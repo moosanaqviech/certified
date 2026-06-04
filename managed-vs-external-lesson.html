@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Managed vs. External Tables</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c10;
+    --frame: #141620;
+    --surface: #171922;
+    --surface-2: #1f222e;
+    --ink: #f1f0f5;
+    --ink-soft: #a6a7b4;
+    --ink-faint: #6a6b78;
+    /* Managed = indigo (Databricks owns it) */
+    --managed: #7c8cf8;
+    --managed-glow: rgba(124,140,248,0.5);
+    /* External = amber (you own it) */
+    --external: #e8a33d;
+    --external-glow: rgba(232,163,61,0.5);
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, #1a1d2b 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+  .phone {
+    position: relative; width: 100%; max-width: 460px; height: 100dvh;
+    background: transparent; border-radius: 0; padding: 0; box-shadow: none;
+  }
+
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 38px; line-height: 1.04; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .vs { width:100%; border-collapse:separate; border-spacing:0; margin-top:4px; font-size:13.5px; }
+  .vs th, .vs td { padding:11px 10px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+  .vs thead th { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .vs .feat { color:var(--ink-soft); font-weight:600; width:30%; }
+  .vs .mcol { color:var(--managed); font-weight:600; }
+  .vs .ecol { color:var(--external); font-weight:600; }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0b0c10; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--managed); background: rgba(124,140,248,0.12); }
+  .choice.correct .key { background: var(--managed); color:#0b0c10; }
+  .choice.wrong { border-color: rgba(232,80,80,0.8); background: rgba(232,80,80,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--managed); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em; background: rgba(255,255,255,0.07); padding: 1px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) {
+    .stage { padding: 0; }
+    .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;}
+    .screen { border-radius:0; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 220">
+    <defs>
+      <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8e9bff"/><stop offset="1" stop-color="#5a68d8"/></linearGradient>
+      <linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0b659"/><stop offset="1" stop-color="#c47e1e"/></linearGradient>
+    </defs>
+    <ellipse cx="160" cy="200" rx="92" ry="13" fill="#000" opacity="0.25"/>
+    <!-- managed: catalog holds both metadata + data -->
+    <g transform="translate(38 44)">
+      <rect x="0" y="0" width="100" height="120" rx="14" fill="url(#mg)" opacity="0.16" stroke="#7c8cf8" stroke-width="2"/>
+      <rect x="20" y="20" width="60" height="20" rx="5" fill="#7c8cf8"/>
+      <rect x="20" y="52" width="60" height="48" rx="6" fill="#7c8cf8" opacity="0.55"/>
+      <text x="50" y="34" text-anchor="middle" fill="#0b0c10" font-family="Hanken Grotesk" font-size="10" font-weight="700">meta</text>
+      <text x="50" y="80" text-anchor="middle" fill="#f1f0f5" font-family="Hanken Grotesk" font-size="10" font-weight="700">data</text>
+    </g>
+    <!-- external: catalog holds metadata, data lives outside -->
+    <g transform="translate(182 44)">
+      <rect x="0" y="0" width="100" height="58" rx="14" fill="url(#eg)" opacity="0.16" stroke="#e8a33d" stroke-width="2"/>
+      <rect x="20" y="18" width="60" height="22" rx="5" fill="#e8a33d"/>
+      <text x="50" y="33" text-anchor="middle" fill="#0b0c10" font-family="Hanken Grotesk" font-size="10" font-weight="700">meta</text>
+      <path d="M50 64 V92" stroke="#e8a33d" stroke-width="2" stroke-dasharray="4 4"/><polygon points="50,98 45,88 55,88" fill="#e8a33d"/>
+      <rect x="14" y="100" width="72" height="34" rx="7" fill="#1f222e" stroke="#e8a33d" stroke-width="1.5"/>
+      <text x="50" y="121" text-anchor="middle" fill="#e8a33d" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">your cloud</text>
+    </g>
+  </svg>`,
+
+  problem: `<svg viewBox="0 0 320 200">
+    <rect x="92" y="30" width="136" height="46" rx="9" fill="#1f222e" stroke="#3a3d4a"/>
+    <text x="160" y="58" text-anchor="middle" fill="#e85050" font-family="ui-monospace, monospace" font-size="14" font-weight="700">DROP TABLE</text>
+    <path d="M120 80 L120 110" stroke="#e85050" stroke-width="2" stroke-dasharray="5 4"/><polygon points="120,116 115,106 125,106" fill="#e85050"/>
+    <path d="M200 80 L200 110" stroke="#36c88a" stroke-width="2" stroke-dasharray="5 4"/><polygon points="200,116 195,106 205,106" fill="#36c88a"/>
+    <g font-family="Hanken Grotesk" font-size="11" font-weight="700">
+      <rect x="64" y="120" width="112" height="56" rx="9" fill="rgba(232,80,80,0.1)" stroke="#e85050" stroke-width="1.5"/>
+      <text x="120" y="142" text-anchor="middle" fill="#e85050">data DELETED?</text>
+      <text x="120" y="162" text-anchor="middle" fill="#a6a7b4" font-size="10">😱 gone forever</text>
+      <rect x="186" y="120" width="112" height="56" rx="9" fill="rgba(54,200,138,0.1)" stroke="#36c88a" stroke-width="1.5"/>
+      <text x="242" y="142" text-anchor="middle" fill="#36c88a">data SAFE?</text>
+      <text x="242" y="162" text-anchor="middle" fill="#a6a7b4" font-size="10">😌 still there</text>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="#6a6b78" font-family="Hanken Grotesk" font-size="11">same command — which one is it?</text>
+  </svg>`,
+
+  bigidea: `<svg viewBox="0 0 320 220">
+    <text x="160" y="20" text-anchor="middle" fill="#a6a7b4" font-family="Hanken Grotesk" font-size="12" font-weight="600">Unity Catalog always owns the METADATA</text>
+    <rect x="100" y="32" width="120" height="34" rx="9" fill="rgba(124,140,248,0.16)" stroke="#7c8cf8" stroke-width="2"/>
+    <text x="160" y="54" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="12" font-weight="700">catalog · metadata</text>
+    <text x="160" y="92" text-anchor="middle" fill="#f1f0f5" font-family="Hanken Grotesk" font-size="13" font-weight="700">The question is: who owns the DATA?</text>
+    <!-- managed -->
+    <g>
+      <path d="M120 100 L100 132" stroke="#7c8cf8" stroke-width="2"/><polygon points="98,138 99,127 107,134" fill="#7c8cf8"/>
+      <rect x="32" y="140" width="120" height="58" rx="11" fill="rgba(124,140,248,0.1)" stroke="#7c8cf8" stroke-width="1.5"/>
+      <text x="92" y="162" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="12" font-weight="700">MANAGED</text>
+      <text x="92" y="182" text-anchor="middle" fill="#a6a7b4" font-family="Hanken Grotesk" font-size="11">data inside UC too</text>
+    </g>
+    <!-- external -->
+    <g>
+      <path d="M200 100 L220 132" stroke="#e8a33d" stroke-width="2"/><polygon points="222,138 213,134 221,127" fill="#e8a33d"/>
+      <rect x="168" y="140" width="120" height="58" rx="11" fill="rgba(232,163,61,0.1)" stroke="#e8a33d" stroke-width="1.5"/>
+      <text x="228" y="162" text-anchor="middle" fill="#e8a33d" font-family="Hanken Grotesk" font-size="12" font-weight="700">EXTERNAL</text>
+      <text x="228" y="182" text-anchor="middle" fill="#a6a7b4" font-family="Hanken Grotesk" font-size="11">data in your storage</text>
+    </g>
+  </svg>`,
+
+  managed: `<svg viewBox="0 0 320 200">
+    <rect x="70" y="24" width="180" height="120" rx="16" fill="rgba(124,140,248,0.08)" stroke="#7c8cf8" stroke-width="2.5"/>
+    <text x="160" y="46" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="11" font-weight="700">UNITY CATALOG</text>
+    <rect x="98" y="58" width="124" height="22" rx="5" fill="#7c8cf8"/>
+    <text x="160" y="73" text-anchor="middle" fill="#0b0c10" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">metadata</text>
+    <rect x="98" y="88" width="124" height="42" rx="6" fill="#7c8cf8" opacity="0.5"/>
+    <text x="160" y="113" text-anchor="middle" fill="#f1f0f5" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">data files</text>
+    <g font-family="Hanken Grotesk" font-size="12.5" font-weight="600">
+      <circle cx="40" cy="168" r="9" fill="rgba(124,140,248,0.18)" stroke="#7c8cf8" stroke-width="2"/><path d="M36 168 l3 3 l6 -7" stroke="#7c8cf8" stroke-width="2" fill="none"/>
+      <text x="58" y="172" fill="#a6a7b4">Databricks controls data + metadata</text>
+    </g>
+    <text x="160" y="192" text-anchor="middle" fill="#e85050" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">DROP = data is deleted</text>
+  </svg>`,
+
+  external: `<svg viewBox="0 0 320 210">
+    <rect x="36" y="24" width="120" height="80" rx="14" fill="rgba(232,163,61,0.06)" stroke="#e8a33d" stroke-width="2.5"/>
+    <text x="96" y="44" text-anchor="middle" fill="#e8a33d" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">UNITY CATALOG</text>
+    <rect x="58" y="56" width="76" height="22" rx="5" fill="#e8a33d"/>
+    <text x="96" y="71" text-anchor="middle" fill="#0b0c10" font-family="Hanken Grotesk" font-size="10" font-weight="700">metadata</text>
+    <text x="96" y="96" text-anchor="middle" fill="#6a6b78" font-family="Hanken Grotesk" font-size="9.5">(just a pointer)</text>
+    <path d="M160 64 H196" stroke="#e8a33d" stroke-width="2" stroke-dasharray="5 4"/><polygon points="202,64 192,59 192,69" fill="#e8a33d"/>
+    <rect x="204" y="30" width="92" height="68" rx="13" fill="#1f222e" stroke="#e8a33d" stroke-width="2"/>
+    <text x="250" y="52" text-anchor="middle" fill="#e8a33d" font-family="Hanken Grotesk" font-size="10" font-weight="700">YOUR CLOUD</text>
+    <text x="250" y="70" text-anchor="middle" fill="#a6a7b4" font-family="Hanken Grotesk" font-size="9.5">S3 / ADLS / GCS</text>
+    <text x="250" y="86" text-anchor="middle" fill="#f1f0f5" font-family="Hanken Grotesk" font-size="10" font-weight="700">data files</text>
+    <g font-family="Hanken Grotesk" font-size="12.5" font-weight="600">
+      <circle cx="40" cy="148" r="9" fill="rgba(232,163,61,0.18)" stroke="#e8a33d" stroke-width="2"/><path d="M36 148 l3 3 l6 -7" stroke="#e8a33d" stroke-width="2" fill="none"/>
+      <text x="58" y="152" fill="#a6a7b4">You control the data in your own storage</text>
+      <circle cx="40" cy="176" r="9" fill="rgba(232,163,61,0.18)" stroke="#e8a33d" stroke-width="2"/><path d="M36 176 l3 3 l6 -7" stroke="#e8a33d" stroke-width="2" fill="none"/>
+      <text x="58" y="180" fill="#a6a7b4">UC only stores a path that points to it</text>
+    </g>
+    <text x="160" y="204" text-anchor="middle" fill="#36c88a" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">DROP = only metadata removed, files stay</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8e9bff"/><stop offset="1" stop-color="#5a68d8"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#0b0c10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(124,140,248,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Governance</div>
+    <h1 class="reveal">Managed vs.<br>External Tables</h1>
+    <p class="lead reveal">Two table types in Unity Catalog — and the difference decides what happens to your data when you drop one. Six cards. Two minutes.</p>` },
+
+  { glow: "radial-gradient(500px 300px at 50% 25%, rgba(232,80,80,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e85050"></span>The stakes</div>
+    <h2 class="reveal">Same command. Opposite outcome.</h2>
+    <div class="art reveal">${A.problem}</div>
+    <p class="lead reveal">Run <code>DROP TABLE</code> on one type and the data is <strong>gone forever</strong>. Run it on the other and the data <strong>survives</strong>. Knowing which is which is the whole lesson — and a favourite exam trap.</p>` },
+
+  { glow: "radial-gradient(520px 320px at 50% 16%, rgba(124,140,248,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">The big idea</div>
+    <h2 class="reveal">Who owns the data?</h2>
+    <div class="art grow reveal">${A.bigidea}</div>
+    <p class="lead reveal">Unity Catalog <strong>always</strong> owns the metadata. The only question that separates the two types is <strong>who owns the underlying data files</strong>.</p>` },
+
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(124,140,248,0.16), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--managed)"><span style="background:var(--managed);width:8px;height:8px;border-radius:50%;display:inline-block"></span>TYPE · MANAGED</div>
+    <h2 class="reveal" style="color:var(--managed)">Managed table</h2>
+    <div class="art reveal">${A.managed}</div>
+    <p class="lead reveal">Databricks manages <strong>both</strong> the metadata and the data, storing files in Unity Catalog's own managed location. Drop the table and <strong>the data files are deleted with it</strong>. Simplest to use — UC handles everything.</p>` },
+
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(232,163,61,0.16), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--external)"><span style="background:var(--external);width:8px;height:8px;border-radius:50%;display:inline-block"></span>TYPE · EXTERNAL</div>
+    <h2 class="reveal" style="color:var(--external)">External table</h2>
+    <div class="art reveal">${A.external}</div>
+    <p class="lead reveal">The data lives in <strong>your own</strong> cloud storage (S3/ADLS/GCS); UC just stores a pointer to it. Drop the table and <strong>only the metadata is removed — your files stay put</strong>. Use it when data is shared with other tools or must outlive the table.</p>` },
+
+  { glow: "radial-gradient(560px 320px at 50% 18%, rgba(124,140,248,0.1), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:25px">The whole picture.</h2>
+    <div class="reveal" style="margin-top:6px">
+    <table class="vs">
+      <thead><tr><th class="feat"></th><th class="mcol">Managed</th><th class="ecol">External</th></tr></thead>
+      <tbody>
+        <tr><td class="feat">Metadata</td><td>Unity Catalog</td><td>Unity Catalog</td></tr>
+        <tr><td class="feat">Data files</td><td>UC managed location</td><td>Your cloud storage</td></tr>
+        <tr><td class="feat">DROP TABLE</td><td>Deletes data</td><td>Keeps data</td></tr>
+        <tr><td class="feat">Best for</td><td>Most use cases</td><td>Shared / external data</td></tr>
+        <tr><td class="feat">Optimizations</td><td>Automatic</td><td>You manage</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Rule of thumb: <strong>default to managed</strong> unless the data needs to live in a specific location or be shared outside Databricks.</p>` },
+
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:23px">You run <code>DROP TABLE sales</code> on an <span style="color:var(--external)">external</span> table. What happens to the data files?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Deleted permanently</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>They stay in cloud storage</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Moved to UC managed location</button>
+    </div>
+    <div class="feedback"><b style="color:var(--external)">They stay.</b> For an external table, UC only owns the metadata pointer. Dropping it removes that pointer — your files remain untouched in your own cloud storage.</div>` },
+
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:23px">A team wants the <span style="color:var(--managed)">simplest</span> setup where Databricks handles storage and optimization automatically. Which type?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Managed table</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>External table</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Neither — must use raw files</button>
+    </div>
+    <div class="feedback"><b>Managed.</b> When you don't need data in a specific external location, managed tables are the default — UC owns the files and handles layout and optimization for you.</div>` },
+
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(124,140,248,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The three that matter:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--managed)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/></svg><p><b>Metadata</b>Unity Catalog owns it for both types</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--external)" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Data</b>Managed = inside UC · External = your storage</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#e85050" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>DROP</b>Managed deletes data · External keeps it</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
