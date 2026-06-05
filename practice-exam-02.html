@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practice Exam 2 · Databricks DE Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam 2</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* ---------- questions: one scenario per chapter, Units 1 & 2 (10 chapters) ---------- */
+const QUESTIONS = [
+  /* Ch 1 — The Lakehouse */
+  {
+    q:`A company runs a cheap data lake for storage but copies data nightly into a separate warehouse just to get reliable SQL and governance. They want to retire the second system. What does adopting a lakehouse give them?`,
+    opts:[
+      "ACID transactions and governance on the same open storage, so a separate warehouse is no longer needed",
+      "Cheaper object storage than the lake already provides",
+      "The ability to store unstructured files for the first time",
+      "A Python-only replacement for their SQL workloads"
+    ],
+    correct:0,
+    explain:`The lake already provides cheap storage, open formats, and unstructured files. The lakehouse adds the warehouse-side strengths (ACID reliability and fine-grained governance) on top of that same storage, so one platform replaces the lake-plus-warehouse copy pipeline.`
+  },
+  /* Ch 2 — Delta Lake essentials */
+  {
+    q:`A developer ran a <code>DELETE</code> an hour ago that removed the wrong rows from a Delta table. No external backup exists. What is the most direct way to recover the data?`,
+    opts:[
+      "Re-run the upstream job to rebuild the whole table from scratch",
+      "Use time travel (<code>VERSION AS OF</code> / <code>TIMESTAMP AS OF</code>) to read the prior version and restore those rows",
+      "Turn on schema evolution with <code>mergeSchema</code>",
+      "Nothing: recovery is impossible without an external backup"
+    ],
+    correct:1,
+    explain:`Delta's transaction log preserves every prior version, so time travel can query the table as it looked before the delete and insert those rows back, with no separate backup needed. mergeSchema deals with columns, not row recovery.`
+  },
+  /* Ch 3 — Unity Catalog overview */
+  {
+    q:`An analyst's query <code>SELECT * FROM sales.orders</code> works, but a governance review asks for fully-qualified names. Which is the correct Unity Catalog form, and what are the levels?`,
+    opts:[
+      "<code>sales.orders</code>, which is already the full Unity Catalog name",
+      "<code>orders.sales.prod</code>, read as table, then schema, then catalog",
+      "<code>prod.sales.orders</code>, read as catalog.schema.table",
+      "<code>prod.orders</code>, read as catalog.table"
+    ],
+    correct:2,
+    explain:`Unity Catalog's hierarchy is catalog, then schema, then table, giving the three-part name catalog.schema.table. Two-part names still work but assume a default catalog; the full three-part form is the UC convention.`
+  },
+  /* Ch 4 — Compute options & cost models */
+  {
+    q:`A pipeline runs on a fixed nightly schedule with no human interaction. The team wants the lowest-cost compute that still runs the automated workload. Which should they choose?`,
+    opts:[
+      "An always-on all-purpose cluster, so it is ready the moment the job starts",
+      "Job compute, which starts for the scheduled run and terminates when it finishes",
+      "A SQL warehouse, since it is tuned for fast queries",
+      "The largest all-purpose cluster available, to finish faster"
+    ],
+    correct:1,
+    explain:`All-purpose clusters are for interactive, hands-on work and cost more, especially when left running. Job compute starts for a scheduled run and shuts down afterward, the cheaper, purpose-built choice for automated workloads. SQL warehouses serve BI and SQL queries, not pipeline jobs.`
+  },
+  /* Ch 5 — Ingestion patterns */
+  {
+    q:`A fraud team needs alerts within seconds of each transaction, and the source produces an unbounded, never-ending flow of events. Which pattern fits, and what is the main cost?`,
+    opts:[
+      "Batch, because it has the lowest latency and the simplest model",
+      "Incremental alone, because it removes the need to pick a latency",
+      "Streaming, giving second-level latency at the cost of an always-on pipeline",
+      "Batch, because it reprocesses the full dataset every run"
+    ],
+    correct:2,
+    explain:`Streaming processes data continuously as it arrives, dropping latency to seconds, which near-real-time alerting needs. The trade-off is an always-on pipeline. Incremental is a separate dial (how much you reprocess), not a latency choice by itself.`
+  },
+  /* Ch 6 — COPY INTO */
+  {
+    q:`A scheduled SQL job runs <code>COPY INTO</code> over the same landing folder every morning. One day no new files arrived, but the job still runs. What happens, and why?`,
+    opts:[
+      "Every file reloads, creating duplicate rows",
+      "Already-ingested files are skipped, so nothing new loads, because COPY INTO is idempotent",
+      "The command fails because the target table already exists",
+      "It reloads everything unless <code>mergeSchema</code> is set"
+    ],
+    correct:1,
+    explain:`COPY INTO tracks which files it has already ingested, so re-running it skips them and is safe to schedule repeatedly. You would only reload seen files by passing the force copy option. mergeSchema controls new columns, not reloads.`
+  },
+  /* Ch 7 — Auto Loader */
+  {
+    q:`Millions of JSON files land in cloud storage each day, and the source occasionally adds new fields. The pipeline uses the <code>cloudFiles</code> source with a checkpoint. Which two Auto Loader behaviors is it relying on?`,
+    opts:[
+      "Manual schema edits plus a full reload on every run",
+      "A SQL-only interface that avoids streaming entirely",
+      "Table-level locking on every write to prevent conflicts",
+      "Exactly-once ingestion via the checkpoint, plus automatic schema evolution for new fields"
+    ],
+    correct:3,
+    explain:`The checkpoint records which files have been processed, giving exactly-once ingestion that resumes after restarts. Schema evolution lets Auto Loader absorb newly-appearing columns without a rewrite. (cloudFiles is the format name that invokes Auto Loader.)`
+  },
+  /* Ch 8 — Auto Loader vs. COPY INTO */
+  {
+    q:`A small team drops a few hundred CSVs into a folder once a night and wants the simplest re-runnable load they can express in plain SQL, with no streaming infrastructure. Which tool fits, and what would push them to the other one?`,
+    opts:[
+      "Auto Loader; they would move to COPY INTO only once they hit millions of files",
+      "COPY INTO; they would move to Auto Loader at millions of files, or continuous arrival with evolving schemas",
+      "Auto Loader; COPY INTO cannot be safely re-run",
+      "Neither; folders of files cannot be loaded incrementally"
+    ],
+    correct:1,
+    explain:`Small, periodic volume plus a preference for plain SQL points to COPY INTO. The signals that tip you toward Auto Loader are huge or continuous file volume and automatic schema evolution, none of which apply here.`
+  },
+  /* Ch 9 — Lakeflow Connect */
+  {
+    q:`One pipeline must pull records directly from a Salesforce account; another ingests millions of JSON files already sitting in S3. Which tools match, respectively?`,
+    opts:[
+      "Auto Loader for Salesforce; Lakeflow Connect for the S3 files",
+      "COPY INTO for both",
+      "Lakeflow Connect for Salesforce; Auto Loader for the S3 files",
+      "Lakeflow Connect for both"
+    ],
+    correct:2,
+    explain:`Lakeflow Connect ingests from external systems like SaaS apps and databases, which fits Salesforce. Files already in cloud storage are the job of Auto Loader (or COPY INTO). Matching the source type to the tool is the key distinction.`
+  },
+  /* Ch 10 — Choosing an ingestion method */
+  {
+    q:`A supported SaaS source must be ingested with the least possible setup, letting Databricks run the pipeline end to end. Which choice fits, and what is the trade-off versus the alternative?`,
+    opts:[
+      "A standard connector: least effort, since Databricks runs it for you",
+      "A managed connector: lowest effort because Databricks runs the pipeline, trading away some hands-on control",
+      "Auto Loader: the right tool for any SaaS source",
+      "COPY INTO on a schedule: the simplest option for every source"
+    ],
+    correct:1,
+    explain:`For a supported external source, a managed connector is the lowest-effort path because Databricks runs the whole pipeline. You give up some of the control a standard connector's hand-built pipeline provides. Auto Loader and COPY INTO are for files in cloud storage, not SaaS systems.`
+  }
+];
+
+const PASS = 70;                 // DE Associate passing ≈ 70%
+const SECONDS = 20 * 60;         // 20 min, proportional to real exam pace
+
+/* ---------- state ---------- */
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent="Practice Exam 2";
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">Databricks DE Associate</div>
+      <h1>Practice Exam 2</h1>
+      <p>Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">Covers all 10 chapters: Unit 1 (the platform) and Unit 2 (ingestion).</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>20:00</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4h12l-2 4 2 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts" id="opts">
+      ${Q.opts.map((o,idx)=>`
+        <button class="opt ${state.answers[i]===idx?'sel':''}" data-idx="${idx}">
+          <span class="key">${"ABCD"[idx]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots" id="dots"></div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Back</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(b=>{
+    b.onclick = ()=>{ state.answers[i]=+b.dataset.idx; render(); setProgress(); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i]=!state.flags[i]; render(); };
+  const prev=document.getElementById("prevBtn"); if(prev) prev.onclick=()=>{ if(state.i>0){state.i--;render();setProgress();} };
+  const next=document.getElementById("nextBtn"); if(next) next.onclick=()=>{ if(state.i<QUESTIONS.length-1){state.i++;render();setProgress();} };
+  const sub=document.getElementById("submitBtn"); if(sub) sub.onclick=confirmSubmit;
+  renderDots();
+}
+
+function renderDots(){
+  const d = document.getElementById("dots"); if(!d) return;
+  d.innerHTML = QUESTIONS.map((_,idx)=>{
+    let cls="dot";
+    if(state.answers[idx]!==null) cls+=" answered";
+    if(idx===state.i) cls+=" current";
+    if(state.flags[idx]) cls+=" flagged";
+    return `<button class="${cls}" data-d="${idx}">${idx+1}</button>`;
+  }).join("");
+  d.querySelectorAll(".dot").forEach(b=>b.onclick=()=>{ state.i=+b.dataset.d; render(); setProgress(); });
+}
+
+function confirmSubmit(){
+  const unanswered = state.answers.filter(a=>a===null).length;
+  if(unanswered>0){
+    if(!confirm(`You have ${unanswered} unanswered question${unanswered>1?'s':''}. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  // animate ring
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson &middot; Joins: Inner / Left / Broadcast / Cross</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --surface: #181b24;
+    --surface-2: #1f232e;
+    --ink: #f3f0ea;
+    --ink-soft: #a7a59f;
+    --ink-faint: #6b6a66;
+    --inner: #4fa8e8;
+    --left: #34d3a6;
+    --broadcast: #f0bb66;
+    --cross: #e07090;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html, body {
+    height:100%;
+    background: radial-gradient(1200px 700px at 50% -10%, #1a1d27 0%, transparent 60%), var(--bg);
+    font-family: var(--body);
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  .stage { height:100dvh; width:100%; display:flex; align-items:center; justify-content:center; }
+  .phone { position:relative; width:100%; max-width:460px; height:100dvh; }
+  .screen {
+    position:relative; height:100%; width:100%;
+    background: var(--surface); overflow:hidden;
+    display:flex; flex-direction:column;
+    border-left:1px solid var(--line); border-right:1px solid var(--line);
+  }
+
+  .glow { position:absolute; inset:0; pointer-events:none; transition:background 0.7s ease; z-index:0; }
+
+  .screen::after {
+    content:""; position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position:relative; z-index:6; padding:18px 20px 8px; display:flex; gap:5px; align-items:center; }
+  .seg { flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,0.12); overflow:hidden; }
+  .seg > i { display:block; height:100%; width:0%; background:var(--ink); border-radius:3px; transition:width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width:100%; }
+
+  .viewport { position:relative; z-index:6; flex:1; overflow:hidden; }
+  .card {
+    position:absolute; inset:0; padding:14px 30px 30px; display:flex; flex-direction:column;
+    opacity:0; transform:translateX(40px);
+    transition:opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events:none; overflow-y:auto;
+  }
+  .card.in { opacity:1; transform:translateX(0); pointer-events:auto; }
+  .card.out-left { opacity:0; transform:translateX(-40px); }
+
+  .eyebrow { font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-bottom:14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform:translateY(-1px); }
+
+  h1 { font-family:var(--display); font-weight:600; font-size:40px; line-height:1.02; letter-spacing:-0.02em; margin-bottom:14px; }
+  h2 { font-family:var(--display); font-weight:600; font-size:30px; line-height:1.08; letter-spacing:-0.015em; margin-bottom:14px; }
+  .lead { font-size:17px; line-height:1.5; color:var(--ink-soft); font-weight:400; }
+  .lead strong { color:var(--ink); font-weight:600; }
+
+  .art { margin:6px 0 18px; display:flex; align-items:center; justify-content:center; min-height:150px; }
+  .art.grow { flex:1; }
+  svg { display:block; width:100%; height:auto; max-width:320px; }
+
+  .card.in .reveal { animation:rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay:0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay:0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay:0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay:0.29s; }
+  @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+
+  .tag {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:7px 13px; border-radius:100px;
+    font-size:12.5px; font-weight:600; letter-spacing:0.04em;
+    border:1px solid var(--line); background:rgba(255,255,255,0.03);
+    margin-bottom:18px;
+  }
+
+  code {
+    font-family:ui-monospace, monospace; font-size:0.86em;
+    background:rgba(255,255,255,0.09); border-radius:5px; padding:2px 6px; color:var(--ink);
+  }
+
+  .callout {
+    margin-top:14px; padding:12px 14px;
+    background:rgba(255,255,255,0.04); border:1px solid var(--line); border-radius:12px;
+    font-size:13.5px; line-height:1.5; color:var(--ink-soft);
+  }
+  .callout strong { color:var(--ink); }
+
+  .vs { width:100%; border-collapse:collapse; font-size:13px; margin-top:4px; }
+  .vs th { padding:8px 10px; text-align:left; font-weight:700; color:var(--ink-faint); font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--line); }
+  .vs td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--ink-soft); vertical-align:top; line-height:1.4; }
+  .vs td:first-child { font-weight:700; white-space:nowrap; }
+  .vs tr:last-child td { border-bottom:none; }
+
+  .spacer { flex:1; }
+
+  .footer { position:relative; z-index:6; padding:12px 24px 26px; display:flex; align-items:center; gap:14px; }
+  .btn {
+    flex:1; border:none; font-family:var(--body); font-weight:700; font-size:16px;
+    letter-spacing:0.01em; padding:16px; border-radius:16px; cursor:pointer;
+    background:var(--ink); color:#14110c;
+    transition:transform 0.15s ease, opacity 0.2s ease;
+  }
+  .btn:active { transform:scale(0.97); }
+  .btn.ghost {
+    flex:0 0 auto; width:54px; background:var(--surface-2); color:var(--ink-soft);
+    border:1px solid var(--line); font-size:20px;
+  }
+  .btn:disabled { opacity:0.3; pointer-events:none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top:4px; }
+  .choice {
+    text-align:left; cursor:pointer;
+    background:var(--surface-2); border:1.5px solid var(--line);
+    color:var(--ink); font-family:var(--body); font-weight:600; font-size:15px;
+    padding:15px 18px; border-radius:14px;
+    transition:border-color 0.2s ease;
+    display:flex; align-items:center; gap:12px;
+  }
+  .choice .key {
+    width:26px; height:26px; border-radius:8px; background:rgba(255,255,255,0.07);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; flex-shrink:0;
+  }
+  .choice:hover { border-color:rgba(255,255,255,0.25); }
+  .choice.correct { border-color:var(--left); background:rgba(52,211,166,0.08); color:var(--left); }
+  .choice.wrong   { border-color:#e85050; background:rgba(232,80,80,0.08); color:#e85050; }
+  .choice.dim     { opacity:0.35; }
+  .feedback {
+    margin-top:14px; padding:14px 16px;
+    background:rgba(255,255,255,0.04); border:1px solid var(--line); border-radius:14px;
+    font-size:14px; line-height:1.5; color:var(--ink-soft); display:none;
+  }
+  .feedback.show { display:block; }
+  .feedback b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back">&#8592;</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SVG ART
+============================================================ */
+const A = {
+
+/* COVER: four join type icons in a balanced 2x2 grid */
+cover: `<svg viewBox="0 0 320 218" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <defs>
+    <clipPath id="cv-rclip"><circle cx="156" cy="62" r="32"/></clipPath>
+  </defs>
+
+  <!-- INNER (top-left): two circles, intersection filled -->
+  <circle cx="124" cy="62" r="32" fill="rgba(79,168,232,0.06)" stroke="#4fa8e8" stroke-width="1.6" opacity="0.6"/>
+  <circle cx="156" cy="62" r="32" fill="rgba(79,168,232,0.06)" stroke="#4fa8e8" stroke-width="1.6" opacity="0.6"/>
+  <circle cx="124" cy="62" r="32" fill="rgba(79,168,232,0.30)" clip-path="url(#cv-rclip)"/>
+  <text x="140" y="109" text-anchor="middle" fill="#4fa8e8" font-size="10.5" font-weight="700" letter-spacing="0.06em">INNER</text>
+
+  <!-- LEFT (top-right): left circle fully lit, right dim -->
+  <circle cx="183" cy="62" r="32" fill="rgba(52,211,166,0.20)" stroke="#34d3a6" stroke-width="1.8"/>
+  <circle cx="215" cy="62" r="32" fill="rgba(52,211,166,0.03)" stroke="#34d3a6" stroke-width="1.5" opacity="0.4"/>
+  <text x="199" y="109" text-anchor="middle" fill="#34d3a6" font-size="10.5" font-weight="700" letter-spacing="0.06em">LEFT</text>
+
+  <!-- BROADCAST (bottom-left): large block + bolt + small copies -->
+  <rect x="62" y="130" width="116" height="62" rx="12" fill="rgba(240,187,102,0.06)" stroke="#f0bb66" stroke-width="1.4" opacity="0.75"/>
+  <rect x="74" y="141" width="28" height="40" rx="5" fill="rgba(240,187,102,0.15)" stroke="#f0bb66" stroke-width="1.2"/>
+  <g fill="rgba(240,187,102,0.32)">
+    <rect x="78" y="147" width="20" height="4" rx="2"/>
+    <rect x="78" y="155" width="20" height="4" rx="2"/>
+    <rect x="78" y="163" width="20" height="4" rx="2"/>
+    <rect x="78" y="171" width="20" height="4" rx="2"/>
+  </g>
+  <text x="120" y="163" text-anchor="middle" fill="#f0bb66" font-size="20">&#9889;</text>
+  <rect x="136" y="141" width="17" height="12" rx="3" fill="rgba(240,187,102,0.22)" stroke="#f0bb66" stroke-width="0.9"/>
+  <rect x="156" y="141" width="17" height="12" rx="3" fill="rgba(240,187,102,0.22)" stroke="#f0bb66" stroke-width="0.9"/>
+  <rect x="136" y="158" width="17" height="12" rx="3" fill="rgba(240,187,102,0.22)" stroke="#f0bb66" stroke-width="0.9"/>
+  <rect x="156" y="158" width="17" height="12" rx="3" fill="rgba(240,187,102,0.22)" stroke="#f0bb66" stroke-width="0.9"/>
+  <text x="120" y="206" text-anchor="middle" fill="#f0bb66" font-size="10.5" font-weight="700" letter-spacing="0.06em">BROADCAST</text>
+
+  <!-- CROSS (bottom-right): cartesian grid -->
+  <rect x="190" y="130" width="72" height="62" rx="12" fill="rgba(224,112,144,0.08)" stroke="#e07090" stroke-width="1.4" opacity="0.8"/>
+  <line x1="190" y1="151" x2="262" y2="151" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <line x1="190" y1="167" x2="262" y2="167" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <line x1="214" y1="130" x2="214" y2="192" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <line x1="238" y1="130" x2="238" y2="192" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <g fill="#e07090" opacity="0.55">
+    <circle cx="202" cy="141" r="3.5"/><circle cx="226" cy="141" r="3.5"/><circle cx="250" cy="141" r="3.5"/>
+    <circle cx="202" cy="159" r="3.5"/><circle cx="226" cy="159" r="3.5"/><circle cx="250" cy="159" r="3.5"/>
+    <circle cx="202" cy="180" r="3.5"/><circle cx="226" cy="180" r="3.5"/><circle cx="250" cy="180" r="3.5"/>
+  </g>
+  <text x="226" y="206" text-anchor="middle" fill="#e07090" font-size="10.5" font-weight="700" letter-spacing="0.06em">CROSS</text>
+</svg>`,
+
+/* PROBLEM: two tables with a question mark between */
+problem: `<svg viewBox="0 0 320 168" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <!-- orders table -->
+  <rect x="8" y="14" width="112" height="140" rx="12" fill="rgba(79,168,232,0.07)" stroke="#4fa8e8" stroke-width="1.6" opacity="0.85"/>
+  <text x="64" y="33" text-anchor="middle" fill="#4fa8e8" font-size="11" font-weight="700">orders</text>
+  <line x1="8" y1="41" x2="120" y2="41" stroke="#4fa8e8" stroke-width="1" opacity="0.3"/>
+  <g font-size="9.5" fill="#6b6a66" font-weight="600">
+    <text x="24" y="57">order_id</text><text x="80" y="57">cust_id</text>
+  </g>
+  <g font-size="10.5" fill="#a7a59f">
+    <text x="30" y="76">1</text><text x="86" y="76">A</text>
+    <text x="30" y="96">2</text><text x="86" y="96">B</text>
+    <text x="30" y="116">3</text><text x="86" y="116">C</text>
+    <text x="30" y="136">4</text><text x="86" y="136">A</text>
+  </g>
+
+  <!-- question mark -->
+  <text x="160" y="94" text-anchor="middle" fill="#6b6a66" font-size="34" font-weight="700">?</text>
+  <line x1="120" y1="88" x2="142" y2="88" stroke="#4a4e5a" stroke-width="1.2" stroke-dasharray="3,3"/>
+  <line x1="178" y1="88" x2="200" y2="88" stroke="#4a4e5a" stroke-width="1.2" stroke-dasharray="3,3"/>
+
+  <!-- customers table -->
+  <rect x="200" y="14" width="112" height="140" rx="12" fill="rgba(52,211,166,0.07)" stroke="#34d3a6" stroke-width="1.6" opacity="0.85"/>
+  <text x="256" y="33" text-anchor="middle" fill="#34d3a6" font-size="11" font-weight="700">customers</text>
+  <line x1="200" y1="41" x2="312" y2="41" stroke="#34d3a6" stroke-width="1" opacity="0.3"/>
+  <g font-size="9.5" fill="#6b6a66" font-weight="600">
+    <text x="216" y="57">cust_id</text><text x="264" y="57">name</text>
+  </g>
+  <g font-size="10.5" fill="#a7a59f">
+    <text x="224" y="76">A</text><text x="268" y="76">Alice</text>
+    <text x="224" y="96">B</text><text x="268" y="96">Bob</text>
+    <text x="224" y="116">D</text><text x="268" y="116">Dana</text>
+  </g>
+  <text x="256" y="140" text-anchor="middle" fill="#6b6a66" font-size="9">no cust C on file</text>
+</svg>`,
+
+/* INNER JOIN: only intersection highlighted */
+inner: `<svg viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <defs>
+    <clipPath id="ij-rclip"><circle cx="192" cy="64" r="54"/></clipPath>
+  </defs>
+  <!-- circle outlines -->
+  <circle cx="128" cy="64" r="54" fill="rgba(79,168,232,0.05)" stroke="#4fa8e8" stroke-width="1.8" opacity="0.55"/>
+  <circle cx="192" cy="64" r="54" fill="rgba(79,168,232,0.05)" stroke="#4fa8e8" stroke-width="1.8" opacity="0.55"/>
+  <!-- intersection fill -->
+  <circle cx="128" cy="64" r="54" fill="rgba(79,168,232,0.30)" clip-path="url(#ij-rclip)"/>
+  <!-- labels -->
+  <text x="90"  y="60" text-anchor="middle" fill="#a7a59f" font-size="11" font-weight="600">orders</text>
+  <text x="90"  y="73" text-anchor="middle" fill="#6b6a66" font-size="9">left table</text>
+  <text x="230" y="60" text-anchor="middle" fill="#a7a59f" font-size="11" font-weight="600">customers</text>
+  <text x="230" y="73" text-anchor="middle" fill="#6b6a66" font-size="9">right table</text>
+  <text x="160" y="60" text-anchor="middle" fill="#4fa8e8" font-size="10.5" font-weight="700">match</text>
+  <text x="160" y="72" text-anchor="middle" fill="#4fa8e8" font-size="9">both sides</text>
+  <!-- dropped row callout -->
+  <rect x="52" y="132" width="216" height="30" rx="8" fill="rgba(232,80,80,0.07)" stroke="rgba(232,80,80,0.22)" stroke-width="1"/>
+  <text x="160" y="151" text-anchor="middle" fill="#e85050" font-size="10">order 3 (cust C) has no match. Dropped.</text>
+</svg>`,
+
+/* LEFT JOIN: full left circle lit */
+left: `<svg viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <!-- left circle: fully lit -->
+  <circle cx="128" cy="64" r="54" fill="rgba(52,211,166,0.20)" stroke="#34d3a6" stroke-width="2"/>
+  <!-- right circle: dim -->
+  <circle cx="192" cy="64" r="54" fill="rgba(52,211,166,0.04)" stroke="#34d3a6" stroke-width="1.6" opacity="0.4"/>
+  <!-- labels -->
+  <text x="90"  y="60" text-anchor="middle" fill="#34d3a6" font-size="11" font-weight="700">orders</text>
+  <text x="90"  y="73" text-anchor="middle" fill="#34d3a6" font-size="9">ALL kept</text>
+  <text x="230" y="60" text-anchor="middle" fill="#a7a59f" font-size="11" font-weight="600">customers</text>
+  <text x="230" y="73" text-anchor="middle" fill="#6b6a66" font-size="9">optional</text>
+  <text x="160" y="60" text-anchor="middle" fill="#34d3a6" font-size="10" font-weight="600">match</text>
+  <text x="160" y="72" text-anchor="middle" fill="#34d3a6" font-size="9">where found</text>
+  <!-- null note -->
+  <rect x="44" y="132" width="232" height="30" rx="8" fill="rgba(52,211,166,0.07)" stroke="rgba(52,211,166,0.22)" stroke-width="1"/>
+  <text x="160" y="151" text-anchor="middle" fill="#34d3a6" font-size="10">order 3 kept. cust_name is NULL (no match).</text>
+</svg>`,
+
+/* BROADCAST: small table shipped to each executor */
+broadcast: `<svg viewBox="0 0 320 188" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <!-- large table -->
+  <rect x="8" y="22" width="76" height="108" rx="10" fill="rgba(240,187,102,0.07)" stroke="#f0bb66" stroke-width="1.6"/>
+  <text x="46" y="39" text-anchor="middle" fill="#f0bb66" font-size="10.5" font-weight="700">events</text>
+  <text x="46" y="52" text-anchor="middle" fill="#6b6a66" font-size="9">600 GB</text>
+  <g fill="rgba(240,187,102,0.22)">
+    <rect x="18" y="59" width="56" height="7" rx="3"/>
+    <rect x="18" y="71" width="56" height="7" rx="3"/>
+    <rect x="18" y="83" width="56" height="7" rx="3"/>
+    <rect x="18" y="95" width="56" height="7" rx="3"/>
+    <rect x="18" y="107" width="56" height="7" rx="3"/>
+    <rect x="18" y="119" width="56" height="7" rx="3"/>
+  </g>
+
+  <!-- small lookup -->
+  <rect x="100" y="46" width="70" height="62" rx="10" fill="rgba(240,187,102,0.16)" stroke="#f0bb66" stroke-width="1.8"/>
+  <text x="135" y="62" text-anchor="middle" fill="#f0bb66" font-size="10" font-weight="700">countries</text>
+  <text x="135" y="75" text-anchor="middle" fill="#6b6a66" font-size="9">4 MB</text>
+  <g fill="rgba(240,187,102,0.32)">
+    <rect x="110" y="82" width="50" height="6" rx="3"/>
+    <rect x="110" y="93" width="50" height="6" rx="3"/>
+  </g>
+
+  <!-- broadcast arrows (dashed) -->
+  <g stroke="#f0bb66" stroke-width="1.3" fill="none" opacity="0.5" stroke-dasharray="4,3">
+    <line x1="170" y1="62" x2="210" y2="44"/>
+    <line x1="170" y1="76" x2="210" y2="96"/>
+    <line x1="170" y1="82" x2="210" y2="148"/>
+  </g>
+
+  <!-- executor boxes -->
+  <g font-size="9" fill="#a7a59f">
+    <rect x="210" y="26" width="100" height="36" rx="7" fill="rgba(240,187,102,0.07)" stroke="rgba(240,187,102,0.35)" stroke-width="1"/>
+    <text x="260" y="41" text-anchor="middle" fill="#f0bb66" font-size="9.5" font-weight="600">Executor 1</text>
+    <text x="260" y="54" text-anchor="middle">+ local lookup copy</text>
+
+    <rect x="210" y="78" width="100" height="36" rx="7" fill="rgba(240,187,102,0.07)" stroke="rgba(240,187,102,0.35)" stroke-width="1"/>
+    <text x="260" y="93" text-anchor="middle" fill="#f0bb66" font-size="9.5" font-weight="600">Executor 2</text>
+    <text x="260" y="106" text-anchor="middle">+ local lookup copy</text>
+
+    <rect x="210" y="130" width="100" height="36" rx="7" fill="rgba(240,187,102,0.07)" stroke="rgba(240,187,102,0.35)" stroke-width="1"/>
+    <text x="260" y="145" text-anchor="middle" fill="#f0bb66" font-size="9.5" font-weight="600">Executor 3</text>
+    <text x="260" y="158" text-anchor="middle">+ local lookup copy</text>
+  </g>
+  <text x="160" y="184" text-anchor="middle" fill="#6b6a66" font-size="10">No network shuffle of the large table. Each node joins locally.</text>
+</svg>`,
+
+/* CROSS JOIN: cartesian product */
+cross: `<svg viewBox="0 0 320 184" xmlns="http://www.w3.org/2000/svg" font-family="Hanken Grotesk,system-ui,sans-serif">
+  <!-- A: 3 rows -->
+  <rect x="8" y="22" width="60" height="110" rx="10" fill="rgba(224,112,144,0.08)" stroke="#e07090" stroke-width="1.6"/>
+  <text x="38" y="40" text-anchor="middle" fill="#e07090" font-size="11" font-weight="700">A</text>
+  <line x1="8" y1="47" x2="68" y2="47" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <g fill="#a7a59f" font-size="11" text-anchor="middle">
+    <text x="38" y="68">a1</text>
+    <text x="38" y="94">a2</text>
+    <text x="38" y="120">a3</text>
+  </g>
+
+  <!-- B: 2 rows -->
+  <rect x="80" y="46" width="60" height="64" rx="10" fill="rgba(224,112,144,0.08)" stroke="#e07090" stroke-width="1.6"/>
+  <text x="110" y="64" text-anchor="middle" fill="#e07090" font-size="11" font-weight="700">B</text>
+  <line x1="80" y1="71" x2="140" y2="71" stroke="#e07090" stroke-width="0.8" opacity="0.4"/>
+  <g fill="#a7a59f" font-size="11" text-anchor="middle">
+    <text x="110" y="90">b1</text>
+    <text x="110" y="110">b2</text>
+  </g>
+
+  <!-- times symbol -->
+  <text x="156" y="92" text-anchor="middle" fill="#6b6a66" font-size="24" font-weight="300">&#215;</text>
+
+  <!-- Result: 6 rows -->
+  <rect x="174" y="16" width="138" height="154" rx="10" fill="rgba(224,112,144,0.07)" stroke="#e07090" stroke-width="1.6"/>
+  <text x="243" y="33" text-anchor="middle" fill="#e07090" font-size="11" font-weight="700">Result (3 &#215; 2 = 6 rows)</text>
+  <line x1="174" y1="40" x2="312" y2="40" stroke="#e07090" stroke-width="0.8" opacity="0.35"/>
+  <line x1="243" y1="16" x2="243" y2="170" stroke="#e07090" stroke-width="0.8" opacity="0.2"/>
+  <g fill="#6b6a66" font-size="9.5" font-weight="700">
+    <text x="208" y="54" text-anchor="middle">A</text>
+    <text x="278" y="54" text-anchor="middle">B</text>
+  </g>
+  <g fill="#a7a59f" font-size="10" text-anchor="middle">
+    <line x1="174" y1="58" x2="312" y2="58" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="73">a1</text><text x="278" y="73">b1</text>
+    <line x1="174" y1="77" x2="312" y2="77" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="92">a1</text><text x="278" y="92">b2</text>
+    <line x1="174" y1="96" x2="312" y2="96" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="111">a2</text><text x="278" y="111">b1</text>
+    <line x1="174" y1="115" x2="312" y2="115" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="130">a2</text><text x="278" y="130">b2</text>
+    <line x1="174" y1="134" x2="312" y2="134" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="149">a3</text><text x="278" y="149">b1</text>
+    <line x1="174" y1="153" x2="312" y2="153" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+    <text x="208" y="166">a3</text><text x="278" y="166">b2</text>
+  </g>
+  <text x="160" y="181" text-anchor="middle" fill="#6b6a66" font-size="10">No join key. m &#215; n output rows. Use deliberately.</text>
+</svg>`,
+
+/* DONE */
+done: `<svg viewBox="0 0 84 84">
+  <defs>
+    <linearGradient id="dn-j" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6ac8f0"/>
+      <stop offset="1" stop-color="#3478a8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="42" cy="42" r="38" fill="url(#dn-j)"/>
+  <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#0a0b11" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`
+
+}; /* end A */
+
+
+/* ============================================================
+   CARDS
+============================================================ */
+const cards = [
+
+  /* 0 — COVER */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(79,168,232,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate &middot; Unit 3 &middot; Lesson 12</div>
+    <h1 class="reveal">Joins</h1>
+    <p class="lead reveal">Inner, left, broadcast, and cross. Know the semantics of each, when to choose one over another, and the performance trick Spark gives you for free. Ten cards. Four minutes.</p>` },
+
+  /* 1 — THE PROBLEM */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(232,80,80,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e85050"></span>The problem</div>
+    <h2 class="reveal">Useful data lives in separate tables.</h2>
+    <div class="art reveal">${A.problem}</div>
+    <p class="lead reveal">An <strong>orders</strong> table knows order IDs and an <strong>customers</strong> table knows names. To answer "who placed order 3?" you must combine them with a join. The critical decision: which rows survive the combination?</p>` },
+
+  /* 2 — INNER JOIN */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(79,168,232,0.16), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--inner)"><span style="background:var(--inner);width:8px;height:8px;border-radius:50%;display:inline-block"></span>JOIN TYPE 1 &middot; INNER</div>
+    <h2 class="reveal" style="color:var(--inner)">Keep only the overlap.</h2>
+    <div class="art reveal">${A.inner}</div>
+    <p class="lead reveal">An <strong>inner join</strong> returns only rows that match in <em>both</em> tables. No match on either side means the row is silently dropped. Writing <code>JOIN</code> without a qualifier defaults to inner.</p>
+    <div class="callout reveal"><strong>Use when:</strong> you only care about fully matched records and unmatched rows are irrelevant or would distort results.</div>` },
+
+  /* 3 — LEFT JOIN */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(52,211,166,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--left)"><span style="background:var(--left);width:8px;height:8px;border-radius:50%;display:inline-block"></span>JOIN TYPE 2 &middot; LEFT</div>
+    <h2 class="reveal" style="color:var(--left)">Keep every left row.</h2>
+    <div class="art reveal">${A.left}</div>
+    <p class="lead reveal">A <strong>left (outer) join</strong> keeps every row from the left table. When no right-side match exists, the right columns come back as <code>NULL</code>. Nothing from the left table is ever lost.</p>
+    <div class="callout reveal"><strong>Use when:</strong> the left table is the source of truth and the right table is optional context (enrichment, lookups).</div>` },
+
+  /* 4 — BROADCAST JOIN */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(240,187,102,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--broadcast)"><span style="background:var(--broadcast);width:8px;height:8px;border-radius:50%;display:inline-block"></span>PERFORMANCE HINT &middot; BROADCAST</div>
+    <h2 class="reveal" style="color:var(--broadcast)">Skip the shuffle.</h2>
+    <div class="art reveal">${A.broadcast}</div>
+    <p class="lead reveal">Broadcast is not a different semantic. It is a <strong>performance hint</strong>: tell Spark the small table fits in each executor's memory. Spark ships a copy to every node so each executor joins locally, skipping the expensive network shuffle of the large table.</p>
+    <div class="callout reveal">Hint syntax: <code>/*+ BROADCAST(countries) */</code><br>Auto-threshold: <code>spark.sql.autoBroadcastJoinThreshold</code> (default 10 MB).</div>` },
+
+  /* 5 — CROSS JOIN */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(224,112,144,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--cross)"><span style="background:var(--cross);width:8px;height:8px;border-radius:50%;display:inline-block"></span>JOIN TYPE 3 &middot; CROSS</div>
+    <h2 class="reveal" style="color:var(--cross)">Every combination.</h2>
+    <div class="art reveal">${A.cross}</div>
+    <p class="lead reveal">A <strong>cross join</strong> pairs every row in the left table with every row in the right. No join key, no filter. The result is <em>m &#215; n</em> rows. A 1,000-row table crossed with a 1,000-row table produces 1 million rows.</p>
+    <div class="callout reveal"><strong>Valid uses:</strong> generating a date-product calendar grid, creating all test-case combinations. Spark requires <code>CROSS JOIN</code> syntax or <code>spark.sql.crossJoin.enabled = true</code> to prevent accidental cartesian explosions.</div>` },
+
+  /* 6 — COMPARISON TABLE */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(124,140,248,0.12), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:26px">Four types at a glance.</h2>
+    <div class="reveal" style="margin-top:6px">
+    <table class="vs">
+      <thead><tr><th>Type</th><th>Rows kept</th><th>Primary signal</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--inner)">INNER</td>
+          <td>Match in both tables</td>
+          <td>Only fully matched records matter</td>
+        </tr>
+        <tr>
+          <td style="color:var(--left)">LEFT</td>
+          <td>All left rows; NULLs where no right match</td>
+          <td>Left is the source of truth; right is optional</td>
+        </tr>
+        <tr>
+          <td style="color:var(--broadcast)">BROADCAST</td>
+          <td>Same as underlying join type</td>
+          <td>One side fits in executor memory; eliminates shuffle</td>
+        </tr>
+        <tr>
+          <td style="color:var(--cross)">CROSS</td>
+          <td>All m &#215; n combinations</td>
+          <td>You need every pairing, intentionally</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="lead reveal" style="margin-top:14px;font-size:15px">Broadcast is an execution strategy, not a new semantic. It layers on top of inner or left to eliminate network shuffle.</p>` },
+
+  /* 7 — QUIZ 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check &middot; 1 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A Silver-layer pipeline must <span style="color:var(--left)">preserve every order</span>, even when no matching customer record exists. Which join is correct?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Inner join</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Left join</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Cross join</button>
+    </div>
+    <div class="feedback"><b>Left join.</b> An inner join silently drops any order without a matching customer, violating the requirement. A left join keeps all orders and fills unmatched customer columns with NULL, which is exactly what "preserve every order" demands.</div>` },
+
+  /* 8 — QUIZ 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check &middot; 2 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A 600 GB <code>events</code> table is joined to a <span style="color:var(--broadcast)">4 MB</span> country-code lookup. What is the right move?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Use a cross join to avoid a shuffle key</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Broadcast the small lookup table</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Broadcast the 600 GB events table</button>
+    </div>
+    <div class="feedback"><b>Broadcast the small table.</b> At 4 MB the lookup fits easily in each executor's memory. Spark ships a copy to every node and each executor joins locally, eliminating the shuffle of the 600 GB table. Broadcasting the large table would immediately exhaust driver and executor memory.</div>` },
+
+  /* 9 — DONE */
+  { last: true, glow: "radial-gradient(540px 340px at 50% 16%, rgba(79,168,232,0.16), transparent 70%)",
+    html: `
+    <div class="spacer"></div>
+    <div class="art reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center">Lesson complete.</h2>
+    <p class="lead reveal" style="text-align:center">You know the semantics of inner, left, and cross joins, and when to reach for the broadcast hint to eliminate shuffle. Up next: column and row manipulation.</p>
+    <div class="spacer"></div>` }
+
+]; /* end cards */
+
+
+/* ============================================================
+   ENGINE
+============================================================ */
+const vp      = document.getElementById('viewport');
+const topbar  = document.getElementById('topbar');
+const glow    = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => {
+  const s = document.createElement('div');
+  s.className = 'seg';
+  s.innerHTML = '<i></i>';
+  topbar.appendChild(s);
+});
+const segs = [...topbar.children];
+
+const els = cards.map((c) => {
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.innerHTML = c.html;
+  vp.appendChild(d);
+  return d;
+});
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in', 'out-left');
+    if (idx === i)     el.classList.add('in');
+    else if (idx < i)  el.classList.add('out-left');
+    segs[idx].classList.toggle('done',   idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) {
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Pick an answer';
+  } else if (c.last) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = 'Restart \u21BB';
+  } else if (i === 0) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = 'Begin lesson';
+  } else {
+    nextBtn.disabled = false;
+    nextBtn.textContent = 'Continue';
+  }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch)               o.classList.add('wrong');
+        else                             o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false;
+      nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) {
+  if (n < 0 || n >= cards.length) return;
+  i = n;
+  render();
+}
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback');
+        if (f) f.classList.remove('show');
+      }
+    });
+    go(0);
+    return;
+  }
+  go(i + 1);
+};
+
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft'  && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+vp.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx >  50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
