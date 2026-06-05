@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Reading Job Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0c;
+    --frame: #121a17;
+    --surface: #141b18;
+    --surface-2: #1c2622;
+    --ink: #eef4f1;
+    --ink-soft: #a0b2ab;
+    --ink-faint: #5f6f69;
+    /* health palette */
+    --ok: #34d3a6;
+    --ok-glow: rgba(52,211,166,0.5);
+    --fail: #e8625c;
+    --fail-glow: rgba(232,98,92,0.5);
+    --run: #4fa8e8;
+    --skip: #b0a04a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, #15211c 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 39px; line-height: 1.03; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  /* status legend rows */
+  .statuses { display:flex; flex-direction:column; gap:9px; margin-top:6px; }
+  .st { display:flex; align-items:center; gap:13px; background: var(--surface-2); border:1px solid var(--line); border-radius:13px; padding:12px 15px; }
+  .st .badge { flex:0 0 auto; width:11px; height:11px; border-radius:50%; }
+  .st .nm { font-weight:700; font-size:14.5px; width:84px; flex:0 0 auto; }
+  .st .ds { font-size:13px; color:var(--ink-soft); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0a0d0c; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--ok); background: rgba(52,211,166,0.12); }
+  .choice.correct .key { background: var(--ok); color:#072018; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--ok); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#52e8bf"/><stop offset="1" stop-color="#1fa07a"/></linearGradient></defs>
+    <!-- a runs list dashboard -->
+    <rect x="40" y="36" width="240" height="148" rx="14" fill="#111714" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="58" y="60" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="11" font-weight="700">Recent runs</text>
+    <g font-family="Hanken Grotesk" font-size="11">
+      <circle cx="62" cy="82" r="5" fill="#34d3a6"/><rect x="76" y="77" width="120" height="9" rx="3" fill="#243029"/><text x="250" y="86" text-anchor="end" fill="#5f6f69" font-size="9.5">2m 14s</text>
+      <circle cx="62" cy="106" r="5" fill="#34d3a6"/><rect x="76" y="101" width="120" height="9" rx="3" fill="#243029"/><text x="250" y="110" text-anchor="end" fill="#5f6f69" font-size="9.5">2m 02s</text>
+      <circle cx="62" cy="130" r="5" fill="#e8625c"/><rect x="76" y="125" width="120" height="9" rx="3" fill="#352525"/><text x="250" y="134" text-anchor="end" fill="#e8625c" font-size="9.5">failed</text>
+      <circle cx="62" cy="154" r="5" fill="#34d3a6"/><rect x="76" y="149" width="120" height="9" rx="3" fill="#243029"/><text x="250" y="158" text-anchor="end" fill="#5f6f69" font-size="9.5">1m 58s</text>
+    </g>
+    <!-- heartbeat over it -->
+    <path d="M40 200 H120 l10 -16 l12 28 l10 -34 l10 22 H280" fill="none" stroke="url(#hg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+
+  why: `<svg viewBox="0 0 320 200">
+    <!-- a pipeline running unattended at night -->
+    <circle cx="60" cy="50" r="16" fill="#1c2622" stroke="#b0a04a" stroke-width="1.5"/>
+    <path d="M60 42 v8 l5 4" stroke="#b0a04a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="60" y="84" text-anchor="middle" fill="#5f6f69" font-family="Hanken Grotesk" font-size="10">runs at 2am</text>
+    <text x="160" y="44" text-anchor="middle" fill="#eef4f1" font-family="Hanken Grotesk" font-size="14" font-weight="700">Did it run?</text>
+    <text x="160" y="66" text-anchor="middle" fill="#eef4f1" font-family="Hanken Grotesk" font-size="14" font-weight="700">Did it fail?</text>
+    <text x="160" y="88" text-anchor="middle" fill="#eef4f1" font-family="Hanken Grotesk" font-size="14" font-weight="700">Where?</text>
+    <!-- three question marks -->
+    <g font-family="Fraunces" font-size="34" font-weight="700" fill="#e8625c" opacity="0.85">
+      <text x="92" y="150">?</text><text x="152" y="166">?</text><text x="214" y="150">?</text>
+    </g>
+    <text x="160" y="192" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="11.5">You weren't watching. The Jobs UI is how you find out.</text>
+  </svg>`,
+
+  hierarchy: `<svg viewBox="0 0 320 220">
+    <!-- Job -> Run -> Task -->
+    <rect x="100" y="14" width="120" height="36" rx="9" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.6"/>
+    <text x="160" y="32" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="12" font-weight="700">Job</text>
+    <text x="160" y="44" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="8.5">the definition</text>
+    <path d="M160 50 V64" stroke="#5f6f69" stroke-width="1.5"/>
+    <rect x="100" y="64" width="120" height="36" rx="9" fill="rgba(176,160,74,0.1)" stroke="#b0a04a" stroke-width="1.6"/>
+    <text x="160" y="82" text-anchor="middle" fill="#b0a04a" font-family="Hanken Grotesk" font-size="12" font-weight="700">Run</text>
+    <text x="160" y="94" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="8.5">one execution</text>
+    <path d="M160 100 V114" stroke="#5f6f69" stroke-width="1.5"/>
+    <!-- tasks DAG -->
+    <text x="160" y="128" text-anchor="middle" fill="#5f6f69" font-family="Hanken Grotesk" font-size="9.5">tasks (a DAG)</text>
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <rect x="38" y="138" width="64" height="32" rx="8" fill="rgba(52,211,166,0.1)" stroke="#34d3a6" stroke-width="1.4"/><text x="70" y="158" text-anchor="middle" fill="#34d3a6">ingest</text>
+      <rect x="128" y="138" width="64" height="32" rx="8" fill="rgba(52,211,166,0.1)" stroke="#34d3a6" stroke-width="1.4"/><text x="160" y="158" text-anchor="middle" fill="#34d3a6">clean</text>
+      <rect x="218" y="138" width="64" height="32" rx="8" fill="rgba(232,98,92,0.12)" stroke="#e8625c" stroke-width="1.6"/><text x="250" y="158" text-anchor="middle" fill="#e8625c">aggregate</text>
+      <path d="M102 154 H126" stroke="#5f6f69" stroke-width="1.6"/><polygon points="128,154 121,150 121,158" fill="#5f6f69"/>
+      <path d="M192 154 H216" stroke="#5f6f69" stroke-width="1.6"/><polygon points="218,154 211,150 211,158" fill="#5f6f69"/>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="11">Read health top-down — run status, then the task that broke.</text>
+    <text x="250" y="184" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="9" font-weight="700">← failed here</text>
+  </svg>`,
+
+  drill: `<svg viewBox="0 0 320 210">
+    <!-- failed run -> open -> failed task -> logs -->
+    <rect x="20" y="30" width="80" height="40" rx="9" fill="rgba(232,98,92,0.12)" stroke="#e8625c" stroke-width="1.6"/>
+    <circle cx="38" cy="50" r="5" fill="#e8625c"/><text x="68" y="54" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="11" font-weight="700">Run failed</text>
+    <path d="M102 50 H124" stroke="#5f6f69" stroke-width="2"/><polygon points="130,50 120,45 120,55" fill="#5f6f69"/>
+    <rect x="132" y="22" width="80" height="56" rx="9" fill="#141b18" stroke="var(--line)"/>
+    <text x="172" y="38" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="9" font-weight="700">task DAG</text>
+    <circle cx="150" cy="56" r="6" fill="#34d3a6"/><circle cx="172" cy="56" r="6" fill="#34d3a6"/><circle cx="194" cy="56" r="6" fill="#e8625c"/>
+    <path d="M156 56 H166 M178 56 H188" stroke="#5f6f69" stroke-width="1.4"/>
+    <path d="M214 50 H236" stroke="#5f6f69" stroke-width="2"/><polygon points="242,50 232,45 232,55" fill="#5f6f69"/>
+    <rect x="244" y="26" width="62" height="48" rx="8" fill="#11100f" stroke="#e8625c" stroke-width="1.2"/>
+    <g font-family="ui-monospace, monospace" font-size="7" fill="#e8625c"><text x="250" y="40">ERROR:</text><text x="250" y="50">Null in</text><text x="250" y="60">col 'id'</text></g>
+    <text x="275" y="70" text-anchor="middle" fill="#5f6f69" font-family="Hanken Grotesk" font-size="7.5">logs</text>
+    <!-- repair -->
+    <rect x="60" y="108" width="200" height="50" rx="12" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1.5"/>
+    <text x="160" y="129" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Repair run</text>
+    <text x="160" y="147" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="10.5">re-runs only the failed task + its dependents</text>
+    <text x="160" y="184" text-anchor="middle" fill="#a0b2ab" font-family="Hanken Grotesk" font-size="11">Run → failed task → its logs → fix → repair.</text>
+    <text x="160" y="200" text-anchor="middle" fill="#5f6f69" font-family="Hanken Grotesk" font-size="10">No need to re-run tasks that already succeeded.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#52e8bf"/><stop offset="1" stop-color="#1fa07a"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#072018" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(52,211,166,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 6 · Lesson 26</div>
+    <h1 class="reveal">Reading Job<br>Health</h1>
+    <p class="lead reveal">How to tell, at a glance, whether a pipeline succeeded — and how to find exactly what broke when it didn't. The Lakeflow Jobs UI. Two minutes.</p>` },
+
+  /* 1 — why */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(232,98,92,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e8625c"></span>Why it matters</div>
+    <h2 class="reveal">Pipelines run while you sleep.</h2>
+    <div class="art reveal">${A.why}</div>
+    <p class="lead reveal">Most production jobs run on a schedule, unattended. When you check in, you need to answer three things fast: <strong>did it run, did it fail, and where?</strong> The <strong>Lakeflow Jobs UI</strong> is the dashboard that answers all three.</p>` },
+
+  /* 2 — Job / Run / Task hierarchy */
+  { glow: "radial-gradient(540px 340px at 50% 14%, rgba(79,168,232,0.12), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--ok)"><span style="background:var(--ok);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE MENTAL MODEL</div>
+    <h2 class="reveal">Job → Run → Task.</h2>
+    <div class="art grow reveal">${A.hierarchy}</div>
+    <p class="lead reveal">A <strong>Job</strong> is the definition. Each execution is a <strong>Run</strong>. A run is made of <strong>Tasks</strong> wired into a DAG. You read health <strong>top-down</strong>: glance at the run's status, then drill into the task that broke.</p>` },
+
+  /* 3 — run statuses */
+  { glow: "radial-gradient(540px 320px at 50% 18%, rgba(52,211,166,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">The status vocabulary</div>
+    <h2 class="reveal" style="font-size:27px">Five states to know.</h2>
+    <div class="statuses reveal">
+      <div class="st"><span class="badge" style="background:var(--ok)"></span><span class="nm" style="color:var(--ok)">Succeeded</span><span class="ds">Finished cleanly — nothing to do.</span></div>
+      <div class="st"><span class="badge" style="background:var(--fail)"></span><span class="nm" style="color:var(--fail)">Failed</span><span class="ds">A task errored — drill in to find which.</span></div>
+      <div class="st"><span class="badge" style="background:var(--run)"></span><span class="nm" style="color:var(--run)">Running</span><span class="ds">In progress right now.</span></div>
+      <div class="st"><span class="badge" style="background:var(--skip)"></span><span class="nm" style="color:var(--skip)">Skipped</span><span class="ds">Didn't run — an upstream task failed.</span></div>
+      <div class="st"><span class="badge" style="background:var(--ink-faint)"></span><span class="nm" style="color:var(--ink-soft)">Canceled</span><span class="ds">Stopped manually or timed out.</span></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:14px"><strong>Skipped</strong> is the sneaky one: the task is fine — its <em>dependency</em> failed, so it never started.</p>` },
+
+  /* 4 — drilling into a failure */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(52,211,166,0.13), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Finding the cause</div>
+    <h2 class="reveal" style="font-size:26px">Drill in, then repair.</h2>
+    <div class="art reveal">${A.drill}</div>
+    <p class="lead reveal">Open the failed run, find the <strong>red task</strong> in the DAG, and read <strong>its logs</strong> for the error. Fix the cause, then use <strong>Repair run</strong> — it re-runs only the failed task and what depends on it, not the tasks that already succeeded.</p>` },
+
+  /* 5 — quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A run shows <span style="color:var(--fail)">Failed</span>. What's the most direct path to the root cause?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Re-run the whole job and hope it passes</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Open the run, find the failed task in the DAG, read its logs</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Check the cluster's billing page</button>
+    </div>
+    <div class="feedback"><b>Drill into the failed task.</b> The run status tells you <em>that</em> it failed; the failing task's logs tell you <em>why</em>. Then fix and Repair run — re-running blindly wastes compute and may just fail again.</div>` },
+
+  /* 6 — quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">A task's status is <span style="color:var(--skip)">Skipped</span>. What does that tell you?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The task itself crashed</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>An upstream task it depends on failed, so it never ran</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The task finished successfully</button>
+    </div>
+    <div class="feedback"><b>Its dependency failed.</b> Skipped means the task never started because something it depends on failed first — so look <em>upstream</em> in the DAG for the real problem, not at the skipped task.</div>` },
+
+  /* 7 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(52,211,166,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Reading a run, start to finish:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--run)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18" stroke-linecap="round"/></svg><p><b>Job → Run → Task</b>The hierarchy you read top-down</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Status first</b>Succeeded · Failed · Running · Skipped · Canceled</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--fail)" stroke-width="2"><path d="M12 9v4M12 17h.01" stroke-linecap="round"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><p><b>Then the failed task</b>Its logs hold the real error</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Repair run</b>Re-runs only what failed — not the whole job</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

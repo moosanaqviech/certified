@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Compute Options & Cost Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c10;
+    --frame: #14161e;
+    --surface: #161820;
+    --surface-2: #1e212c;
+    --ink: #f2f1ec;
+    --ink-soft: #a8a8a0;
+    --ink-faint: #65665e;
+    /* All-purpose = blue (interactive) */
+    --allpurpose: #4fa8e8;
+    /* Job = green (automated) */
+    --job: #34d3a6;
+    /* SQL warehouse = violet (BI/SQL) */
+    --sql: #b07ef0;
+    /* Cost / money = gold (the through-line) */
+    --cost: #e3b84a;
+    --cost-glow: rgba(227,184,74,0.5);
+    --danger: #e85a54;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, #1c1d26 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+  .phone {
+    position: relative; width: 100%; max-width: 460px; height: 100dvh;
+    background: transparent; border-radius: 0; padding: 0; box-shadow: none;
+  }
+
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 38px; line-height: 1.03; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .vs { width:100%; border-collapse:separate; border-spacing:0; margin-top:4px; font-size:13px; }
+  .vs th, .vs td { padding:10px 9px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+  .vs thead th { font-size:10.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .vs .feat { color:var(--ink-soft); font-weight:600; width:30%; }
+  .vs .acol { color:var(--allpurpose); font-weight:600; }
+  .vs .jcol { color:var(--job); font-weight:600; }
+  .vs .scol { color:var(--sql); font-weight:600; }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0b0c10; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--cost); background: rgba(227,184,74,0.12); }
+  .choice.correct .key { background: var(--cost); color:#0b0c10; }
+  .choice.wrong { border-color: rgba(232,90,84,0.8); background: rgba(232,90,84,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--cost); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) {
+    .stage { padding: 0; }
+    .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;}
+    .screen { border-radius:0; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d57a"/><stop offset="1" stop-color="#c79420"/></linearGradient>
+    </defs>
+    <ellipse cx="160" cy="200" rx="94" ry="13" fill="#000" opacity="0.25"/>
+    <!-- three server stacks of different sizes feeding a coin -->
+    <g>
+      <rect x="36" y="96" width="46" height="64" rx="7" fill="rgba(79,168,232,0.14)" stroke="#4fa8e8" stroke-width="1.6"/>
+      <rect x="44" y="106" width="30" height="6" rx="2" fill="#4fa8e8"/><rect x="44" y="118" width="30" height="6" rx="2" fill="#4fa8e8" opacity="0.6"/><rect x="44" y="130" width="30" height="6" rx="2" fill="#4fa8e8" opacity="0.6"/>
+      <text x="59" y="152" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">all-purpose</text>
+
+      <rect x="98" y="80" width="46" height="80" rx="7" fill="rgba(52,211,166,0.14)" stroke="#34d3a6" stroke-width="1.6"/>
+      <rect x="106" y="90" width="30" height="6" rx="2" fill="#34d3a6"/><rect x="106" y="102" width="30" height="6" rx="2" fill="#34d3a6" opacity="0.6"/><rect x="106" y="114" width="30" height="6" rx="2" fill="#34d3a6" opacity="0.6"/>
+      <text x="121" y="152" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">jobs</text>
+
+      <rect x="176" y="104" width="46" height="56" rx="7" fill="rgba(176,126,240,0.14)" stroke="#b07ef0" stroke-width="1.6"/>
+      <rect x="184" y="114" width="30" height="6" rx="2" fill="#b07ef0"/><rect x="184" y="126" width="30" height="6" rx="2" fill="#b07ef0" opacity="0.6"/>
+      <text x="199" y="152" text-anchor="middle" fill="#b07ef0" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SQL</text>
+    </g>
+    <!-- coin -->
+    <circle cx="270" cy="92" r="30" fill="url(#cg)"/>
+    <text x="270" y="103" text-anchor="middle" fill="#5a3e06" font-family="Fraunces" font-size="30" font-weight="700">$</text>
+    <text x="160" y="186" text-anchor="middle" fill="#e3b84a" font-family="Hanken Grotesk" font-size="11" font-weight="700">right compute · right cost</text>
+  </svg>`,
+
+  problem: `<svg viewBox="0 0 320 200">
+    <!-- a big idle cluster burning money overnight -->
+    <rect x="60" y="34" width="200" height="78" rx="14" fill="rgba(79,168,232,0.08)" stroke="#4fa8e8" stroke-width="1.6"/>
+    <g fill="#4fa8e8" opacity="0.5">
+      <rect x="76" y="50" width="40" height="46" rx="4"/><rect x="124" y="50" width="40" height="46" rx="4"/><rect x="172" y="50" width="40" height="46" rx="4"/><rect x="220" y="50" width="24" height="46" rx="4"/>
+    </g>
+    <text x="160" y="78" text-anchor="middle" fill="#0b0c10" font-family="Hanken Grotesk" font-size="13" font-weight="700">big cluster · idle</text>
+    <!-- z's for sleeping -->
+    <text x="250" y="42" fill="#65665e" font-family="Hanken Grotesk" font-size="14" font-weight="700">z</text>
+    <text x="262" y="32" fill="#65665e" font-family="Hanken Grotesk" font-size="18" font-weight="700">Z</text>
+    <!-- money draining -->
+    <g font-family="Fraunces" font-size="16" font-weight="700" fill="#e85a54">
+      <text x="100" y="142">$</text><text x="140" y="156">$</text><text x="180" y="142">$</text><text x="220" y="156">$</text>
+    </g>
+    <text x="160" y="184" text-anchor="middle" fill="#e85a54" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">Compute is the bill. Idle &amp; oversized = wasted money.</text>
+  </svg>`,
+
+  types: `<svg viewBox="0 0 320 230">
+    <g font-family="Hanken Grotesk">
+      <!-- all-purpose -->
+      <rect x="20" y="20" width="280" height="58" rx="13" fill="rgba(79,168,232,0.08)" stroke="#4fa8e8" stroke-width="1.6"/>
+      <circle cx="48" cy="49" r="14" fill="rgba(79,168,232,0.2)" stroke="#4fa8e8" stroke-width="1.5"/>
+      <path d="M42 49 h12 M48 43 v12" stroke="#4fa8e8" stroke-width="2" stroke-linecap="round"/>
+      <text x="74" y="44" fill="#4fa8e8" font-size="14" font-weight="700">All-purpose cluster</text>
+      <text x="74" y="63" fill="#a8a8a0" font-size="11">Interactive dev — notebooks, exploration, shared</text>
+
+      <!-- job -->
+      <rect x="20" y="86" width="280" height="58" rx="13" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1.6"/>
+      <circle cx="48" cy="115" r="14" fill="rgba(52,211,166,0.2)" stroke="#34d3a6" stroke-width="1.5"/>
+      <path d="M44 115 l3 3 l6 -7" stroke="#34d3a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="74" y="110" fill="#34d3a6" font-size="14" font-weight="700">Job cluster</text>
+      <text x="74" y="129" fill="#a8a8a0" font-size="11">Automated runs — spins up, runs task, shuts down</text>
+
+      <!-- sql warehouse -->
+      <rect x="20" y="152" width="280" height="58" rx="13" fill="rgba(176,126,240,0.08)" stroke="#b07ef0" stroke-width="1.6"/>
+      <circle cx="48" cy="181" r="14" fill="rgba(176,126,240,0.2)" stroke="#b07ef0" stroke-width="1.5"/>
+      <path d="M42 178 h12 v6 h-12 z M42 184 h12" stroke="#b07ef0" stroke-width="1.6" fill="none"/>
+      <text x="74" y="176" fill="#b07ef0" font-size="14" font-weight="700">SQL warehouse</text>
+      <text x="74" y="195" fill="#a8a8a0" font-size="11">BI &amp; SQL queries — dashboards, analysts</text>
+    </g>
+    <text x="160" y="226" text-anchor="middle" fill="#65665e" font-size="10.5" font-family="Hanken Grotesk">Match the compute to the workload.</text>
+  </svg>`,
+
+  apvsjob: `<svg viewBox="0 0 320 210">
+    <text x="80" y="22" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="12" font-weight="700">ALL-PURPOSE</text>
+    <text x="240" y="22" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12" font-weight="700">JOB</text>
+    <line x1="160" y1="32" x2="160" y2="196" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 5"/>
+    <!-- all-purpose: person at notebook, stays on -->
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#a8a8a0">
+      <circle cx="80" cy="56" r="10" fill="rgba(79,168,232,0.18)" stroke="#4fa8e8" stroke-width="1.5"/>
+      <path d="M74 56 l4 4 l8 -9" stroke="#4fa8e8" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <text x="80" y="84" text-anchor="middle" font-weight="700" fill="#4fa8e8">You drive it</text>
+      <text x="80" y="102" text-anchor="middle">interactive,</text>
+      <text x="80" y="116" text-anchor="middle">stays running</text>
+      <text x="80" y="146" text-anchor="middle">shared by a team</text>
+      <text x="80" y="172" text-anchor="middle" fill="#e3b84a" font-weight="700">costs more</text>
+      <text x="80" y="186" text-anchor="middle" fill="#65665e">(idle time)</text>
+    </g>
+    <!-- job: gear runs then stops -->
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#a8a8a0">
+      <circle cx="240" cy="56" r="10" fill="rgba(52,211,166,0.18)" stroke="#34d3a6" stroke-width="1.5"/>
+      <path d="M240 50 v12 M234 56 h12" stroke="#34d3a6" stroke-width="2" stroke-linecap="round"/>
+      <text x="240" y="84" text-anchor="middle" font-weight="700" fill="#34d3a6">Scheduler drives it</text>
+      <text x="240" y="102" text-anchor="middle">starts on trigger,</text>
+      <text x="240" y="116" text-anchor="middle">ends when done</text>
+      <text x="240" y="146" text-anchor="middle">one job, dedicated</text>
+      <text x="240" y="172" text-anchor="middle" fill="#34d3a6" font-weight="700">costs less</text>
+      <text x="240" y="186" text-anchor="middle" fill="#65665e">(no idle)</text>
+    </g>
+  </svg>`,
+
+  levers: `<svg viewBox="0 0 320 220">
+    <text x="160" y="20" text-anchor="middle" fill="#e3b84a" font-family="Hanken Grotesk" font-size="12" font-weight="700">FOUR LEVERS THAT CUT THE BILL</text>
+    <g font-family="Hanken Grotesk" font-size="11">
+      <!-- auto-terminate -->
+      <rect x="20" y="34" width="135" height="76" rx="12" fill="rgba(227,184,74,0.07)" stroke="#e3b84a" stroke-width="1.4"/>
+      <text x="87" y="56" text-anchor="middle" fill="#e3b84a" font-size="12.5" font-weight="700">Auto-terminate</text>
+      <text x="87" y="76" text-anchor="middle" fill="#a8a8a0">Shut down idle</text>
+      <text x="87" y="91" text-anchor="middle" fill="#a8a8a0">clusters after N min</text>
+      <text x="87" y="105" text-anchor="middle" fill="#65665e" font-size="9.5">kills idle waste</text>
+
+      <!-- autoscale -->
+      <rect x="165" y="34" width="135" height="76" rx="12" fill="rgba(227,184,74,0.07)" stroke="#e3b84a" stroke-width="1.4"/>
+      <text x="232" y="56" text-anchor="middle" fill="#e3b84a" font-size="12.5" font-weight="700">Autoscaling</text>
+      <text x="232" y="76" text-anchor="middle" fill="#a8a8a0">Add workers under</text>
+      <text x="232" y="91" text-anchor="middle" fill="#a8a8a0">load, remove when idle</text>
+      <text x="232" y="105" text-anchor="middle" fill="#65665e" font-size="9.5">pay for what you use</text>
+
+      <!-- spot -->
+      <rect x="20" y="120" width="135" height="76" rx="12" fill="rgba(227,184,74,0.07)" stroke="#e3b84a" stroke-width="1.4"/>
+      <text x="87" y="142" text-anchor="middle" fill="#e3b84a" font-size="12.5" font-weight="700">Spot instances</text>
+      <text x="87" y="162" text-anchor="middle" fill="#a8a8a0">Cheap spare capacity</text>
+      <text x="87" y="177" text-anchor="middle" fill="#a8a8a0">(can be reclaimed)</text>
+      <text x="87" y="191" text-anchor="middle" fill="#65665e" font-size="9.5">big discount, less stable</text>
+
+      <!-- serverless -->
+      <rect x="165" y="120" width="135" height="76" rx="12" fill="rgba(227,184,74,0.07)" stroke="#e3b84a" stroke-width="1.4"/>
+      <text x="232" y="142" text-anchor="middle" fill="#e3b84a" font-size="12.5" font-weight="700">Serverless</text>
+      <text x="232" y="162" text-anchor="middle" fill="#a8a8a0">No cluster to manage,</text>
+      <text x="232" y="177" text-anchor="middle" fill="#a8a8a0">starts in seconds</text>
+      <text x="232" y="191" text-anchor="middle" fill="#65665e" font-size="9.5">no idle, instant</text>
+    </g>
+  </svg>`,
+
+  serverless: `<svg viewBox="0 0 320 200">
+    <text x="80" y="24" text-anchor="middle" fill="#65665e" font-family="Hanken Grotesk" font-size="11" font-weight="700">CLASSIC</text>
+    <text x="240" y="24" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="11" font-weight="700">SERVERLESS</text>
+    <line x1="160" y1="32" x2="160" y2="186" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 5"/>
+    <!-- classic: cluster in YOUR cloud, slow start -->
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#a8a8a0">
+      <rect x="30" y="44" width="100" height="44" rx="9" fill="rgba(101,102,94,0.12)" stroke="#65665e" stroke-width="1.4"/>
+      <text x="80" y="62" text-anchor="middle" fill="#a8a8a0" font-weight="700">your cloud acct</text>
+      <text x="80" y="79" text-anchor="middle" fill="#65665e" font-size="9.5">you manage VMs</text>
+      <text x="80" y="112" text-anchor="middle">⏱ ~5 min to start</text>
+      <text x="80" y="132" text-anchor="middle">you tune the size</text>
+      <text x="80" y="160" text-anchor="middle" fill="#65665e">pay while idle</text>
+    </g>
+    <!-- serverless: databricks-managed, instant -->
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#a8a8a0">
+      <rect x="190" y="44" width="100" height="44" rx="9" fill="rgba(52,211,166,0.12)" stroke="#34d3a6" stroke-width="1.4"/>
+      <text x="240" y="62" text-anchor="middle" fill="#34d3a6" font-weight="700">Databricks-managed</text>
+      <text x="240" y="79" text-anchor="middle" fill="#65665e" font-size="9.5">pool, ready to go</text>
+      <text x="240" y="112" text-anchor="middle" fill="#34d3a6">⚡ seconds to start</text>
+      <text x="240" y="132" text-anchor="middle">auto-sized for you</text>
+      <text x="240" y="160" text-anchor="middle" fill="#34d3a6">pay only while running</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d57a"/><stop offset="1" stop-color="#c79420"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#5a3e06" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(227,184,74,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 1 · Lesson 4</div>
+    <h1 class="reveal">Compute Options<br>& Cost Models</h1>
+    <p class="lead reveal">Which engine runs your workload — and the levers that decide what it costs. The last platform foundation. A few cards. Two minutes.</p>` },
+
+  /* 1 — problem */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(232,90,84,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e85a54"></span>Why it matters</div>
+    <h2 class="reveal">Compute is the bill.</h2>
+    <div class="art reveal">${A.problem}</div>
+    <p class="lead reveal">On Databricks, <strong>compute is the main thing you pay for</strong>. An oversized cluster, or one left running idle overnight, quietly burns money. Picking the right type — and the right cost levers — is a real exam theme, not an afterthought.</p>` },
+
+  /* 2 — the three compute types */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(79,168,232,0.12), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--allpurpose)"><span style="background:var(--allpurpose);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE BIG IDEA</div>
+    <h2 class="reveal">Three compute types, three jobs.</h2>
+    <div class="art grow reveal">${A.types}</div>
+    <p class="lead reveal">Databricks compute comes in three flavors, each built for a different workload: <strong style="color:var(--allpurpose)">all-purpose</strong> clusters for interactive work, <strong style="color:var(--job)">job</strong> clusters for automation, and <strong style="color:var(--sql)">SQL warehouses</strong> for BI.</p>` },
+
+  /* 3 — all-purpose vs job (the key distinction) */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(52,211,166,0.13), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">The distinction that's tested most</div>
+    <h2 class="reveal" style="font-size:26px">All-purpose vs. job clusters.</h2>
+    <div class="art reveal">${A.apvsjob}</div>
+    <p class="lead reveal">An <strong style="color:var(--allpurpose)">all-purpose</strong> cluster is for people — interactive notebooks, kept running, shared. A <strong style="color:var(--job)">job</strong> cluster is created by the scheduler for a single automated run, then <strong>terminates itself</strong>. For production pipelines, job clusters are cheaper — no idle time.</p>` },
+
+  /* 4 — cost levers */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(227,184,74,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--cost)"><span style="background:var(--cost);width:8px;height:8px;border-radius:50%;display:inline-block"></span>CONTROLLING COST</div>
+    <h2 class="reveal" style="font-size:27px">Four levers that cut the bill.</h2>
+    <div class="art grow reveal">${A.levers}</div>
+    <p class="lead reveal">Whatever compute you choose, these four knobs manage cost: <strong>auto-termination</strong> and <strong>autoscaling</strong> stop you paying for idle or excess; <strong>spot instances</strong> trade stability for a discount; <strong>serverless</strong> removes idle entirely.</p>` },
+
+  /* 5 — serverless vs classic */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(52,211,166,0.12), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">A distinction worth knowing</div>
+    <h2 class="reveal" style="font-size:27px">Serverless vs. classic.</h2>
+    <div class="art reveal">${A.serverless}</div>
+    <p class="lead reveal"><strong>Classic</strong> compute runs in your own cloud account — you size it and wait minutes for it to start. <strong style="color:var(--job)">Serverless</strong> is Databricks-managed and starts in seconds, with no idle cost. The trade-off: less control over the environment in exchange for speed and simplicity.</p>` },
+
+  /* 6 — quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(227,184,74,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A scheduled production pipeline runs every night. Which compute is the <span style="color:var(--cost)">most cost-effective</span> choice to run it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A shared all-purpose cluster left running 24/7</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A job cluster that starts for the run and terminates after</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A SQL warehouse</button>
+    </div>
+    <div class="feedback"><b>The job cluster.</b> It spins up for the scheduled run and shuts down when finished — so you pay only for the work, with no idle time. An always-on all-purpose cluster would burn money between runs.</div>` },
+
+  /* 7 — quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(227,184,74,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:22px">Which setting most directly prevents paying for a cluster that's been left running but <span style="color:var(--cost)">idle</span>?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Autoscaling the number of workers</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Auto-termination after an idle period</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Switching to a larger node type</button>
+    </div>
+    <div class="feedback"><b>Auto-termination.</b> It shuts a cluster down after a set idle window — the direct fix for idle waste. Autoscaling helps with <em>load</em>, not idleness; a bigger node would cost more.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(227,184,74,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match compute to workload, then cut the cost:</p>
+    <div class="pills reveal">
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--allpurpose)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+        <p><b>All-purpose</b>Interactive notebooks &amp; shared dev — stays on</p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--job)" stroke-width="2"><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9"/></svg>
+        <p><b>Job cluster</b>Automated runs — self-terminates, cheaper for pipelines</p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--sql)" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" stroke-linecap="round"/></svg>
+        <p><b>SQL warehouse</b>BI &amp; SQL queries for analysts &amp; dashboards</p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--cost)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p><b>Cost levers</b>Auto-terminate · autoscale · spot · serverless</p>
+      </div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

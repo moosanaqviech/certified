@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Spotting Spark Bottlenecks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b0a;
+    --frame: #1a1512;
+    --surface: #1a1613;
+    --surface-2: #251e19;
+    --ink: #f4f0ec;
+    --ink-soft: #b4a89e;
+    --ink-faint: #756a60;
+    /* the three S's */
+    --skew: #e0903a;
+    --skew-glow: rgba(224,144,58,0.5);
+    --shuffle: #4fa8e8;
+    --shuffle-glow: rgba(79,168,232,0.5);
+    --spill: #e8625c;
+    --spill-glow: rgba(232,98,92,0.5);
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; background: radial-gradient(1200px 700px at 50% -10%, #241a14 0%, transparent 60%), var(--bg); font-family: var(--body); color: var(--ink); overflow: hidden; }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 37px; line-height: 1.04; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0d0b0a; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--skew); background: rgba(224,144,58,0.13); }
+  .choice.correct .key { background: var(--skew); color:#0d0b0a; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--skew); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <text x="160" y="24" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="11" font-weight="600">The Spark UI · stage detail</text>
+    <!-- three tell-tale bars -->
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <text x="34" y="58" fill="#e0903a">SKEW</text>
+      <rect x="90" y="48" width="40" height="13" rx="3" fill="#e0903a" opacity="0.5"/>
+      <rect x="90" y="48" width="200" height="13" rx="3" fill="none" stroke="#e0903a" stroke-width="1" stroke-dasharray="3 3"/>
+      <rect x="90" y="48" width="200" height="13" rx="3" fill="#e0903a" opacity="0.9" style="" />
+      <text x="34" y="108" fill="#4fa8e8">SHUFFLE</text>
+      <text x="34" y="158" fill="#e8625c">SPILL</text>
+    </g>
+    <!-- skew: one long bar among short ones -->
+    <g>
+      <rect x="90" y="44" width="30" height="9" rx="2" fill="#e0903a" opacity="0.5"/>
+      <rect x="90" y="56" width="36" height="9" rx="2" fill="#e0903a" opacity="0.5"/>
+      <rect x="90" y="68" width="190" height="9" rx="2" fill="#e0903a"/>
+    </g>
+    <!-- shuffle: arrows crossing -->
+    <g stroke="#4fa8e8" stroke-width="2" opacity="0.85">
+      <path d="M96 98 L150 122"/><path d="M150 98 L96 122"/><path d="M180 98 L234 122"/><path d="M234 98 L180 122"/>
+    </g>
+    <!-- spill: overflow from a box to disk -->
+    <rect x="96" y="142 " width="60" height="28" rx="5" fill="none" stroke="#e8625c" stroke-width="1.6"/>
+    <path d="M156 156 q24 0 24 16" stroke="#e8625c" stroke-width="2" fill="none"/>
+    <path d="M180 168 l-4 -8 l8 2 Z" fill="#e8625c"/>
+    <text x="200" y="172" fill="#e8625c" font-family="Hanken Grotesk" font-size="9">→ disk</text>
+    <text x="160" y="206" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">Three patterns that mean "slow." Learn to spot each.</text>
+  </svg>`,
+
+  why: `<svg viewBox="0 0 320 190">
+    <!-- a job that succeeds but takes forever -->
+    <circle cx="160" cy="70" r="44" fill="none" stroke="#251e19" stroke-width="10"/>
+    <path d="M160 26 a44 44 0 0 1 38 66" fill="none" stroke="#e0903a" stroke-width="10" stroke-linecap="round"/>
+    <text x="160" y="66" text-anchor="middle" fill="#f4f0ec" font-family="Fraunces" font-size="22" font-weight="700">✓</text>
+    <text x="160" y="88" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="10" font-weight="700">succeeds</text>
+    <text x="160" y="138" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="15" font-weight="700">…but takes 3 hours</text>
+    <text x="160" y="162" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11.5">A different problem from failure — and the</text>
+    <text x="160" y="178" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11.5">Spark UI is where you diagnose <tspan font-weight="700" fill="#f4f0ec">slow</tspan>.</text>
+  </svg>`,
+
+  stages: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="11" font-weight="600">Spark splits work into stages → tasks</text>
+    <!-- a job bar -->
+    <rect x="30" y="36" width="260" height="22" rx="6" fill="rgba(244,240,236,0.08)" stroke="var(--line)"/>
+    <text x="160" y="51" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11" font-weight="700">your query (a job)</text>
+    <!-- stages -->
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <rect x="30" y="74" width="120" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="90" y="91" text-anchor="middle" fill="#4fa8e8">stage 1</text>
+      <rect x="170" y="74" width="120" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="230" y="91" text-anchor="middle" fill="#4fa8e8">stage 2</text>
+    </g>
+    <!-- tasks inside -->
+    <g fill="#e0903a" opacity="0.7">
+      <rect x="40" y="116" width="14" height="22" rx="2"/><rect x="58" y="116" width="14" height="22" rx="2"/><rect x="76" y="116" width="14" height="22" rx="2"/><rect x="94" y="116" width="14" height="22" rx="2"/><rect x="112" y="116" width="14" height="22" rx="2"/><rect x="130" y="116" width="14" height="22" rx="2"/>
+    </g>
+    <text x="90" y="152" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="9">tasks run in parallel</text>
+    <text x="160" y="182" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">A stage is only as fast as its <tspan font-weight="700" fill="#f4f0ec">slowest task.</tspan></text>
+  </svg>`,
+
+  skew: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#e0903a" font-family="Hanken Grotesk" font-size="12" font-weight="700">SKEW · uneven partitions</text>
+    <!-- task duration bars: one giant straggler -->
+    <g>
+      <rect x="40" y="40" width="34" height="13" rx="3" fill="#e0903a" opacity="0.5"/>
+      <rect x="40" y="58" width="40" height="13" rx="3" fill="#e0903a" opacity="0.5"/>
+      <rect x="40" y="76" width="30" height="13" rx="3" fill="#e0903a" opacity="0.5"/>
+      <rect x="40" y="94" width="232" height="13" rx="3" fill="#e0903a"/>
+      <rect x="40" y="112" width="36" height="13" rx="3" fill="#e0903a" opacity="0.5"/>
+    </g>
+    <text x="278" y="104" text-anchor="end" fill="#0d0b0a" font-family="Hanken Grotesk" font-size="9" font-weight="700">straggler</text>
+    <text x="40" y="148" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">One task gets way more data than the rest —</text>
+    <text x="40" y="164" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">everyone waits for it. <tspan font-weight="700" fill="#f4f0ec">Max ≫ median</tspan> duration.</text>
+    <text x="40" y="186" fill="#756a60" font-family="Hanken Grotesk" font-size="10">Cause: a few key values dominate (e.g. join on a skewed key).</text>
+  </svg>`,
+
+  shuffle: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="12" font-weight="700">SHUFFLE · data crosses the network</text>
+    <!-- two rows of executors with crossing arrows -->
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700" fill="#4fa8e8">
+      <rect x="40" y="42" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="63" y="59" text-anchor="middle">node A</text>
+      <rect x="138" y="42" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="161" y="59" text-anchor="middle">node B</text>
+      <rect x="236" y="42" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="259" y="59" text-anchor="middle">node C</text>
+      <rect x="40" y="118" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="63" y="135" text-anchor="middle">node A</text>
+      <rect x="138" y="118" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="161" y="135" text-anchor="middle">node B</text>
+      <rect x="236" y="118" width="46" height="26" rx="6" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.3"/><text x="259" y="135" text-anchor="middle">node C</text>
+    </g>
+    <g stroke="#4fa8e8" stroke-width="1.6" opacity="0.7">
+      <path d="M63 68 L161 118"/><path d="M161 68 L63 118"/><path d="M161 68 L259 118"/><path d="M259 68 L161 118"/><path d="M63 68 L259 118"/>
+    </g>
+    <text x="160" y="170" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">Wide ops (join, groupBy) move data between nodes.</text>
+    <text x="160" y="187" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="10">Big <tspan font-weight="700" fill="#f4f0ec">shuffle read/write</tspan> = expensive network traffic.</text>
+  </svg>`,
+
+  spill: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="12" font-weight="700">SPILL · memory overflows to disk</text>
+    <!-- memory box overflowing -->
+    <rect x="70" y="40" width="80" height="70" rx="9" fill="none" stroke="#b4a89e" stroke-width="1.6"/>
+    <text x="110" y="34" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">memory</text>
+    <rect x="76" y="74" width="68" height="32" rx="4" fill="#4fa8e8" opacity="0.4"/>
+    <rect x="76" y="58" width="68" height="14" rx="4" fill="#e8625c" opacity="0.5"/>
+    <text x="110" y="69" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="8" font-weight="700">too much!</text>
+    <!-- overflow arrow to disk -->
+    <path d="M150 56 q40 -4 40 30 v10" stroke="#e8625c" stroke-width="2" fill="none"/>
+    <polygon points="190,100 185,90 195,90" fill="#e8625c"/>
+    <rect x="166" y="104" width="56" height="34" rx="6" fill="rgba(232,98,92,0.08)" stroke="#e8625c" stroke-width="1.4"/>
+    <text x="194" y="125" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="10" font-weight="700">disk</text>
+    <text x="160" y="166" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">Data too big for RAM gets written to slow disk.</text>
+    <text x="160" y="184" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="10">UI shows <tspan font-weight="700" fill="#f4f0ec">Spill (memory)</tspan> and <tspan font-weight="700" fill="#f4f0ec">Spill (disk)</tspan>.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efb061"/><stop offset="1" stop-color="#c47e1e"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#3a2a06" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(224,144,58,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 6 · Lesson 27</div>
+    <h1 class="reveal">Spotting Spark<br>Bottlenecks</h1>
+    <p class="lead reveal">The three patterns — <strong>skew, shuffle, spill</strong> — that make a Spark job slow, and how to recognize each in the Spark UI. Two minutes.</p>` },
+
+  /* 1 — why (slow ≠ failed) */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(232,98,92,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e0903a"></span>A different problem</div>
+    <h2 class="reveal">It works — but it's slow.</h2>
+    <div class="art reveal">${A.why}</div>
+    <p class="lead reveal">A failed job and a <strong>slow</strong> job are different problems. The Jobs UI tells you a run failed; the <strong>Spark UI</strong> tells you why a run that <em>succeeds</em> is crawling. Three culprits cause most of it.</p>` },
+
+  /* 2 — stages and tasks */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(79,168,232,0.12), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--shuffle)"><span style="background:var(--shuffle);width:8px;height:8px;border-radius:50%;display:inline-block"></span>HOW TO READ IT</div>
+    <h2 class="reveal">Stages and tasks.</h2>
+    <div class="art grow reveal">${A.stages}</div>
+    <p class="lead reveal">Spark breaks a query into <strong>stages</strong>, and each stage into <strong>tasks</strong> that run in parallel across the cluster. A stage finishes only when its slowest task does — so bottlenecks show up as <strong>patterns in the task metrics</strong>.</p>` },
+
+  /* 3 — skew */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(224,144,58,0.15), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--skew)"><span style="background:var(--skew);width:8px;height:8px;border-radius:50%;display:inline-block"></span>CULPRIT 1 · SKEW</div>
+    <h2 class="reveal" style="color:var(--skew)">One task does all the work.</h2>
+    <div class="art reveal">${A.skew}</div>
+    <p class="lead reveal"><strong>Skew</strong> is uneven data across partitions: one task gets far more rows than the others and becomes a straggler everyone waits on. Tell-tale sign: <strong>max task duration ≫ the median</strong>. Usually caused by a few dominant key values.</p>` },
+
+  /* 4 — shuffle */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(79,168,232,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--shuffle)"><span style="background:var(--shuffle);width:8px;height:8px;border-radius:50%;display:inline-block"></span>CULPRIT 2 · SHUFFLE</div>
+    <h2 class="reveal" style="color:var(--shuffle)">Data crosses the network.</h2>
+    <div class="art reveal">${A.shuffle}</div>
+    <p class="lead reveal"><strong>Shuffle</strong> is data moving between nodes — triggered by wide operations like <strong>joins and groupBy</strong>. It's necessary but expensive. Large <strong>shuffle read/write</strong> in the stage metrics flags it as your bottleneck.</p>` },
+
+  /* 5 — spill */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(232,98,92,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--spill)"><span style="background:var(--spill);width:8px;height:8px;border-radius:50%;display:inline-block"></span>CULPRIT 3 · SPILL</div>
+    <h2 class="reveal" style="color:var(--spill)">Memory overflows to disk.</h2>
+    <div class="art reveal">${A.spill}</div>
+    <p class="lead reveal"><strong>Spill</strong> happens when a task's data won't fit in memory, so Spark writes it to slow disk. The UI shows <strong>Spill (memory)</strong> and <strong>Spill (disk)</strong> columns — any spill means tasks are starved for memory and slowing down.</p>` },
+
+  /* 6 — quiz 1 → skew */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(224,144,58,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:21px">In a stage, most tasks finish in ~5 seconds but <span style="color:var(--skew)">one takes 8 minutes</span>. Which problem is this?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Data skew</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Shuffle</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Spill to disk</button>
+    </div>
+    <div class="feedback"><b>Skew.</b> One straggler task with a duration far above the median is the signature of skew — that task's partition got a disproportionate share of the data, and the whole stage waits for it.</div>` },
+
+  /* 7 — quiz 2 → shuffle */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(79,168,232,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">A stage with a large <span style="color:var(--shuffle)">join</span> shows very high shuffle read/write bytes. What's happening?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Skew — one key dominates</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Shuffle — the join moves lots of data across the network</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The job has failed</button>
+    </div>
+    <div class="feedback"><b style="color:var(--shuffle)">Shuffle.</b> Wide operations like joins repartition data across nodes; heavy shuffle read/write is the metric that exposes it. (A broadcast join can avoid shuffling the large side — a fix you'll meet later.)</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(224,144,58,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The three S's of a slow Spark job:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--skew)" stroke-width="2"><path d="M4 18h3M4 13h7M4 8h16" stroke-linecap="round"/></svg><p><b>Skew</b>One straggler task — max duration ≫ median</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--shuffle)" stroke-width="2"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Shuffle</b>Joins / groupBy move data — high shuffle read/write</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--spill)" stroke-width="2"><path d="M12 3v10m0 0l-3-3m3 3l3-3M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Spill</b>Memory → disk — watch Spill (memory) / Spill (disk)</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg><p><b>Where</b>Spark UI → stage detail → task metrics</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

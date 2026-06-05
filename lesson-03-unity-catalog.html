@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Unity Catalog Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b11;
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    /* Unity Catalog = indigo (the governance plane) */
+    --uc: #7c8cf8;
+    --uc-glow: rgba(124,140,248,0.5);
+    /* Catalog level = violet */
+    --cat: #b07ef0;
+    /* Schema level = blue */
+    --sch: #4fa8e8;
+    /* Table level = teal */
+    --tbl: #34d3a6;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, #191b2c 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+  .phone {
+    position: relative; width: 100%; max-width: 460px; height: 100dvh;
+    background: transparent; border-radius: 0; padding: 0; box-shadow: none;
+  }
+
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 39px; line-height: 1.03; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .vs { width:100%; border-collapse:separate; border-spacing:0; margin-top:4px; font-size:13px; }
+  .vs th, .vs td { padding:10px 9px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+  .vs thead th { font-size:10.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .vs .feat { color:var(--ink-soft); font-weight:600; width:34%; }
+  .vs .ucol { color:var(--uc); font-weight:600; }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0a0b11; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--uc); background: rgba(124,140,248,0.12); }
+  .choice.correct .key { background: var(--uc); color:#0a0b11; }
+  .choice.wrong { border-color: rgba(232,80,80,0.8); background: rgba(232,80,80,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--uc); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) {
+    .stage { padding: 0; }
+    .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;}
+    .screen { border-radius:0; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <defs>
+      <linearGradient id="ucg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9aa6ff"/><stop offset="1" stop-color="#5a68d8"/></linearGradient>
+    </defs>
+    <ellipse cx="160" cy="198" rx="96" ry="13" fill="#000" opacity="0.25"/>
+    <!-- central governance hub -->
+    <circle cx="160" cy="92" r="40" fill="rgba(124,140,248,0.12)" stroke="#7c8cf8" stroke-width="2.5"/>
+    <path d="M160 72 l16 9 v18 l-16 9 l-16 -9 v-18 Z" fill="url(#ucg)"/>
+    <path d="M153 92 l5 5 l10 -11" stroke="#0a0b11" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="160" y="150" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="11" font-weight="700">UNITY CATALOG</text>
+    <!-- spokes to workspaces -->
+    <g stroke="#7c8cf8" stroke-width="1.6" opacity="0.55">
+      <line x1="128" y1="74" x2="64" y2="46"/>
+      <line x1="192" y1="74" x2="256" y2="46"/>
+      <line x1="126" y1="104" x2="56" y2="120"/>
+      <line x1="194" y1="104" x2="264" y2="120"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700" fill="#a6a8b6">
+      <rect x="34" y="32" width="56" height="26" rx="7" fill="#1e2130" stroke="#7c8cf8" stroke-width="1"/><text x="62" y="49" text-anchor="middle">workspace</text>
+      <rect x="230" y="32" width="56" height="26" rx="7" fill="#1e2130" stroke="#7c8cf8" stroke-width="1"/><text x="258" y="49" text-anchor="middle">workspace</text>
+      <rect x="28" y="108" width="56" height="26" rx="7" fill="#1e2130" stroke="#7c8cf8" stroke-width="1"/><text x="56" y="125" text-anchor="middle">SQL / BI</text>
+      <rect x="236" y="108" width="56" height="26" rx="7" fill="#1e2130" stroke="#7c8cf8" stroke-width="1"/><text x="264" y="125" text-anchor="middle">ML / jobs</text>
+    </g>
+  </svg>`,
+
+  problem: `<svg viewBox="0 0 320 210">
+    <text x="160" y="20" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="11" font-weight="600">Without one catalog: governance islands</text>
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <!-- three siloed workspaces each with own rules -->
+      <rect x="20" y="40" width="84" height="118" rx="12" fill="rgba(232,80,80,0.06)" stroke="#e85050" stroke-width="1.5"/>
+      <text x="62" y="60" text-anchor="middle" fill="#e85050">Workspace A</text>
+      <rect x="34" y="72" width="56" height="14" rx="3" fill="#2a2030"/><text x="62" y="82" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9">own users</text>
+      <rect x="34" y="92" width="56" height="14" rx="3" fill="#2a2030"/><text x="62" y="102" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9">own grants</text>
+      <rect x="34" y="112" width="56" height="14" rx="3" fill="#2a2030"/><text x="62" y="122" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9">own tables</text>
+      <text x="62" y="148" text-anchor="middle" fill="#e85050" font-size="9">no sharing</text>
+
+      <rect x="118" y="40" width="84" height="118" rx="12" fill="rgba(232,80,80,0.06)" stroke="#e85050" stroke-width="1.5"/>
+      <text x="160" y="60" text-anchor="middle" fill="#e85050">Workspace B</text>
+      <rect x="132" y="72" width="56" height="14" rx="3" fill="#2a2030"/>
+      <rect x="132" y="92" width="56" height="14" rx="3" fill="#2a2030"/>
+      <rect x="132" y="112" width="56" height="14" rx="3" fill="#2a2030"/>
+      <text x="160" y="148" text-anchor="middle" fill="#e85050" font-size="9">duplicated</text>
+
+      <rect x="216" y="40" width="84" height="118" rx="12" fill="rgba(232,80,80,0.06)" stroke="#e85050" stroke-width="1.5"/>
+      <text x="258" y="60" text-anchor="middle" fill="#e85050">Workspace C</text>
+      <rect x="230" y="72" width="56" height="14" rx="3" fill="#2a2030"/>
+      <rect x="230" y="92" width="56" height="14" rx="3" fill="#2a2030"/>
+      <rect x="230" y="112" width="56" height="14" rx="3" fill="#2a2030"/>
+      <text x="258" y="148" text-anchor="middle" fill="#e85050" font-size="9">inconsistent</text>
+    </g>
+    <text x="160" y="184" text-anchor="middle" fill="#9aaab4" font-family="Hanken Grotesk" font-size="11">Permissions and data scattered, no single source of truth.</text>
+  </svg>`,
+
+  hub: `<svg viewBox="0 0 320 220">
+    <!-- one catalog governing all -->
+    <rect x="92" y="20" width="136" height="42" rx="12" fill="rgba(124,140,248,0.14)" stroke="#7c8cf8" stroke-width="2"/>
+    <text x="160" y="40" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">UNITY CATALOG</text>
+    <text x="160" y="54" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">one metastore · account-level</text>
+    <!-- governs three things -->
+    <g stroke="#7c8cf8" stroke-width="1.6" opacity="0.6" fill="none">
+      <path d="M120 62 V96"/><path d="M160 62 V96"/><path d="M200 62 V96"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <rect x="20" y="98" width="86" height="60" rx="11" fill="rgba(124,140,248,0.08)" stroke="#7c8cf8" stroke-width="1.3"/>
+      <text x="63" y="120" text-anchor="middle" fill="#7c8cf8">Access</text>
+      <text x="63" y="137" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9.5">who can do what</text>
+
+      <rect x="117" y="98" width="86" height="60" rx="11" fill="rgba(124,140,248,0.08)" stroke="#7c8cf8" stroke-width="1.3"/>
+      <text x="160" y="120" text-anchor="middle" fill="#7c8cf8">Lineage</text>
+      <text x="160" y="137" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9.5">where data flows</text>
+
+      <rect x="214" y="98" width="86" height="60" rx="11" fill="rgba(124,140,248,0.08)" stroke="#7c8cf8" stroke-width="1.3"/>
+      <text x="257" y="120" text-anchor="middle" fill="#7c8cf8">Audit</text>
+      <text x="257" y="137" text-anchor="middle" fill="#a6a8b6" font-weight="400" font-size="9.5">who did what</text>
+    </g>
+    <text x="160" y="186" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">One place, every workspace.</text>
+    <text x="160" y="204" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10">Define a rule once — it applies everywhere.</text>
+  </svg>`,
+
+  hierarchy: `<svg viewBox="0 0 320 240">
+    <!-- metastore at top -->
+    <rect x="96" y="14" width="128" height="34" rx="9" fill="rgba(124,140,248,0.1)" stroke="#7c8cf8" stroke-width="1.6"/>
+    <text x="160" y="35" text-anchor="middle" fill="#7c8cf8" font-family="Hanken Grotesk" font-size="11" font-weight="700">Metastore</text>
+    <path d="M160 48 V62" stroke="#62647a" stroke-width="1.5"/>
+    <!-- catalog -->
+    <rect x="70" y="62" width="180" height="44" rx="10" fill="rgba(176,126,240,0.1)" stroke="#b07ef0" stroke-width="1.8"/>
+    <text x="160" y="82" text-anchor="middle" fill="#b07ef0" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Catalog</text>
+    <text x="160" y="98" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9.5">e.g. prod · dev</text>
+    <path d="M160 106 V120" stroke="#62647a" stroke-width="1.5"/>
+    <!-- schema -->
+    <rect x="86" y="120" width="148" height="44" rx="10" fill="rgba(79,168,232,0.1)" stroke="#4fa8e8" stroke-width="1.8"/>
+    <text x="160" y="140" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Schema</text>
+    <text x="160" y="156" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9.5">aka database · e.g. sales</text>
+    <path d="M160 164 V178" stroke="#62647a" stroke-width="1.5"/>
+    <!-- table -->
+    <rect x="102" y="178" width="116" height="44" rx="10" fill="rgba(52,211,166,0.1)" stroke="#34d3a6" stroke-width="1.8"/>
+    <text x="160" y="198" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Table / View</text>
+    <text x="160" y="214" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9.5">e.g. orders</text>
+  </svg>`,
+
+  namespace: `<svg viewBox="0 0 320 180">
+    <text x="160" y="24" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="11" font-weight="600">Three levels = three-part name</text>
+    <!-- the dotted name -->
+    <g font-family="ui-monospace, monospace" font-size="20" font-weight="700">
+      <text x="42" y="76" fill="#b07ef0">prod</text>
+      <text x="110" y="76" fill="#62647a">.</text>
+      <text x="122" y="76" fill="#4fa8e8">sales</text>
+      <text x="186" y="76" fill="#62647a">.</text>
+      <text x="198" y="76" fill="#34d3a6">orders</text>
+    </g>
+    <!-- labels -->
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <path d="M64 88 V104" stroke="#b07ef0" stroke-width="1.4"/>
+      <text x="64" y="118" text-anchor="middle" fill="#b07ef0">catalog</text>
+      <path d="M148 88 V104" stroke="#4fa8e8" stroke-width="1.4"/>
+      <text x="148" y="118" text-anchor="middle" fill="#4fa8e8">schema</text>
+      <path d="M232 88 V104" stroke="#34d3a6" stroke-width="1.4"/>
+      <text x="232" y="118" text-anchor="middle" fill="#34d3a6">table</text>
+    </g>
+    <rect x="40" y="138" width="240" height="30" rx="8" fill="rgba(124,140,248,0.08)" stroke="#7c8cf8" stroke-width="1.2"/>
+    <text x="160" y="157" text-anchor="middle" fill="#9aaab4" font-family="ui-monospace, monospace" font-size="12">SELECT * FROM prod.sales.orders</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9aa6ff"/><stop offset="1" stop-color="#5a68d8"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#0a0b11" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(124,140,248,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 1 · Lesson 3</div>
+    <h1 class="reveal">Unity Catalog<br>Overview</h1>
+    <p class="lead reveal">The single governance layer for every workspace, table, and user on the account. The third foundation, after the lakehouse and Delta. A few cards. Two minutes.</p>` },
+
+  /* 1 — problem */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(232,80,80,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e85050"></span>The problem</div>
+    <h2 class="reveal">Governance, scattered everywhere.</h2>
+    <div class="art reveal">${A.problem}</div>
+    <p class="lead reveal">Before Unity Catalog, each workspace managed its <strong>own</strong> users, permissions, and tables. Sharing data meant copying it; rules drifted out of sync; nobody could answer "who can see this, and where did it come from?"</p>` },
+
+  /* 2 — the big idea: one governance hub */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(124,140,248,0.16), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--uc)"><span style="background:var(--uc);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE BIG IDEA</div>
+    <h2 class="reveal" style="color:var(--uc)">One catalog governs it all.</h2>
+    <div class="art grow reveal">${A.hub}</div>
+    <p class="lead reveal">Unity Catalog is a <strong>single, account-level</strong> governance plane shared across every workspace. Define access, track lineage, and audit usage <strong>in one place</strong> — and the rules apply everywhere automatically.</p>` },
+
+  /* 3 — the three-level hierarchy */
+  { glow: "radial-gradient(540px 340px at 50% 14%, rgba(176,126,240,0.13), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">How it's organized</div>
+    <h2 class="reveal">A three-level hierarchy.</h2>
+    <div class="art reveal">${A.hierarchy}</div>
+    <p class="lead reveal">Inside a <strong>metastore</strong>, data is organized into three nested levels: <strong style="color:var(--cat)">catalog</strong> → <strong style="color:var(--sch)">schema</strong> → <strong style="color:var(--tbl)">table</strong>. A schema is also called a <em>database</em>. This is the most-tested fact in the whole lesson.</p>` },
+
+  /* 4 — the three-part namespace */
+  { glow: "radial-gradient(540px 340px at 50% 18%, rgba(124,140,248,0.13), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Naming things</div>
+    <h2 class="reveal" style="font-size:27px">Three levels → three-part names.</h2>
+    <div class="art reveal">${A.namespace}</div>
+    <p class="lead reveal">Because there are three levels, every object has a fully-qualified <strong>three-part name</strong>: <code>catalog.schema.table</code>. Old two-part names (<code>schema.table</code>) still work but assume a default catalog — on the exam, the full three-part form is the UC way.</p>` },
+
+  /* 5 — what UC secures */
+  { glow: "radial-gradient(540px 320px at 50% 20%, rgba(124,140,248,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">More than tables</div>
+    <h2 class="reveal" style="font-size:26px">It secures everything.</h2>
+    <div class="reveal" style="margin-top:6px">
+    <table class="vs">
+      <thead><tr><th class="feat"></th><th class="ucol">Unity Catalog governs</th></tr></thead>
+      <tbody>
+        <tr><td class="feat">Data</td><td>Tables, views, materialized views</td></tr>
+        <tr><td class="feat">Files</td><td>Volumes (non-tabular data)</td></tr>
+        <tr><td class="feat">AI</td><td>ML models &amp; functions</td></tr>
+        <tr><td class="feat">Access</td><td>One GRANT model across all of it</td></tr>
+        <tr><td class="feat">Visibility</td><td>Built-in lineage &amp; audit logs</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">One permission model for tables, files, and models alike — instead of a different system for each.</p>` },
+
+  /* 6 — quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:23px">What is the correct order of the Unity Catalog object hierarchy, top to bottom?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Schema → Catalog → Table</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Catalog → Schema → Table</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Table → Schema → Catalog</button>
+    </div>
+    <div class="feedback"><b>Catalog → Schema → Table.</b> Inside a metastore, a catalog contains schemas (databases), which contain tables and views — giving the three-part name <code>catalog.schema.table</code>.</div>` },
+
+  /* 7 — quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(124,140,248,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A company has several workspaces and wants <span style="color:var(--uc)">one consistent</span> set of permissions, lineage, and audit across all of them. What provides this?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Per-workspace access control lists</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A single Unity Catalog metastore shared by the account</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Copying tables into each workspace</button>
+    </div>
+    <div class="feedback"><b>One UC metastore.</b> Unity Catalog is account-level, so a rule defined once applies across every attached workspace — no per-workspace duplication, with lineage and audit built in.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(124,140,248,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The foundation of Databricks governance:</p>
+    <div class="pills reveal">
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--uc)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l3 2v4l-3 2-3-2V9z" stroke-linejoin="round"/></svg>
+        <p><b>One governance plane</b>Account-level — access, lineage &amp; audit in one place</p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--cat)" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round"/></svg>
+        <p><b>Three levels</b>catalog → schema → table</p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--tbl)" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg>
+        <p><b>Three-part names</b><code>catalog.schema.table</code></p>
+      </div>
+      <div class="pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#4fa8e8" stroke-width="2"><path d="M12 3l9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p><b>Secures everything</b>Tables, files (volumes) &amp; ML models alike</p>
+      </div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

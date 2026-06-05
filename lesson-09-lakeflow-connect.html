@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Lakeflow Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080f0b;
+    --frame: #101a13;
+    --surface: #101a14;
+    --surface-2: #18261c;
+    --ink: #ecf5ef;
+    --ink-soft: #9eb6a7;
+    --ink-faint: #5d7165;
+    /* Lakeflow Connect = green (consistent with lesson 10) */
+    --lc: #4cc97a;
+    --lc-glow: rgba(76,201,122,0.5);
+    /* managed = the deeper green / fully-handled */
+    --managed: #34d3a6;
+    /* standard = teal-blue / more control */
+    --standard: #3ba9c4;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: radial-gradient(1200px 700px at 50% -10%, #112418 0%, transparent 60%), var(--bg); font-family: var(--body); color: var(--ink); overflow: hidden; }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.03; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .vs { width:100%; border-collapse:separate; border-spacing:0; margin-top:4px; font-size:13px; }
+  .vs th, .vs td { padding:10px 9px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+  .vs thead th { font-size:10.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .vs .feat { color:var(--ink-soft); font-weight:600; width:30%; }
+  .vs .mcol { color:var(--managed); font-weight:600; }
+  .vs .scol { color:var(--standard); font-weight:600; }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #080f0b; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--lc); background: rgba(76,201,122,0.12); }
+  .choice.correct .key { background: var(--lc); color:#08120b; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--lc); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fe0a0"/><stop offset="1" stop-color="#2a9a5a"/></linearGradient></defs>
+    <!-- external sources plugging into the lake -->
+    <g font-family="Hanken Grotesk" font-size="8.5" font-weight="700" fill="#9eb6a7">
+      <rect x="20" y="40" width="58" height="24" rx="6" fill="#18261c" stroke="var(--line)"/><text x="49" y="55" text-anchor="middle">Salesforce</text>
+      <rect x="20" y="78" width="58" height="24" rx="6" fill="#18261c" stroke="var(--line)"/><text x="49" y="93" text-anchor="middle">Workday</text>
+      <rect x="20" y="116" width="58" height="24" rx="6" fill="#18261c" stroke="var(--line)"/><text x="49" y="131" text-anchor="middle">SQL Server</text>
+    </g>
+    <path d="M80 52 L120 86" stroke="#4cc97a" stroke-width="1.8"/>
+    <path d="M80 90 H120" stroke="#4cc97a" stroke-width="1.8"/>
+    <path d="M80 128 L120 94" stroke="#4cc97a" stroke-width="1.8"/>
+    <!-- connector hub -->
+    <rect x="122" y="64" width="92" height="52" rx="12" fill="rgba(76,201,122,0.14)" stroke="#4cc97a" stroke-width="2"/>
+    <path d="M150 80 V72 M162 80 V72 M146 80 h20 v8 a10 10 0 0 1 -20 0 Z M156 98 v8" stroke="#4cc97a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="168" y="110" text-anchor="middle" fill="#4cc97a" font-family="Hanken Grotesk" font-size="9" font-weight="700">connector</text>
+    <path d="M214 90 H244" stroke="#4cc97a" stroke-width="2"/><polygon points="250,90 240,85 240,95" fill="#4cc97a"/>
+    <!-- lake -->
+    <g transform="translate(252 66)">
+      <ellipse cx="32" cy="16" rx="32" ry="9" fill="url(#lg)"/>
+      <path d="M0 16 v34 a32 9 0 0 0 64 0 v-34" fill="url(#lg)" opacity="0.5"/>
+      <ellipse cx="32" cy="16" rx="32" ry="9" fill="url(#lg)"/>
+      <text x="32" y="20" text-anchor="middle" fill="#08240f" font-family="Hanken Grotesk" font-size="9" font-weight="700">lake</text>
+    </g>
+    <text x="160" y="172" text-anchor="middle" fill="#4cc97a" font-family="Hanken Grotesk" font-size="12" font-weight="700">Built-in connectors to outside systems</text>
+    <text x="160" y="192" text-anchor="middle" fill="#5d7165" font-family="Hanken Grotesk" font-size="10">no custom extraction code to maintain</text>
+  </svg>`,
+
+  problem: `<svg viewBox="0 0 320 200">
+    <text x="160" y="22" text-anchor="middle" fill="#5d7165" font-family="Hanken Grotesk" font-size="11" font-weight="600">The old way: hand-built pipelines</text>
+    <rect x="30" y="40" width="60" height="30" rx="7" fill="#18261c" stroke="var(--line)"/><text x="60" y="59" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">SaaS API</text>
+    <path d="M92 55 H120" stroke="#e8625c" stroke-width="1.8" stroke-dasharray="4 3"/><polygon points="126,55 116,50 116,60" fill="#e8625c"/>
+    <rect x="128" y="36" width="64" height="38" rx="8" fill="rgba(232,98,92,0.08)" stroke="#e8625c" stroke-width="1.5"/>
+    <text x="160" y="52" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="9" font-weight="700">custom code</text>
+    <text x="160" y="65" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="8">auth · paging · retries</text>
+    <path d="M194 55 H222" stroke="#e8625c" stroke-width="1.8" stroke-dasharray="4 3"/><polygon points="228,55 218,50 218,60" fill="#e8625c"/>
+    <rect x="230" y="40" width="60" height="30" rx="7" fill="#18261c" stroke="var(--line)"/><text x="260" y="59" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">lake</text>
+    <g font-family="Hanken Grotesk" font-size="11" fill="#e8625c" font-weight="700">
+      <text x="160" y="110" text-anchor="middle">You own the breakage:</text>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#9eb6a7">
+      <text x="160" y="132" text-anchor="middle">API changes · token expiry · schema drift</text>
+      <text x="160" y="150" text-anchor="middle">rate limits · incremental bookkeeping</text>
+    </g>
+    <text x="160" y="180" text-anchor="middle" fill="#4cc97a" font-family="Hanken Grotesk" font-size="11" font-weight="700">Lakeflow Connect takes this off your plate.</text>
+  </svg>`,
+
+  spectrum: `<svg viewBox="0 0 320 210">
+    <text x="160" y="22" text-anchor="middle" fill="#5d7165" font-family="Hanken Grotesk" font-size="11" font-weight="600">Two kinds of connector</text>
+    <!-- managed -->
+    <rect x="20" y="40" width="135" height="140" rx="13" fill="rgba(52,211,166,0.06)" stroke="#34d3a6" stroke-width="1.5"/>
+    <text x="87" y="62" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Managed</text>
+    <circle cx="87" cy="92" r="18" fill="rgba(52,211,166,0.14)" stroke="#34d3a6" stroke-width="1.6"/>
+    <path d="M79 92 l5 5 l10 -11" stroke="#34d3a6" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="87" y="132" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="10">Databricks runs the</text>
+    <text x="87" y="146" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="10">whole pipeline for you</text>
+    <text x="87" y="168" text-anchor="middle" fill="#5d7165" font-family="Hanken Grotesk" font-size="9.5">fully handled</text>
+    <!-- standard -->
+    <rect x="165" y="40" width="135" height="140" rx="13" fill="rgba(59,169,196,0.06)" stroke="#3ba9c4" stroke-width="1.5"/>
+    <text x="232" y="62" text-anchor="middle" fill="#3ba9c4" font-family="Hanken Grotesk" font-size="12.5" font-weight="700">Standard</text>
+    <g stroke="#3ba9c4" stroke-width="1.8" fill="none">
+      <circle cx="232" cy="92" r="16"/><path d="M232 84 v8 l5 5" stroke-linecap="round"/>
+      <path d="M232 70 v-5 M232 119 v-5 M210 92 h-5 M259 92 h-5" stroke-linecap="round"/>
+    </g>
+    <text x="232" y="132" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="10">You build it with more</text>
+    <text x="232" y="146" text-anchor="middle" fill="#9eb6a7" font-family="Hanken Grotesk" font-size="10">control and flexibility</text>
+    <text x="232" y="168" text-anchor="middle" fill="#5d7165" font-family="Hanken Grotesk" font-size="9.5">more hands-on</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fe0a0"/><stop offset="1" stop-color="#2a9a5a"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#08240f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0: cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(76,201,122,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 2 · Lesson 9</div>
+    <h1 class="reveal">Lakeflow<br>Connect</h1>
+    <p class="lead reveal">Built-in connectors that pull data from outside systems into the lakehouse, and the two flavors they come in. A few cards. Two minutes.</p>` },
+
+  /* 1: the problem it solves */
+  { glow: "radial-gradient(520px 320px at 50% 20%, rgba(232,98,92,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e8625c"></span>Why it exists</div>
+    <h2 class="reveal">Getting data out of apps is painful.</h2>
+    <div class="art reveal">${A.problem}</div>
+    <p class="lead reveal">COPY INTO and Auto Loader read files. But a lot of data never becomes files on its own: it lives inside <strong>SaaS apps and databases</strong>. Extracting it by hand means writing and babysitting custom code for auth, paging, retries, and schema drift.</p>` },
+
+  /* 2: what Lakeflow Connect is */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(76,201,122,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--lc)"><span style="background:var(--lc);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE BIG IDEA</div>
+    <h2 class="reveal" style="color:var(--lc)">Connectors, built in.</h2>
+    <div class="lead reveal" style="margin-bottom:14px"><strong>Lakeflow Connect</strong> is Databricks' built-in way to ingest from external systems. You configure a connector to a source like Salesforce, Workday, or SQL Server, and it lands the data in the lakehouse for you.</div>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lc)" stroke-width="2"><path d="M9 7V4h6v3M9 17v3h6v-3M5 7h14v10H5z" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>SaaS apps and databases</b>Salesforce, Workday, ServiceNow, SQL Server, and more</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lc)" stroke-width="2"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>No custom extraction code</b>Auth, paging, and incremental sync are handled</p></div>
+    </div>` },
+
+  /* 3: the two flavors */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(52,211,166,0.13), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">The distinction to know</div>
+    <h2 class="reveal" style="font-size:26px">Managed vs standard.</h2>
+    <div class="art grow reveal">${A.spectrum}</div>
+    <p class="lead reveal"><strong style="color:var(--managed)">Managed connectors</strong>: Databricks runs the whole ingestion pipeline for you, the simplest path for supported sources. <strong style="color:var(--standard)">Standard connectors</strong>: you build the pipeline yourself with more control and flexibility.</p>` },
+
+  /* 4: side by side */
+  { glow: "radial-gradient(540px 320px at 50% 18%, rgba(76,201,122,0.1), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:26px">Which one, when.</h2>
+    <div class="reveal" style="margin-top:6px">
+    <table class="vs">
+      <thead><tr><th class="feat"></th><th class="mcol">Managed</th><th class="scol">Standard</th></tr></thead>
+      <tbody>
+        <tr><td class="feat">Who runs it</td><td>Databricks</td><td>You</td></tr>
+        <tr><td class="feat">Effort</td><td>Lowest, configure only</td><td>More setup</td></tr>
+        <tr><td class="feat">Control</td><td>Less</td><td>More, flexible</td></tr>
+        <tr><td class="feat">Best when</td><td>Source is supported</td><td>You need custom behavior</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Rule of thumb: if a <strong style="color:var(--managed)">managed</strong> connector exists for your source, start there. Drop to <strong style="color:var(--standard)">standard</strong> only when you need control it does not give you.</p>` },
+
+  /* 5: quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(76,201,122,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:21px">Which scenario is the <span style="color:var(--lc)">right fit</span> for Lakeflow Connect rather than Auto Loader?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Millions of JSON files landing in S3</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Pulling records from a Salesforce account</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Loading a folder of nightly CSVs</button>
+    </div>
+    <div class="feedback"><b>Salesforce.</b> Lakeflow Connect is for data inside external systems. Files already in cloud storage (the other two options) are the job of Auto Loader or COPY INTO.</div>` },
+
+  /* 6: quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">A supported source needs ingesting with the <span style="color:var(--managed)">least setup</span>, letting Databricks run the pipeline. Which connector type?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>A managed connector</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A standard connector</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A hand-written API script</button>
+    </div>
+    <div class="feedback"><b>Managed.</b> Managed connectors have Databricks run the whole pipeline, the lowest-effort path when your source is supported. Standard connectors trade that simplicity for more hands-on control.</div>` },
+
+  /* 7: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(76,201,122,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Lakeflow Connect in three:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--lc)" stroke-width="2"><path d="M9 7V4h6v3M9 17v3h6v-3M5 7h14v10H5z" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>For external systems</b>Ingest from SaaS apps and databases, not files</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--managed)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Managed</b>Databricks runs it. Lowest effort when the source is supported.</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--standard)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke-linecap="round"/></svg><p><b>Standard</b>You build it. More control and flexibility.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Ingestion Patterns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --frame: #131820;
+    --surface: #14181f;
+    --surface-2: #1c222c;
+    --ink: #eef2f6;
+    --ink-soft: #a3afba;
+    --ink-faint: #616d78;
+    /* Batch = amber (scheduled chunks; echoes COPY INTO) */
+    --batch: #e0a04a;
+    --batch-glow: rgba(224,160,74,0.5);
+    /* Streaming = cyan (continuous flow; echoes Auto Loader) */
+    --stream: #2bc4e0;
+    --stream-glow: rgba(43,196,224,0.5);
+    /* Incremental = teal-green (only new; the shared efficiency) */
+    --incr: #34d3a6;
+    --incr-glow: rgba(52,211,166,0.5);
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: radial-gradient(1200px 700px at 50% -10%, #161d28 0%, transparent 60%), var(--bg); font-family: var(--body); color: var(--ink); overflow: hidden; }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.03; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0a0c10; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--incr); background: rgba(52,211,166,0.12); }
+  .choice.correct .key { background: var(--incr); color:#072018; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--incr); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <!-- three lanes: batch (blocks), streaming (line), incremental (only new) -->
+    <text x="34" y="52" fill="#e0a04a" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">batch</text>
+    <g fill="#e0a04a"><rect x="92" y="42" width="22" height="16" rx="3"/><rect x="132" y="42" width="22" height="16" rx="3" opacity="0.8"/><rect x="172" y="42" width="22" height="16" rx="3" opacity="0.6"/><rect x="212" y="42" width="22" height="16" rx="3" opacity="0.45"/></g>
+    <text x="34" y="108" fill="#2bc4e0" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">stream</text>
+    <path d="M88 100 H262" stroke="#2bc4e0" stroke-width="3" stroke-linecap="round"/>
+    <g fill="#2bc4e0"><circle cx="100" cy="100" r="3"/><circle cx="140" cy="100" r="3"/><circle cx="180" cy="100" r="3"/><circle cx="220" cy="100" r="3"/><circle cx="252" cy="100" r="3"/></g>
+    <text x="34" y="164" fill="#34d3a6" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">incr.</text>
+    <g><rect x="92" y="154" width="22" height="16" rx="3" fill="#34d3a6" opacity="0.25"/><rect x="132" y="154" width="22" height="16" rx="3" fill="#34d3a6" opacity="0.25"/><rect x="172" y="154" width="22" height="16" rx="3" fill="#34d3a6" opacity="0.25"/><rect x="212" y="154" width="22" height="16" rx="3" fill="#34d3a6"/></g>
+    <text x="223" y="190" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="9" font-weight="700">only the new one</text>
+    <text x="160" y="212" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="11">Three patterns for getting data in.</text>
+  </svg>`,
+
+  why: `<svg viewBox="0 0 320 200">
+    <text x="160" y="22" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="11" font-weight="600">Every ingestion choice answers two questions</text>
+    <!-- dial 1: freshness -->
+    <circle cx="92" cy="92" r="40" fill="none" stroke="#1c222c" stroke-width="9"/>
+    <path d="M92 52 a40 40 0 0 1 34 60" fill="none" stroke="#2bc4e0" stroke-width="9" stroke-linecap="round"/>
+    <text x="92" y="88" text-anchor="middle" fill="#eef2f6" font-family="Hanken Grotesk" font-size="11" font-weight="700">How</text>
+    <text x="92" y="103" text-anchor="middle" fill="#eef2f6" font-family="Hanken Grotesk" font-size="11" font-weight="700">fresh?</text>
+    <text x="92" y="150" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="10">latency</text>
+    <!-- dial 2: how much reprocess -->
+    <circle cx="228" cy="92" r="40" fill="none" stroke="#1c222c" stroke-width="9"/>
+    <path d="M228 52 a40 40 0 0 1 28 16" fill="none" stroke="#34d3a6" stroke-width="9" stroke-linecap="round"/>
+    <text x="228" y="88" text-anchor="middle" fill="#eef2f6" font-family="Hanken Grotesk" font-size="11" font-weight="700">How much</text>
+    <text x="228" y="103" text-anchor="middle" fill="#eef2f6" font-family="Hanken Grotesk" font-size="11" font-weight="700">to redo?</text>
+    <text x="228" y="150" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="10">scope</text>
+    <text x="160" y="184" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="11">Answer both and the right tool nearly picks itself.</text>
+  </svg>`,
+
+  batch: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#e0a04a" font-family="Hanken Grotesk" font-size="12" font-weight="700">BATCH · scheduled chunks</text>
+    <!-- clock -->
+    <circle cx="58" cy="80" r="26" fill="none" stroke="#e0a04a" stroke-width="2"/>
+    <path d="M58 80 V62 M58 80 l12 8" stroke="#e0a04a" stroke-width="2" stroke-linecap="round"/>
+    <text x="58" y="122" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="9.5">runs on a schedule</text>
+    <!-- chunks delivered at intervals -->
+    <g fill="#e0a04a" opacity="0.85">
+      <rect x="108" y="64" width="30" height="32" rx="4"/>
+      <rect x="166" y="64" width="30" height="32" rx="4"/>
+      <rect x="224" y="64" width="30" height="32" rx="4"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="8" fill="#616d78" text-anchor="middle">
+      <text x="123" y="110">2am</text><text x="181" y="110">3am</text><text x="239" y="110">4am</text>
+    </g>
+    <text x="160" y="152" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="11.5">Process a bounded chunk on a schedule.</text>
+    <text x="160" y="172" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="10.5">Simplest model. Higher latency: data is as fresh as the last run.</text>
+  </svg>`,
+
+  stream: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#2bc4e0" font-family="Hanken Grotesk" font-size="12" font-weight="700">STREAMING · continuous flow</text>
+    <!-- continuous wavy flow -->
+    <path d="M30 90 Q60 66 90 90 T150 90 T210 90 T270 90 T300 90" fill="none" stroke="#2bc4e0" stroke-width="3" stroke-linecap="round"/>
+    <g fill="#2bc4e0">
+      <circle cx="40" cy="86" r="3.5"/><circle cx="95" cy="92" r="3.5"/><circle cx="150" cy="90" r="3.5"/><circle cx="205" cy="90" r="3.5"/><circle cx="260" cy="90" r="3.5"/>
+    </g>
+    <text x="300" y="78" text-anchor="end" fill="#616d78" font-family="Hanken Grotesk" font-size="9">never ends</text>
+    <text x="160" y="138" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="11.5">Process data continuously as it arrives.</text>
+    <text x="160" y="158" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="10.5">Latency in seconds, with an always-on pipeline.</text>
+    <text x="160" y="178" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="10.5">Built on Structured Streaming.</text>
+  </svg>`,
+
+  incr: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12" font-weight="700">INCREMENTAL · only the new data</text>
+    <!-- a big pile already processed (dim), one new piece (bright) -->
+    <g opacity="0.25" fill="#34d3a6">
+      <rect x="50" y="60" width="26" height="20" rx="3"/><rect x="80" y="60" width="26" height="20" rx="3"/><rect x="110" y="60" width="26" height="20" rx="3"/>
+      <rect x="50" y="84" width="26" height="20" rx="3"/><rect x="80" y="84" width="26" height="20" rx="3"/><rect x="110" y="84" width="26" height="20" rx="3"/>
+    </g>
+    <text x="93" y="122" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="9">already loaded · skip</text>
+    <rect x="170" y="72" width="34" height="26" rx="4" fill="#34d3a6"/>
+    <text x="187" y="118" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="9" font-weight="700">new · load this</text>
+    <path d="M210 85 H242" stroke="#34d3a6" stroke-width="2"/><polygon points="248,85 238,80 238,90" fill="#34d3a6"/>
+    <rect x="250" y="68" width="40" height="34" rx="6" fill="rgba(52,211,166,0.14)" stroke="#34d3a6" stroke-width="1.4"/>
+    <text x="270" y="89" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="9" font-weight="700">table</text>
+    <text x="160" y="156" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="11.5">Load only what is new, not the whole history.</text>
+    <text x="160" y="176" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="10.5">Pairs with either mode. The Databricks default.</text>
+  </svg>`,
+
+  fit: `<svg viewBox="0 0 320 210">
+    <text x="160" y="22" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="11" font-weight="600">Two dials, not three boxes</text>
+    <!-- latency axis -->
+    <line x1="40" y1="70" x2="280" y2="70" stroke="#3a4450" stroke-width="2"/>
+    <polygon points="284,70 276,66 276,74" fill="#3a4450"/>
+    <circle cx="70" cy="70" r="7" fill="#e0a04a"/><text x="70" y="52" text-anchor="middle" fill="#e0a04a" font-family="Hanken Grotesk" font-size="10" font-weight="700">batch</text>
+    <circle cx="250" cy="70" r="7" fill="#2bc4e0"/><text x="250" y="52" text-anchor="middle" fill="#2bc4e0" font-family="Hanken Grotesk" font-size="10" font-weight="700">streaming</text>
+    <text x="70" y="90" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="9">slower, scheduled</text>
+    <text x="250" y="90" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="9">continuous, fast</text>
+    <text x="160" y="74" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="9">latency</text>
+    <!-- incremental layer -->
+    <rect x="50" y="120" width="220" height="48" rx="12" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1.5"/>
+    <text x="160" y="142" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12" font-weight="700">Incremental sits on top of both</text>
+    <text x="160" y="159" text-anchor="middle" fill="#a3afba" font-family="Hanken Grotesk" font-size="10.5">a separate choice: load only what is new</text>
+    <text x="160" y="194" text-anchor="middle" fill="#616d78" font-family="Hanken Grotesk" font-size="10.5">Pick a latency, then almost always go incremental.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#52e8bf"/><stop offset="1" stop-color="#1fa07a"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#072018" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0: cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(52,211,166,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 2 · Lesson 5</div>
+    <h1 class="reveal">Ingestion<br>Patterns</h1>
+    <p class="lead reveal">Three ways data gets into the lakehouse: <strong>batch</strong>, <strong>streaming</strong>, and <strong>incremental</strong>. The frame the loaders in the next lessons all build on. Two minutes.</p>` },
+
+  /* 1: why: the two questions */
+  { glow: "radial-gradient(520px 320px at 50% 20%, rgba(43,196,224,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">Start here</div>
+    <h2 class="reveal">It comes down to two questions.</h2>
+    <div class="art grow reveal">${A.why}</div>
+    <p class="lead reveal">Every ingestion decision answers two things: <strong>how fresh</strong> the data needs to be (latency), and <strong>how much you reprocess</strong> each time (scope). The three patterns are just different answers to those two questions.</p>` },
+
+  /* 2: batch */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(224,160,74,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--batch)"><span style="background:var(--batch);width:8px;height:8px;border-radius:50%;display:inline-block"></span>PATTERN 1 · BATCH</div>
+    <h2 class="reveal" style="color:var(--batch)">Scheduled chunks.</h2>
+    <div class="art reveal">${A.batch}</div>
+    <p class="lead reveal"><strong>Batch</strong> processes a bounded chunk of data on a schedule, for example all of yesterday's orders at 2am. It is the simplest model, but latency is higher: the data is only as fresh as the last run.</p>` },
+
+  /* 3: streaming */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(43,196,224,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--stream)"><span style="background:var(--stream);width:8px;height:8px;border-radius:50%;display:inline-block"></span>PATTERN 2 · STREAMING</div>
+    <h2 class="reveal" style="color:var(--stream)">Continuous flow.</h2>
+    <div class="art reveal">${A.stream}</div>
+    <p class="lead reveal"><strong>Streaming</strong> processes data continuously as it arrives, treating the source as an unbounded, never-ending flow. Latency drops to seconds, at the cost of an always-on pipeline. On Databricks it runs on <strong>Structured Streaming</strong>.</p>` },
+
+  /* 4: incremental */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(52,211,166,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--incr)"><span style="background:var(--incr);width:8px;height:8px;border-radius:50%;display:inline-block"></span>PATTERN 3 · INCREMENTAL</div>
+    <h2 class="reveal" style="color:var(--incr)">Only the new data.</h2>
+    <div class="art reveal">${A.incr}</div>
+    <p class="lead reveal"><strong>Incremental</strong> processes only what is new since last time, instead of rereading everything. It is the efficiency lever, and it pairs with either mode. <strong style="color:var(--batch)">COPY INTO</strong> is incremental batch; <strong style="color:var(--stream)">Auto Loader</strong> is incremental and runs streaming or batch.</p>` },
+
+  /* 5: how they fit together */
+  { glow: "radial-gradient(540px 320px at 50% 18%, rgba(52,211,166,0.1), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">How they relate</div>
+    <h2 class="reveal" style="font-size:26px">Latency is a dial. Incremental is a layer.</h2>
+    <div class="art grow reveal">${A.fit}</div>
+    <p class="lead reveal">Think of <strong>batch and streaming</strong> as two ends of a latency dial, not separate worlds. <strong>Incremental</strong> is a separate choice layered on top of either: load only what is new. Modern Databricks ingestion is almost always incremental.</p>` },
+
+  /* 6: quiz 1 → streaming */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(43,196,224,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A fraud dashboard must reflect transactions <span style="color:var(--stream)">within seconds</span> of them happening. Which pattern fits the latency need?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Nightly batch</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Streaming</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A weekly full reload</button>
+    </div>
+    <div class="feedback"><b style="color:var(--stream)">Streaming.</b> Second-level freshness means a continuous pipeline. Any batch schedule leaves the dashboard stale between runs, which defeats fraud detection.</div>` },
+
+  /* 7: quiz 2 → incremental */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">A job rereads an entire 5 TB table every night just to add <span style="color:var(--incr)">one day</span> of new records. What removes the waste?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Switch to a bigger cluster</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Process incrementally, loading only the new records</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Run the full reload more often</button>
+    </div>
+    <div class="feedback"><b>Process incrementally.</b> Reading only the new data, rather than reprocessing all 5 TB, is the whole point of incremental ingestion. A bigger cluster just pays more to repeat the same waste.</div>` },
+
+  /* 8: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(52,211,166,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The frame for everything that loads data:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--batch)" stroke-width="2"><rect x="4" y="5" width="6" height="6" rx="1.5"/><rect x="14" y="5" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/></svg><p><b>Batch</b>Bounded chunks on a schedule. Simple, higher latency.</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--stream)" stroke-width="2"><path d="M3 12c3-5 6-5 9 0s6 5 9 0" stroke-linecap="round"/></svg><p><b>Streaming</b>Continuous as data arrives. Seconds of latency, always on.</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--incr)" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Incremental</b>Only the new data. The efficiency layer on either mode.</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Up next</b>COPY INTO and Auto Loader put incremental into practice.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

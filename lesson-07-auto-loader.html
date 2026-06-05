@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Auto Loader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070d0e;
+    --frame: #101a1c;
+    --surface: #111a1b;
+    --surface-2: #182426;
+    --ink: #ecf4f5;
+    --ink-soft: #9db4b7;
+    --ink-faint: #5d6f71;
+    /* Auto Loader = cyan (consistent with the trade-off lesson) */
+    --al: #2bc4e0;
+    --al-glow: rgba(43,196,224,0.5);
+    --ok: #34d3a6;
+    --evolve: #7cc47c;
+    --new: #e0a04a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: radial-gradient(1200px 700px at 50% -10%, #102426 0%, transparent 60%), var(--bg); font-family: var(--body); color: var(--ink); overflow: hidden; }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 42px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color:#2bc4e0; font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #070d0e; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--al); background: rgba(43,196,224,0.12); }
+  .choice.correct .key { background: var(--al); color:#070d0e; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--al); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ad8ee"/><stop offset="1" stop-color="#1f93b0"/></linearGradient></defs>
+    <!-- continuous stream of files into a funnel -> table -->
+    <g fill="#2bc4e0">
+      <rect x="20" y="40" width="13" height="9" rx="2" opacity="0.9"/><rect x="40" y="52" width="13" height="9" rx="2" opacity="0.8"/>
+      <rect x="22" y="64" width="13" height="9" rx="2" opacity="0.85"/><rect x="44" y="76" width="13" height="9" rx="2" opacity="0.7"/>
+      <rect x="20" y="88" width="13" height="9" rx="2" opacity="0.8"/><rect x="42" y="100" width="13" height="9" rx="2" opacity="0.6"/>
+      <rect x="24" y="112" width="13" height="9" rx="2" opacity="0.55"/><rect x="44" y="124" width="13" height="9" rx="2" opacity="0.45"/>
+      <rect x="22" y="136" width="13" height="9" rx="2" opacity="0.35"/>
+    </g>
+    <text x="40" y="162" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="9.5">files keep arriving</text>
+    <!-- funnel -->
+    <path d="M70 60 L150 60 L120 100 L120 140 L100 140 L100 100 Z" fill="rgba(43,196,224,0.14)" stroke="#2bc4e0" stroke-width="1.6"/>
+    <text x="110" y="86" text-anchor="middle" fill="#2bc4e0" font-family="ui-monospace, monospace" font-size="8" font-weight="700">cloudFiles</text>
+    <path d="M150 100 H188" stroke="#5d6f71" stroke-width="1.6"/><polygon points="194,100 184,95 184,105" fill="#5d6f71"/>
+    <!-- table -->
+    <g transform="translate(198 64)">
+      <ellipse cx="44" cy="20" rx="44" ry="11" fill="url(#ag)"/>
+      <path d="M0 20 v44 a44 11 0 0 0 88 0 v-44" fill="url(#ag)" opacity="0.5"/>
+      <ellipse cx="44" cy="20" rx="44" ry="11" fill="url(#ag)"/>
+      <text x="44" y="24" text-anchor="middle" fill="#062028" font-family="Hanken Grotesk" font-size="10" font-weight="700">Delta</text>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="#2bc4e0" font-family="Hanken Grotesk" font-size="12" font-weight="700">Built for files at scale, as they land</text>
+    <text x="160" y="210" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="10">a Structured Streaming source</text>
+  </svg>`,
+
+  discovery: `<svg viewBox="0 0 320 210">
+    <text x="160" y="20" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="11" font-weight="600">Two ways it finds new files</text>
+    <!-- directory listing -->
+    <rect x="20" y="36" width="135" height="150" rx="12" fill="rgba(43,196,224,0.05)" stroke="#2bc4e0" stroke-width="1.4"/>
+    <text x="87" y="58" text-anchor="middle" fill="#2bc4e0" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">Directory listing</text>
+    <g stroke="#2bc4e0" stroke-width="1.5" fill="none" opacity="0.8">
+      <circle cx="60" cy="92" r="13"/><path d="M70 102 l10 10" stroke-linecap="round"/>
+    </g>
+    <text x="87" y="130" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10">Lists the folder to</text>
+    <text x="87" y="145" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10">see what's new</text>
+    <text x="87" y="168" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="9.5">default · simplest</text>
+    <!-- file notification -->
+    <rect x="165" y="36" width="135" height="150" rx="12" fill="rgba(52,211,166,0.05)" stroke="#34d3a6" stroke-width="1.4"/>
+    <text x="232" y="58" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">File notification</text>
+    <g stroke="#34d3a6" stroke-width="1.5" fill="none" opacity="0.85">
+      <path d="M232 78 a12 12 0 0 0 -12 12 v8 l-3 5 h30 l-3 -5 v-8 a12 12 0 0 0 -12 -12Z"/><path d="M228 108 a4 4 0 0 0 8 0" stroke-linecap="round"/>
+    </g>
+    <text x="232" y="130" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10">Cloud tells it the</text>
+    <text x="232" y="145" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10">moment a file lands</text>
+    <text x="232" y="168" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="9.5">scales to huge volumes</text>
+  </svg>`,
+
+  schema: `<svg viewBox="0 0 320 200">
+    <!-- incoming file with a new column -> schema grows -->
+    <rect x="20" y="44" width="110" height="96" rx="10" fill="#0a1011" stroke="var(--line)"/>
+    <text x="75" y="38" text-anchor="middle" fill="#5d6f71" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">existing table</text>
+    <g font-family="ui-monospace, monospace" font-size="10">
+      <text x="34" y="68" fill="#9db4b7">id</text>
+      <text x="34" y="88" fill="#9db4b7">amount</text>
+      <text x="34" y="108" fill="#9db4b7">ts</text>
+    </g>
+    <path d="M134 92 H164" stroke="#5d6f71" stroke-width="1.6"/><polygon points="170,92 160,87 160,97" fill="#5d6f71"/>
+    <!-- new file brings region -->
+    <rect x="174" y="34" width="126" height="58" rx="10" fill="rgba(224,160,74,0.08)" stroke="#e0a04a" stroke-width="1.4"/>
+    <text x="237" y="52" text-anchor="middle" fill="#e0a04a" font-family="Hanken Grotesk" font-size="10" font-weight="700">new file arrives</text>
+    <text x="237" y="72" text-anchor="middle" fill="#e0a04a" font-family="ui-monospace, monospace" font-size="11">+ region</text>
+    <text x="237" y="85" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="9">extra column</text>
+    <!-- evolved schema -->
+    <rect x="174" y="104" width="126" height="76" rx="10" fill="rgba(124,196,124,0.07)" stroke="#7cc47c" stroke-width="1.4"/>
+    <text x="237" y="123" text-anchor="middle" fill="#7cc47c" font-family="Hanken Grotesk" font-size="10" font-weight="700">schema evolves ✓</text>
+    <g font-family="ui-monospace, monospace" font-size="9.5">
+      <text x="190" y="142" fill="#9db4b7">id · amount · ts</text>
+      <text x="190" y="160" fill="#7cc47c">+ region added</text>
+    </g>
+    <path d="M237 92 V104" stroke="#7cc47c" stroke-width="1.6"/><polygon points="237,104 232,96 242,96" fill="#7cc47c"/>
+    <text x="95" y="170" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10.5">Infers schema, and</text>
+    <text x="95" y="186" text-anchor="middle" fill="#9db4b7" font-family="Hanken Grotesk" font-size="10.5">adapts when it changes.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ad8ee"/><stop offset="1" stop-color="#1f93b0"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#062028" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(43,196,224,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 2 · Lesson 7</div>
+    <h1 class="reveal">Auto Loader</h1>
+    <p class="lead reveal">Incremental file ingestion built for scale — millions of files, arriving continuously, with schema changes handled for you. A few cards. Two minutes.</p>` },
+
+  /* 1 — what it is */
+  { glow: "radial-gradient(520px 320px at 50% 20%, rgba(43,196,224,0.12), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">What it is</div>
+    <h2 class="reveal">A streaming source for files.</h2>
+    <div class="lead reveal" style="margin-bottom:16px">Auto Loader is a <strong>Structured Streaming</strong> source named <code>cloudFiles</code>. You read from it like any stream, and it processes new files as they appear:</div>
+    <div class="codeblock reveal">
+spark.<span class="kw">readStream</span>
+  .<span class="kw">format</span>(<span class="al">"cloudFiles"</span>)
+  .<span class="kw">option</span>(<span class="st">"cloudFiles.format"</span>, <span class="st">"json"</span>)
+  .<span class="kw">load</span>(<span class="st">"/landing/events/"</span>)</div>
+    <p class="lead reveal" style="margin-top:16px">Because it's a stream, it can run <strong>continuously</strong> or in scheduled batch — and it scales to <strong>millions of files</strong>.</p>` },
+
+  /* 2 — how it finds new files */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(43,196,224,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--al)"><span style="background:var(--al);width:8px;height:8px;border-radius:50%;display:inline-block"></span>HOW IT SCALES</div>
+    <h2 class="reveal" style="font-size:27px">It discovers new files efficiently.</h2>
+    <div class="art grow reveal">${A.discovery}</div>
+    <p class="lead reveal"><strong>Directory listing</strong> (the default) scans the folder for new files — simple, works anywhere. <strong>File notification</strong> uses cloud events to hear about new files instantly, which is what lets it scale to enormous, busy directories.</p>` },
+
+  /* 3 — schema inference & evolution */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(124,196,124,0.13), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--evolve)"><span style="background:var(--evolve);width:8px;height:8px;border-radius:50%;display:inline-block"></span>SCHEMA HANDLING</div>
+    <h2 class="reveal" style="font-size:27px">It adapts when the schema changes.</h2>
+    <div class="art reveal">${A.schema}</div>
+    <p class="lead reveal">Auto Loader <strong>infers</strong> the schema on its own, and with <strong>schema evolution</strong> it absorbs new columns as they appear in incoming files — without you rewriting the pipeline. This is the headline feature COPY INTO doesn't give you for free.</p>` },
+
+  /* 4 — checkpoint / exactly-once */
+  { glow: "radial-gradient(540px 320px at 50% 18%, rgba(43,196,224,0.12), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">How it tracks progress</div>
+    <h2 class="reveal" style="font-size:26px">The checkpoint remembers.</h2>
+    <div class="codeblock reveal">
+  .<span class="kw">writeStream</span>
+  .<span class="kw">option</span>(<span class="st">"checkpointLocation"</span>, <span class="st">"/chk/events"</span>)
+  .<span class="kw">trigger</span>(availableNow=<span class="al">True</span>)  <span class="cm"># batch-style</span>
+  .<span class="kw">toTable</span>(<span class="st">"bronze.events"</span>)</div>
+    <p class="lead reveal" style="margin-top:16px">A <strong>checkpoint</strong> records which files have been processed, so Auto Loader gives <strong>exactly-once</strong> ingestion and resumes where it left off after a restart — its version of COPY INTO's "skip what's loaded."</p>` },
+
+  /* 5 — quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(43,196,224,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:21px">Which Spark format name tells the reader to use <span style="color:var(--al)">Auto Loader</span>?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>"delta"</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>"cloudFiles"</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>"autoloader"</button>
+    </div>
+    <div class="feedback"><b>"cloudFiles".</b> Auto Loader is invoked as the <code>cloudFiles</code> Structured Streaming source, with the actual file type set via the <code>cloudFiles.format</code> option (json, csv, parquet, …).</div>` },
+
+  /* 6 — quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(43,196,224,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">Incoming JSON files start including a <span style="color:var(--new)">new field</span>. Which Auto Loader capability lets the pipeline absorb it without a rewrite?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>File notification mode</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Schema evolution</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The checkpoint location</button>
+    </div>
+    <div class="feedback"><b>Schema evolution.</b> It lets Auto Loader add newly-appearing columns automatically. File notification is about <em>discovering</em> files fast; the checkpoint tracks <em>progress</em> — neither handles schema changes.</div>` },
+
+  /* 7 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(43,196,224,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Auto Loader, the essentials:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--al)" stroke-width="2"><path d="M3 7h4l2 10 4-16 2 8h6" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>cloudFiles source</b>A streaming reader — continuous or batch, at scale</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--al)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg><p><b>Efficient discovery</b>Directory listing, or file notification for huge volumes</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--evolve)" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg><p><b>Schema evolution</b>Infers schema and absorbs new columns automatically</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--al)" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Checkpoint</b>Exactly-once — resumes where it left off</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
