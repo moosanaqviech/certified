@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Lesson · Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+	--bg: #0c0a07;
+	--bg-tint: #2a2113;
+	--accent: #e8c468;
+	--accent-glow: rgba(232,196,104,0.12);
+	--accent-ink: #2a1d06;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 210">
+    <defs>
+      <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c79628"/><stop offset="1" stop-color="#f3d878"/></linearGradient>
+    </defs>
+    <rect x="118" y="14" width="84" height="40" rx="10" fill="url(#gGold)"/>
+    <text x="160" y="39" text-anchor="middle" fill="#3a2a06" font-family="Hanken Grotesk" font-size="13" font-weight="700">GOLD</text>
+    <path d="M160 54 V72" stroke="#9a8a4a" stroke-width="1.6"/>
+    <path d="M160 72 H68 V90 M160 72 V90 M160 72 H252 V90" stroke="#9a8a4a" stroke-width="1.6" fill="none"/>
+    <rect x="28" y="90" width="80" height="46" rx="10" fill="rgba(111,183,255,0.1)" stroke="#6fb7ff" stroke-width="1.6"/>
+    <text x="68" y="110" text-anchor="middle" fill="#6fb7ff" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">View</text>
+    <text x="68" y="126" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">computed on read</text>
+    <rect x="120" y="90" width="80" height="46" rx="10" fill="rgba(192,139,242,0.1)" stroke="#c08bf2" stroke-width="1.6"/>
+    <text x="160" y="106" text-anchor="middle" fill="#c08bf2" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">Materialized</text>
+    <text x="160" y="119" text-anchor="middle" fill="#c08bf2" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">view</text>
+    <text x="160" y="132" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">precomputed</text>
+    <rect x="212" y="90" width="80" height="46" rx="10" fill="rgba(79,216,196,0.1)" stroke="#4fd8c4" stroke-width="1.6"/>
+    <text x="252" y="106" text-anchor="middle" fill="#4fd8c4" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">Streaming</text>
+    <text x="252" y="119" text-anchor="middle" fill="#4fd8c4" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">table</text>
+    <text x="252" y="132" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">incremental append</text>
+    <g font-family="Hanken Grotesk" font-size="10.5" fill="#62647a" text-anchor="middle" font-weight="600">
+      <text x="160" y="168">Three ways to serve the same layer.</text>
+      <text x="160" y="184">The query defines all three. The engine differs.</text>
+    </g>
+  </svg>`,
+
+  view: `<svg viewBox="0 0 320 190">
+    <rect x="20" y="64" width="92" height="52" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="66" y="86" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="11" font-weight="600">Silver tables</text>
+    <text x="66" y="102" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="9">data lives here</text>
+    <path d="M112 90 H146" stroke="#6fb7ff" stroke-width="2"/><polygon points="152,90 143,85 143,95" fill="#6fb7ff"/>
+    <rect x="156" y="58" width="100" height="64" rx="12" fill="rgba(111,183,255,0.1)" stroke="#6fb7ff" stroke-width="1.8" stroke-dasharray="5 4"/>
+    <text x="206" y="84" text-anchor="middle" fill="#6fb7ff" font-family="Hanken Grotesk" font-size="12" font-weight="700">View</text>
+    <text x="206" y="100" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">saved query, no data</text>
+    <path d="M256 90 H286" stroke="#6fb7ff" stroke-width="2"/><polygon points="292,90 283,85 283,95" fill="#6fb7ff"/>
+    <text x="206" y="146" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10" font-weight="600">runs fresh on every read</text>
+    <text x="206" y="162" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10">dashed border: nothing is stored</text>
+  </svg>`,
+
+  mv: `<svg viewBox="0 0 320 190">
+    <rect x="20" y="64" width="92" height="52" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="66" y="86" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="11" font-weight="600">Silver tables</text>
+    <text x="66" y="102" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="9">source of truth</text>
+    <path d="M112 90 H146" stroke="#c08bf2" stroke-width="2"/><polygon points="152,90 143,85 143,95" fill="#c08bf2"/>
+    <text x="132" y="78" text-anchor="middle" fill="#c08bf2" font-family="Hanken Grotesk" font-size="9" font-weight="700">refresh</text>
+    <rect x="156" y="58" width="100" height="64" rx="12" fill="rgba(192,139,242,0.12)" stroke="#c08bf2" stroke-width="1.8"/>
+    <text x="206" y="80" text-anchor="middle" fill="#c08bf2" font-family="Hanken Grotesk" font-size="12" font-weight="700">Materialized view</text>
+    <text x="206" y="96" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">results stored on disk</text>
+    <text x="206" y="109" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">refreshed incrementally</text>
+    <path d="M256 90 H286" stroke="#c08bf2" stroke-width="2"/><polygon points="292,90 283,85 283,95" fill="#c08bf2"/>
+    <text x="206" y="146" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10" font-weight="600">reads are instant: the work was done at refresh time</text>
+    <text x="206" y="162" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10">solid border: data is stored</text>
+  </svg>`,
+
+  st: `<svg viewBox="0 0 320 190">
+    <circle cx="34" cy="76" r="5" fill="#4fd8c4"/><circle cx="50" cy="96" r="5" fill="#4fd8c4" opacity="0.7"/><circle cx="34" cy="112" r="5" fill="#4fd8c4" opacity="0.45"/>
+    <text x="42" y="138" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">arriving rows</text>
+    <path d="M64 94 H112" stroke="#4fd8c4" stroke-width="2"/><polygon points="118,94 109,89 109,99" fill="#4fd8c4"/>
+    <rect x="122" y="62" width="110" height="64" rx="12" fill="rgba(79,216,196,0.1)" stroke="#4fd8c4" stroke-width="1.8"/>
+    <text x="177" y="86" text-anchor="middle" fill="#4fd8c4" font-family="Hanken Grotesk" font-size="12" font-weight="700">Streaming table</text>
+    <text x="177" y="102" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">each row processed once</text>
+    <text x="177" y="115" text-anchor="middle" fill="#a6a8b6" font-family="Hanken Grotesk" font-size="9">appends accumulate</text>
+    <path d="M232 94 H280" stroke="#4fd8c4" stroke-width="2"/><polygon points="286,94 277,89 277,99" fill="#4fd8c4"/>
+    <text x="160" y="160" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10" font-weight="600">built for continuous, incremental arrival</text>
+  </svg>`,
+
+  compare: `<svg viewBox="0 0 320 210">
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700" text-anchor="middle">
+      <text x="124" y="22" fill="#6fb7ff">View</text>
+      <text x="200" y="22" fill="#c08bf2">MV</text>
+      <text x="276" y="22" fill="#4fd8c4">ST</text>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="10" fill="#a6a8b6" font-weight="600">
+      <text x="14" y="52">Stores data</text>
+      <text x="14" y="88">Read cost</text>
+      <text x="14" y="124">Freshness</text>
+      <text x="14" y="160">Best input</text>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="9.5" text-anchor="middle">
+      <text x="124" y="52" fill="#6fb7ff">no</text><text x="200" y="52" fill="#c08bf2">yes</text><text x="276" y="52" fill="#4fd8c4">yes</text>
+      <text x="124" y="88" fill="#6fb7ff">full query</text><text x="200" y="88" fill="#c08bf2">cheap</text><text x="276" y="88" fill="#4fd8c4">cheap</text>
+      <text x="124" y="124" fill="#6fb7ff">always live</text><text x="200" y="124" fill="#c08bf2">as of refresh</text><text x="276" y="124" fill="#4fd8c4">as of update</text>
+      <text x="124" y="160" fill="#6fb7ff">any tables</text><text x="200" y="160" fill="#c08bf2">batch sources</text><text x="276" y="160" fill="#4fd8c4">append stream</text>
+    </g>
+    <g stroke="var(--line)" stroke-width="1">
+      <path d="M10 64 H310 M10 100 H310 M10 136 H310"/>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10" font-weight="600">One question decides most cases: who pays, the reader or the refresh?</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d878"/><stop offset="1" stop-color="#c79628"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#3a2a06" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 14%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Databricks DE Associate · Unit 3 · Lesson 16</div>
+    <h1 class="reveal">Gold-Layer<br>Objects</h1>
+    <p class="lead reveal">The gold layer serves people. Views, materialized views, and streaming tables are three ways to do it, and the exam loves asking which one fits.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — shared ground */
+  { html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal">All three start from the same place: a query.</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Each object is defined by a <code>SELECT</code> over upstream silver data. What differs is <strong>when that query runs</strong> and <strong>where its result lives</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Same definition style</b>CREATE VIEW, CREATE MATERIALIZED VIEW, CREATE STREAMING TABLE: all wrap a query.</p></div>
+      <div class="pill"><p><b>Same governance</b>All three are Unity Catalog objects with the same three-part naming and permissions.</p></div>
+      <div class="pill"><p><b>Different economics</b>The choice is about who pays the compute cost: the reader at query time, or a refresh job ahead of time.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — views */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(111,183,255,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#6fb7ff"></span>Option 1</div>
+    <h2 class="reveal">Views: a saved query, nothing more</h2>
+    <div class="art reveal">${A.view}</div>
+    <p class="lead reveal" style="margin-bottom:14px">A view stores <strong>no data</strong>. Every read re-runs the query against the source tables, so results are always live and storage cost is zero.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Pay at read time</b>Cheap to create, but a heavy query gets re-paid by every single reader.</p></div>
+      <div class="pill"><p><b>Temp view variant</b>A temporary view is session-scoped and never registered in the catalog. It vanishes when the session ends.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — materialized views */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(192,139,242,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#c08bf2"></span>Option 2</div>
+    <h2 class="reveal">Materialized views: precomputed and stored</h2>
+    <div class="art reveal">${A.mv}</div>
+    <p class="lead reveal" style="margin-bottom:14px">An MV runs the query <strong>ahead of time</strong> and stores the result. Reads are fast and cheap; freshness is "as of the last refresh."</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Incremental refresh</b>Where possible, only changed source data is reprocessed instead of recomputing from scratch.</p></div>
+      <div class="pill"><p><b>Built for BI</b>The classic fit: an expensive aggregation read constantly by dashboards.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — quiz 1 (view direction) */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:23px">A small lookup of 40 region codes joins two tiny silver tables. Analysts query it a handful of times a day and it must always reflect the latest silver data. Best fit?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Materialized view, refreshed hourly</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A standard view</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Streaming table fed by Auto Loader</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The query is trivially cheap and rarely run, so paying at read time costs almost nothing, and a view is the only option that is always live by definition. An MV adds refresh machinery for no benefit, and there is no streaming source here.</div>` },
+
+  /* 5 — streaming tables */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(79,216,196,0.10), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#4fd8c4"></span>Option 3</div>
+    <h2 class="reveal">Streaming tables: built for arriving data</h2>
+    <div class="art reveal">${A.st}</div>
+    <p class="lead reveal" style="margin-bottom:14px">A streaming table reads from an <strong>append-only source</strong> and processes each input row exactly once, accumulating results incrementally.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Incremental by design</b>New rows are picked up where the last update left off. Nothing is reprocessed.</p></div>
+      <div class="pill"><p><b>Where it sits</b>Most common at ingestion and early layers, but valid in gold when consumers need continuously updating results from a stream.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — side by side */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal">Three objects, one table</h2>
+    <div class="art grow reveal">${A.compare}</div>
+    <p class="lead reveal">Views shift cost to the reader. MVs and streaming tables shift it to a refresh or update, trading a little freshness for fast, cheap reads.</p>` },
+
+  /* 7 — quiz 2 (MV direction) */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:23px">A revenue dashboard runs a heavy multi-table aggregation. Hundreds of users open it daily, and data current as of this morning is acceptable. Best fit?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A standard view over the silver tables</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A temporary view created each morning</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>A materialized view refreshed on a schedule</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> This is the mirror image of the last quiz: expensive query, huge read volume, relaxed freshness. Precompute once, serve hundreds of cheap reads. A view would re-pay the full aggregation per user, and a temp view is invisible outside its own session.</div>` },
+
+  /* 8 — decision signals */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>The decision</div>
+    <h2 class="reveal">The signal that picks each one</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Exam questions hide the answer in two or three keywords. Match the signal, pick the object.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b style="color:#6fb7ff">"Always current", cheap logic</b>View. No storage, no refresh, always live.</p></div>
+      <div class="pill"><p><b style="color:#c08bf2">"Expensive query, read often"</b>Materialized view. Precompute once, serve many.</p></div>
+      <div class="pill"><p><b style="color:#4fd8c4">"Continuously arriving", "process once"</b>Streaming table. Incremental append is its whole job.</p></div>
+      <div class="pill"><p><b style="color:#6fb7ff">"Only for this session"</b>Temporary view. Never lands in the catalog.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 9 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Same query, three engines: the difference is when it runs and where the result lives.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>View</b>No data stored, computed fresh on every read, always live.</p></div>
+      <div class="pill"><p><b>Materialized view</b>Stored, refreshed, instant reads. The BI workhorse.</p></div>
+      <div class="pill"><p><b>Streaming table</b>Incremental, exactly-once processing of append-only sources.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
