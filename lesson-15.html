@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Lesson 15 · How Spark Runs Your Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+ 
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0d0a0d;
+--bg-tint: #2a1424;
+--accent: #ea5f9c;
+--accent-glow: rgba(234,95,156,0.12);
+--accent-ink: #0d0a0d;
+  }
+ 
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+ 
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+ 
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+ 
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+ 
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+ 
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+ 
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+ 
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+ 
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+ 
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+ 
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+ 
+  .spacer { flex: 1; }
+ 
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+ 
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+ 
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+ 
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+ 
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+ 
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+ 
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+ 
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+ 
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<script>
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="120" y="20" width="80" height="42" rx="10" fill="var(--accent)" opacity="0.9"/>
+    <text x="160" y="46" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">your code</text>
+    <path d="M160 66 L160 94" stroke="var(--ink-faint)" stroke-width="2" marker-end="url(#pa)"/>
+    <defs><marker id="pa" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--ink-faint)"/></marker></defs>
+    <rect x="36" y="100" width="76" height="56" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="122" y="100" width="76" height="56" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="208" y="100" width="76" height="56" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="48" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="76" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="134" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="162" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="220" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="248" y="114" width="22" height="28" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <text x="160" y="184" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11" font-weight="600" letter-spacing="2">ONE PROGRAM, MANY WORKERS</text>
+  </svg>`,
+
+  cluster: `<svg viewBox="0 0 320 200">
+    <rect x="110" y="14" width="100" height="46" rx="10" fill="var(--accent)" opacity="0.9"/>
+    <text x="160" y="36" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">driver</text>
+    <text x="160" y="51" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">plans + coordinates</text>
+    <path d="M132 64 L72 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#ca)"/>
+    <path d="M160 64 L160 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#ca)"/>
+    <path d="M188 64 L248 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#ca)"/>
+    <defs><marker id="ca" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--accent)"/></marker></defs>
+    <rect x="30" y="106" width="84" height="62" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="118" y="106" width="84" height="62" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="206" y="106" width="84" height="62" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="72" y="132" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">executor</text>
+    <text x="160" y="132" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">executor</text>
+    <text x="248" y="132" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">executor</text>
+    <text x="72" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">does the work</text>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">does the work</text>
+    <text x="248" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">does the work</text>
+  </svg>`,
+
+  parts: `<svg viewBox="0 0 320 200">
+    <rect x="20" y="60" width="90" height="80" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="65" y="96" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">one big</text>
+    <text x="65" y="112" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">dataset</text>
+    <path d="M116 100 H148" stroke="var(--ink-faint)" stroke-width="2" marker-end="url(#pp)"/>
+    <defs><marker id="pp" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--ink-faint)"/></marker></defs>
+    <rect x="160" y="36" width="60" height="30" rx="6" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="160" y="74" width="60" height="30" rx="6" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="160" y="112" width="60" height="30" rx="6" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="160" y="150" width="60" height="30" rx="6" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <text x="190" y="55" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="600">part 1</text>
+    <text x="190" y="93" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="600">part 2</text>
+    <text x="190" y="131" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="600">part 3</text>
+    <text x="190" y="169" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="600">part 4</text>
+    <text x="268" y="56" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">core 1</text>
+    <text x="268" y="94" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">core 2</text>
+    <text x="268" y="132" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">core 3</text>
+    <text x="268" y="170" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">core 4</text>
+  </svg>`,
+
+  narrowwide: `<svg viewBox="0 0 320 200">
+    <text x="80" y="26" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">narrow</text>
+    <rect x="40" y="40" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="86" y="40" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <path d="M57 68 L57 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <path d="M103 68 L103 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <defs><marker id="nw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--accent)"/></marker></defs>
+    <rect x="40" y="108" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="86" y="108" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <text x="80" y="158" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">stays in place</text>
+    <line x1="160" y1="20" x2="160" y2="170" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="240" y="26" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">wide</text>
+    <rect x="200" y="40" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="246" y="40" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <path d="M217 68 L217 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <path d="M217 68 L263 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <path d="M263 68 L217 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <path d="M263 68 L263 102" stroke="var(--accent)" stroke-width="2" marker-end="url(#nw)"/>
+    <rect x="200" y="108" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="246" y="108" width="34" height="24" rx="5" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <text x="240" y="158" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">crosses the network: shuffle</text>
+  </svg>`,
+
+  hierarchy: `<svg viewBox="0 0 320 200">
+    <rect x="110" y="14" width="100" height="34" rx="8" fill="var(--accent)" opacity="0.9"/>
+    <text x="160" y="36" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">job</text>
+    <path d="M134 52 L92 78" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M186 52 L228 78" stroke="var(--ink-faint)" stroke-width="2"/>
+    <rect x="48" y="82" width="88" height="32" rx="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <rect x="184" y="82" width="88" height="32" rx="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="92" y="102" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">stage 1</text>
+    <text x="228" y="102" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">stage 2</text>
+    <text x="160" y="102" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="600">shuffle</text>
+    <rect x="50" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="80" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="110" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="186" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="216" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <rect x="246" y="126" width="24" height="20" rx="4" fill="var(--accent-glow)" stroke="var(--accent)"/>
+    <text x="92" y="168" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">tasks: one per partition</text>
+    <text x="228" y="168" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10" font-weight="600">tasks: one per partition</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Lesson 15</div>
+    <h1 class="reveal">How Spark runs your code</h1>
+    <p class="lead reveal">You have been writing joins and aggregations for three units. This lesson shows <strong>what actually happens when you hit run</strong>: the mental model behind every performance question on the exam.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — driver and executors */
+  { html: `
+    <div class="eyebrow reveal">The cast</div>
+    <h2 class="reveal">One driver, many executors</h2>
+    <p class="lead reveal" style="margin-bottom:14px">A Spark cluster splits responsibility into two roles.</p>
+    <div class="art reveal" style="min-height:130px">${A.cluster}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The driver plans</b>It runs your program, builds the execution plan, and hands out work. There is exactly one.</p></div>
+      <div class="pill"><p><b>Executors work</b>They hold slices of the data in memory and run computations on them, in parallel across the cluster.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — lazy evaluation */
+  { html: `
+    <div class="eyebrow reveal">The trigger</div>
+    <h2 class="reveal">Spark is lazy until you ask for a result</h2>
+    <p class="lead reveal" style="margin-bottom:16px"><strong>Transformations</strong> (select, filter, join, groupBy) only describe a plan. <strong>Actions</strong> (count, display, write) make Spark execute it.</p>
+    <div class="codeblock reveal">df2 = df.<span class="kw">filter</span>(<span class="st">"amount > 0"</span>)   <span class="cm"># nothing runs</span>
+df3 = df2.<span class="kw">groupBy</span>(<span class="st">"region"</span>).sum() <span class="cm"># still nothing</span>
+
+df3.<span class="al">count</span>()                       <span class="cm"># NOW the cluster works</span></div>
+    <div class="pills reveal" style="margin-top:16px">
+      <div class="pill"><p><b>Why laziness wins</b>Seeing the whole plan before running lets Spark optimize it: reorder filters, prune columns, skip work entirely.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — quiz: lazy evaluation */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:24px">A notebook cell runs <code>df.filter(...).join(other)</code> and finishes instantly. The next cell runs <code>df.write...</code> and takes 10 minutes. Why?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The cluster was still warming up during the first cell</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Filter and join are transformations; only the write action triggered execution</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Writes are always the slowest operation in Spark</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The first cell only built a plan, which is nearly free. The write is an action, so all the deferred filter and join work executed inside that 10 minutes. The time belongs to the whole pipeline, not just the write.</div>` },
+
+  /* 4 — partitions */
+  { html: `
+    <div class="eyebrow reveal">The unit of parallelism</div>
+    <h2 class="reveal">Data is processed in partitions</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Spark never hands an executor a whole table. It splits every dataset into <strong>partitions</strong>: chunks small enough to process independently.</p>
+    <div class="art reveal" style="min-height:130px">${A.parts}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>One partition, one core, one task</b>Four partitions can run on four cores at once. More partitions than cores means cores queue up work; far fewer means idle hardware.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — narrow vs wide */
+  { html: `
+    <div class="eyebrow reveal">The expensive move</div>
+    <h2 class="reveal">Narrow vs. wide transformations</h2>
+    <p class="lead reveal" style="margin-bottom:14px">The split that decides performance: <strong>does the data have to move between partitions?</strong></p>
+    <div class="art reveal" style="min-height:140px">${A.narrowwide}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Narrow: filter, select, withColumn</b>Each output partition needs only its own input partition. No movement.</p></div>
+      <div class="pill"><p><b>Wide: groupBy, join, distinct, orderBy</b>Rows with the same key must meet, so data is redistributed across the network. This is the <strong>shuffle</strong>, Spark's costliest operation.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: narrow vs wide */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:24px">Which pipeline forces a shuffle?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>df.select("id", "amount").filter("amount > 100")</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>df.groupBy("store").agg(sum("amount"))</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>df.withColumn("tax", col("amount") * 0.13)</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Summing per store requires every row for a given store to reach the same partition, which means redistributing data across the network. Select, filter, and withColumn all work row by row inside the partition each row already lives in.</div>` },
+
+  /* 7 — jobs, stages, tasks */
+  { html: `
+    <div class="eyebrow reveal">Reading the Spark UI</div>
+    <h2 class="reveal">Jobs, stages, tasks</h2>
+    <p class="lead reveal" style="margin-bottom:14px">When an action fires, the work shows up in the Spark UI in a three-level hierarchy.</p>
+    <div class="art reveal" style="min-height:140px">${A.hierarchy}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Job</b>One per action. Your <code>count()</code> is a job.</p></div>
+      <div class="pill"><p><b>Stage</b>Jobs split into stages at every shuffle boundary. Wide transformations end one stage and start the next.</p></div>
+      <div class="pill"><p><b>Task</b>One per partition, per stage. The smallest unit, and where time is actually spent.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You now have the vocabulary every tuning conversation assumes.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Driver plans, executors work</b>Your code becomes a plan; the cluster runs it in parallel.</p></div>
+      <div class="pill"><p><b>Actions trigger, transformations describe</b>Nothing executes until an action like count or write.</p></div>
+      <div class="pill"><p><b>Wide means shuffle</b>Partitions are the unit of parallelism, and moving data between them is the cost that the next lesson teaches you to control.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+]; 
+ 
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+ 
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+ 
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+ 
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+ 
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+ 
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+ 
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+ 
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+ 
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+ 
+render();
+</script>
+</body>
+</html>
+ 
