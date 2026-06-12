@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "Practice Exam 3",
+  badge: "Databricks DE Associate",
+  blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
+  coverage: "Covers all 17 chapters: Unit 1 (the platform), Unit 2 (ingestion), and Unit 3 (transformation & modeling).",
+  minutes: 34,
+  pass: 70
+};
+
+const QUESTIONS = [
+  /* Ch 1 - The Lakehouse */
+  {
+    q:`A BI team queries curated tables with SQL while an ML team needs direct file-level access to the same data for model training. Today the data lives in a proprietary warehouse, so the ML team maintains a separate export pipeline. How does a lakehouse remove that export step?`,
+    opts:[
+      "It converts ML workloads into SQL so everything runs inside the warehouse",
+      "It schedules the export pipeline automatically so the two copies stay in sync",
+      "It stores data in open formats on object storage, so SQL tools and ML libraries work against one copy of the data",
+      "It caches warehouse data in cluster memory where ML jobs can reach it"
+    ],
+    correct:2,
+    explain:`A lakehouse keeps data in open formats (Delta on Parquet) directly on cloud object storage. BI tools query it with SQL while ML frameworks read the same files, so there is no second copy to export and keep in sync. The other options all keep the two-system split alive in some form.`
+  },
+  /* Ch 2 - Delta Lake essentials */
+  {
+    q:`A streaming job appends to a Delta table while analysts query it all day. An analyst worries their dashboard might read half-written files mid-append. What actually happens?`,
+    opts:[
+      "Reads can return partial data, so writes should be paused during business hours",
+      "Readers see only the last committed snapshot recorded in the transaction log, never in-progress writes",
+      "Delta locks the entire table, so the analyst's query waits until the append finishes",
+      "The query fails with a concurrency error until the stream is stopped"
+    ],
+    correct:1,
+    explain:`The _delta_log is the source of truth for table state. A write only becomes visible once its commit lands in the log, so readers get snapshot isolation: a consistent view of the last committed version. No locking, pausing, or failures are involved.`
+  },
+  /* Ch 3 - Unity Catalog overview */
+  {
+    q:`A company runs three workspaces. The same analyst group needs SELECT on the same tables in all three, and today admins maintain three separate permission sets that keep drifting apart. What is the Unity Catalog fix?`,
+    opts:[
+      "Attach all three workspaces to one UC metastore so grants are defined once at the account level and apply everywhere",
+      "Write a nightly job that copies permission settings between the workspaces",
+      "Duplicate the tables into each workspace with matching grants",
+      "Consolidate everyone into a single workspace so only one permission set exists"
+    ],
+    correct:0,
+    explain:`Unity Catalog governance lives in the metastore at the account level, not inside any single workspace. Workspaces attached to the same metastore share one set of securables and one set of grants, so a permission is defined once and enforced consistently everywhere. Copy jobs and duplicated tables just automate the drift problem.`
+  },
+  /* Ch 4 - Compute options & cost models */
+  {
+    q:`A nightly ETL pipeline runs on an all-purpose cluster the team leaves running 24/7 so the job "never waits for startup." The job itself takes 40 minutes. Which change cuts cost the most without breaking the schedule?`,
+    opts:[
+      "Resize the all-purpose cluster with more workers so the job finishes faster",
+      "Move the job to a larger driver node and keep the cluster running",
+      "Switch the always-on cluster to cheaper instance types",
+      "Run the pipeline on a job cluster (or serverless) that starts for the run and terminates when it finishes"
+    ],
+    correct:3,
+    explain:`All-purpose clusters are meant for interactive work and bill the entire time they are up: here, 24 hours a day for 40 minutes of work. A job cluster exists only for the run and terminates after, and job compute also bills at a lower DBU rate than all-purpose. The other options shave cost from a fundamentally wasteful setup.`
+  },
+  /* Ch 5 - Ingestion patterns */
+  {
+    q:`Files land in cloud storage every hour. The ingest job reloads the entire folder on every run, so runtime and cost grow week over week even though only a few new files arrive each time. Which pattern fixes this?`,
+    opts:[
+      "Batch ingestion: keep the full reloads but schedule them less often",
+      "Incremental ingestion: track which files were already processed and load only the new ones",
+      "A bigger cluster so the full reloads finish in the same wall-clock time",
+      "Compressing the source files so each full reload reads fewer bytes"
+    ],
+    correct:1,
+    explain:`The root problem is that work scales with total history instead of new data. Incremental ingestion processes only what arrived since the last run, so each run's cost tracks new data volume. The other options make the full reload cheaper or rarer without removing it, so the growth curve stays.`
+  },
+  /* Ch 6 - COPY INTO */
+  {
+    q:`A scheduled <code>COPY INTO</code> job failed midway last night and was rerun this morning. The team fears yesterday's files were loaded twice. What is true?`,
+    opts:[
+      "COPY INTO tracks files it has already loaded and skips them on rerun, so the reload is safe",
+      "Every rerun reloads all files in the path, so duplicates must be cleaned up manually",
+      "COPY INTO truncates the table before each run, which is why reruns are safe",
+      "Duplicates were prevented only if the table has a primary key defined"
+    ],
+    correct:0,
+    explain:`COPY INTO is idempotent by design: it records which files were ingested and skips them on subsequent runs, which is exactly what makes rerunning after a failure safe. It never truncates the target, and Delta tables do not rely on primary keys to deduplicate loads.`
+  },
+  /* Ch 7 - Auto Loader: schema enforcement & evolution */
+  {
+    q:`An Auto Loader stream reads JSON using the default schema evolution mode (<code>addNewColumns</code>). The source system starts sending a new field, <code>coupon_code</code>. What happens?`,
+    opts:[
+      "The new field is silently dropped because the schema was already inferred",
+      "The stream keeps running and the field appears in new rows immediately, no restart needed",
+      "The stream fails with an UnknownFieldException, the tracked schema is updated, and the new column flows through after a restart",
+      "All historical rows are reprocessed to backfill the new column"
+    ],
+    correct:2,
+    explain:`In addNewColumns mode, Auto Loader stops the stream when it meets an unknown field, merges the new column into the schema stored at the schema location, and includes it once the stream restarts. Nothing is dropped, but the column does not appear without that restart, and history is not reprocessed.`
+  },
+  /* Ch 8 - Auto Loader vs. COPY INTO */
+  {
+    q:`Two ingest jobs are being designed. Source A: a directory that will accumulate millions of small files arriving continuously, with a schema that drifts. Source B: a few hundred CSVs delivered once a month, loaded by an analyst running a SQL statement. Which pairing fits?`,
+    opts:[
+      "Auto Loader for A, COPY INTO for B",
+      "COPY INTO for A, Auto Loader for B",
+      "Auto Loader for both, since it always outperforms COPY INTO",
+      "COPY INTO for both, since SQL is simpler to maintain"
+    ],
+    correct:0,
+    explain:`Auto Loader is built for high file volumes, continuous arrival, and schema evolution, with scalable file discovery. COPY INTO shines for smaller, occasional, SQL-driven batch loads where simplicity wins. Neither tool dominates everywhere: the arrival pattern and file volume are the signals that decide.`
+  },
+  /* Ch 9 - Lakeflow Connect */
+  {
+    q:`The team needs daily ingestion from Salesforce into Unity Catalog tables. One engineer proposes writing custom API extraction code; another points at the Lakeflow Connect managed connector. What does the managed connector change?`,
+    opts:[
+      "It only generates starter code that the team must still host and maintain themselves",
+      "It copies Salesforce data as raw files into cloud storage for Auto Loader to pick up",
+      "It gives full control over every pipeline component, the same as custom code",
+      "Databricks runs the ingestion end to end, handling extraction and incremental updates into governed tables, in exchange for less control over pipeline internals"
+    ],
+    correct:3,
+    explain:`Managed connectors are fully managed ingestion pipelines: Databricks handles the connection, extraction, and incremental loading into Unity Catalog. The trade-off is control: you accept the connector's behavior instead of hand-building each component. Auto Loader and COPY INTO target files in cloud storage, not SaaS APIs.`
+  },
+  /* Ch 10 - Choosing an ingestion method */
+  {
+    q:`Three sources need ingesting: (1) operational data in a PostgreSQL database, (2) JSON files streaming into cloud storage all day, (3) a one-off load of historical CSVs an analyst wants to run in SQL. Which mapping is best?`,
+    opts:[
+      "(1) Auto Loader, (2) COPY INTO, (3) Lakeflow Connect",
+      "(1) Lakeflow Connect, (2) Auto Loader, (3) COPY INTO",
+      "(1) COPY INTO, (2) Lakeflow Connect, (3) Auto Loader",
+      "(1) Lakeflow Connect, (2) COPY INTO, (3) Auto Loader"
+    ],
+    correct:1,
+    explain:`First signal: where the data lives. Database and SaaS sources point to Lakeflow Connect; files in cloud storage point to the file tools. Between those, continuous high-volume arrival favors Auto Loader, while an occasional analyst-driven SQL batch favors COPY INTO.`
+  },
+  /* Ch 11 - Bronze → Silver cleaning */
+  {
+    q:`A pipeline casts types, drops malformed rows, and renames columns while writing source data into Bronze. Months later a casting bug is discovered, but the original values are gone. What was the design mistake?`,
+    opts:[
+      "Cleaning happened on the way into Bronze; Bronze should store data raw and as-delivered so the Silver transformations can be fixed and replayed",
+      "Bronze should have been skipped entirely so the bug would have landed in Silver instead",
+      "The malformed rows should have been deleted in the source system before ingestion",
+      "The pipeline should have written the cleaned data to both Bronze and Silver"
+    ],
+    correct:0,
+    explain:`Bronze is the raw, append-only landing zone: its whole job is preserving the source exactly as it arrived, which is what makes replay possible. Casting, null handling, renames, and dedup belong in the Bronze-to-Silver step, where buggy logic can be corrected and rerun against intact raw data.`
+  },
+  /* Ch 12 - Joins */
+  {
+    q:`A 900 GB fact table is joined to a 40 MB country dimension table. The Spark UI shows both sides being shuffled across the cluster, and the shuffle dominates the runtime. What is the standard fix?`,
+    opts:[
+      "Broadcast the fact table so the dimension table never has to move",
+      "Switch to a cross join, which avoids shuffles by design",
+      "Broadcast the small dimension table so every executor holds a full copy and the large table joins in place without shuffling",
+      "Convert the join to a union and filter the combined result afterwards"
+    ],
+    correct:2,
+    explain:`A broadcast join ships the small side to every executor, so the big table's partitions join locally and the expensive shuffle of 900 GB disappears. You only ever broadcast the small side: broadcasting 900 GB would blow out executor memory. A cross join multiplies rows rather than matching them, making things far worse.`
+  },
+  /* Ch 13 - Column & row manipulation */
+  {
+    q:`Each order row has an <code>items</code> column holding an array of products. Analysts need one row per product. Which operation does this, and what kind of reshaping is it?`,
+    opts:[
+      "withColumn: a column operation that unpacks the array in place",
+      "explode on the items column: a row operation, because it changes how many records exist",
+      "select on the items column: a column operation that flattens arrays automatically",
+      "filter: a row operation that removes the array wrapper"
+    ],
+    correct:1,
+    explain:`explode generates one output row per array element, multiplying the row count: that makes it row-level reshaping even though it targets a column. select and withColumn change what each row carries, not how many rows exist, and filter only removes rows.`
+  },
+  /* Ch 14 - Deduplication & aggregations */
+  {
+    q:`Ingest retries produced multiple versions of the same <code>order_id</code>, each with a different <code>updated_at</code>. The team must keep only the most recent record per order. Why does <code>dropDuplicates()</code> with no arguments fail here, and what works?`,
+    opts:[
+      "It works fine, since Spark always keeps the newest row by default",
+      "distinct() is the fix, because it compares only the key columns",
+      "groupBy on order_id with count() is the fix, since aggregating collapses the duplicates",
+      "Full-row dropDuplicates only removes rows identical in every column; instead rank rows per order_id by updated_at with a window and row_number, and keep rank 1"
+    ],
+    correct:3,
+    explain:`The duplicate rows differ in updated_at, so they are not identical and full-row deduplication keeps them all; dropDuplicates on a key subset keeps an arbitrary row, not the latest. A window partitioned by order_id, ordered by updated_at descending, filtered to row_number() = 1 deterministically keeps the newest version. count() gives you a number, not the surviving row.`
+  },
+  /* Ch 15 - Spark tuning parameters */
+  {
+    q:`After a groupBy on a modest dataset, a job launches 200 tasks, most finishing in under a second, and the write produces hundreds of tiny files. Which config story explains and fixes this?`,
+    opts:[
+      "spark.sql.shuffle.partitions defaults to 200 regardless of data size; enabling AQE lets Spark coalesce shuffle partitions to fit the actual data",
+      "The broadcast threshold is set too low; raising it removes the extra tasks",
+      "The cluster has 200 cores, and task count always equals core count",
+      "Tiny files mean the disk cache is disabled; enabling it merges them on write"
+    ],
+    correct:0,
+    explain:`Shuffle operations like groupBy produce spark.sql.shuffle.partitions output partitions, 200 by default, even when the data is small: hence the sub-second tasks and tiny files. AQE coalesces those partitions at runtime based on actual sizes (or you can lower the setting manually). The broadcast threshold governs join strategy, not shuffle partition counts.`
+  },
+  /* Ch 16 - Gold-layer objects */
+  {
+    q:`A dashboard hits an expensive multi-table aggregation hundreds of times a day. It is currently a standard view, so every dashboard refresh recomputes the whole query. Which Gold-layer object fits better, and why?`,
+    opts:[
+      "A streaming table, because it continuously appends the aggregation results as they change",
+      "A temporary view, because it caches results for all dashboard users",
+      "A materialized view: the result is precomputed and refreshed incrementally, so dashboard reads are cheap",
+      "A managed table that the dashboard team manually rebuilds each morning"
+    ],
+    correct:2,
+    explain:`A standard view is just a stored query: every read pays full compute. A materialized view stores the result and keeps it fresh with incremental refreshes, exactly the pattern for a hot, expensive aggregation. Streaming tables target append-heavy ingestion sources, and temp views are session-scoped: they vanish and cache nothing across users.`
+  },
+  /* Ch 17 - Data quality checks & validation */
+  {
+    q:`Silver's <code>orders</code> table keeps receiving rows with NULL <code>order_id</code>, which breaks downstream joins. The team currently finds them with a weekly audit query. What enforces quality at write time instead?`,
+    opts:[
+      "Schedule the audit query daily instead of weekly",
+      "Add a comment on the column documenting that NULLs are not allowed",
+      "Grant fewer users write access so fewer bad rows arrive",
+      "Add a NOT NULL (or CHECK) constraint on the table, so a write containing violating rows fails instead of landing"
+    ],
+    correct:3,
+    explain:`Delta constraints such as NOT NULL and CHECK are enforced on write: a transaction containing a violating row fails, so bad data never lands in the table. Audits and comments are detection and documentation, not prevention. Quality enforcement belongs as close to the write as possible.`
+  }
+];
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>

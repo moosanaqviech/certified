@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>LESSON 20 · TRIGGER TYPES - PAYLOAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL - do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+	   --bg: #0d0a0a;
+	   --bg-tint: #2b1714;
+	   --accent: #f4826a;
+	   --accent-glow: rgba(244,130,106,0.12);
+	   --accent-ink: #0d0a0a;
+ 
+
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD - BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <!-- three trigger sources -->
+    <circle cx="56" cy="52" r="24" fill="var(--surface-2)" stroke="var(--line)"/>
+    <circle cx="56" cy="52" r="13" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="56" y1="52" x2="56" y2="44" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="56" y1="52" x2="62" y2="55" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+ 
+    <circle cx="56" cy="112" r="24" fill="var(--surface-2)" stroke="var(--line)"/>
+    <path d="M48 112 a8 8 0 1 1 3 6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M49 121 l2 -4 l4 2 z" fill="var(--accent)"/>
+ 
+    <circle cx="56" cy="172" r="24" fill="var(--surface-2)" stroke="var(--line)"/>
+    <path d="M48 164 h9 l3 3 h8 v13 h-20 z" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+ 
+    <!-- arrows -->
+    <path d="M86 52 C 130 52, 150 96, 186 104" fill="none" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M86 112 H 186" fill="none" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M86 172 C 130 172, 150 128, 186 120" fill="none" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M186 104 l-8 -4 v8 z" fill="var(--ink-faint)" transform="rotate(8 186 104)"/>
+    <path d="M186 112 l-8 -4 v8 z" fill="var(--ink-faint)"/>
+    <path d="M186 120 l-8 -4 v8 z" fill="var(--ink-faint)" transform="rotate(-8 186 120)"/>
+ 
+    <!-- the job -->
+    <rect x="196" y="80" width="96" height="64" rx="16" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <path d="M234 98 l20 14 l-20 14 z" fill="var(--accent)"/>
+    <text x="244" y="166" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="12" font-weight="600">JOB RUN</text>
+  </svg>`,
+ 
+  clock: `<svg viewBox="0 0 320 200">
+    <circle cx="160" cy="96" r="58" fill="var(--surface-2)" stroke="var(--line)"/>
+    <circle cx="160" cy="96" r="58" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 7"/>
+    <line x1="160" y1="96" x2="160" y2="60" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="160" y1="96" x2="186" y2="106" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="160" cy="96" r="4" fill="var(--accent)"/>
+    <!-- run ticks on a timeline -->
+    <line x1="50" y1="178" x2="270" y2="178" stroke="var(--line)" stroke-width="2"/>
+    <circle cx="80" cy="178" r="5" fill="var(--accent)"/>
+    <circle cx="135" cy="178" r="5" fill="var(--accent)"/>
+    <circle cx="190" cy="178" r="5" fill="var(--accent)"/>
+    <circle cx="245" cy="178" r="5" fill="var(--accent)"/>
+    <text x="160" y="166" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11" font-weight="600">EVENLY SPACED RUNS</text>
+  </svg>`,
+ 
+  loop: `<svg viewBox="0 0 320 200">
+    <rect x="30" y="78" width="74" height="44" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="67" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">RUN 1</text>
+    <path d="M104 100 H 118" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M122 100 l-7 -4 v8 z" fill="var(--ink-faint)"/>
+    <rect x="124" y="78" width="74" height="44" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="161" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">RUN 2</text>
+    <path d="M198 100 H 212" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M216 100 l-7 -4 v8 z" fill="var(--ink-faint)"/>
+    <rect x="218" y="78" width="74" height="44" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="255" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">RUN 3</text>
+    <!-- no-gap markers -->
+    <text x="111" y="68" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">NO GAP</text>
+    <text x="205" y="68" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">NO GAP</text>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11" font-weight="600">NEXT RUN STARTS WHEN THE LAST ONE ENDS</text>
+  </svg>`,
+ 
+  file: `<svg viewBox="0 0 320 200">
+    <!-- storage location -->
+    <path d="M60 70 h52 l8 9 h60 v74 h-120 z" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="120" y="170" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11" font-weight="600">UC VOLUME / LOCATION</text>
+    <!-- file dropping in -->
+    <rect x="104" y="22" width="30" height="38" rx="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="111" y1="34" x2="127" y2="34" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="111" y1="42" x2="127" y2="42" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M119 64 v14" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M119 82 l-5 -7 h10 z" fill="var(--accent)"/>
+    <!-- arrow to job -->
+    <path d="M182 116 H 224" stroke="var(--ink-faint)" stroke-width="2"/>
+    <path d="M228 116 l-8 -4 v8 z" fill="var(--ink-faint)"/>
+    <rect x="232" y="92" width="62" height="48" rx="14" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <path d="M255 106 l16 10 l-16 10 z" fill="var(--accent)"/>
+  </svg>`,
+ 
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+ 
+/* ----------  CARDS  ---------- */
+const cards = [
+ 
+  /* 0 - cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Lesson 20</div>
+    <h1 class="reveal">Trigger types</h1>
+    <p class="lead reveal">Building a pipeline answers <strong>what</strong> runs. Triggers answer <strong>when</strong>. Databricks gives you three main ways to start a job, and the exam loves asking which one fits a scenario.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+ 
+  /* 1 - concept: what a trigger is */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">A trigger is the job's start condition</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Every Lakeflow Job has exactly one trigger configuration. Besides manual <code>Run now</code>, there are three automated options:</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Scheduled</b>Run at fixed times defined by a cron expression. Time decides.</p></div>
+      <div class="pill"><p><b>Continuous</b>A new run starts the moment the previous one finishes. The job decides.</p></div>
+      <div class="pill"><p><b>File arrival</b>Run when new files land in a storage location. The data decides.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+ 
+  /* 2 - scheduled */
+  { html: `
+    <div class="eyebrow reveal">Trigger 1 of 3</div>
+    <h2 class="reveal">Scheduled: time decides</h2>
+    <div class="art reveal" style="min-height:120px">${A.clock}</div>
+    <p class="lead reveal" style="margin-bottom:14px">The job fires at fixed times using <strong>Quartz cron syntax</strong> (note the extra seconds field) in a timezone you choose:</p>
+    <div class="codeblock reveal"><span class="cm">// every day at 6:30 AM</span>
+<span class="al">0 30 6 * * ?</span>
+<span class="cm">// sec min hour day month weekday</span></div>
+    <div class="pills" style="margin-top:14px">
+      <div class="pill"><p><b>Best for predictable cadence</b>Nightly batch loads, hourly refreshes, Monday reports.</p></div>
+      <div class="pill"><p><b>Blind to data</b>It runs whether or not new data arrived: late data is missed, empty runs still cost compute.</p></div>
+    </div>` },
+ 
+  /* 3 - continuous */
+  { html: `
+    <div class="eyebrow reveal">Trigger 2 of 3</div>
+    <h2 class="reveal">Continuous: always on</h2>
+    <div class="art reveal" style="min-height:120px">${A.loop}</div>
+    <p class="lead reveal" style="margin-bottom:14px">As soon as one run completes, the next begins. Only <strong>one run is active at a time</strong>, so runs never overlap.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Lowest latency</b>The natural fit for streaming jobs feeding near-real-time dashboards or alerts.</p></div>
+      <div class="pill"><p><b>Self-healing</b>If a run fails, Databricks restarts it automatically with exponential backoff.</p></div>
+      <div class="pill"><p><b>Highest cost</b>Compute effectively never shuts down. You pay for the always-on guarantee.</p></div>
+    </div>` },
+ 
+  /* 4 - file arrival */
+  { html: `
+    <div class="eyebrow reveal">Trigger 3 of 3</div>
+    <h2 class="reveal">File arrival: data decides</h2>
+    <div class="art reveal" style="min-height:120px">${A.file}</div>
+    <p class="lead reveal" style="margin-bottom:14px">Databricks watches a <strong>Unity Catalog volume or external location</strong> and starts a run when new files appear, checking roughly every minute.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>No empty runs</b>If nothing lands, nothing runs and no job cluster spins up. Ideal for irregular drops.</p></div>
+      <div class="pill"><p><b>Tunable</b>You can set a minimum time between triggers and a wait period after the last file change.</p></div>
+      <div class="pill"><p><b>Requires Unity Catalog</b>The watched path must be a UC volume or external location, not arbitrary storage.</p></div>
+    </div>` },
+ 
+  /* 5 - quiz 1 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:24px">A vendor drops CSVs into cloud storage a few unpredictable times per day. Your hourly scheduled job usually finds nothing. Best fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Tighten the schedule to every 5 minutes</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Switch the job to a continuous trigger</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Switch to a file arrival trigger on the drop location</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> File arrival runs only when data actually lands, eliminating empty runs entirely. A makes the waste worse (more empty runs, more cluster spin-ups), and B keeps compute running all day for a few drops.</div>` },
+ 
+  /* 6 - choosing */
+  { html: `
+    <div class="eyebrow reveal">Decision</div>
+    <h2 class="reveal">Match the trigger to the signal</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Exam scenarios hand you one of these clues. Map clue to trigger:</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>"Every night at 2 AM", "weekly report"</b>Fixed cadence in the wording: <span style="color:var(--accent);font-weight:600">Scheduled</span>.</p></div>
+      <div class="pill"><p><b>"Within seconds", "real-time", "streaming"</b>Latency is the requirement: <span style="color:var(--accent);font-weight:600">Continuous</span>.</p></div>
+      <div class="pill"><p><b>"Unpredictable", "whenever files land", "avoid wasted runs"</b>Data-driven and irregular: <span style="color:var(--accent);font-weight:600">File arrival</span>.</p></div>
+    </div>
+    <p class="lead reveal" style="margin-top:16px;font-size:15px">Cost order, low to high, when data is irregular: file arrival, then scheduled, then continuous.</p>
+    <div class="spacer"></div>` },
+ 
+  /* 7 - quiz 2 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:24px">A fraud dashboard must reflect new events within seconds. The job runs a Structured Streaming pipeline. Which trigger?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Scheduled, with a cron firing every minute</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Continuous</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>File arrival on the events location</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Continuous keeps the streaming job always on, giving second-level latency and automatic restarts. A adds cluster startup time to every run and can never hit "within seconds". C checks about once a minute and only reacts to new files, not a stream of events.</div>` },
+ 
+  /* 8 - done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Time decides, the job decides, or the data decides.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Scheduled</b>Quartz cron, fixed cadence, blind to whether data arrived.</p></div>
+      <div class="pill"><p><b>Continuous</b>Back-to-back runs, lowest latency, auto-restart, highest cost.</p></div>
+      <div class="pill"><p><b>File arrival</b>Watches a UC volume or external location, fires only when files land.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD - END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE - shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
