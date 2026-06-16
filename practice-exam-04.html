@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "Practice Exam: Units 1-4",
+  badge: "Databricks DE Associate",
+  blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
+  coverage: "Covers chapters 1-21: Units 1-4 (Platform, Ingestion, Transformation, Lakeflow Jobs).",
+  minutes: 80,
+  pass: 70
+};
+
+
+const QUESTIONS = [
+ 
+  /* ============ UNIT 1 - PLATFORM FOUNDATION ============ */
+ 
+  /* Ch 1 - Lakehouse concepts */
+  {
+    q:`A team runs a data warehouse for BI dashboards and a separate data lake for ML. They keep struggling to sync the two and pay to store the same data twice. Which lakehouse property addresses this most directly?`,
+    opts:[
+      "It enforces schema only on read, so the two systems no longer need to sync",
+      "It combines warehouse reliability (ACID, governance) with lake openness (cheap object storage, any data type) in one system",
+      "It replaces object storage with a faster proprietary format",
+      "It removes the need for a metastore"
+    ],
+    correct:1,
+    explain:`The lakehouse unifies the warehouse and the lake into one platform on open object storage, so BI and ML read the same governed copy instead of two synced ones. Schema-on-read alone does not solve the duplicate-storage and sync problem.`
+  },
+  /* Ch 1 - Lakehouse concepts */
+  {
+    q:`Which storage layer is what actually turns a plain data lake into a lakehouse by adding ACID transactions and schema enforcement on top of cheap cloud object storage?`,
+    opts:[
+      "Only the committed rows are visible (Parquet files on their own)",
+      "The Hive metastore",
+      "Delta Lake",
+      "A classic SQL data warehouse engine"
+    ],
+    correct:2,
+    explain:`Delta Lake is the open transaction layer that brings ACID guarantees, schema enforcement, and time travel to files in object storage, which is what makes the lakehouse possible. Plain Parquet files have no transaction log and cannot give those guarantees.`
+  },
+ 
+  /* Ch 2 - Delta Lake Essentials */
+  {
+    q:`A job half-writes a large append into a Delta table and then crashes mid-write. Seconds later another team queries that table. What do they see?`,
+    opts:[
+      "Only the committed rows from before the failed write",
+      "A mix of old rows plus the partially written new rows",
+      "An error, because the table is locked until the write finishes",
+      "An empty table until the write is retried"
+    ],
+    correct:0,
+    explain:`Delta commits atomically through its transaction log, so readers always see the last fully committed version and never a partial write. Seeing half-written rows is exactly the failure mode the Delta log prevents.`
+  },
+  /* Ch 2 - Delta Lake Essentials */
+  {
+    q:`An analyst accidentally deletes rows from a Delta table and needs the data as it was yesterday. Which Delta feature recovers it without restoring a separate backup?`,
+    opts:[
+      "DEEP CLONE the table from a backup bucket",
+      "REFRESH TABLE to reload the old rows",
+      "Schema evolution",
+      "Time travel: query VERSION AS OF or TIMESTAMP AS OF, then restore"
+    ],
+    correct:3,
+    explain:`Delta keeps prior versions in its log, so time travel can read yesterday's snapshot and you can restore from it with no separate backup. CLONE copies a table but does not recover an earlier version of this same table.`
+  },
+ 
+  /* Ch 3 - Unity Catalog Overview */
+  {
+    q:`A company has four workspaces and wants one consistent set of permissions, lineage, and audit across all of them. What provides this?`,
+    opts:[
+      "Per-workspace access control lists kept in sync by hand",
+      "Copying the tables into each workspace",
+      "A single Unity Catalog metastore shared at the account level",
+      "A separate Hive metastore per workspace"
+    ],
+    correct:2,
+    explain:`Unity Catalog is account-level: one metastore governs every attached workspace, so a grant defined once applies everywhere with lineage and audit built in. Per-workspace ACLs are exactly the duplication that Unity Catalog removes.`
+  },
+  /* Ch 3 - Unity Catalog Overview */
+  {
+    q:`In Unity Catalog, what is the correct fully-qualified name for a table?`,
+    opts:[
+      "schema.table",
+      "metastore.catalog.table",
+      "workspace.schema.table",
+      "catalog.schema.table"
+    ],
+    correct:3,
+    explain:`Unity Catalog uses a three-level namespace, so every object is addressed as catalog.schema.table. The two-part form schema.table still works but assumes a default catalog and is not the Unity Catalog way the exam expects.`
+  },
+ 
+  /* Ch 4 - Compute Options and Cost Models */
+  {
+    q:`A team runs a scheduled, automated ETL job every night with no human watching it. Which compute minimizes cost for this pattern?`,
+    opts:[
+      "An always-on all-purpose cluster shared with the analysts",
+      "Job compute: a cluster created for the run and terminated when it finishes",
+      "A SQL warehouse",
+      "A personal single-node cluster left running"
+    ],
+    correct:1,
+    explain:`Job compute spins up for the run and tears down afterward, and it is billed at the lower Jobs rate, which fits unattended scheduled ETL. All-purpose clusters cost more and are meant to stay up for interactive work.`
+  },
+  /* Ch 4 - Compute Options and Cost Models */
+  {
+    q:`Analysts need to run interactive BI and SQL queries against Gold tables with fast startup and autoscaling. Which compute is designed for that?`,
+    opts:[
+      "Job compute",
+      "A SQL warehouse",
+      "A single-node all-purpose cluster",
+      "A Photon-disabled batch cluster"
+    ],
+    correct:1,
+    explain:`SQL warehouses are tuned for low-latency SQL and BI with quick startup and autoscaling, which matches interactive analyst queries. Job compute is built for non-interactive scheduled runs, not ad hoc BI.`
+  },
+ 
+  /* ============ UNIT 2 - DATA INGESTION ============ */
+ 
+  /* Ch 5 - Batch / streaming / incremental patterns */
+  {
+    q:`A source drops a new file every few minutes. The team wants each file processed shortly after it arrives, exactly once, without reprocessing the files already handled. Which pattern fits?`,
+    opts:[
+      "Incremental ingestion that tracks which files are new",
+      "A full batch reload of the whole directory on every run",
+      "A one-time historical backfill",
+      "Manual file-by-file loading"
+    ],
+    correct:0,
+    explain:`Incremental ingestion processes only newly arrived data and remembers what it already consumed, which matches frequent small files. A full reload reprocesses everything each run, which is wasteful and not exactly-once.`
+  },
+  /* Ch 5 - Batch / streaming / incremental patterns */
+  {
+    q:`Which statement best distinguishes streaming from batch ingestion on Databricks?`,
+    opts:[
+      "Streaming processes data continuously as it arrives, while batch processes a bounded set on a schedule",
+      "Streaming can only read from Kafka and batch only from files",
+      "Batch guarantees exactly-once but streaming never can",
+      "Streaming cannot write to Delta tables"
+    ],
+    correct:0,
+    explain:`The core difference is continuous processing of unbounded data (streaming) versus scheduled processing of a bounded set (batch). Both can read varied sources and write to Delta, and Structured Streaming does support exactly-once, so the other options are false.`
+  },
+ 
+  /* Ch 6 - COPY INTO */
+  {
+    q:`A team needs to load a known, relatively small set of new files into a Delta table on a schedule, and the same files must never be loaded twice. Which command fits, and why?`,
+    opts:[
+      "INSERT INTO, because it deduplicates automatically",
+      "CREATE TABLE AS SELECT, because it is incremental",
+      "MERGE, because it is the only idempotent option",
+      "COPY INTO, because it is idempotent and skips files it has already loaded"
+    ],
+    correct:3,
+    explain:`COPY INTO tracks the files it has already ingested and skips them on re-run, so it is idempotent and ideal for repeatable loads of a bounded file set. INSERT INTO does not track files and would duplicate the rows.`
+  },
+  /* Ch 6 - COPY INTO */
+  {
+    q:`COPY INTO becomes a poor fit when:`,
+    opts:[
+      "The schema is fixed and known",
+      "The files arrive as Parquet",
+      "The directory grows to millions of files and listing them every run is slow",
+      "The target is a Delta table"
+    ],
+    correct:2,
+    explain:`COPY INTO relies on listing the directory, which degrades badly at very high file counts; that is the signal to move to Auto Loader's notification mode. A fixed schema and Parquet files are perfectly fine for COPY INTO.`
+  },
+ 
+  /* Ch 7 - Auto Loader */
+  {
+    q:`A directory receives millions of files and new ones arrive constantly. The team wants efficient, scalable, exactly-once incremental ingestion. Which tool and mechanism fit?`,
+    opts:[
+      "COPY INTO with a manually maintained file list",
+      "A nightly full batch reload",
+      "Repeated INSERT INTO statements",
+      "Auto Loader (cloudFiles), which tracks ingested files and can use file notifications"
+    ],
+    correct:3,
+    explain:`Auto Loader is built for high-volume continuous file ingestion: it checkpoints which files it has processed for exactly-once and can use notifications instead of directory listing. COPY INTO with a manual list does not scale to millions of files.`
+  },
+  /* Ch 7 - Auto Loader */
+  {
+    q:`What does Auto Loader use to guarantee it does not reprocess files it has already ingested?`,
+    opts:[
+      "A broadcast join against the source",
+      "The Delta transaction log of the source files",
+      "A checkpoint location that records which files were processed",
+      "A nightly VACUUM"
+    ],
+    correct:2,
+    explain:`Auto Loader persists its progress in a checkpoint, so on restart it resumes and never reprocesses, giving exactly-once ingestion. VACUUM only cleans up old data files and has nothing to do with tracking ingested files.`
+  },
+ 
+  /* Ch 8 - Auto Loader vs COPY INTO (tradeoff) */
+  {
+    q:`Two teams ingest files. Team X loads a few dozen new files each night; Team Y ingests millions of files arriving continuously. Which choice fits each?`,
+    opts:[
+      "Both should use COPY INTO",
+      "X: COPY INTO, Y: Auto Loader",
+      "X: Auto Loader, Y: COPY INTO",
+      "Both should use Auto Loader"
+    ],
+    correct:1,
+    explain:`COPY INTO suits small, periodic, bounded loads (Team X), while Auto Loader suits high-volume continuous arrival (Team Y). Swapping them over-engineers the tiny nightly job and under-serves the massive continuous one.`
+  },
+  /* Ch 8 - Auto Loader vs COPY INTO (tradeoff) */
+  {
+    q:`Which single signal most strongly pushes you from COPY INTO toward Auto Loader?`,
+    opts:[
+      "File volume is very high and directory listing has become the bottleneck",
+      "The files are CSV rather than Parquet",
+      "The target is a managed table",
+      "You want idempotent loads"
+    ],
+    correct:0,
+    explain:`Both tools are idempotent, so wanting idempotency does not decide it; the deciding signal is scale, where Auto Loader's file-notification mode beats listing. File format and table type do not force the choice.`
+  },
+ 
+  /* Ch 9 - Lakeflow Connect */
+  {
+    q:`A team wants to ingest from Salesforce and from a relational database without building and maintaining custom extraction code. Which Databricks capability fits?`,
+    opts:[
+      "Lakeflow Connect managed connectors",
+      "Auto Loader pointed at the SaaS API",
+      "COPY INTO run from the application UI",
+      "A hand-written REST script on a cron"
+    ],
+    correct:0,
+    explain:`Lakeflow Connect provides built-in managed connectors for SaaS apps and databases, removing the need for custom pipeline code. Auto Loader ingests files from cloud storage and cannot pull directly from a SaaS application's API.`
+  },
+ 
+  /* Ch 10 - Choosing an ingestion method (tradeoff) */
+  {
+    q:`The source is an operational Postgres database and the team wants its changes captured into Bronze with minimal engineering effort. Best fit?`,
+    opts:[
+      "Auto Loader on nightly CSV exports of the database",
+      "COPY INTO run hourly against an export",
+      "A Lakeflow Connect database connector",
+      "Manual JDBC reads in a notebook on a schedule"
+    ],
+    correct:2,
+    explain:`For a database source that needs low-maintenance, change-aware ingestion, a Lakeflow Connect connector is purpose-built. Exporting to CSV and then running Auto Loader or COPY INTO adds a brittle extra hop that you have to maintain.`
+  },
+  /* Ch 10 - Choosing an ingestion method (tradeoff) */
+  {
+    q:`A vendor drops compressed JSON files into a cloud storage bucket continuously, sometimes thousands per hour. Which ingestion method fits best?`,
+    opts:[
+      "A Lakeflow Connect SaaS connector",
+      "COPY INTO scheduled once a day",
+      "A SQL warehouse query over the bucket",
+      "Auto Loader on the bucket"
+    ],
+    correct:3,
+    explain:`Files landing continuously in object storage at high volume is the Auto Loader case. Lakeflow Connect targets applications and databases rather than arbitrary file drops, and a daily COPY INTO would lag far behind the arrival rate.`
+  },
+ 
+  /* ============ UNIT 3 - DATA TRANSFORMATION AND MODELING ============ */
+ 
+  /* Ch 11 - Bronze to Silver cleaning */
+  {
+    q:`In the medallion architecture, what is the primary job of the Silver layer?`,
+    opts:[
+      "Store raw, untouched data exactly as it landed",
+      "Clean, conform, and enrich data: fix types, deduplicate, join reference data",
+      "Serve final business-level aggregates to dashboards",
+      "Hold only archived cold data"
+    ],
+    correct:1,
+    explain:`Silver takes raw Bronze and produces validated, conformed tables (typed, deduplicated, joined) that are ready for analytics. Raw-as-landed describes Bronze and business aggregates describe Gold.`
+  },
+  /* Ch 11 - Bronze to Silver cleaning */
+  {
+    q:`A pipeline has Bronze, Silver, and Gold layers. Which task belongs in Gold rather than Silver?`,
+    opts:[
+      "Casting raw string columns to proper types",
+      "Removing duplicate events from the raw feed",
+      "Standardizing inconsistent date formats",
+      "Aggregating cleaned orders into quarterly revenue by region for the exec dashboard"
+    ],
+    correct:3,
+    explain:`Gold holds business-level aggregates and serving tables, so the revenue rollup belongs there. Type casting, deduplication, and standardizing formats are Silver cleaning steps, and putting aggregation in Silver blurs the layer's purpose.`
+  },
+ 
+  /* Ch 12 - Joins */
+  {
+    q:`A large fact table (billions of rows) is joined to a tiny dimension table (a few thousand rows). The join shuffles a huge amount of data and runs slowly. What usually fixes it?`,
+    opts:[
+      "Broadcast the small dimension table so it is sent to every executor, avoiding a shuffle",
+      "Switch the join to a cross join",
+      "Use a left join instead of an inner join",
+      "Add more columns to the join key"
+    ],
+    correct:0,
+    explain:`Broadcasting the small side ships it to all executors so the big table is not shuffled, which is the standard fix for large-to-small joins. Changing the join type does not remove the expensive shuffle.`
+  },
+  /* Ch 12 - Joins */
+  {
+    q:`A reporting query must keep every customer, even those with no orders, showing nulls where order data is missing. Which join does this?`,
+    opts:[
+      "Inner join",
+      "Cross join",
+      "Left (outer) join with customers on the left",
+      "Semi join"
+    ],
+    correct:2,
+    explain:`A left outer join returns all left-side rows and fills nulls where the right side has no match, which is exactly keeping all customers. An inner join would drop customers that have no orders.`
+  },
+ 
+  /* Ch 13 - Column and row manipulation */
+  {
+    q:`A team needs to add a derived column and keep only the rows where status equals 'active'. Which pair of operations expresses this?`,
+    opts:[
+      "A projection (withColumn) to add the column and a filter (WHERE) to keep the active rows",
+      "GROUP BY followed by ORDER BY",
+      "A broadcast join followed by VACUUM",
+      "MERGE followed by OPTIMIZE"
+    ],
+    correct:0,
+    explain:`Adding a computed column is a projection (withColumn or a SELECT expression) and keeping a subset of rows is a filter (WHERE). GROUP BY and ORDER BY aggregate and sort, which is not what was asked for.`
+  },
+ 
+  /* Ch 14 - Deduplication and aggregations */
+  {
+    q:`A clickstream sometimes delivers the same event twice. The team wants one row per event_id, keeping the latest by timestamp. Which approach fits?`,
+    opts:[
+      "A window function: ROW_NUMBER partitioned by event_id ordered by timestamp descending, keep where the rank equals 1",
+      "SELECT DISTINCT across all columns",
+      "GROUP BY event_id with COUNT",
+      "A cross join to compare every pair of rows"
+    ],
+    correct:0,
+    explain:`Ranking within each event_id by timestamp and keeping the top row deduplicates while preserving the latest version. SELECT DISTINCT only removes fully identical rows and cannot choose the latest among differing duplicates.`
+  },
+  /* Ch 14 - Deduplication and aggregations */
+  {
+    q:`Which statement about aggregations in Spark SQL is correct?`,
+    opts:[
+      "HAVING filters individual rows before grouping",
+      "COUNT(col) counts nulls while COUNT(*) skips them",
+      "Aggregations cannot be combined with a WHERE clause",
+      "GROUP BY collapses rows into one row per group, where WHERE filters before grouping and HAVING filters after"
+    ],
+    correct:3,
+    explain:`WHERE filters rows before aggregation and HAVING filters groups after aggregation, and GROUP BY produces one row per group. COUNT(*) counts all rows while COUNT(col) skips nulls, so the option claiming the reverse is false.`
+  },
+ 
+  /* Ch 15 - Spark tuning parameters */
+  {
+    q:`A job's stage shows a few tasks running far longer than the rest, and the Spark UI shows wildly uneven data per task. What is this, and a typical mitigation?`,
+    opts:[
+      "Spill, fixed by lowering the number of shuffle partitions",
+      "Data skew, mitigated with AQE skew handling, salting, or broadcasting the small side",
+      "Small files, fixed by running VACUUM",
+      "Driver overload, fixed by adding executors"
+    ],
+    correct:1,
+    explain:`Uneven per-task data with a few long stragglers is classic data skew, which AQE skew handling, salting, or broadcasting can address. Spill is memory overflowing to disk, a different symptom with a different fix.`
+  },
+  /* Ch 15 - Spark tuning parameters */
+  {
+    q:`Adaptive Query Execution (AQE) helps a Spark job primarily by:`,
+    opts:[
+      "Caching every DataFrame automatically",
+      "Disabling Photon to save memory",
+      "Forcing a fixed number of shuffle partitions",
+      "Re-optimizing the plan at runtime using real shuffle statistics: coalescing partitions and handling skew"
+    ],
+    correct:3,
+    explain:`AQE adjusts the plan during execution based on actual runtime statistics, coalescing small partitions and handling skew without manual tuning. It does not auto-cache everything and is not about a fixed partition count.`
+  },
+ 
+  /* Ch 16 - Gold-layer objects */
+  {
+    q:`A BI team needs a Gold object that always reflects fresh upstream data and precomputes an expensive aggregation so dashboards load fast, without anyone rerunning it by hand. Which fits?`,
+    opts:[
+      "A materialized view that is incrementally refreshed",
+      "A standard (non-materialized) view",
+      "A temporary view",
+      "A common table expression (CTE)"
+    ],
+    correct:0,
+    explain:`A materialized view stores precomputed results and refreshes as upstream data changes, giving fast reads without manual reruns. A plain view recomputes on every query, so it is not precomputed and would not speed up the dashboard.`
+  },
+  /* Ch 16 - Gold-layer objects */
+  {
+    q:`What is the key difference between a streaming table and a standard materialized view in the Gold layer?`,
+    opts:[
+      "Streaming tables can only store string columns",
+      "A materialized view cannot be queried by BI tools",
+      "A streaming table processes new rows incrementally as an append stream, while a materialized view maintains the result of a query over its inputs",
+      "They are identical and interchangeable"
+    ],
+    correct:2,
+    explain:`A streaming table is for incremental append-style processing of incoming data, while a materialized view maintains and refreshes the result of a defined query. They serve different purposes and are not the same object.`
+  },
+ 
+  /* Ch 17 - Data quality checks and validation */
+  {
+    q:`A pipeline must drop rows that violate a not-null rule and record how many were dropped, declaratively rather than with hand-written checks. Which mechanism fits in a Lakeflow declarative pipeline?`,
+    opts:[
+      "A manual COUNT run after each load",
+      "VACUUM with a retention of zero",
+      "A broadcast join against a rules table",
+      "Expectations (constraints) that validate rows and can drop or quarantine violations while tracking metrics"
+    ],
+    correct:3,
+    explain:`Declarative data-quality expectations validate each row against rules and can drop, quarantine, or fail on violations while recording the metrics automatically. A manual COUNT is neither declarative nor enforced by the pipeline.`
+  },
+  /* Ch 17 - Data quality checks and validation */
+  {
+    q:`A team wants bad records to fail the pipeline immediately rather than be silently dropped. Using expectations, which action achieves stop-on-violation?`,
+    opts:[
+      "Warn only and continue the run",
+      "Drop the invalid rows and continue",
+      "Fail (abort) the update when the expectation is violated",
+      "Quarantine to a side table and continue"
+    ],
+    correct:2,
+    explain:`An expectation can be configured to fail the run on violation, which halts the pipeline exactly as required. Dropping and quarantining both keep the pipeline running, which is the opposite of the stated requirement.`
+  },
+ 
+  /* ============ UNIT 4 - LAKEFLOW JOBS ============ */
+ 
+  /* Ch 18 - Anatomy of a Job: tasks and the DAG */
+  {
+    q:`A Lakeflow Job has three tasks: ingest, transform, publish. Transform must run only after ingest succeeds, and publish only after transform. How is this expressed?`,
+    opts:[
+      "Three separate jobs that someone triggers in order by hand",
+      "Task dependencies that form a DAG, so each task waits for its upstream task",
+      "A single notebook containing all the logic and no tasks",
+      "One cron entry per task"
+    ],
+    correct:1,
+    explain:`A Job models multiple tasks with dependencies as a DAG, so each downstream task runs only after its upstream task succeeds. Separate manual jobs lose the ordering and orchestration the DAG provides.`
+  },
+  /* Ch 18 - Anatomy of a Job: tasks and the DAG */
+  {
+    q:`One task in a multi-task Job fails. By default, what happens to a downstream task that depends on it?`,
+    opts:[
+      "It runs anyway using stale inputs",
+      "The whole workspace is locked",
+      "It is skipped because its upstream dependency did not succeed",
+      "It retries the upstream task forever"
+    ],
+    correct:2,
+    explain:`A downstream task only runs when its dependency succeeds, so on an upstream failure it is skipped. It does not run with stale inputs, and a single task failure does not lock the workspace.`
+  },
+ 
+  /* Ch 19 - Control flow: retries, branching, looping */
+  {
+    q:`A task occasionally fails because of a transient network blip on the source. The team wants it to recover automatically without anyone rerunning it. Which setting fits?`,
+    opts:[
+      "Increase the cluster size",
+      "Configure task retries with a retry policy",
+      "Add a broadcast hint to the query",
+      "Switch the task to a SQL warehouse"
+    ],
+    correct:1,
+    explain:`A retry policy reruns a failed task automatically, which absorbs transient failures like a brief network blip. Resizing the cluster does nothing to address an intermittent network error.`
+  },
+  /* Ch 19 - Control flow: retries, branching, looping */
+  {
+    q:`A Job should run a 'send alert' task only when an upstream check task reports failures, and otherwise skip it. Which control-flow feature expresses this?`,
+    opts:[
+      "A fixed cron schedule",
+      "A broadcast join",
+      "Time travel",
+      "Conditional branching: a run-if condition on the task"
+    ],
+    correct:3,
+    explain:`A run-if (conditional) execution lets a task fire only when an upstream condition is met, which is exactly run-the-alert-only-on-failure. A cron schedule controls when the job starts, not whether one task runs based on another's result.`
+  },
+ 
+  /* Ch 20 - Trigger types */
+  {
+    q:`A pipeline should run automatically whenever new files land in a monitored cloud storage location, not on a clock. Which trigger type fits?`,
+    opts:[
+      "A scheduled (cron) trigger every five minutes",
+      "A file-arrival trigger",
+      "Manual trigger only",
+      "A continuously running all-purpose cluster"
+    ],
+    correct:1,
+    explain:`A file-arrival trigger starts the Job when new files appear, which matches event-driven ingestion. A five-minute cron runs even when nothing arrived and can still lag behind the actual file arrivals.`
+  },
+  /* Ch 20 - Trigger types */
+  {
+    q:`Which statement is true about a scheduled trigger versus a continuous job?`,
+    opts:[
+      "A scheduled trigger runs the job on a defined cadence, while a continuous job keeps a pipeline running to process data as it arrives",
+      "Both run exactly once and then stop",
+      "A scheduled trigger needs file notifications to work",
+      "Continuous jobs cannot write to Delta tables"
+    ],
+    correct:0,
+    explain:`A scheduled trigger fires on a set cadence, while continuous keeps the pipeline always on to process data as it arrives. They are different execution modes, and neither claim about one-time runs or Delta limits is true.`
+  },
+ 
+  /* Ch 21 - Time-based vs data-driven triggers (tradeoff) */
+  {
+    q:`Two pipelines: Pipeline P must publish a report every morning at 6 AM regardless of data, and Pipeline Q must react within minutes of files landing. Which trigger fits each?`,
+    opts:[
+      "Both: file-arrival",
+      "P: file-arrival, Q: scheduled",
+      "P: scheduled (time-based), Q: file-arrival (data-driven)",
+      "Both: manual"
+    ],
+    correct:2,
+    explain:`A fixed delivery time is a time-based (scheduled) trigger, and reacting to arriving data is a data-driven (file-arrival) trigger. Swapping them would make the report miss its clock and delay the reactive pipeline.`
+  },
+  /* Ch 21 - Time-based vs data-driven triggers (tradeoff) */
+  {
+    q:`Which signal most clearly indicates you should choose a data-driven trigger over a time-based one?`,
+    opts:[
+      "The job must align with a fixed business SLA time",
+      "Data arrives at unpredictable intervals and the latency to process it should be minimal",
+      "The job only ever runs once",
+      "You want the job to run even when no new data exists"
+    ],
+    correct:1,
+    explain:`Unpredictable arrival plus a need for low latency points to event-driven (data-driven) triggering. A fixed SLA time or wanting the job to run even with no new data are the signals for time-based scheduling.`
+  }
+ 
+];
+ 
+
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>

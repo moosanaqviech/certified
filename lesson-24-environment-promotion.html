@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Lesson 24 · Environment Promotion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #090d09;
+    --bg-tint: #18271a;
+    --accent: #8fe06a;        /* lime "go-live" green: CI/CD promotion */
+    --accent-glow: rgba(143,224,106,0.13);
+    --accent-ink: #0a1408;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs><linearGradient id="prodG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9ee37a"/><stop offset="1" stop-color="#5cbf4e"/></linearGradient></defs>
+    <rect x="18" y="118" width="80" height="48" rx="11" fill="rgba(108,122,145,0.12)" stroke="#6c7a91" stroke-width="1.6"/>
+    <text x="58" y="140" text-anchor="middle" fill="#9aa6b8" font-family="Hanken Grotesk" font-size="12" font-weight="700">dev</text>
+    <text x="58" y="156" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="9">build</text>
+    <path d="M102 134 H120" stroke="#7a8090" stroke-width="2"/><polygon points="126,134 117,129 117,139" fill="#7a8090"/>
+    <rect x="122" y="90" width="80" height="48" rx="11" fill="rgba(227,184,74,0.12)" stroke="#e3b84a" stroke-width="1.6"/>
+    <text x="162" y="112" text-anchor="middle" fill="#e3b84a" font-family="Hanken Grotesk" font-size="12" font-weight="700">test</text>
+    <text x="162" y="128" text-anchor="middle" fill="#a98f3f" font-family="Hanken Grotesk" font-size="9">validate</text>
+    <path d="M206 106 H224" stroke="#9a9a5a" stroke-width="2"/><polygon points="230,106 221,101 221,111" fill="#9a9a5a"/>
+    <rect x="226" y="58" width="80" height="48" rx="11" fill="url(#prodG)"/>
+    <text x="266" y="80" text-anchor="middle" fill="#0a1408" font-family="Hanken Grotesk" font-size="12" font-weight="700">prod</text>
+    <text x="266" y="96" text-anchor="middle" fill="#163a0e" font-family="Hanken Grotesk" font-size="9" font-weight="600">live</text>
+    <text x="160" y="190" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="11" font-weight="600">one path, one direction</text>
+  </svg>`,
+
+  lane: `<svg viewBox="0 0 320 210">
+    <rect x="14" y="38" width="86" height="96" rx="13" fill="rgba(108,122,145,0.1)" stroke="#6c7a91" stroke-width="1.6"/>
+    <text x="57" y="64" text-anchor="middle" fill="#9aa6b8" font-family="Hanken Grotesk" font-size="13" font-weight="700">dev</text>
+    <text x="57" y="90" text-anchor="middle" fill="#8a8fa0" font-family="Hanken Grotesk" font-size="9.5">build &amp;</text>
+    <text x="57" y="104" text-anchor="middle" fill="#8a8fa0" font-family="Hanken Grotesk" font-size="9.5">experiment</text>
+    <text x="57" y="123" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="8.5">may break</text>
+    <path d="M103 86 H115" stroke="#7a8090" stroke-width="2"/><polygon points="121,86 112,81 112,91" fill="#7a8090"/>
+    <rect x="117" y="38" width="86" height="96" rx="13" fill="rgba(227,184,74,0.1)" stroke="#e3b84a" stroke-width="1.6"/>
+    <text x="160" y="64" text-anchor="middle" fill="#e3b84a" font-family="Hanken Grotesk" font-size="13" font-weight="700">test</text>
+    <text x="160" y="90" text-anchor="middle" fill="#c2a24a" font-family="Hanken Grotesk" font-size="9.5">prod-like</text>
+    <text x="160" y="104" text-anchor="middle" fill="#c2a24a" font-family="Hanken Grotesk" font-size="9.5">validation</text>
+    <text x="160" y="123" text-anchor="middle" fill="#a98f3f" font-family="Hanken Grotesk" font-size="8.5">catch issues</text>
+    <path d="M206 86 H218" stroke="#8a9a5a" stroke-width="2"/><polygon points="224,86 215,81 215,91" fill="#8a9a5a"/>
+    <rect x="220" y="38" width="86" height="96" rx="13" fill="rgba(143,224,106,0.12)" stroke="#8fe06a" stroke-width="1.8"/>
+    <text x="263" y="64" text-anchor="middle" fill="#8fe06a" font-family="Hanken Grotesk" font-size="13" font-weight="700">prod</text>
+    <text x="263" y="90" text-anchor="middle" fill="#86c272" font-family="Hanken Grotesk" font-size="9.5">serves real</text>
+    <text x="263" y="104" text-anchor="middle" fill="#86c272" font-family="Hanken Grotesk" font-size="9.5">workloads</text>
+    <text x="263" y="123" text-anchor="middle" fill="#6fa05c" font-family="Hanken Grotesk" font-size="8.5">protected</text>
+    <text x="160" y="168" text-anchor="middle" fill="#9aa6b8" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">Isolation, gated promotion</text>
+    <text x="160" y="188" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10">changes earn their way forward, never skip ahead</text>
+  </svg>`,
+
+  split: `<svg viewBox="0 0 320 222">
+    <rect x="104" y="8" width="112" height="42" rx="11" fill="rgba(143,224,106,0.1)" stroke="#8fe06a" stroke-width="1.6"/>
+    <text x="160" y="29" text-anchor="middle" fill="#8fe06a" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">one codebase</text>
+    <text x="160" y="43" text-anchor="middle" fill="#7aa86a" font-family="Hanken Grotesk" font-size="8.5">notebooks · jobs · pipelines</text>
+    <path d="M122 52 L70 76" stroke="#62647a" stroke-width="1.4"/><polygon points="66,80 75,77 70,70" fill="#62647a"/>
+    <path d="M160 52 V72" stroke="#62647a" stroke-width="1.4"/><polygon points="160,78 155,69 165,69" fill="#62647a"/>
+    <path d="M198 52 L250 76" stroke="#62647a" stroke-width="1.4"/><polygon points="254,80 245,70 250,77" fill="#62647a"/>
+    <text x="58" y="96" text-anchor="middle" fill="#9aa6b8" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">dev</text>
+    <text x="160" y="96" text-anchor="middle" fill="#e3b84a" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">test</text>
+    <text x="262" y="96" text-anchor="middle" fill="#8fe06a" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">prod</text>
+    <ellipse cx="58" cy="120" rx="30" ry="8" fill="rgba(108,122,145,0.2)" stroke="#6c7a91" stroke-width="1.3"/>
+    <path d="M28 120 V156 a30 8 0 0 0 60 0 V120" fill="rgba(108,122,145,0.1)" stroke="#6c7a91" stroke-width="1.3"/>
+    <text x="58" y="182" text-anchor="middle" fill="#8a8fa0" font-family="Hanken Grotesk" font-size="9">dev catalog</text>
+    <ellipse cx="160" cy="120" rx="30" ry="8" fill="rgba(227,184,74,0.18)" stroke="#e3b84a" stroke-width="1.3"/>
+    <path d="M130 120 V156 a30 8 0 0 0 60 0 V120" fill="rgba(227,184,74,0.08)" stroke="#e3b84a" stroke-width="1.3"/>
+    <text x="160" y="182" text-anchor="middle" fill="#c2a24a" font-family="Hanken Grotesk" font-size="9">test catalog</text>
+    <ellipse cx="262" cy="120" rx="30" ry="8" fill="rgba(143,224,106,0.2)" stroke="#8fe06a" stroke-width="1.3"/>
+    <path d="M232 120 V156 a30 8 0 0 0 60 0 V120" fill="rgba(143,224,106,0.08)" stroke="#8fe06a" stroke-width="1.3"/>
+    <text x="262" y="182" text-anchor="middle" fill="#86c272" font-family="Hanken Grotesk" font-size="9">prod catalog</text>
+    <text x="160" y="210" text-anchor="middle" fill="#62647a" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">code moves, data stays put</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9ee37a"/><stop offset="1" stop-color="#5cbf4e"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#0a1408" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>CI/CD · Lesson 24</div>
+    <h1 class="reveal">Promoting to<br>Production</h1>
+    <p class="lead reveal">Move a change from dev, to test, to prod without ever putting unvetted code in front of real workloads. Nine cards.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — the problem */
+  { glow: "radial-gradient(500px 300px at 50% 26%, rgba(232,98,92,0.08), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e3625c"></span>The problem</div>
+    <h2 class="reveal">You can't build straight into prod.</h2>
+    <p class="lead reveal" style="margin-bottom:18px">If the only place your code runs is production, every half-finished idea is one save away from breaking live dashboards and downstream jobs.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>No safety net</b>A bad change hits real users and scheduled pipelines the instant it lands. There is nowhere safe to fail.</p></div>
+      <div class="pill"><p><b>No way to trust a release</b>Untested code mixed with live data is hard to diagnose, hard to undo, and impossible to reproduce.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — the three environments */
+  { html: `
+    <div class="eyebrow reveal">The shape of it</div>
+    <h2 class="reveal">Three isolated environments</h2>
+    <p class="lead reveal" style="margin-bottom:4px">Each stage has one job, and a change only moves forward once it has earned the next step.</p>
+    <div class="art reveal">${A.lane}</div>
+    <p class="lead reveal" style="font-size:14.5px">Dev is where you build and break things. Test mirrors production closely enough to catch real issues. Prod is sacred: only vetted code arrives, and it serves the actual workloads.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — promote code, not data */
+  { glow: "radial-gradient(520px 320px at 50% 16%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal">The key rule</div>
+    <h2 class="reveal">Promote code, not data</h2>
+    <p class="lead reveal" style="margin-bottom:2px">Promotion moves the <strong>definition</strong> (your notebooks, jobs, and pipeline config), never the rows.</p>
+    <div class="art reveal">${A.split}</div>
+    <p class="lead reveal" style="font-size:14.5px">One version-controlled codebase points at a different Unity Catalog in each environment. The same logic runs against dev data, test data, then prod data, with no copying of tables between stages.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — quiz 1 (the principle) */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:23px">A team finishes a pipeline in dev and "promotes" it to prod. What actually moves?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The dev tables and their rows are copied into the prod catalog</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>The pipeline definition and config, which then read and write the prod catalog</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Nothing moves; prod automatically mirrors whatever dev runs</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>The dev cluster is reattached to the production workspace</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Promotion carries the code and configuration, not the data. The same definition is pointed at the prod catalog, so production runs on its own governed data while every environment shares one source of truth.</div>` },
+
+  /* 5 — the mechanism: bundles + targets */
+  { html: `
+    <div class="eyebrow reveal">The mechanism</div>
+    <h2 class="reveal">One bundle, many targets</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A Databricks Asset Bundle defines your jobs and pipelines as code. Named <strong>targets</strong> parametrize where each deploy lands and which catalog it uses.</p>
+    <div class="codeblock reveal">
+<span class="cm"># databricks.yml: one bundle, three targets</span><br>
+targets:<br>
+&nbsp;&nbsp;<span class="al">dev</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variables: { catalog: <span class="st">dev</span> }<br>
+&nbsp;&nbsp;<span class="al">test</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variables: { catalog: <span class="st">test</span> }<br>
+&nbsp;&nbsp;<span class="al">prod</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variables: { catalog: <span class="st">prod</span> }<br><br>
+<span class="cm"># promote the same code to the next stage</span><br>
+<span class="kw">databricks</span> bundle deploy <span class="al">-t prod</span>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:14px">Deploying the same bundle to the next target is the promotion. Nothing is hand-edited along the way.</p>
+    <div class="spacer"></div>` },
+
+  /* 6 — the path forward */
+  { html: `
+    <div class="eyebrow reveal">The path forward</div>
+    <h2 class="reveal">How a change reaches prod</h2>
+    <div class="pills reveal" style="margin-top:10px">
+      <div class="pill"><p><b>1 · Branch in dev</b>Work on a branch in a Git Folder, running against dev data.</p></div>
+      <div class="pill"><p><b>2 · PR to main</b>Open a pull request. Review and merge fold the change into the shared source.</p></div>
+      <div class="pill"><p><b>3 · Deploy to test</b>A bundle deploy to the test target validates the code on prod-like data.</p></div>
+      <div class="pill"><p><b>4 · Deploy to prod</b>Once tests pass, deploy the same bundle to prod, run by a service principal rather than a personal account.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 — quiz 2 (the anti-pattern) */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">An engineer fixes a bug by editing the job's notebook directly in prod, then pastes the change into dev by hand. What is wrong, and what is better?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Nothing is wrong; editing prod directly is the fastest safe fix</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Prod should always be edited first, and dev should copy down from prod</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Prod changed outside version control, causing drift; the fix belongs in Git, then deployed to test and prod via the bundle</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>The two workspaces should be merged into one so edits never diverge</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Hand-editing prod leaves no audit trail and lets environments drift apart. Changes belong in Git first, then flow forward by deploying the bundle to each target, so every environment stays reproducible from one source.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Changes earn their way from dev to prod, one gate at a time.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Three environments, one direction</b>Dev builds, test validates, prod serves. Code only moves forward.</p></div>
+      <div class="pill"><p><b>Promote code, not data</b>One bundle, parametrized by target, points at a separate catalog per environment.</p></div>
+      <div class="pill"><p><b>Git first, deploy forward</b>Never hand-edit prod. Land changes in version control, then deploy the bundle to the next target.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
