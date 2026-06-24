@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Liquid Clustering & Predictive Optimization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b0a;
+    --frame: #1a1512;
+    --surface: #1a1613;
+    --surface-2: #251e19;
+    --ink: #f4f0ec;
+    --ink-soft: #b4a89e;
+    --ink-faint: #756a60;
+    /* lesson accents */
+    --accent: #34d3a6;
+    --accent-glow: rgba(52,211,166,0.5);
+    --flow: #34d3a6;
+    --flow-glow: rgba(52,211,166,0.5);
+    --auto: #4fa8e8;
+    --auto-glow: rgba(79,168,232,0.5);
+    --old: #e0903a;
+    --old-glow: rgba(224,144,58,0.5);
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; background: radial-gradient(1200px 700px at 50% -10%, #14241e 0%, transparent 60%), var(--bg); font-family: var(--body); color: var(--ink); overflow: hidden; }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column; opacity: 0; transform: translateX(40px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1); pointer-events: none; overflow-y: auto; }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 37px; line-height: 1.04; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: #0d0b0a; transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: rgba(52,211,166,0.13); }
+  .choice.correct .key { background: var(--accent); color:#0d0b0a; }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------  ART  ---------- */
+const A = {
+
+  cover: `<svg viewBox="0 0 320 220">
+    <text x="160" y="22" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="11" font-weight="600">Table layout · old way vs. liquid</text>
+    <!-- old: rigid partition folders -->
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <text x="34" y="52" fill="#e0903a">PARTITIONED</text>
+      <rect x="34" y="58" width="40" height="30" rx="3" fill="none" stroke="#e0903a" stroke-width="1.4" opacity="0.8"/>
+      <rect x="80" y="58" width="40" height="30" rx="3" fill="none" stroke="#e0903a" stroke-width="1.4" opacity="0.8"/>
+      <rect x="126" y="58" width="16" height="30" rx="3" fill="none" stroke="#e0903a" stroke-width="1.4" opacity="0.5"/>
+      <text x="54" y="103" text-anchor="middle" fill="#756a60" font-size="8.5">rigid folders · small files</text>
+    </g>
+    <!-- arrow -->
+    <text x="160" y="80" text-anchor="middle" fill="#b4a89e" font-size="18">→</text>
+    <!-- liquid: smooth clustered blob -->
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <text x="180" y="52" fill="#34d3a6">LIQUID CLUSTERED</text>
+      <rect x="180" y="58" width="100" height="30" rx="14" fill="rgba(52,211,166,0.16)" stroke="#34d3a6" stroke-width="1.4"/>
+      <circle cx="200" cy="73" r="5" fill="#34d3a6" opacity="0.9"/>
+      <circle cx="218" cy="73" r="5" fill="#34d3a6" opacity="0.7"/>
+      <circle cx="236" cy="73" r="5" fill="#34d3a6" opacity="0.85"/>
+      <circle cx="254" cy="73" r="5" fill="#34d3a6" opacity="0.6"/>
+      <text x="230" y="103" text-anchor="middle" fill="#756a60" font-size="8.5">self-organizing · adapts</text>
+    </g>
+    <text x="160" y="150" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11.5">No more guessing partition keys.</text>
+    <text x="160" y="178" text-anchor="middle" fill="#f4f0ec" font-family="Fraunces" font-size="15" font-weight="600">Let Databricks lay out the data.</text>
+    <text x="160" y="202" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="10">~2 minutes</text>
+  </svg>`,
+
+  why: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#e0903a" font-family="Hanken Grotesk" font-size="11" font-weight="700">The old tuning checklist</text>
+    <g font-family="Hanken Grotesk" font-size="12" font-weight="600">
+      <text x="46" y="58" fill="#b4a89e">☐ pick the right PARTITION BY column</text>
+      <text x="46" y="88" fill="#b4a89e">☐ add ZORDER BY for skipping</text>
+      <text x="46" y="118" fill="#b4a89e">☐ schedule OPTIMIZE to compact files</text>
+      <text x="46" y="148" fill="#b4a89e">☐ run VACUUM to clean old files</text>
+    </g>
+    <text x="160" y="182" text-anchor="middle" fill="#e8625c" font-family="Hanken Grotesk" font-size="11.5">Guess wrong → tiny files, skew, slow scans.</text>
+  </svg>`,
+
+  cluster: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12" font-weight="700">CLUSTER BY · one declaration</text>
+    <rect x="34" y="36" width="252" height="44" rx="8" fill="rgba(52,211,166,0.07)" stroke="#34d3a6" stroke-width="1.2"/>
+    <text x="48" y="56" fill="#f4f0ec" font-family="ui-monospace, monospace" font-size="11">CREATE TABLE sales</text>
+    <text x="48" y="72" fill="#34d3a6" font-family="ui-monospace, monospace" font-size="11">CLUSTER BY (region, day)</text>
+    <!-- data skipping illustration -->
+    <g>
+      <rect x="40" y="100" width="30" height="20" rx="3" fill="#34d3a6" opacity="0.85"/>
+      <rect x="76" y="100" width="30" height="20" rx="3" fill="#251e19" stroke="var(--line)"/>
+      <rect x="112" y="100" width="30" height="20" rx="3" fill="#34d3a6" opacity="0.85"/>
+      <rect x="148" y="100" width="30" height="20" rx="3" fill="#251e19" stroke="var(--line)"/>
+      <rect x="184" y="100" width="30" height="20" rx="3" fill="#251e19" stroke="var(--line)"/>
+      <rect x="220" y="100" width="30" height="20" rx="3" fill="#34d3a6" opacity="0.85"/>
+    </g>
+    <text x="40" y="146" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">Clusters co-locate related rows so queries</text>
+    <text x="40" y="162" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11"><tspan font-weight="700" fill="#34d3a6">skip</tspan> the files they don't need.</text>
+    <text x="40" y="186" fill="#756a60" font-family="Hanken Grotesk" font-size="10">Replaces partitioning + Z-ordering in one feature.</text>
+  </svg>`,
+
+  flex: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="12" font-weight="700">Change keys · no rewrite</text>
+    <!-- before -->
+    <text x="40" y="50" fill="#756a60" font-family="ui-monospace, monospace" font-size="11">CLUSTER BY (region)</text>
+    <text x="160" y="74" text-anchor="middle" fill="#4fa8e8" font-family="Hanken Grotesk" font-size="14">↓  ALTER TABLE …</text>
+    <text x="40" y="98" fill="#34d3a6" font-family="ui-monospace, monospace" font-size="11">CLUSTER BY (customer_id)</text>
+    <text x="40" y="128" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">New data uses the new keys instantly —</text>
+    <text x="40" y="144" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">no full table rewrite required.</text>
+    <rect x="40" y="158" width="240" height="26" rx="8" fill="rgba(79,168,232,0.08)" stroke="#4fa8e8" stroke-width="1.1"/>
+    <text x="160" y="175" text-anchor="middle" fill="#4fa8e8" font-family="ui-monospace, monospace" font-size="11">CLUSTER BY AUTO  → Databricks picks keys</text>
+  </svg>`,
+
+  predictive: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="12" font-weight="700">Predictive Optimization</text>
+    <!-- robot/auto running maintenance -->
+    <circle cx="160" cy="72" r="30" fill="rgba(52,211,166,0.1)" stroke="#34d3a6" stroke-width="1.6"/>
+    <text x="160" y="78" text-anchor="middle" fill="#34d3a6" font-family="Hanken Grotesk" font-size="22">⚙</text>
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700" fill="#b4a89e">
+      <rect x="20" y="116" width="84" height="24" rx="12" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1"/><text x="62" y="132" text-anchor="middle">OPTIMIZE</text>
+      <rect x="118" y="116" width="84" height="24" rx="12" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1"/><text x="160" y="132" text-anchor="middle">CLUSTERING</text>
+      <rect x="216" y="116" width="84" height="24" rx="12" fill="rgba(52,211,166,0.08)" stroke="#34d3a6" stroke-width="1"/><text x="258" y="132" text-anchor="middle">VACUUM</text>
+    </g>
+    <text x="160" y="168" text-anchor="middle" fill="#b4a89e" font-family="Hanken Grotesk" font-size="11">Databricks runs maintenance automatically on</text>
+    <text x="160" y="184" text-anchor="middle" fill="#756a60" font-family="Hanken Grotesk" font-size="10.5">Unity Catalog managed tables — no schedule to babysit.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fe6c0"/><stop offset="1" stop-color="#1f9e78"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#072018" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+  /* 0 - cover */
+  { glow: "radial-gradient(540px 320px at 50% 8%, rgba(52,211,166,0.10), transparent 70%)",
+    html: `
+    <div class="art reveal" style="min-height:210px">${A.cover}</div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 6 · Lesson 28</div>
+    <h1 class="reveal">Liquid Clustering<br>&amp; Predictive Opt.</h1>
+    <p class="lead reveal">How modern Delta tables organize themselves — <strong>no partition guessing, no manual OPTIMIZE schedule</strong>. Two minutes.</p>` },
+
+  /* 1 - why */
+  { glow: "radial-gradient(520px 320px at 50% 22%, rgba(224,144,58,0.09), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:#e0903a"></span>The pain it removes</div>
+    <h2 class="reveal">Tuning layout was a chore.</h2>
+    <div class="art reveal">${A.why}</div>
+    <p class="lead reveal">The classic recipe — <strong>partition by</strong> a column, <strong>Z-order</strong> for skipping, schedule <strong>OPTIMIZE</strong> and <strong>VACUUM</strong> — works, but it's manual and easy to get wrong. Pick a bad partition column and you get tiny files and skew.</p>` },
+
+  /* 2 - liquid clustering */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(52,211,166,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--flow)"><span style="background:var(--flow);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE FEATURE</div>
+    <h2 class="reveal" style="color:var(--flow)">Just CLUSTER BY.</h2>
+    <div class="art grow reveal">${A.cluster}</div>
+    <p class="lead reveal"><strong>Liquid Clustering</strong> replaces partitioning <em>and</em> Z-ordering. You declare <code>CLUSTER BY (cols)</code> and Delta co-locates related rows so queries skip irrelevant files — without rigid partition folders or the small-file problem.</p>` },
+
+  /* 3 - flexibility / AUTO */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(79,168,232,0.13), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--auto)"><span style="background:var(--auto);width:8px;height:8px;border-radius:50%;display:inline-block"></span>WHY IT'S "LIQUID"</div>
+    <h2 class="reveal" style="color:var(--auto)">Change keys anytime.</h2>
+    <div class="art reveal">${A.flex}</div>
+    <p class="lead reveal">Clustering keys aren't baked in. <code>ALTER TABLE … CLUSTER BY</code> changes them with <strong>no full rewrite</strong> — new data reorganizes on the fly. Use <code>CLUSTER BY AUTO</code> and Databricks <strong>picks the keys for you</strong> based on your query patterns.</p>` },
+
+  /* 4 - predictive optimization */
+  { glow: "radial-gradient(540px 340px at 50% 16%, rgba(52,211,166,0.14), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--flow)"><span style="background:var(--flow);width:8px;height:8px;border-radius:50%;display:inline-block"></span>THE AUTOPILOT</div>
+    <h2 class="reveal" style="color:var(--flow)">Maintenance runs itself.</h2>
+    <div class="art reveal">${A.predictive}</div>
+    <p class="lead reveal"><strong>Predictive Optimization</strong> automatically runs <strong>OPTIMIZE, clustering, and VACUUM</strong> on Unity Catalog managed tables — when and where it helps, paid only for the work done. You stop scheduling maintenance jobs and let Databricks decide.</p>` },
+
+  /* 5 - quiz 1 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:21px">A teammate wants better data skipping but keeps choosing bad <span style="color:var(--old)">partition columns</span>. What should they use instead?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>More PARTITION BY columns</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Liquid Clustering (CLUSTER BY)</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Smaller file sizes manually</button>
+    </div>
+    <div class="feedback"><b>Liquid Clustering.</b> <code>CLUSTER BY</code> replaces both partitioning and Z-ordering, avoids the small-file and skew traps of bad partition columns, and lets you change keys later without rewriting the table.</div>` },
+
+  /* 6 - quiz 2 */
+  { glow: "radial-gradient(540px 340px at 50% 20%, rgba(52,211,166,0.14), transparent 70%)", quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:21px">What does <span style="color:var(--flow)">Predictive Optimization</span> do for a Unity Catalog managed table?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Encrypts the table at rest</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Automatically runs OPTIMIZE / clustering / VACUUM when beneficial</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Forces you to schedule maintenance jobs</button>
+    </div>
+    <div class="feedback"><b>It automates maintenance.</b> Predictive Optimization decides when to run <code>OPTIMIZE</code>, clustering, and <code>VACUUM</code> on managed tables — removing the manual schedules you'd otherwise babysit.</div>` },
+
+  /* 7 - done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, rgba(52,211,166,0.16), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Self-organizing tables, in four ideas:</p>
+    <div class="pills reveal">
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--flow)" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg><p><b>CLUSTER BY</b>Replaces partitioning + Z-order; better data skipping</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--auto)" stroke-width="2"><path d="M12 3v6m0 6v6M5 12H3m18 0h-2M7 7L5 5m14 14-2-2" stroke-linecap="round"/></svg><p><b>Flexible keys</b>Change with ALTER TABLE — no rewrite; AUTO picks for you</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--flow)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3" stroke-linecap="round"/></svg><p><b>Predictive Optimization</b>Auto OPTIMIZE / clustering / VACUUM on managed tables</p></div>
+      <div class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><p><b>Net effect</b>Less manual tuning, fewer small files, faster scans</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ----------  ENGINE  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
