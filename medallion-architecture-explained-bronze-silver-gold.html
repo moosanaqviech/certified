@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medallion Architecture Explained: Bronze, Silver &amp; Gold Layers</title>
+<meta name="description" content="The medallion architecture organizes lakehouse data into three layers — Bronze (raw), Silver (cleaned and conformed), and Gold (business-ready aggregates). Here's what each layer does and why it matters.">
+<link rel="canonical" href="https://alreadycertified.netlify.app/medallion-architecture-explained-bronze-silver-gold">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Medallion Architecture Explained: Bronze, Silver & Gold Layers">
+<meta property="og:description" content="Bronze (raw), Silver (cleaned), Gold (business-ready) — the three-layer data design pattern of the lakehouse, explained simply.">
+<meta property="og:url" content="https://alreadycertified.netlify.app/medallion-architecture-explained-bronze-silver-gold">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;--bronze:#c98a5b;--silver:#c3c9d4;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.9em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  .flow{display:grid;gap:12px;margin:8px 0 6px;}
+  .layer{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;position:relative;border-left:4px solid var(--line);}
+  .layer.bronze{border-left-color:var(--bronze);}
+  .layer.silver{border-left-color:var(--silver);}
+  .layer.gold{border-left-color:var(--gold);}
+  .layer .tag{display:inline-block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;padding:4px 10px;border-radius:100px;margin-bottom:10px;}
+  .layer.bronze .tag{color:var(--bronze);background:rgba(201,138,91,0.14);}
+  .layer.silver .tag{color:var(--silver);background:rgba(195,201,212,0.13);}
+  .layer.gold .tag{color:var(--gold);background:rgba(227,184,74,0.14);}
+  .layer h3{font-family:var(--display);font-size:20px;font-weight:600;letter-spacing:-0.01em;margin-bottom:8px;}
+  .layer p{font-size:15.5px;margin-bottom:8px;}
+  .layer ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--ink-soft);}
+  .layer li{margin-bottom:4px;}
+  .arrow{text-align:center;color:var(--ink-faint);font-size:18px;line-height:1;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:6px 0 14px;}
+  .callout p{margin:0;font-size:15.5px;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="index.html">Already Certified</a><span>›</span>
+    <a href="databricks-data-engineer-associate-certification-guide.html">Certification Guide</a><span>›</span>
+    <span>Medallion Architecture</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Core Concept · Data Modeling</div>
+    <h1>Medallion Architecture Explained: Bronze, Silver &amp; Gold</h1>
+    <p class="lede">The <strong>medallion architecture</strong> is a data design pattern that organizes lakehouse data into three progressively refined layers: <strong>Bronze</strong> holds raw ingested data, <strong>Silver</strong> holds cleaned and conformed data, and <strong>Gold</strong> holds business-ready aggregates. Data flows Bronze → Silver → Gold, getting more valuable and trustworthy at each step.</p>
+    <p class="updated">Last updated July 2026.</p>
+  </header>
+
+  <section id="layers">
+    <h2>The three layers</h2>
+    <div class="flow">
+      <div class="layer bronze">
+        <span class="tag">Bronze · Raw</span>
+        <h3>Land the data exactly as it arrives</h3>
+        <p>Bronze is the raw landing zone. You ingest source data — files, streams, database change feeds — with as little transformation as possible, keeping a faithful, append-only history of what came in.</p>
+        <ul>
+          <li>Raw, as-is; nothing dropped</li>
+          <li>Adds ingestion metadata (source file, load timestamp)</li>
+          <li>Reprocessable — you can always rebuild Silver and Gold from it</li>
+        </ul>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="layer silver">
+        <span class="tag">Silver · Cleaned</span>
+        <h3>Clean, validate, and conform</h3>
+        <p>Silver takes Bronze and makes it trustworthy: correct data types, deduplication, null handling, quality checks, and joins that resolve entities into a consistent, queryable model.</p>
+        <ul>
+          <li>Typed, deduplicated, validated</li>
+          <li>Joined and conformed into clean entities</li>
+          <li>The "single source of truth" most analysts and pipelines read from</li>
+        </ul>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="layer gold">
+        <span class="tag">Gold · Business-ready</span>
+        <h3>Aggregate for the business</h3>
+        <p>Gold is purpose-built for consumption: aggregated metrics, dimensional models, and feature tables shaped for specific BI dashboards, reports, or ML use cases.</p>
+        <ul>
+          <li>Business-level aggregates and KPIs</li>
+          <li>Optimized for read performance</li>
+          <li>What dashboards, reports, and models actually query</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <h2>Why organize data this way?</h2>
+    <p>Splitting the pipeline into layers gives you separation of concerns. Each stage has one job, which makes the whole system easier to debug, test, and trust:</p>
+    <ul>
+      <li><strong>Reprocessability.</strong> Because Bronze keeps the raw history, you can rebuild everything downstream if logic changes or a bug slips through.</li>
+      <li><strong>Incremental refinement.</strong> Quality improves step by step, so a problem is easy to isolate to the layer that introduced it.</li>
+      <li><strong>Reuse.</strong> Many Gold tables can be built from one well-modeled Silver layer, instead of every consumer re-cleaning raw data.</li>
+      <li><strong>Clear contracts.</strong> Analysts know Silver is trustworthy and Gold is ready to report on, without touching messy raw data.</li>
+    </ul>
+  </section>
+
+  <section id="databricks">
+    <h2>Medallion architecture on Databricks</h2>
+    <p>On the Databricks lakehouse, each layer is typically a set of <strong>Delta Lake</strong> tables governed by Unity Catalog. Raw data lands in Bronze via <code>COPY INTO</code> or Auto Loader; declarative pipelines and Spark SQL/PySpark transform Bronze into Silver and Silver into Gold, with expectations enforcing data quality along the way. Because every layer is a Delta table, you get ACID transactions, time travel, and schema enforcement at each step.</p>
+    <div class="callout"><p><strong>Exam tip:</strong> Watch for questions that describe a table's <em>role</em> rather than naming it. "Raw as-landed" = Bronze, "validated and conformed" = Silver, "business-level aggregates" = Gold. Recognizing the role is often the whole question.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>Is the medallion architecture required on Databricks?</summary><div class="fa"><p>No — it's a recommended pattern, not a hard rule. It's widely adopted because it makes pipelines easier to reason about, but you can use fewer or more layers depending on your needs.</p></div></details>
+      <details><summary>What's the difference between Bronze and raw data?</summary><div class="fa"><p>They're essentially the same idea. "Bronze" is the medallion term for the raw landing layer — data ingested as-is, usually with a little ingestion metadata added, before any cleaning.</p></div></details>
+      <details><summary>Can I have more than three layers?</summary><div class="fa"><p>Yes. Bronze/Silver/Gold is the standard three, but teams sometimes add sub-layers (for example, a raw vs. cleansed split within Silver). The principle — progressive refinement — matters more than the exact count.</p></div></details>
+      <details><summary>Which layer do BI tools and dashboards read from?</summary><div class="fa"><p>Usually Gold, because it holds the business-ready aggregates shaped for reporting. Some ad-hoc analysis reads from Silver, which is clean and conformed but not yet aggregated.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Go deeper in the course</h2>
+    <p>The Bronze → Silver → Gold flow is one of the most-tested ideas on the exam. Work through it hands-on in the transformation chapters.</p>
+    <a href="medallion-lesson.html" class="cta">Open the Medallion chapter →</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-data-engineer-associate-certification-guide.html">The complete Databricks DE Associate certification guide →</a>
+    <a href="lakeflow-declarative-pipelines-vs-delta-live-tables.html">Lakeflow Declarative Pipelines vs Delta Live Tables →</a>
+    <a href="lesson-16-gold-layer-objects.html">Gold-layer objects: views, MVs &amp; streaming tables →</a>
+  </nav>
+
+  <footer>
+    Built as a learning project · lessons authored from the public Databricks exam guide.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Medallion Architecture Explained: Bronze, Silver & Gold","description":"The medallion architecture organizes lakehouse data into three layers — Bronze (raw), Silver (cleaned and conformed), and Gold (business-ready aggregates).","author":{"@type":"Organization","name":"Already Certified"},"publisher":{"@type":"Organization","name":"Already Certified","url":"https://alreadycertified.netlify.app/"},"datePublished":"2026-07-06","dateModified":"2026-07-06","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://alreadycertified.netlify.app/medallion-architecture-explained-bronze-silver-gold"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is the medallion architecture required on Databricks?","acceptedAnswer":{"@type":"Answer","text":"No — it is a recommended pattern, not a hard rule. It is widely adopted because it makes pipelines easier to reason about, but you can use fewer or more layers depending on your needs."}},
+{"@type":"Question","name":"What is the difference between Bronze and raw data?","acceptedAnswer":{"@type":"Answer","text":"They are essentially the same idea. Bronze is the medallion term for the raw landing layer — data ingested as-is, usually with a little ingestion metadata added, before any cleaning."}},
+{"@type":"Question","name":"Can a medallion architecture have more than three layers?","acceptedAnswer":{"@type":"Answer","text":"Yes. Bronze/Silver/Gold is the standard three, but teams sometimes add sub-layers. The principle of progressive refinement matters more than the exact count."}},
+{"@type":"Question","name":"Which layer do BI tools and dashboards read from?","acceptedAnswer":{"@type":"Answer","text":"Usually Gold, because it holds the business-ready aggregates shaped for reporting. Some ad-hoc analysis reads from Silver, which is clean and conformed but not yet aggregated."}}
+]}
+</script>
+
+</body>
+</html>
