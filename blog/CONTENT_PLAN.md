@@ -46,7 +46,7 @@ root, so filenames here point to those root-level pages.
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | What's new on the Databricks Data Engineer Professional exam vs Associate | "databricks professional exam difficulty" | No | |
+| 1 | What's new on the Databricks Data Engineer Professional exam vs Associate | "databricks professional exam difficulty" | Yes | databricks-data-engineer-professional-exam-topics.html |
 | 2 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | No | |
 | 3 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | No | |
 
