@@ -1,0 +1,81 @@
+name: Daily Blog Post Draft
+
+on:
+  schedule:
+    # 13:00 UTC = 9:00 AM Toronto during EDT, 8:00 AM during EST.
+    # Adjust the hour if you want a different local time.
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}  # lets you trigger it manually from the Actions tab to test
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  draft-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run Claude Code to draft the next blog post
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--model claude-sonnet-4-6 --max-turns 25"
+          prompt: |
+            You are working in the Certified exam-prep platform repo
+            (the static site published at alreadycertified.netlify.app).
+
+            Read blog/CONTENT_PLAN.md and blog/BLOG_STYLE_GUIDE.md in full
+            before doing anything else.
+
+            Step 1: Establish what is already published. Published posts
+            are hand-built .html files at the repository ROOT (for
+            example databricks-data-engineer-associate-vs-professional.html),
+            not inside blog/. The blog/ folder is a staging area that
+            holds these config files plus any markdown drafts not yet
+            converted to the site's HTML template. Treat the "Published"
+            column in blog/CONTENT_PLAN.md as the source of truth, and
+            confirm it against the root-level .html posts and any existing
+            blog/*.md drafts. For each existing post, note its title and
+            which topic/certification it covers.
+
+            Step 2: Compare that against the "Target topics" tables in
+            CONTENT_PLAN.md. Identify every target topic that does NOT yet
+            have a matching published post (Published = No and no existing
+            draft). If everything in the current tables is covered, say so
+            in the PR description and stop without writing a post.
+
+            Step 3: From the uncovered topics, pick exactly ONE, using the
+            priority order defined in CONTENT_PLAN.md (highest priority
+            uncovered topic wins; on ties, prefer the certification with
+            fewer existing posts).
+
+            Step 4: Write that one post following BLOG_STYLE_GUIDE.md
+            exactly (structure, tone, length, sourcing rules, em-dash
+            prohibition, terminology rules). Every factual claim about a
+            certification, exam format, or product behavior must trace to
+            official vendor documentation or the official exam guide, the
+            same sourcing standard used for lessons. Do not invent stats,
+            pass rates, or question counts, if you are not certain, phrase
+            the sentence to avoid the unverified specific.
+
+            Step 5: Save the post as blog/<slug>.md using the slug and
+            frontmatter format shown in BLOG_STYLE_GUIDE.md. This markdown
+            file is a draft in the staging area: a human converts it into
+            the site's root-level .html template (and adds it to
+            sitemap.xml) before it goes live. Do not attempt to publish
+            HTML or edit sitemap.xml yourself.
+
+            Step 6: Update the "Published" column in CONTENT_PLAN.md for
+            that topic, and record the draft filename in the Filename
+            column.
+
+            Step 7: Open a pull request (do not push to main directly). PR
+            title: "Blog: <post title>". PR description: the topic chosen,
+            why it was next in priority, and a one-line summary of what the
+            post covers. Do NOT auto-merge.
+
+            If CONTENT_PLAN.md or BLOG_STYLE_GUIDE.md is missing, stop and
+            open an issue instead of guessing at structure or sourcing rules.
