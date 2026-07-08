@@ -56,14 +56,84 @@ title: "Exact page title, matches the target search intent"
 slug: "url-friendly-slug"
 description: "150-160 character meta description, intent-matched, no keyword stuffing"
 certification: "databricks-data-engineer-associate" | "databricks-data-engineer-professional" | "aws-dea-c01"
-date: "YYYY-MM-DD"
-author: "Moosa"
+date: "YYYY-MM-DD"            # datePublished
+updated: "YYYY-MM-DD"         # optional, dateModified; defaults to date if omitted
+author: "Moosa"              # visible byline only (see note in SEO section)
+canonical: "https://alreadycertified.netlify.app/<slug>"
+og_image: ""                 # optional; current posts set none, leave empty to match
+faq:                          # optional; include only if the post has an FAQ section
+  - q: "Question phrased the way a reader would search it?"
+    a: "Answer in plain sentences, no markdown, no em dashes."
+  - q: "Second question?"
+    a: "Second answer."
 ---
 ```
 
-The `slug` becomes both the draft filename (`blog/<slug>.md`) and the
-published page's clean URL (`/<slug>`), so it must be unique against the
-posts already listed in CONTENT_PLAN.md.
+The `slug` becomes the draft filename (`blog/<slug>.md`), the published
+page's clean URL (`/<slug>`), and the `canonical` value, so it must be
+unique against the posts already listed in CONTENT_PLAN.md. The `faq` block
+is the single source for both the visible FAQ section in the body and the
+`FAQPage` JSON-LD, so write each question and answer once here and reuse it
+in both places.
+
+## SEO and structured data
+
+The six existing cluster posts all ship a fixed set of SEO tags and two
+JSON-LD blocks. New posts must match that standard, so the frontmatter above
+carries everything needed to generate it, and the `.md` to root `.html`
+conversion must emit all of the following. Base URL:
+`https://alreadycertified.netlify.app`.
+
+**Required `<head>` elements (mirror the existing posts exactly):**
+
+1. `<title>` = `title`.
+2. `<meta name="description">` = `description`.
+3. `<link rel="canonical">` = `canonical` (i.e. base URL + `/<slug>`).
+4. `<meta name="robots" content="index,follow,max-image-preview:large">`.
+5. OpenGraph: `og:type=article`, `og:title` = title, `og:description`
+   (may match the meta description or the OG-specific one), `og:url` =
+   canonical, `og:site_name=Already Certified`. Add `og:image` only if
+   `og_image` is set; current posts omit it.
+6. `<meta name="twitter:card" content="summary_large_image">`.
+
+**JSON-LD `Article`** (one script block, matching the existing shape):
+
+```
+{"@context":"https://schema.org","@type":"Article",
+ "headline": <title>,
+ "description": <description>,
+ "author":{"@type":"Organization","name":"Already Certified"},
+ "publisher":{"@type":"Organization","name":"Already Certified","url":"https://alreadycertified.netlify.app/"},
+ "datePublished": <date>,
+ "dateModified": <updated or date>,
+ "inLanguage":"en",
+ "mainEntityOfPage":{"@type":"WebPage","@id": <canonical>}}
+```
+
+Note: the JSON-LD `author` and `publisher` are the Organization
+"Already Certified," not "Moosa." The `author` frontmatter field is only the
+human-visible byline. This matches every existing post, do not change it.
+
+**JSON-LD `FAQPage`** (second script block, only when `faq` is present):
+
+```
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+ {"@type":"Question","name": <faq[i].q>,
+  "acceptedAnswer":{"@type":"Answer","text": <faq[i].a>}},
+ ...
+]}
+```
+
+The questions and answers in this block must be identical to the visible
+FAQ section rendered from the same `faq` frontmatter. If the post has no
+FAQ, omit this block entirely rather than emitting an empty one.
+
+**Sitemap:** add a `<url>` entry to `sitemap.xml` with `loc` = canonical,
+`lastmod` = `updated` (or `date`), and `priority` `0.9` (the value the other
+cluster posts use; lessons use `0.6`).
+
+The no-em-dash rule applies here too: titles, descriptions, OG tags, and
+every JSON-LD string must use colons, commas, parentheses, or periods.
 
 ## Sourcing rules (same standard as lesson content)
 
