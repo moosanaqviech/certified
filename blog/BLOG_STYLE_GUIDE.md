@@ -6,14 +6,15 @@ like generic SEO filler.
 
 ## Where posts live
 
-Published posts on this site are hand-built `.html` pages at the repository
-root (for example `databricks-data-engineer-associate-vs-professional.html`),
-served at clean URLs like `/databricks-data-engineer-associate-vs-professional`.
-The automation does not write that HTML directly. It writes a markdown draft
-into `blog/<slug>.md`, which a human then converts into the site's root-level
-HTML template and adds to `sitemap.xml` before it goes live. So `blog/` is a
-staging area: the markdown here is the raw draft, the root `.html` file is the
-published page.
+Published posts on this site are `.html` pages at the repository root (for
+example `databricks-data-engineer-associate-vs-professional.html`), served at
+clean URLs like `/databricks-data-engineer-associate-vs-professional`. The
+automation writes that HTML directly: it copies `blog/POST_TEMPLATE.html` to
+`<slug>.html` at the repo root, fills in every placeholder (content plus all
+SEO tags and JSON-LD), and adds the page to `sitemap.xml`. The output is a
+finished, publish-ready page, not a draft. The `blog/` folder holds only the
+config files (this guide, `CONTENT_PLAN.md`) and `POST_TEMPLATE.html`; it does
+not contain published posts.
 
 ## Voice
 
@@ -29,7 +30,8 @@ the relevant course), never bolted on as an ad.
 
 ## Structure
 
-1. **Frontmatter** (see format below).
+1. **Post metadata** (see format below): the values that fill the template's
+   head, SEO tags, and JSON-LD.
 2. **Opening (2-4 sentences):** state the question the post answers or the
    confusion it clears up. No throat-clearing.
 3. **Body:** organized under H2/H3 headings that mirror how someone would
@@ -48,41 +50,39 @@ the relevant course), never bolted on as an ad.
 a full guide (e.g., a complete exam-domain breakdown). Never pad to hit a
 word count, a tight 650-word post beats a bloated 1,200-word one.
 
-## Frontmatter format
+## Post metadata
+
+Decide these values before writing; they map into the template's `<head>`,
+SEO tags, and JSON-LD. This is not a YAML block in the output file (the
+output is HTML), it is the set of fields the template placeholders consume.
 
 ```
----
-title: "Exact page title, matches the target search intent"
-slug: "url-friendly-slug"
-description: "150-160 character meta description, intent-matched, no keyword stuffing"
-certification: "databricks-data-engineer-associate" | "databricks-data-engineer-professional" | "aws-dea-c01"
-date: "YYYY-MM-DD"            # datePublished
-updated: "YYYY-MM-DD"         # optional, dateModified; defaults to date if omitted
-author: "Moosa"              # visible byline only (see note in SEO section)
-canonical: "https://alreadycertified.netlify.app/<slug>"
-og_image: ""                 # optional; current posts set none, leave empty to match
-faq:                          # optional; include only if the post has an FAQ section
-  - q: "Question phrased the way a reader would search it?"
-    a: "Answer in plain sentences, no markdown, no em dashes."
-  - q: "Second question?"
-    a: "Second answer."
----
+title:        Exact page title, matches the target search intent
+slug:         url-friendly-slug
+description:  150-160 character meta description, intent-matched, no keyword stuffing
+certification: databricks-data-engineer-associate | databricks-data-engineer-professional | aws-dea-c01
+date:         YYYY-MM-DD            (datePublished)
+updated:      YYYY-MM-DD            (optional, dateModified; defaults to date)
+author:       Moosa                 (visible byline only, see note in SEO section)
+canonical:    https://alreadycertified.netlify.app/<slug>
+og_image:     (optional; current posts set none, leave unset to match)
+faq:          (optional; a list of question/answer pairs, only if the post has an FAQ)
 ```
 
-The `slug` becomes the draft filename (`blog/<slug>.md`), the published
-page's clean URL (`/<slug>`), and the `canonical` value, so it must be
-unique against the posts already listed in CONTENT_PLAN.md. The `faq` block
-is the single source for both the visible FAQ section in the body and the
-`FAQPage` JSON-LD, so write each question and answer once here and reuse it
-in both places.
+The `slug` is the output filename (`<slug>.html` at the repo root), the
+published page's clean URL (`/<slug>`), and the `canonical` value, so it must
+be unique against the posts already listed in CONTENT_PLAN.md. The `faq`
+list is the single source for both the visible FAQ section and the
+`FAQPage` JSON-LD, so write each question and answer once and use it in both
+places.
 
 ## SEO and structured data
 
 The six existing cluster posts all ship a fixed set of SEO tags and two
-JSON-LD blocks. New posts must match that standard, so the frontmatter above
-carries everything needed to generate it, and the `.md` to root `.html`
-conversion must emit all of the following. Base URL:
-`https://alreadycertified.netlify.app`.
+JSON-LD blocks. `blog/POST_TEMPLATE.html` already contains this scaffolding,
+so filling the template correctly produces it. New posts must match that
+standard, so the generated `<slug>.html` must include all of the following.
+Base URL: `https://alreadycertified.netlify.app`.
 
 **Required `<head>` elements (mirror the existing posts exactly):**
 
@@ -132,6 +132,11 @@ FAQ, omit this block entirely rather than emitting an empty one.
 `lastmod` = `updated` (or `date`), and `priority` `0.9` (the value the other
 cluster posts use; lessons use `0.6`).
 
+**No leftover placeholders:** the finished `<slug>.html` must contain no
+`{{PLACEHOLDER}}` tokens and none of the template's instructional HTML
+comments. Delete any body component (comparison table, FAQ, pick cards) the
+post does not use.
+
 The no-em-dash rule applies here too: titles, descriptions, OG tags, and
 every JSON-LD string must use colons, commas, parentheses, or periods.
 
@@ -167,14 +172,14 @@ every JSON-LD string must use colons, commas, parentheses, or periods.
 ## Hard formatting rules
 
 - **No em dashes anywhere.** Use colons, commas, parentheses, or periods
-  instead. This applies to headings, body text, and frontmatter.
+  instead. This applies to headings, body text, metadata, and JSON-LD.
 - No exclamation points in headings.
 - No unverified superlatives ("the best," "the only") about Certified or
   competitors.
-- Internal links point to other posts/pages in this repo by their clean
-  path (e.g., `/lesson-01-lakehouse` or the target post's slug), not full
-  URLs. Remember published pages live at the repo root, so a link from a
-  draft is to the root-level page, not to another file inside `blog/`.
+- Internal links point to other posts/pages in this repo by their relative
+  file path (e.g., `lesson-01-lakehouse.html` or another post's
+  `<slug>.html`), matching how the existing posts link, not full URLs. All
+  posts and lessons live at the repo root, so links are plain filenames.
 
 ## What NOT to do
 

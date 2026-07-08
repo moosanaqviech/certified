@@ -5,18 +5,18 @@ anything. It answers two questions: what's already published, and what's
 next.
 
 **Setup state:** the "Published" column below has been reconciled against the
-actual site. Published posts are the hand-built `.html` pages at the
-repository root; the Filename column records the published page for each
-covered topic. The automation keeps this column updated after each run.
+actual site. Published posts are the `.html` pages at the repository root;
+the Filename column records the published page for each covered topic. The
+automation keeps this column updated after each run.
 
 ## How the automation uses this file
 
 1. Reads the target topic list below.
-2. Cross-checks against what's actually published (root-level `.html` posts)
-   and any markdown drafts in `blog/`.
+2. Cross-checks against what's actually published (root-level `.html` posts).
 3. Picks the highest-priority row where Published = No.
-4. Writes that post as a `blog/<slug>.md` draft, then flips Published to Yes
-   and fills in the filename.
+4. Writes that post as a publish-ready `<slug>.html` at the repo root (from
+   `blog/POST_TEMPLATE.html`), adds it to `sitemap.xml`, then flips Published
+   to Yes and fills in the filename.
 
 Priority order is top-to-bottom within each certification block. Between
 certifications, prefer whichever certification currently has fewer published
@@ -24,8 +24,7 @@ posts (keeps coverage balanced rather than exhausting one cert's list
 first).
 
 Note on the Filename column: published posts are `.html` files at the repo
-root (a human converts each markdown draft into the site's HTML template
-before it goes live), so filenames here point to those root-level pages.
+root, so filenames here point to those root-level pages.
 
 ---
 
