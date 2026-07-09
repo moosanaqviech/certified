@@ -1,0 +1,248 @@
+---
+name: certified-content-author
+description: "Author lessons, practice exams, and curriculum indexes for the Certified exam-prep platform (frozen-engine HTML lessons and timed exams). Use this skill whenever the user asks to create or revise a lesson, quiz card, practice exam, exam payload, curriculum index, or to onboard a NEW certification (any vendor: Databricks, AWS, Azure, GCP, Snowflake, Kubernetes, etc.) onto the Certified engine. Also trigger for palette selection, terminology rules, sourcing or researching content material for a chapter (which vendor docs to fetch, what sources are allowed), validation of lesson/exam files, or anything mentioning lesson-template.html, test-template.html, payload injection, or Learn, Recall, Reason."
+---
+
+# Certified Content Author
+
+Certified is a mobile-first static site of interactive lessons and timed practice
+exams (Netlify, standalone HTML files, no build step). Its pedagogy is a
+"Learn, Recall, Reason" loop: one concept per card, a per-lesson quiz for recall,
+cross-unit practice exams for reasoning. Its competitive position is legitimacy
+(no braindumps), freshness, and pedagogical design, never raw question volume.
+
+This skill covers three jobs:
+
+1. **Onboarding a new certification** (curriculum index + cert config)
+2. **Authoring lessons** (payload-only, frozen engine)
+3. **Authoring practice exams** (payload-only, frozen engine)
+
+Repo reference files (read before authoring, do not duplicate their content
+from memory):
+
+- `CLAUDE.md`: architecture and hard rules (repo root)
+- `lesson-template.html` + `lesson-authoring-guide.md`: lesson engine and card spec
+- `test-template.html` + `test-authoring-guide.md`: exam engine and question spec
+- `curriculum-index-<cert>.md`: authoritative chapter/unit placement per cert
+- `cert-config-<cert>.md`: per-certification settings (see below)
+- `scripts/validate.py`: run on every generated file before presenting it
+
+## The frozen-engine rule (applies to every certification)
+
+Lessons and exams are copies of a template where ONLY the payload zone changes.
+
+- **Lessons**: touch exactly two zones. (1) The 5 palette vars in `:root`
+  (`--bg`, `--bg-tint`, `--accent`, `--accent-glow` at ~0.12 alpha,
+  `--accent-ink`, plus extra named colors only if SVGs reference them), and
+  (2) the payload between `LESSON PAYLOAD - BEGIN / END` markers: the `A`
+  SVG object and the `cards` array. Also set `<title>`.
+- **Exams**: replace only the payload between `EXAM PAYLOAD - BEGIN / END`
+  markers: the `E` config object and the `QUESTIONS` array. Exams always keep
+  the gold palette; gold is the exam identity color across the whole product,
+  for every certification.
+- NEVER edit anything below the `ENGINE` marker. Never edit the exam
+  template's `<style>` block. Never regenerate a full shell; deliver payloads
+  and targeted drop-in blocks.
+
+## Job 1: Onboarding a new certification
+
+When the user wants to add a certification (e.g., "let's start the AWS Data
+Engineer Associate course"), produce two markdown files before any lesson.
+
+### Step 1: Fetch the official exam guide
+
+Fetch the vendor's official exam guide page or PDF. Practical notes:
+
+- Vendor pages are navigation-heavy; use a high token limit (~30,000) so the
+  fetch reaches past the chrome to the actual outline.
+- For PDFs, extract text rather than raw bytes.
+- Record the exam guide version/date. The curriculum mirrors THAT document,
+  not blog posts or third-party outlines.
+
+### Step 2: Draft `curriculum-index-<cert-slug>.md`
+
+Mirror the official guide's domains as units. Rules:
+
+- Continuous chapter numbering across the whole course (never per-unit resets).
+- One concept per chapter. Split any exam-guide bullet that bundles two
+  decisions into separate chapters.
+- Flag trade-off chapters with `TO` (they follow the fixed trade-off lesson
+  pattern later).
+- Each entry: chapter number, title, unit, eyebrow label, and a one-line scope
+  note tying it to the exam guide section it covers.
+- Get the user to confirm and LOCK the index. After locking, the index is the
+  authoritative source: if a later request conflicts with it, flag the
+  conflict and propose a one-line fix instead of silently complying.
+
+### Step 3: Draft `cert-config-<cert-slug>.md`
+
+This file holds everything cert-specific so the engine rules stay generic.
+Sections:
+
+- **Identity**: badge text (e.g., `"AWS Data Engineer Associate"`), standard
+  blurb line, exam guide version and date, official pass threshold percent,
+  minutes-per-question pace (default 2 unless the real exam differs).
+- **File naming**: lesson prefix (`lesson-NN-name.html`, numbering from the
+  locked index) and exam prefix. Convention: the first course keeps
+  `practice-exam-NN.html`; every later course gets a short slug prefix
+  (Databricks Professional uses `pro-practice-exam-NN.html`; follow the same
+  pattern, e.g. `aws-dea-practice-exam-NN.html`).
+- **Terminology rules**: current official product names and the deprecated
+  names that must NEVER appear. Model this on the Databricks Professional
+  rule ("Lakeflow Spark Declarative Pipelines", never "Delta Live Tables" or
+  "DLT"). Check the vendor's latest naming at onboarding time; vendors rename
+  constantly and stale names undermine the freshness advantage.
+- **Recommended-vs-contrast stances**: where the vendor now recommends one
+  approach, teach it as the recommendation and present the older approach only
+  as a contrast case (the Liquid Clustering vs partitioning/Z-Order pattern).
+- **Palette registry**: a table assigning an accent color to each unit or
+  major concept domain. Colors are semantic (the color should evoke the
+  concept) and MUST NOT collide with palettes already used elsewhere in the
+  product. Before assigning, list the accents already claimed by existing
+  courses and check neighbors. Reserve gold for exams.
+
+## Where content material comes from (source rules)
+
+Every fact in a lesson card or exam question must trace to a public, official
+source. This is the legitimacy guarantee: Certified is not a braindump.
+
+### Source hierarchy (use in this order)
+
+1. **Official vendor documentation** for the product/feature the chapter
+   covers (e.g., docs.databricks.com, docs.aws.amazon.com). This is the
+   primary source for how things actually behave: syntax, defaults, limits,
+   failure modes. Distractors come from here too: real behavior applied to
+   the wrong situation.
+2. **The official exam guide** (already fetched at onboarding). It defines
+   scope and weighting; a chapter never teaches beyond what its exam guide
+   section implies.
+3. **Vendor release notes, official blogs, and best-practice guides**: the
+   freshness source. Use these to confirm current product names, current
+   recommendations, and anything renamed or deprecated since the docs page
+   was last read. Check these whenever a chapter touches a fast-moving
+   feature.
+4. **Official free training or reference architectures** from the vendor:
+   useful for how the vendor frames a concept and for realistic scenario
+   framing, not for copying wording.
+
+### Per-chapter research routine
+
+Before writing a chapter's payload, fetch the 1 to 3 official doc pages that
+cover its concept. Practical fetch notes: vendor doc pages are
+navigation-heavy, so use a high token limit (~30,000); for PDFs, extract
+text. Pull out: the current official name, the recommended approach, the
+key defaults and limits, and one or two concrete failure symptoms (these
+become quiz scenarios and exam distractors). Note the page URLs in the chat
+or commit message so a claim can be re-verified later.
+
+### Forbidden sources
+
+- Exam dumps, braindump sites, "real exam questions" collections, or any
+  leaked exam content. Never fetch them, never paraphrase them, never use
+  them to check coverage.
+- Third-party question banks as material (SkillCertPro and similar). They
+  may be looked at only for competitive analysis, never as content input.
+- Unofficial blogs or forum posts as the sole source for a factual claim.
+  They can inspire a scenario, but the underlying fact must be confirmed
+  against official docs before it goes in a card or question.
+- Anything Claude "remembers" about a versioned product without checking.
+  Training data goes stale; if a claim involves a name, default, limit, or
+  recommendation that could have changed, verify against current docs first.
+
+## Job 2: Authoring a lesson
+
+1. Read the locked curriculum index entry: unit, chapter number, title,
+   eyebrow. Conflicts get flagged, not absorbed.
+2. Read `lesson-authoring-guide.md` for card shapes and helper classes
+   (`.eyebrow`, `.reveal`, `.pills`, `.choices`, `.feedback`, `.codeblock`,
+   `.art`, etc.). Do not invent classes; the engine only styles what exists.
+3. Pick the palette from the cert config registry; state which neighboring
+   lessons were checked for collisions and why this accent fits the concept.
+4. Deliver ONLY the payload: the `A` object and the `cards` array (plus the
+   5 palette var values and the `<title>` string). In Claude Code, copy the
+   template, inject, and save as `lesson-NN-name.html`; in chat, hand the
+   payload as a single paste-ready block.
+5. Card count: 8 to 12 cards, target 9. Going to 11 or 12 is fine when one
+   concept genuinely needs it (multi-stage workflows, trade-off lessons with
+   3+ options); lessons of 11+ cards must carry a second quiz card so recall
+   density stays at roughly one quiz per 4 to 5 content cards. If a topic
+   wants more than 12 cards, that is a signal the chapter bundles two
+   concepts: propose splitting it (one-line curriculum index fix) instead of
+   compressing or bloating. Flag it if trimming below 8.
+6. Include at least one quiz card mid-lesson and end with a `last: true` card.
+7. Wire the file into `index.html` (quicklink + card href) when working in
+   the repo.
+
+### Trade-off lessons (chapters flagged TO)
+
+Fixed structure, in order: shared-ground card, one card per option, a
+side-by-side comparison table card, a decision-signal card ("this signal
+picks that option"), then TWO quiz cards testing opposite directions (one
+scenario where option A wins, one where option B wins).
+
+## Job 3: Authoring a practice exam
+
+1. Read `test-authoring-guide.md` for the `E` config and question object shape.
+2. State the coverage plan first: which units/chapters, how many questions.
+   Default: one question per chapter in scope, in chapter order, each with a
+   `/* Ch NN - name */` comment header.
+3. `E` config values come from the cert config: badge, blurb, pass percent,
+   `minutes` = questions x pace.
+4. Question rules (non-negotiable):
+   - Scenario-based, single best answer, exactly 4 options. Open with a
+     concrete situation, never bare definition recall.
+   - Distractors are plausible: true statements applied to the wrong
+     situation, common misconceptions, right tool for a different signal.
+     No joke options.
+   - `explain` does two jobs in 2 to 4 sentences: why the correct answer is
+     right AND why the most tempting distractor is wrong.
+   - Correct letters spread roughly evenly across A/B/C/D, never three
+     identical letters in a row.
+   - Strongest questions combine two chapters where natural.
+   - Trade-off chapters get a "which signal picks which option" question.
+5. Backtick template literals for `q` and `explain`; no raw backticks or
+   `${` inside the text.
+6. Deliver only the payload (`E` + `QUESTIONS`). Full-length mocks (45
+   questions) follow the same rules with coverage spread across all units.
+
+## Hard content rules (every certification, every file)
+
+- NO em dashes anywhere: content, options, explanations, commit messages,
+  config files. Use colons, commas, parentheses, or periods.
+- SVG art: static string literals only, no nested template interpolation
+  (backtick parity failures). viewBox around `0 0 320 200`. Stroke/fill via
+  palette vars so art recolors with the theme.
+- Quiz cards: exactly one `data-correct="true"` per card plus a `.feedback`
+  block. Lessons of 11+ cards need at least two quiz cards.
+- Terminology: only the current official names from the cert config. If
+  unsure whether a product was renamed, check before writing.
+- No braindump content ever: every question is original and scenario-based.
+  Anchor to publicly documented behavior, never to leaked exam items.
+
+## Validation before presenting anything
+
+Run `python scripts/validate.py <file>` when in the repo. When delivering a
+payload in chat, run the equivalent checks manually:
+
+- Node.js syntax check on the payload (wrap in a scratch file if needed)
+- Backtick parity
+- Em-dash scan scoped to the payload zone (the zone markers themselves use
+  em dashes; the scan pattern accepts both em dashes and hyphens in marker
+  detection but flags em dashes only inside the payload)
+- Quiz wiring: `data-correct` present exactly once per quiz card, `.feedback`
+  present, final card has `last: true`
+- Exam letter distribution: balanced A/B/C/D, no three-in-a-row
+- Card or question count matches the stated plan
+
+Fix everything the checks report BEFORE presenting the result. Never present
+and then ask the user to run validation.
+
+## Working style
+
+- Fresh chat (or fresh context) per lesson or exam; the template plus the
+  guides are the only references needed, never prior finished files.
+- Revisions are targeted: single card, single question, single value.
+  Drop-in replacement blocks, never full-file rewrites.
+- `str_replace`-style direct edits beat regex-in-heredoc for targeted changes.
+- If a request is ambiguous about chapter placement, palette, or scope, check
+  the index and config first; ask only if they genuinely do not answer it.
