@@ -54,7 +54,7 @@ root, so filenames here point to those root-level pages.
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | AWS Data Engineer Associate (DEA-C01) exam guide breakdown: domains and weighting | "DEA-C01 exam domains" | No | |
+| 1 | AWS Data Engineer Associate (DEA-C01) exam guide breakdown: domains and weighting | "DEA-C01 exam domains" | Yes | aws-dea-c01-exam-guide-domains-weighting.html |
 | 2 | Amazon Data Firehose and Managed Service for Apache Flink: the renames AWS made | "kinesis firehose renamed" / "kinesis data analytics renamed" | No | |
 | 3 | Kinesis Data Streams vs Amazon Data Firehose vs Managed Flink: which to use when | "kinesis vs firehose vs flink" | No | |
 | 4 | AWS Schema Conversion Tool (SCT): current status and what replaced it | "is aws sct deprecated" | No | |
