@@ -1,0 +1,90 @@
+name: Daily Blog Post
+
+on:
+  schedule:
+    # 13:00 UTC = 9:00 AM Toronto during EDT, 8:00 AM during EST.
+    # Adjust the hour if you want a different local time.
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}  # lets you trigger it manually from the Actions tab to test
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write  # required by claude-code-action to fetch its OIDC token
+
+jobs:
+  draft-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run Claude Code to write the next blog post
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--model claude-sonnet-4-6 --max-turns 25 --allowedTools Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash"
+          prompt: |
+            You are working in the Certified exam-prep platform repo
+            (the static site published at alreadycertified.netlify.app).
+
+            Read blog/CONTENT_PLAN.md and blog/BLOG_STYLE_GUIDE.md in full
+            before doing anything else.
+
+            Step 1: Establish what is already published. Published posts
+            are hand-built .html files at the repository ROOT (for
+            example databricks-data-engineer-associate-vs-professional.html).
+            The blog/ folder holds the config files and the HTML post
+            template (blog/POST_TEMPLATE.html), not published posts. Treat
+            the "Published" column in blog/CONTENT_PLAN.md as the source of
+            truth, and confirm it against the root-level .html posts. For
+            each existing post, note its title and which topic/certification
+            it covers.
+
+            Step 2: Compare that against the "Target topics" tables in
+            CONTENT_PLAN.md. Identify every target topic that does NOT yet
+            have a matching published post (Published = No). If everything
+            in the current tables is covered, say so in the PR description
+            and stop without writing a post.
+
+            Step 3: From the uncovered topics, pick exactly ONE, using the
+            priority order defined in CONTENT_PLAN.md (highest priority
+            uncovered topic wins; on ties, prefer the certification with
+            fewer existing posts).
+
+            Step 4: Write that one post following BLOG_STYLE_GUIDE.md
+            exactly (structure, tone, length, sourcing rules, em-dash
+            prohibition, terminology rules). Every factual claim about a
+            certification, exam format, or product behavior must trace to
+            official vendor documentation or the official exam guide, the
+            same sourcing standard used for lessons. Do not invent stats,
+            pass rates, or question counts, if you are not certain, phrase
+            the sentence to avoid the unverified specific.
+
+            Step 5: Produce a publish-ready HTML page, not markdown. Copy
+            blog/POST_TEMPLATE.html to <slug>.html at the repository ROOT
+            (using the slug from BLOG_STYLE_GUIDE.md) and fill in every
+            placeholder. Keep the <head>, CSS, footer, and JSON-LD
+            scaffolding from the template byte-for-byte so the post matches
+            the existing six. Bake in all SEO tags (canonical, robots,
+            OpenGraph, Twitter) and the Article JSON-LD, and include the
+            FAQPage JSON-LD block only when the post has an FAQ section,
+            keeping its questions and answers identical to the visible FAQ.
+            Remove any body components from the template that the post does
+            not use, and remove the placeholder comments. Do not leave any
+            {{PLACEHOLDER}} tokens in the output.
+
+            Step 6: Add the new page to sitemap.xml with a <url> entry:
+            loc = the canonical URL, lastmod = today's date, priority 0.9
+            (the value the other cluster posts use). Then update the
+            "Published" column in CONTENT_PLAN.md for that topic to Yes and
+            record the <slug>.html filename in the Filename column.
+
+            Step 7: Open a pull request (do not push to main directly). PR
+            title: "Blog: <post title>". PR description: the topic chosen,
+            why it was next in priority, and a one-line summary of what the
+            post covers. Do NOT auto-merge.
+
+            If CONTENT_PLAN.md, BLOG_STYLE_GUIDE.md, or POST_TEMPLATE.html
+            is missing, stop and open an issue instead of guessing at
+            structure or sourcing rules.

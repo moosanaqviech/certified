@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  POST TEMPLATE for Certified cluster posts.
+  The daily automation copies this file to /<slug>.html at the repo root and
+  fills every {{PLACEHOLDER}}. Keep the <head>, CSS, footer, and JSON-LD
+  scaffolding byte-for-byte so new posts match the existing six. Replace only
+  the placeholders and the body components. Remove any body component you do
+  not use (comparison table, FAQ, etc.). No em dashes anywhere, including
+  inside JSON-LD strings.
+
+  Placeholders:
+    {{TITLE}}            exact page title (matches target search intent)
+    {{DESCRIPTION}}      150-160 char meta description
+    {{SLUG}}             url-friendly slug (also the filename: /<slug>.html)
+    {{CANONICAL}}        https://alreadycertified.netlify.app/{{SLUG}}
+    {{OG_DESCRIPTION}}   OG-specific description (may equal {{DESCRIPTION}})
+    {{KICKER}}           small uppercase eyebrow, e.g. "Databricks Data Engineer · Guide"
+    {{H1}}               visible headline
+    {{LEDE}}             1-3 sentence hero lede (HTML allowed: <strong>)
+    {{UPDATED_LABEL}}    e.g. "Last updated July 2026."
+    {{DATE_PUBLISHED}}   YYYY-MM-DD
+    {{DATE_MODIFIED}}    YYYY-MM-DD (defaults to {{DATE_PUBLISHED}})
+    {{BREADCRUMB}}       topnav trail (see below)
+    {{BODY}}             the article sections (see component library below)
+    {{RELATED}}          related-post links (see below)
+    {{FAQ_JSONLD}}       the FAQPage script block, or empty string if no FAQ
+-->
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL}}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{OG_DESCRIPTION}}">
+<meta property="og:url" content="{{CANONICAL}}">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    {{BREADCRUMB}}
+    <!-- Example:
+    <a href="index.html">Already Certified</a><span>&rsaquo;</span>
+    <a href="databricks-data-engineer-associate-certification-guide.html">Certification Guide</a><span>&rsaquo;</span>
+    <span>This Post</span>
+    -->
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">{{KICKER}}</div>
+    <h1>{{H1}}</h1>
+    <p class="lede">{{LEDE}}</p>
+    <p class="updated">{{UPDATED_LABEL}}</p>
+  </header>
+
+  {{BODY}}
+  <!--
+    BODY COMPONENT LIBRARY (use what the post needs, delete the rest):
+
+    Standard section:
+      <section id="short-id">
+        <h2>Heading that mirrors how someone searches</h2>
+        <p>Body text. <strong>Emphasis</strong> for key terms.</p>
+      </section>
+
+    Comparison table:
+      <section id="table">
+        <h2>Side by side</h2>
+        <table class="cmp">
+          <thead><tr><th>&nbsp;</th><th class="col-h">Option A</th><th>Option B</th></tr></thead>
+          <tbody>
+            <tr><th>Row label</th><td class="col-h">A value</td><td>B value</td></tr>
+          </tbody>
+        </table>
+        <p class="fnote">Source note with a link to the official exam guide.</p>
+      </section>
+
+    Two-card "which should you" block:
+      <div class="pick">
+        <div class="pickcard gold"><h3>Choose A if...</h3><p>...</p></div>
+        <div class="pickcard"><h3>Choose B if...</h3><p>...</p></div>
+      </div>
+
+    FAQ (must match the FAQ_JSONLD block exactly):
+      <section id="faq">
+        <h2>FAQ</h2>
+        <div class="faq">
+          <details><summary>Question?</summary><div class="fa"><p>Answer.</p></div></details>
+        </div>
+      </section>
+  -->
+
+  <div class="ctacard">
+    <h2>{{CTA_HEADING}}</h2>
+    <p>{{CTA_TEXT}}</p>
+    <a href="{{CTA_HREF}}" class="cta">{{CTA_LABEL}} &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    {{RELATED}}
+    <!-- Example: <a href="lesson-01-lakehouse.html">Start Chapter 1 &rarr;</a> -->
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"{{TITLE}}","description":"{{DESCRIPTION}}","author":{"@type":"Organization","name":"Already Certified"},"publisher":{"@type":"Organization","name":"Already Certified","url":"https://alreadycertified.netlify.app/"},"datePublished":"{{DATE_PUBLISHED}}","dateModified":"{{DATE_MODIFIED}}","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"{{CANONICAL}}"}}
+</script>
+{{FAQ_JSONLD}}
+<!--
+  FAQ_JSONLD, only when the post has an FAQ section. Every Question/Answer
+  here must be identical to the visible FAQ above:
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+  {"@type":"Question","name":"Question?","acceptedAnswer":{"@type":"Answer","text":"Answer."}}
+  ]}
+  </script>
+-->
+
+</body>
+</html>
