@@ -6,15 +6,15 @@ like generic SEO filler.
 
 ## Where posts live
 
-Published posts on this site are `.html` pages at the repository root (for
-example `databricks-data-engineer-associate-vs-professional.html`), served at
-clean URLs like `/databricks-data-engineer-associate-vs-professional`. The
-automation writes that HTML directly: it copies `blog/POST_TEMPLATE.html` to
-`<slug>.html` at the repo root, fills in every placeholder (content plus all
-SEO tags and JSON-LD), and adds the page to `sitemap.xml`. The output is a
-finished, publish-ready page, not a draft. The `blog/` folder holds only the
-config files (this guide, `CONTENT_PLAN.md`) and `POST_TEMPLATE.html`; it does
-not contain published posts.
+Published posts on this site are `.html` pages in the `blog/` folder (for
+example `blog/databricks-data-engineer-associate-vs-professional.html`),
+served at clean URLs like `/blog/databricks-data-engineer-associate-vs-professional`.
+The automation writes that HTML directly: it copies `blog/POST_TEMPLATE.html`
+to `blog/<slug>.html`, fills in every placeholder (content plus all SEO tags
+and JSON-LD), and adds the page to `sitemap.xml`. The output is a finished,
+publish-ready page, not a draft. The `blog/` folder also holds the config
+files (this guide, `CONTENT_PLAN.md`) and `POST_TEMPLATE.html`, which are not
+published posts.
 
 ## Voice
 
@@ -64,13 +64,13 @@ certification: databricks-data-engineer-associate | databricks-data-engineer-pro
 date:         YYYY-MM-DD            (datePublished)
 updated:      YYYY-MM-DD            (optional, dateModified; defaults to date)
 author:       Moosa                 (visible byline only, see note in SEO section)
-canonical:    https://alreadycertified.netlify.app/<slug>
+canonical:    https://alreadycertified.netlify.app/blog/<slug>
 og_image:     (optional; current posts set none, leave unset to match)
 faq:          (optional; a list of question/answer pairs, only if the post has an FAQ)
 ```
 
-The `slug` is the output filename (`<slug>.html` at the repo root), the
-published page's clean URL (`/<slug>`), and the `canonical` value, so it must
+The `slug` is the output filename (`blog/<slug>.html`), the published page's
+clean URL (`/blog/<slug>`), and drives the `canonical` value, so it must
 be unique against the posts already listed in CONTENT_PLAN.md. The `faq`
 list is the single source for both the visible FAQ section and the
 `FAQPage` JSON-LD, so write each question and answer once and use it in both
@@ -88,7 +88,7 @@ Base URL: `https://alreadycertified.netlify.app`.
 
 1. `<title>` = `title`.
 2. `<meta name="description">` = `description`.
-3. `<link rel="canonical">` = `canonical` (i.e. base URL + `/<slug>`).
+3. `<link rel="canonical">` = `canonical` (i.e. base URL + `/blog/<slug>`).
 4. `<meta name="robots" content="index,follow,max-image-preview:large">`.
 5. OpenGraph: `og:type=article`, `og:title` = title, `og:description`
    (may match the meta description or the OG-specific one), `og:url` =
@@ -166,8 +166,9 @@ every JSON-LD string must use colons, commas, parentheses, or periods.
   and Z-Order appear only as contrast cases, never as the default advice.
 - If a post touches a product/feature not covered by these rules, confirm the
   current official name against the vendor's documentation and the matching
-  published lesson page at the repo root (for example
-  `lesson-28-liquid-clustering.html`) before writing.
+  published lesson page in the course folder (for example
+  `databricks-data-engineer-associate/lesson-28-liquid-clustering.html`)
+  before writing.
 
 ## Hard formatting rules
 
@@ -177,9 +178,11 @@ every JSON-LD string must use colons, commas, parentheses, or periods.
 - No unverified superlatives ("the best," "the only") about Certified or
   competitors.
 - Internal links point to other posts/pages in this repo by their relative
-  file path (e.g., `lesson-01-lakehouse.html` or another post's
-  `<slug>.html`), matching how the existing posts link, not full URLs. All
-  posts and lessons live at the repo root, so links are plain filenames.
+  file path, matching how the existing posts link, not full URLs. Posts live
+  in `blog/`, so a link to a sibling post is a plain filename (another post's
+  `<slug>.html`), while a link out of `blog/` needs a `../` prefix: the
+  catalog is `../index.html` and a lesson is
+  `../databricks-data-engineer-associate/lesson-01-lakehouse.html`.
 
 ## What NOT to do
 

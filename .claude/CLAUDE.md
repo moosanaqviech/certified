@@ -17,12 +17,20 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-data-engineer-professional/` folder as they're authored.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
-`databricks-data-engineer-associate-certification-guide.html`) stay at the
-repo root regardless of which course they're about; do not move them into a
-course folder. Any link from a root-level page into a lesson or exam must be
-prefixed with that course's folder
+`databricks-data-engineer-associate-certification-guide.html`) live in the
+`blog/` folder regardless of which course they're about; do not move them
+into a course folder. They are served at clean `/blog/<slug>` URLs, and the
+daily automation writes new posts there (see `blog/CONTENT_PLAN.md` and
+`blog/BLOG_STYLE_GUIDE.md`). A blog post linking to a sibling post uses a
+plain filename; linking out of `blog/` needs a `../` prefix (the catalog is
+`../index.html`, a lesson is
+`../databricks-data-engineer-associate/lesson-01-lakehouse.html`). Any link
+from a root-level page into a lesson or exam must be prefixed with that
+course's folder
 (`databricks-data-engineer-associate/lesson-01-lakehouse.html`, not
-`lesson-01-lakehouse.html`).
+`lesson-01-lakehouse.html`); a root-level page linking to a blog post uses
+the `blog/` prefix
+(`blog/databricks-data-engineer-associate-certification-guide.html`).
 
 ## Architecture: frozen engines, injected payloads
 
