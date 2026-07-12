@@ -1,0 +1,24 @@
+# Netlify config for the Certified static site + freemium paywall.
+# The site is plain static files, so there is no build step: publish the repo
+# root as-is. Only the serverless functions carry dependencies (installed by
+# Netlify automatically from package.json); the lessons and exams stay
+# standalone files that open locally.
+
+[build]
+  publish = "."
+  command = ""
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# The gate lives in netlify/edge-functions/gate.ts and registers itself with
+# `export const config = { path: "/*" }`, so no [[edge_functions]] block is
+# needed here. Per-site behaviour is controlled entirely by env vars:
+#   GATING_ENABLED=true    -> lock the paid lessons (set on the paid site only)
+#   NOINDEX_SITE=true      -> add X-Robots-Tag: noindex (set on the free mirror)
+#   GATE_SIGNING_SECRET    -> HMAC secret shared by the gate and unlock function
+#   STRIPE_SECRET_KEY      -> Stripe restricted key (Checkout Sessions: write)
+#   STRIPE_PRICE_ID        -> the price_... to charge
+#   SITE_URL               -> https://certify.courses (checkout redirect base)
+#   ACTIVATION_LIMIT       -> devices per purchase (default 3)
