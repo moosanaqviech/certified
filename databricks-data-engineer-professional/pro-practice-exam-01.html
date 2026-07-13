@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Professional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "Practice Exam 1",
+  badge: "Databricks DE Professional",
+  blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
+  coverage: "Covers all 10 chapters of Unit 1: Developing Code with Python and SQL.",
+  minutes: 20,
+  pass: 70
+};
+
+const QUESTIONS = [
+  /* Ch 01 - DABs Project Structure for Scalable Python */
+  {
+    q:`A developer adds a new scheduled job by editing <code>resources/jobs.yml</code>, but forgets to write the actual transformation logic. Where should that logic go, and why can it not just live inside <code>resources/jobs.yml</code>?`,
+    opts:[
+      `Inline inside <code>resources/jobs.yml</code>, since YAML supports embedded Python blocks for exactly this`,
+      `In <code>src/</code>, as part of the bundle's importable Python package, because <code>resources/*.yml</code> only declares what runs and when`,
+      `In <code>databricks.yml</code>, under the targets section, so it deploys with every target`,
+      `It does not matter, since <code>databricks bundle deploy</code> inlines any Python it finds under <code>resources/</code>`
+    ],
+    correct:1,
+    explain:`resources/*.yml only declares job structure: clusters, schedules, task graphs. The actual logic belongs in src/ as an importable Python package a task references, which is also what makes it unit testable later. YAML has no mechanism for embedded Python, and databricks.yml holds only bundle-level config like targets, not task logic.`
+  },
+  /* Ch 02 - Libraries and Dependencies */
+  {
+    q:`A job cluster has no C compiler installed. A required PyPI dependency's newest patch release ships only a source distribution for the cluster's Python version, no wheel. What is the most likely outcome, and the safer fix going forward?`,
+    opts:[
+      `Nothing breaks; source distributions never need a compiler on Databricks`,
+      `Databricks automatically substitutes a compatible wheel from a different Python version`,
+      `The job falls back to notebook-scoped <code>%pip install</code>, which bypasses the need for a compiler`,
+      `Pin the dependency to the last version that published a wheel, or build one in-house, since the install would otherwise fail without a compiler`
+    ],
+    correct:3,
+    explain:`With no wheel, pip has to build the source archive locally, which needs a compiler and headers a minimal job cluster may not have, so the install can fail. Pinning to a version that still ships a wheel, or building one in-house, sidesteps the missing build tools. Nothing in Databricks auto-substitutes wheels across Python versions, and %pip install still triggers the same build step for an unwheeled package.`
+  },
+  /* Ch 03 - Python and Pandas UDFs */
+  {
+    q:`A pipeline uses a Python UDF to compute <code>date_add(order_date, 7)</code> instead of Spark's built-in function. A separate transform uses a pandas UDF to call a third-party sentiment model on a text column, since one row at a time is too slow. Which change most improves performance?`,
+    opts:[
+      `Replace the date_add UDF with the built-in function; leave the sentiment model as a pandas UDF, since no built-in covers it`,
+      `Convert the date_add UDF into a pandas UDF, since vectorization always outperforms built-in functions`,
+      `Convert the sentiment model call into a plain Python UDF, since row-at-a-time avoids Arrow serialization overhead`,
+      `Leave both as they are; UDF type has no measurable effect on this kind of workload`
+    ],
+    correct:0,
+    explain:`date_add is already a built-in Spark SQL function, so the fastest fix is dropping the UDF entirely, not upgrading it to a pandas UDF. The sentiment model has no Spark built-in equivalent, so a pandas UDF is the right tool there. A plain row-at-a-time UDF would be slower for the model call, not faster, since it pays serialization cost on every single row.`
+  },
+  /* Ch 04 - Production Pipelines: Lakeflow + Auto Loader */
+  {
+    q:`A bronze table built with Auto Loader has run for months. An engineer notices the cluster now spends unusually long re-scanning file metadata at the start of every run, and finds <code>cloudFiles.schemaLocation</code> was accidentally deleted from the pipeline config. What connects the two symptoms?`,
+    opts:[
+      `The missing schemaLocation reset the streaming checkpoint, so every file is being reprocessed from scratch`,
+      `schemaLocation only affects Delta sink tables, so its absence cannot explain source-side behavior`,
+      `Without a schemaLocation, Auto Loader has nowhere to persist its inferred schema, so it re-infers from a file sample on every run`,
+      `cloudFiles.format was also removed alongside schemaLocation, forcing a full file type re-scan`
+    ],
+    correct:2,
+    explain:`schemaLocation is where Auto Loader checkpoints the schema it inferred and its evolution history; losing it forces a fresh schema inference from a file sample every run, matching the added startup overhead. That is a separate mechanism from the streaming checkpoint that tracks which files were already processed, so file reprocessing is not the explanation, and nothing here points to a missing cloudFiles.format.`
+  },
+  /* Ch 05 - Automating Jobs: UI, API, and CLI */
+  {
+    q:`A platform team wants every job change to go through a pull request and stay identical across dev, staging, and prod. An engineer proposes standardizing on editing jobs directly in the workspace UI, arguing it is faster to iterate. What is the strongest argument against that plan?`,
+    opts:[
+      `The UI cannot trigger a job at all, only the CLI and REST API can start a run`,
+      `UI edits are not commits; nothing records who changed a job or why, and nothing keeps dev, staging, and prod in sync`,
+      `The UI only supports notebook tasks, not Python wheel or SQL tasks`,
+      `UI-created jobs cannot be scheduled, only run manually with run-now`
+    ],
+    correct:1,
+    explain:`The team's actual goals, a PR trail and identical environments, both require version control, and UI edits bypass it entirely: nothing records the change and nothing forces staging or prod to match. The UI can trigger runs and supports the same task types as the CLI and API, and it fully supports scheduling, so those are not real limitations of the proposal.`
+  },
+  /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
+  {
+    q:`A gold table joins a slowly changing customer tier dimension (occasionally corrected after the fact) against a silver fact table to compute tier-level totals. Which signal should decide whether this table is a streaming table or a materialized view?`,
+    opts:[
+      `Whether the fact table is large; streaming tables scale better on large sources regardless of update patterns`,
+      `Whether the pipeline runs on a schedule or continuously; only continuous pipelines can use materialized views`,
+      `Whether the join uses SQL or Python; materialized views require SQL-defined tables`,
+      `Whether the dimension table's rows can be corrected after the fact; since they can, only a materialized view keeps the join result correct`
+    ],
+    correct:3,
+    explain:`The deciding signal is always whether a source can change after landing, not size, schedule, or language. A streaming table only ever sees new rows and would miss or double count a corrected dimension row; a materialized view recomputes or incrementally maintains its result against the current state of both inputs, so the correction flows through. Table size, trigger style, and SQL versus Python are unrelated to this choice.`
+  },
+  /* Ch 07 - CDC with the APPLY CHANGES API */
+  {
+    q:`A CDC pipeline uses <code>apply_changes</code> with <code>keys=["order_id"]</code> and <code>sequence_by="lsn"</code>. During a brief network partition, a batch of updates for order_id 900 is delivered twice, once as a retry and once as the original, both carrying the same lsn value. What happens to the target table?`,
+    opts:[
+      `The target ends up correct regardless of which duplicate is applied first, since both share the same key and sequence value`,
+      `The target is corrupted, because apply_changes cannot detect duplicate lsn values and will double-apply the change`,
+      `The pipeline fails outright, since apply_changes rejects any two records sharing a sequence_by value`,
+      `Only the retry copy is applied; apply_changes always prefers the most recently arrived record regardless of sequence_by`
+    ],
+    correct:0,
+    explain:`keys and sequence_by together make apply_changes idempotent here: both copies target the same key with the same sequence value, so applying either lands the target in the same state, and reapplying an identical change is a no-op in effect. Nothing in apply_changes rejects a repeated sequence value, and arrival order plays no role since sequence_by, not arrival time, decides what wins.`
+  },
+  /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
+  {
+    q:`A team's pipeline reads Kafka events, deduplicates them with a custom stateful operator that has no equivalent in Lakeflow Declarative Pipelines, and lands the result in a Delta table in Unity Catalog. Which approach fits, and what decides it?`,
+    opts:[
+      `Lakeflow Declarative Pipelines, because the output is a Delta table in Unity Catalog, which always overrides any other signal`,
+      `Either approach is equivalent, since both ultimately run the same Structured Streaming engine underneath`,
+      `Raw Structured Streaming, because the custom stateful operator, not the Delta sink, is unavailable in the managed pipeline`,
+      `Structured Streaming for the read, then a separate Lakeflow pipeline for the write, chained together as two jobs`
+    ],
+    correct:2,
+    explain:`The deciding signal is whichever requirement the managed wrapper cannot express, here the custom stateful operator, and that overrides the fact that the sink happens to be a Delta table in Unity Catalog, which would otherwise favor Lakeflow Pipelines. They share an engine underneath, but that does not make them interchangeable, since only one exposes arbitrary stateful operators. Chaining two jobs adds an unnecessary hop, since raw Structured Streaming can write straight to Delta itself.`
+  },
+  /* Ch 09 - Control Flow and Task Configuration in Jobs */
+  {
+    q:`A job has tasks extract, load_warehouse, and load_lake, where both load tasks depend on extract and run in parallel. A final notify_ops task must alert if either load task failed, but stay silent if both succeeded. Which run_if rule on notify_ops achieves this?`,
+    opts:[
+      `ALL_DONE, so notify_ops always runs once both load tasks finish, regardless of outcome`,
+      `AT_LEAST_ONE_FAILED, so notify_ops only fires when one of its dependencies failed`,
+      `ALL_SUCCESS, the default, so notify_ops only runs after a clean run`,
+      `A For Each task wrapping notify_ops, iterating over the two load tasks' outcomes`
+    ],
+    correct:1,
+    explain:`AT_LEAST_ONE_FAILED fires exactly when at least one dependency failed and stays silent otherwise, matching the requirement precisely. ALL_DONE would send the alert even after a fully successful run, which is not wanted, and ALL_SUCCESS (the default) would never fire the alert at all, since it requires every dependency to succeed. For Each iterates over a list of inputs to run repeated tasks, it does not evaluate conditional alerting logic.`
+  },
+  /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
+  {
+    q:`A test calls <code>assertDataFrameEqual(actual, expected)</code> where both have the same schema and the same set of rows, but actual came from a groupBy() aggregation, so its rows land in a different order. A second test compares a computed average of 12.000000000000002 against an expected 12.0. What happens in each case, by default?`,
+    opts:[
+      `The first test fails on row order; the second passes, since integer-like floats are compared exactly`,
+      `Both tests fail; assertDataFrameEqual requires identical row order and exact float equality unless configured otherwise`,
+      `The first test passes; the second fails, since assertDataFrameEqual has no float tolerance`,
+      `Both tests pass; assertDataFrameEqual compares rows independent of order and tolerates small floating-point differences by default`
+    ],
+    correct:3,
+    explain:`assertDataFrameEqual is built to forgive exactly these two situations: it treats the two DataFrames as unordered by default, so a groupBy reshuffling rows is not a failure, and it applies rtol and atol tolerances, so a floating-point rounding difference like this passes while a genuinely wrong value would still fail loudly. Neither symptom described here causes a failure on its own.`
+  }
+];
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>

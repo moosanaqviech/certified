@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Testing Pipelines · DE Professional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #140806;            /* page background */
+    --bg-tint: #33120e;       /* ambient glow tint behind the card */
+    --accent: #f87171;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(248,113,113,0.12);  /* correct-answer fill */
+    --accent-ink: #1a0908;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 10 · Testing Pipelines: assertDataFrameEqual,
+   transform, Debugger (1.11)
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="12" y="76" width="70" height="48" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="24" y="88" width="46" height="7" rx="3" fill="var(--ink-faint)"/>
+    <rect x="24" y="100" width="46" height="7" rx="3" fill="var(--ink-faint)"/>
+    <rect x="24" y="112" width="30" height="7" rx="3" fill="var(--ink-faint)"/>
+    <text x="47" y="70" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">input df</text>
+    <line x1="82" y1="100" x2="118" y2="100" stroke="var(--accent)" stroke-width="1.5"/>
+    <rect x="118" y="80" width="72" height="40" rx="11" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="154" y="104" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">transform</text>
+    <line x1="190" y1="100" x2="226" y2="100" stroke="var(--accent)" stroke-width="1.5"/>
+    <circle cx="256" cy="100" r="30" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <path d="M242 100 l10 10 l18 -20" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="256" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">assert equal</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 10</div>
+    <h1 class="reveal">Testing Pipelines</h1>
+    <p class="lead reveal">A pipeline you cannot test is a pipeline you cannot change safely. The trick is shaping the logic so a plain unit test can reach it.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — concept: testable = pure functions, ties to Ch1 src/ */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Testable logic is a pure function</h2>
+    <p class="lead reveal" style="margin-bottom:18px">This is why Chapter 1 put logic in src/, not inline in a job. An importable function is one a test can call.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>DataFrame in, DataFrame out</b>A transformation written as a function that takes a DataFrame and returns one has no hidden dependency on a cluster, a path, or the time of day.</p></div>
+      <div class="pill"><p><b>So the test needs nothing real</b>Feed it a five-row DataFrame you built by hand, check what comes back. No production data, no deployed pipeline.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — concept: .transform() */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">.transform() chains those functions</h2>
+    <p class="lead reveal" style="margin-bottom:16px">DataFrame.transform() applies a named function in a chain, so each step is a unit you can test on its own.</p>
+    <div class="codeblock reveal">
+<span class="kw">def</span> clean(df):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> (df<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.filter(<span class="st">"amt > 0"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.dropDuplicates([<span class="st">"id"</span>]))<br>
+<br>
+silver = bronze.<span class="al">transform</span>(clean)
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — concept: assertDataFrameEqual */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">assertDataFrameEqual is the check</h2>
+    <p class="lead reveal" style="margin-bottom:14px">From pyspark.testing. It compares an actual DataFrame to an expected one, schema and rows together.</p>
+    <div class="codeblock reveal">
+<span class="kw">from</span> pyspark.testing <span class="kw">import</span> (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;assertDataFrameEqual)<br>
+<br>
+<span class="kw">def</span> test_clean(spark):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;inp = spark.createDataFrame(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(1, 5), (2, 0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="st">"id"</span>, <span class="st">"amt"</span>])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exp = spark.createDataFrame(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(1, 5)], [<span class="st">"id"</span>, <span class="st">"amt"</span>])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="al">assertDataFrameEqual</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inp.transform(clean),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exp)
+    </div>` },
+
+  /* 4 — concept: what assertDataFrameEqual handles */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">It handles what == cannot</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The reason to use it over a hand-rolled collect() comparison is everything it forgives, and everything it catches.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Row order does not matter</b>By default it treats the two DataFrames as sets of rows, so a different ordering is not a failure. A naive collect() list comparison would break on it.</p></div>
+      <div class="pill"><p><b>Floats within a tolerance</b>Built-in rtol and atol mean 0.1 + 0.2 landing at 0.30000000000004 still passes, while a genuinely wrong value still fails loudly.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — concept: the debugger */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">The debugger is for the unknown case</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Tests confirm cases you already thought of. The debugger is how you find the ones you did not.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Breakpoints instead of prints</b>Pause on a line, step through it, and read the DataFrame and variables in scope, without adding display() calls and re-running the whole job.</p></div>
+      <div class="pill"><p><b>Inspect the middle of a chain</b>When a transform is right on sample data but wrong in production, a breakpoint mid-chain shows exactly which step diverges.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: assertDataFrameEqual behavior */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A test fails: the actual and expected DataFrames hold identical rows, but a join reordered them and one sum reads 4.9999999 instead of 5.0. What is the right fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Sort both DataFrames and round every float before comparing them by hand</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Accept the failure; the outputs genuinely differ and the test is correct</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Use assertDataFrameEqual, which ignores row order and tolerates float rounding by default</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Both symptoms, reordered rows and a tiny floating-point delta, are exactly what assertDataFrameEqual is built to forgive: it compares rows order-independently and applies rtol and atol tolerances. Sorting and rounding by hand reinvents that logic and is easy to get wrong, and the outputs are not actually different in any way that matters.</div>` },
+
+  /* 7 — quiz: debugger vs test */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A transform passes its unit tests on sample rows but produces wrong totals on production data. What is the fastest way to locate where the logic diverges?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Add more assertDataFrameEqual cases until one of them fails</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Set a breakpoint in the transform and step through it with the real data, inspecting each stage</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Rewrite the transform as a pandas UDF so it runs row by row</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The failure is a case the tests never anticipated, so writing more tests is guesswork until one happens to hit it. The debugger lets you pause inside the transform on the actual data and watch the DataFrame at each step, pinpointing the diverging stage directly. Rewriting it as a UDF changes the execution model without telling you anything about the bug.</div>` },
+
+  /* 8 — done, closes Unit 1 */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 1 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">That was the last chapter of Developing Code with Python and SQL. You can now build, package, orchestrate, and test a pipeline.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Test the logic, not the pipeline</b>Shape transforms as pure functions, chain them with transform(), and check them with assertDataFrameEqual.</p></div>
+      <div class="pill"><p><b>Debug what tests miss</b>Breakpoints and stepping find the divergence a passing test never saw.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
