@@ -228,6 +228,45 @@ def run_node(harness):
 
 
 # ---------------------------------------------------------------------------
+# Full <script> syntax check
+#
+# The payload harness above only evaluates the isolated payload zone, so a
+# stray token left between the payload END marker and the frozen ENGINE
+# section (e.g. by a scripted find/replace) can pass every other check while
+# still breaking the page's actual <script> tag in a browser. This check
+# runs `node --check` against the whole inline script exactly as shipped.
+# ---------------------------------------------------------------------------
+
+SCRIPT_TAG_RE = re.compile(r"<script>(.*?)</script>", re.DOTALL)
+
+
+def check_full_script_syntax(text, rep):
+    scripts = SCRIPT_TAG_RE.findall(text)
+    if not scripts:
+        rep.warn("no inline <script> tag found; skipped full-script syntax check")
+        return
+    if len(scripts) > 1:
+        rep.warn(f"{len(scripts)} inline <script> tags found; checking the first only")
+
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+            f.write(scripts[0])
+            tmp = f.name
+        proc = subprocess.run(["node", "--check", tmp], capture_output=True, text=True, timeout=20)
+        Path(tmp).unlink(missing_ok=True)
+        if proc.returncode != 0:
+            err = proc.stderr.strip().splitlines()
+            first = err[0] if err else "unknown error"
+            rep.fail(f"full <script> tag fails to parse (syntax error the isolated payload check cannot see): {first}")
+        else:
+            rep.ok("full <script> tag (payload + frozen engine, as shipped) parses cleanly")
+    except FileNotFoundError:
+        rep.warn("node not found: full-script syntax check skipped (install Node.js to enable)")
+    except subprocess.TimeoutExpired:
+        rep.fail("full <script> tag syntax check timed out")
+
+
+# ---------------------------------------------------------------------------
 # Lesson checks
 # ---------------------------------------------------------------------------
 
@@ -396,6 +435,7 @@ def validate_file(path):
     rep.ok(f"detected {kind} file")
     check_backtick_parity(payload, rep)
     check_em_dashes(payload, rep)
+    check_full_script_syntax(text, rep)
     if kind == "lesson":
         check_lesson(payload, rep)
     else:
