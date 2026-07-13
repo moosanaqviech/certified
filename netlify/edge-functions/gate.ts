@@ -151,7 +151,7 @@ function paywallHtml(): string {
 <title>Unlock the full course · Already Certified</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0b0d12;--surface:#161a22;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--line:rgba(255,255,255,.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  :root{--bg:#0b0d12;--surface:#161a22;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66; --red:#FF0000; --green:#008000; --gold:#e3b84a;--line:rgba(255,255,255,.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;line-height:1.55;}
   .card{max-width:440px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:36px 30px;text-align:center;}
@@ -160,8 +160,8 @@ function paywallHtml(): string {
   h1{font-family:var(--display);font-weight:600;font-size:27px;line-height:1.12;letter-spacing:-.02em;margin-bottom:12px;}
   p{color:var(--ink-soft);font-size:15.5px;margin-bottom:20px;}
   .price{display:flex;align-items:baseline;gap:10px;justify-content:center;margin-bottom:4px;}
-  .price .now{font-family:var(--display);font-size:38px;font-weight:700;color:var(--ink);}
-  .price .was{font-size:19px;color:var(--ink-faint);text-decoration:line-through;}
+  .price .now{font-family:var(--display);font-size:38px;font-weight:700;color:var(--green);}
+  .price .was{font-size:19px;color:var(--red);text-decoration:line-through;}
   .oneoff{font-size:12.5px;color:var(--ink-faint);margin-bottom:22px;}
   .cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 26px;border-radius:14px;border:none;cursor:pointer;text-decoration:none;transition:transform .15s ease;}
   .cta:active{transform:scale(.98);}
