@@ -47,8 +47,9 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | What's new on the Databricks Data Engineer Professional exam vs Associate | "databricks professional exam difficulty" | Yes | blog/databricks-data-engineer-professional-exam-topics.html |
-| 2 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | No | |
-| 3 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | No | |
+| 2 | Complete Databricks Data Engineer Professional certification guide (pillar) | "databricks data engineer professional certification guide" | Yes | blog/databricks-data-engineer-professional-certification-guide.html |
+| 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | No | |
+| 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | No | |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
