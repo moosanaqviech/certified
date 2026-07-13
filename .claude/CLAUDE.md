@@ -60,7 +60,8 @@ anything. They define card shapes, helper classes, and question rules.
   for stroke/fill so art recolors with the theme.
 - Quiz cards: exactly one `data-correct="true"` per card, plus a `.feedback`
   block. Final card carries `last: true`.
-- Lessons: 8 to 10 cards unless specified; target 9, flag if trimming.
+- Lessons: 8 to 12 cards, target 9. A second quiz card is required at 11
+  or more cards. Chapters exceeding 12 cards should be split, not extended.
 - Trade-off lessons (flagged TO in the index) follow the fixed pattern:
   shared ground, one card per option, side-by-side comparison table,
   decision-signal card, two quiz cards testing opposite directions.

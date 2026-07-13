@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Libraries and Dependencies · DE Professional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #120d09;            /* page background */
+    --bg-tint: #2a1c10;       /* ambient glow tint behind the card */
+    --accent: #e8a24f;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(232,162,79,0.12);  /* correct-answer fill */
+    --accent-ink: #1a1006;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 2 · Libraries and Dependencies: PyPI, Wheels, Source Archives (1.2)
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="10" y="26" width="76" height="34" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="48" y="48" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">PyPI</text>
+    <rect x="122" y="26" width="76" height="34" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="160" y="48" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">.whl</text>
+    <rect x="234" y="26" width="76" height="34" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="272" y="48" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">.tar.gz</text>
+    <line x1="48" y1="60" x2="140" y2="126" stroke="var(--line)" stroke-width="1.5"/>
+    <line x1="160" y1="60" x2="160" y2="126" stroke="var(--line)" stroke-width="1.5"/>
+    <line x1="272" y1="60" x2="180" y2="126" stroke="var(--line)" stroke-width="1.5"/>
+    <rect x="110" y="126" width="100" height="52" rx="12" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="122" y="138" width="76" height="7" rx="3" fill="var(--ink-faint)"/>
+    <rect x="122" y="150" width="76" height="7" rx="3" fill="var(--ink-faint)"/>
+    <rect x="122" y="162" width="50" height="7" rx="3" fill="var(--accent)" opacity="0.6"/>
+    <text x="160" y="192" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10">job cluster</text>
+  </svg>`,
+
+  wheelflow: `<svg viewBox="0 0 320 200">
+    <rect x="14" y="82" width="70" height="36" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="49" y="105" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">src/</text>
+    <line x1="84" y1="100" x2="130" y2="100" stroke="var(--accent)" stroke-width="1.5"/>
+    <rect x="130" y="72" width="96" height="56" rx="14" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <circle cx="178" cy="100" r="15" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="178" cy="100" r="3" fill="var(--accent)"/>
+    <line x1="178" y1="85" x2="178" y2="90" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="178" y1="110" x2="178" y2="115" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="163" y1="100" x2="168" y2="100" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="188" y1="100" x2="193" y2="100" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="226" y1="100" x2="236" y2="100" stroke="var(--accent)" stroke-width="1.5"/>
+    <rect x="236" y="82" width="70" height="36" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="271" y="105" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11.5" font-weight="700">.whl</text>
+    <text x="178" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="10">python -m build</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 2</div>
+    <h1 class="reveal">Libraries and Dependencies</h1>
+    <p class="lead reveal">Every job needs code beyond what you wrote by hand. PyPI, wheels, and source archives are the three ways that code and its dependencies actually reach a cluster.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — concept: three formats overview */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Three ways code reaches a cluster</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Same goal, different trade-offs: how fast it installs, and whether the cluster has to build anything first.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>PyPI package</b>Installed by name and version from the Python Package Index. Best for well-known, publicly hosted dependencies like requests or pandas.</p></div>
+      <div class="pill"><p><b>.whl (wheel)</b>A prebuilt binary distribution. Installing it is just unzipping, no compile step, which makes it the fastest and most reliable format.</p></div>
+      <div class="pill"><p><b>.tar.gz (source archive)</b>Raw source code. The installer builds it locally, which needs the right compiler and headers on that machine.</p></div>
+    </div>` },
+
+  /* 2 — concept: pinning and scope */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Pin it, and know its scope</h2>
+    <p class="lead reveal" style="margin-bottom:18px">PyPI is the easy path, but two habits separate a reproducible job from a flaky one.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Pin every version</b><code>requests==2.31.0</code>, not <code>requests</code>. An unpinned dependency can resolve differently on your laptop than on the job cluster.</p></div>
+      <div class="pill"><p><b>Notebook-scoped vs declared</b><code>%pip install</code> in a notebook cell only affects that running session. A cluster library or a bundle environment applies every time the job runs.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — concept: wheels, ties to Ch1 src/ */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Your own code ships as a wheel</h2>
+    <p class="lead reveal" style="margin-bottom:12px">The src/ package from Chapter 1 gets built once into a .whl, then referenced by file path instead of reinstalled from source on every run.</p>
+    <div class="art reveal">${A.wheelflow}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Why it is fast</b>A wheel is already compiled and laid out; installing it is a file copy, not a build.</p></div>
+    </div>` },
+
+  /* 4 — concept: source archives as fallback */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Source archives are the fallback</h2>
+    <p class="lead reveal" style="margin-bottom:18px">pip reaches for a .tar.gz only when nothing better is available, and that has a cost.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>When you hit one</b>A package has no prebuilt wheel for your platform or Python version, so pip falls back to the source archive and builds it on the spot.</p></div>
+      <div class="pill"><p><b>The risk</b>That build needs a compiler and system headers. A minimal job cluster image may not have them, and the install fails.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — concept: wiring into databricks.yml */
+  { html: `
+    <div class="eyebrow reveal">Concept</div>
+    <h2 class="reveal">Declared in the same databricks.yml</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Dependencies live next to the job that needs them, versioned with everything else from Chapter 1.</p>
+    <div class="codeblock reveal">
+<span class="cm"># resources/jobs.yml, under my_etl_job</span><br>
+<span class="kw">environments:</span><br>
+&nbsp;&nbsp;- <span class="kw">environment_key:</span> <span class="st">default</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">spec:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">client:</span> <span class="st">"1"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">dependencies:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="al">dist/etl-0.1.0-py3-none-any.whl</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="st">requests==2.31.0</span>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: wheel vs source archive */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">The job cluster image has no C compiler. A required package has no prebuilt wheel for its Python version, only a source archive. Most likely outcome?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>The install fails, because pip has to build the source archive and there is no compiler to do it with</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Databricks silently substitutes the closest wheel from a different Python version</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The job runs normally; source archives never need a compiler</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> With no wheel available, pip has to build the .tar.gz locally, and that build step needs a C compiler and headers. A minimal cluster image without them fails the install. This is exactly why wheels, which skip the build step entirely, are preferred whenever one exists.</div>` },
+
+  /* 7 — quiz: declare vs %pip */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">A job task runs %pip install pandas==2.2.0 as its first cell instead of declaring the dependency in the bundle. Why is that not reproducible?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>%pip install is session-scoped and not part of the deployed bundle, so nothing enforces it runs the same way on the next trigger</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>pandas cannot be installed with %pip install on any Databricks cluster</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Version pins like ==2.2.0 are ignored inside a %pip install command</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> %pip install is a live action inside a running session, not a declared dependency in databricks.yml, so it never becomes part of the versioned bundle from Chapter 1. Declaring the package in the job's environment spec instead makes it part of what actually gets deployed and reviewed.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 2 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now choose the right distribution format for a dependency, and know where it belongs in the bundle.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Three formats</b>PyPI for public packages, a wheel for your own bundle code, a source archive only as the slow fallback.</p></div>
+      <div class="pill"><p><b>Declare, do not %pip</b>Job dependencies belong in the environment spec inside databricks.yml, not in a notebook cell.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
