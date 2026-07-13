@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Professional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "Practice Exam 3",
+  badge: "Databricks DE Professional",
+  blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
+  coverage: "Covers all 14 chapters across Units 1-3: Developing Code with Python and SQL, Data Ingestion and Acquisition, and Transformation, Cleansing, and Quality.",
+  minutes: 60,
+  pass: 70
+};
+
+const QUESTIONS = [
+  /* Ch 01 - DABs Project Structure for Scalable Python */
+  {
+    q:`A reviewer notices a pull request adding a new task to <code>resources/pipelines.yml</code> that includes a 30-line inline Python transformation instead of a reference to a function in <code>src/</code>. What should the reviewer flag, and why?`,
+    opts:[
+      `Nothing; resources/*.yml is free-form and can hold any Python needed for a task`,
+      `The transformation belongs in src/ as part of the bundle's importable package; resources/*.yml should only declare what runs and when`,
+      `The transformation should move into databricks.yml instead, since that file holds all bundle-level logic`,
+      `The task should be split into a separate bundle entirely, since one bundle cannot mix config and logic`
+    ],
+    correct:0,
+    explain:`resources/*.yml is meant to declare structure only, clusters, schedules, task graphs, not carry business logic; a 30-line inline transformation belongs in src/ as an importable function a task references, which also makes it unit testable. databricks.yml holds only bundle-level config like targets and includes, not task logic, and nothing requires splitting logic and config into separate bundles.`
+  },
+  {
+    q:`An engineer runs <code>databricks bundle deploy -t prod</code> directly after editing YAML by hand, skipping <code>databricks bundle validate</code>. The deploy fails midway with a variable resolution error inside a production target. What would have caught this earlier and more safely?`,
+    opts:[
+      `databricks bundle init, which re-scaffolds the bundle from its original template`,
+      `databricks bundle validate, which checks YAML and resolves variables without touching any workspace`,
+      `databricks bundle run, which would have surfaced the same error without any risk`,
+      `Nothing would have caught it earlier; validation only happens during deploy itself`
+    ],
+    correct:1,
+    explain:`bundle validate exists specifically to catch YAML and variable-resolution problems before anything touches a real workspace, which is exactly what would have caught this error safely, especially valuable before a prod deploy. init only scaffolds a new bundle, run assumes a working deployed job already exists, and deploy itself is the risky step this workflow should have validated before running against production.`
+  },
+  /* Ch 02 - Libraries and Dependencies: PyPI, Wheels, Source Archives */
+  {
+    q:`A team's own transformation package changes weekly. Instead of shipping it as a source archive that rebuilds on every job run, they build it once into a .whl and reference it by file path in the environment spec. What does this save, and what would the source-archive approach have cost instead?`,
+    opts:[
+      `Nothing measurable; wheels and source archives install at the same speed`,
+      `It saves disk space only; both formats install at identical speed`,
+      `It saves the build step: installing a wheel is a file copy, while a source archive is rebuilt locally on every run, and that rebuild needs a compiler and headers on the cluster`,
+      `It avoids needing a databricks.yml environment spec entirely, since wheels install automatically`
+    ],
+    correct:2,
+    explain:`A wheel is already compiled, so installing one is just a file copy; a source archive is rebuilt from scratch on every install, which costs time and requires a compiler and headers the cluster image may not even have. That is a real speed and reliability difference, not just disk space, and a wheel still has to be declared in the environment spec like any other dependency, nothing installs itself automatically.`
+  },
+  {
+    q:`During code review, a teammate points out that a new job's <code>requests</code> dependency was added by running <code>%pip install requests==2.31.0</code> as the notebook's first cell, with nothing changed in <code>resources/jobs.yml</code>. What is the correct fix to request in review?`,
+    opts:[
+      `Nothing; %pip install with a pinned version is fully equivalent to a declared dependency`,
+      `Ask them to also add a comment above the %pip install line documenting the pinned version`,
+      `Ask them to switch to an unpinned %pip install so the dependency always stays current`,
+      `Ask them to remove %pip install and add requests==2.31.0 to the job's environment spec in databricks.yml, so it deploys as part of the bundle`
+    ],
+    correct:3,
+    explain:`%pip install is session-scoped and never becomes part of the deployed, versioned bundle, so nothing enforces it runs the same way on the next scheduled trigger; the fix is declaring it in the job's environment spec instead. A comment does not change where the dependency actually lives, and an unpinned install trades reproducibility for automatic updates that can break the pipeline without warning.`
+  },
+  /* Ch 03 - Python and Pandas UDFs */
+  {
+    q:`A pipeline defines a Python UDF that calls .upper() on a string column, and a second pandas UDF that scores each row of text against a third-party sentiment model with no Spark equivalent. A reviewer suggests converting both to pandas UDFs for consistency. What is the better advice?`,
+    opts:[
+      `Convert both, since pandas UDFs are always faster than any alternative`,
+      `Convert both to plain row-at-a-time UDFs instead, for simpler debugging`,
+      `Drop the .upper() UDF entirely in favor of the built-in function; leave the sentiment model as a pandas UDF, since nothing built-in covers it`,
+      `Leave both exactly as they are; UDF type has no effect on either workload`
+    ],
+    correct:2,
+    explain:`.upper() is already a built-in Spark SQL function, so the fastest option is removing the UDF entirely, not upgrading it to a pandas UDF; a pandas UDF would still be slower than the built-in. The sentiment model has no Spark equivalent at all, so a pandas UDF is the right tool there, since it beats a row-at-a-time UDF on serialization cost. Neither the "convert both" nor the "leave both" advice accounts for the fact that these two cases call for different fixes.`
+  },
+  {
+    q:`A pandas UDF applies a lightweight arithmetic conversion to a numeric column across 900 million rows. A plain Python <code>@udf</code> doing the identical calculation is also available. Which one processes faster at this scale, and why?`,
+    opts:[
+      `The pandas UDF, because it crosses the JVM/Python boundary once per batch of rows and runs the math vectorized in pandas and NumPy instead of looped in Python`,
+      `The plain UDF, since row-at-a-time execution avoids the overhead of building a pandas Series`,
+      `Both run at the same speed once the cluster has enough executors`,
+      `The plain UDF, because Arrow serialization only helps with string columns, not numeric ones`
+    ],
+    correct:0,
+    explain:`The pandas UDF crosses the JVM/Python boundary once per batch instead of once per row, and pandas/NumPy operations on that batch run vectorized in C rather than looped in Python, which is exactly why it wins at large scale. A plain UDF pays that serialization cost on every single row, which only gets worse as row count grows, not better with more executors, and Arrow batching benefits numeric columns just as much as string ones.`
+  },
+  /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
+  {
+    q:`A bronze table's <code>cloudFiles.schemaLocation</code> points at a path that gets accidentally wiped by an unrelated cleanup script. On the next run, a new column that started appearing in recent files a week ago is suddenly treated as brand new again. What does this reveal about what schemaLocation actually stores?`,
+    opts:[
+      `It stores nothing important; the wipe should have no observable effect`,
+      `It only stores raw file paths already ingested, unrelated to column-level schema changes`,
+      `It stores a cached copy of the target Delta table, so wiping it corrupts the table itself`,
+      `It stores the inferred schema and its evolution history, so wiping it erases the record of which columns Auto Loader had already learned about`
+    ],
+    correct:3,
+    explain:`schemaLocation persists both the inferred schema and its evolution history; wiping it erases that memory, so a column Auto Loader had already learned about a week ago looks newly discovered again on the next run. It has nothing to do with which files were already ingested, that is a separate streaming checkpoint, and it does not cache or affect the target Delta table's own data.`
+  },
+  {
+    q:`An engineer manually adds a <code>depends_on</code> style comment above <code>gold_orders</code>'s function noting "must run after silver_orders", believing the pipeline needs this hint to sequence the two tables correctly. Is the comment necessary?`,
+    opts:[
+      `Yes; without an explicit ordering hint the two tables could run in the wrong order`,
+      `No; the pipeline already infers the dependency automatically because gold_orders's function body calls dlt.read("silver_orders")`,
+      `Yes, but only because Lakeflow Declarative Pipelines ignore read references inside SQL-defined tables`,
+      `No, but only because both tables happen to be materialized views in this example`
+    ],
+    correct:1,
+    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like dlt.read("silver_orders") and build the dependency DAG from that automatically; a plain comment adds nothing the engine actually uses. This inference works regardless of whether the referenced tables are streaming tables or materialized views, and it applies to SQL-defined tables too, not just Python ones.`
+  },
+  /* Ch 05 - Automating Jobs: UI, API, and CLI */
+  {
+    q:`A data scientist wants to test a notebook once against production data with a new parameter value, and does not want a job definition left behind afterward. Which API call fits, and what is the key difference from triggering an existing job?`,
+    opts:[
+      `jobs/runs/submit, which runs the task once with no job definition persisted, unlike run-now which requires an existing job`,
+      `jobs/run-now, since it accepts one-time parameter overrides on a saved job`,
+      `jobs/create, immediately followed by jobs/delete once the run finishes`,
+      `There is no such option; every run in Databricks requires a saved job definition`
+    ],
+    correct:0,
+    explain:`runs/submit is built for exactly this: an ephemeral, one-off run that leaves nothing saved behind. run-now does accept parameter overrides, but only against a job that already exists and stays saved in its run history afterward, the opposite of what is wanted here. create-then-delete works but leaves a needless job definition sitting around in between, and ad hoc runs are fully supported without any saved job.`
+  },
+  {
+    q:`A platform engineer explains to a new hire that the Jobs UI, the REST API, and the CLI are "three doors to the same room." What does that mean in practice, and what is the one thing that is not true of all three equally?`,
+    opts:[
+      `All three are equally scriptable, since the UI can be automated with browser macros`,
+      `The three interfaces manage entirely separate job definitions that must be kept in sync manually`,
+      `All three ultimately describe and can trigger the same underlying job spec, but only the CLI and API changes are naturally scriptable and reproducible, unlike UI edits`,
+      `Only the REST API can trigger a run; the UI and CLI can only view job state`
+    ],
+    correct:2,
+    explain:`UI, API, and CLI all end up describing and operating on the same job spec underneath, that part of the analogy holds. What is not equal is reproducibility: CLI and API calls are naturally scriptable and can live in version control, while UI edits are not commits and leave no record of who changed what. Browser macros are not a supported or reliable substitute for real automation, the three interfaces share one job spec rather than separate ones, and the UI can trigger runs just like the other two.`
+  },
+  /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
+  {
+    q:`A page-view log table receives continuous new events, but rows must occasionally be deleted entirely to comply with a user data-erasure request. A downstream summary table reports total page views per day. Which table type should that summary be, and what does the erasure requirement rule out?`,
+    opts:[
+      `A streaming table; erasure requests are rare enough not to matter for table type`,
+      `Either type works, since both eventually reflect deletes given enough time`,
+      `A streaming table with a nightly batch job layered on top to handle deletions separately`,
+      `A materialized view; a streaming table would never see a deleted row disappear from its already-counted total, since it only ever processes new rows`
+    ],
+    correct:3,
+    explain:`The moment a source can be changed after landing, here by deletion, a streaming table stops being reliable: it only ever processes new rows and has no mechanism to notice something already counted was removed. A materialized view recomputes or incrementally maintains its result against the current state of the source, so an erasure is reflected correctly. Streaming tables never catch up to deletes on their own no matter how much time passes, and bolting on a separate batch job to patch the gap is exactly the complexity a materialized view avoids.`
+  },
+  {
+    q:`A bronze table ingests raw server access logs via Auto Loader. Every log line is a new, immutable event; nothing already ingested is ever changed or removed. Which table type is the right default here, and what makes a materialized view unnecessary?`,
+    opts:[
+      `A materialized view, since access logs are high volume and volume alone favors materialized views`,
+      `A streaming table; its incremental, process-once model fits an append-only source exactly, and a materialized view would only add a recompute cost this source never needs`,
+      `Neither; raw logs should always be processed as a one-time batch read, not a Lakeflow table at all`,
+      `A materialized view, because streaming tables cannot ingest data through Auto Loader`
+    ],
+    correct:1,
+    explain:`When nothing already landed ever changes, a streaming table's incremental, process-once semantics fit exactly, with lower latency and no downside. A materialized view would still work, but it pays a recompute or incremental-maintenance cost to guard against upstream changes that this strictly append-only source never actually produces. Volume alone is not the deciding signal, and streaming tables read from Auto Loader routinely, that is one of their most common sources.`
+  },
+  /* Ch 07 - CDC with the APPLY CHANGES API */
+  {
+    q:`An apply_changes call is configured with <code>keys=["order_id"]</code>. A teammate proposes removing keys entirely, arguing sequence_by alone is enough to keep the target table correct. What would actually break without keys?`,
+    opts:[
+      `apply_changes would have no way to know which target row a given change belongs to, since keys is what identifies the entity a change record is about`,
+      `Nothing; sequence_by alone fully determines correctness, keys are only a performance hint`,
+      `The pipeline would fail to start, since keys is required only for stored_as_scd_type=2`,
+      `Removing keys would only affect delete handling, not inserts or updates`
+    ],
+    correct:0,
+    explain:`keys is what tells apply_changes which target row a change record refers to; without it, there is no way to match an incoming change, insert, update, or delete, to the entity it is about, so the whole matching logic breaks, not just deletes. sequence_by only decides which of several changes to the same key wins, it does not substitute for identifying the key itself, and keys is required for both SCD Type 1 and Type 2, not just Type 2.`
+  },
+  {
+    q:`A customer dimension table needs to answer "what was this customer's billing address as of any past order date," not just the current address. Which apply_changes setting makes that possible, and what does it add to the target table?`,
+    opts:[
+      `stored_as_scd_type=1, since it is the default and requires the least configuration`,
+      `apply_as_deletes, since historical answers require deleting stale rows`,
+      `sequence_by pointed at the customer's original signup date instead of the change timestamp`,
+      `stored_as_scd_type=2, which keeps every version of a row and adds __START_AT and __END_AT columns marking when each version was valid`
+    ],
+    correct:3,
+    explain:`Answering a question about a specific point in time requires retained history, which only SCD Type 2 provides: every change becomes its own row bounded by __START_AT and __END_AT, so a past address is still queryable. Type 1 overwrites in place and only shows the current value, apply_as_deletes governs how source deletes are handled rather than history retention, and sequence_by determines ordering of changes, not what gets stored.`
+  },
+  /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
+  {
+    q:`A pipeline reads Kafka, applies a custom stateful deduplication operator with no Lakeflow equivalent, and writes the result straight into a Delta table inside Unity Catalog. A colleague argues Lakeflow Declarative Pipelines should be used since the sink is a UC Delta table. What settles the disagreement?`,
+    opts:[
+      `The colleague is right; the sink is always the deciding signal regardless of anything else`,
+      `Neither approach can write to Unity Catalog directly, so a separate load job is required either way`,
+      `The custom stateful operator settles it: since it has no equivalent in the managed pipeline, raw Structured Streaming is required even though the sink would otherwise favor Lakeflow`,
+      `The two approaches are interchangeable here, since both ultimately run on Structured Streaming`
+    ],
+    correct:2,
+    explain:`The deciding signal is whichever requirement the managed wrapper cannot express, here the custom stateful operator, and that overrides the fact that the sink happens to be a UC Delta table, which would otherwise favor Lakeflow Pipelines. Raw Structured Streaming can write directly to Delta in Unity Catalog with no separate load step needed, and sharing an engine underneath does not make the two approaches interchangeable when only one exposes arbitrary stateful operators.`
+  },
+  {
+    q:`A two-person team maintains three raw Structured Streaming jobs, each with its own hand-managed checkpoint path, retry logic, and a duplicated null-check step, all landing Delta tables in Unity Catalog. What is the strongest fix for their growing operational load?`,
+    opts:[
+      `Consolidate the three jobs into one larger Structured Streaming job to reduce the number of checkpoint paths`,
+      `Migrate the three jobs to a Lakeflow Declarative Pipeline; checkpoints, retries, and data-quality expectations come managed, and the sink already fits what it targets`,
+      `Keep the current design, since medallion-style pipelines require foreachBatch control a managed pipeline cannot offer`,
+      `Hire an additional engineer dedicated to checkpoint and retry maintenance`
+    ],
+    correct:1,
+    explain:`Everything driving this team's load, hand-managed checkpoints, retries, and a duplicated quality check, is exactly what a Lakeflow Declarative Pipeline provides out of the box, and their sink, Delta tables in Unity Catalog, is precisely what it targets, so nothing is lost by moving. Consolidating jobs still leaves the same hand-built machinery in place, medallion pipelines do not require foreachBatch, and adding headcount treats a tooling problem as a staffing one.`
+  },
+  /* Ch 09 - Control Flow and Task Configuration in Jobs */
+  {
+    q:`A job's extract task feeds two parallel tasks, load_warehouse and load_lake. A final task, archive_source, must run only after both loads have finished, whether they succeeded or failed, so source files are always archived. Which run_if setting on archive_source is correct?`,
+    opts:[
+      `ALL_DONE, so archive_source runs once both load tasks finish, regardless of outcome`,
+      `ALL_SUCCESS, the default, so archive_source only runs after a fully clean run`,
+      `AT_LEAST_ONE_FAILED, so archive_source only runs when something upstream broke`,
+      `A For Each task wrapping archive_source, iterating over the two load tasks`
+    ],
+    correct:0,
+    explain:`ALL_DONE fires once every dependency has finished, pass or fail, which is exactly what "always archive" requires. ALL_SUCCESS (the default) would skip archiving after any failure, leaving source files unarchived exactly when a rerun might need them, and AT_LEAST_ONE_FAILED would skip archiving after a clean run instead. For Each iterates over list elements to repeat a task, it is not a conditional execution rule.`
+  },
+  {
+    q:`The same cleansing notebook must run once for each of 25 source tables named in a config file, with up to 5 running at a time to control load on shared compute. What is the cleanest way to configure this in a job?`,
+    opts:[
+      `25 separate notebook tasks, each hardcoded to one table name`,
+      `One notebook task with an internal Python loop over all 25 tables, run sequentially`,
+      `A single task with run_if=ALL_DONE, so it retries automatically for each table on failure`,
+      `A For Each task wrapping the notebook, iterating the 25-table list with a concurrency limit of 5`
+    ],
+    correct:3,
+    explain:`A For Each task runs one inner task per list element with configurable concurrency, so 25 tables need one task definition, not 25, and the concurrency limit caps how many run at once, exactly matching "up to 5 at a time." Twenty-five hardcoded tasks is the copy-paste this feature exists to remove, an internal loop runs everything on one task sequentially with no real parallelism or per-table isolation, and run_if governs conditional execution, not iteration or concurrency.`
+  },
+  /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
+  {
+    q:`Two tests are written for the same cleaning function. Test A compares actual and expected DataFrames that hold identical rows in a different order because of an upstream join. Test B compares a computed value of 7.9999999999998 against an expected 8.0. Using assertDataFrameEqual with default settings, what happens?`,
+    opts:[
+      `Test A fails on row order, test B passes, since integer-like floats compare exactly`,
+      `Both tests fail, since assertDataFrameEqual requires identical row order and exact float equality unless explicitly configured`,
+      `Both tests pass; assertDataFrameEqual compares rows independent of order and tolerates small floating-point differences by default`,
+      `Test A passes, test B fails, since assertDataFrameEqual has no built-in float tolerance`
+    ],
+    correct:2,
+    explain:`assertDataFrameEqual is built to forgive exactly these two situations: by default it treats the two DataFrames as unordered, so a reordering from an upstream join is not a failure, and it applies rtol and atol tolerances, so a tiny floating-point rounding difference passes while a genuinely wrong value would still fail loudly. Neither symptom described here causes a failure on its own with default settings.`
+  },
+  {
+    q:`A transformation passes every unit test written against small hand-built sample rows, but produces visibly wrong output only when run against a specific production customer's full order history. What is the fastest way to find where the logic actually diverges?`,
+    opts:[
+      `Add several more assertDataFrameEqual cases with small samples and hope one happens to reproduce it`,
+      `Set a breakpoint inside the transformation and step through it against that customer's real data to inspect each stage`,
+      `Rewrite the transformation as a plain row-at-a-time UDF, since row-level execution surfaces bugs more directly`,
+      `Assume the tests are sufficient and treat the production discrepancy as unrelated data noise`
+    ],
+    correct:1,
+    explain:`The bug only appears on a specific production case the existing tests never covered, so the debugger is the direct path: a breakpoint lets you step through the transformation against that real data and watch exactly where the output diverges from expectations. Writing more small-sample tests is guesswork until one happens to hit the case, switching UDF style changes the execution model without revealing anything about the bug, and dismissing it risks shipping genuinely wrong output.`
+  },
+  /* Ch 11 - Multi-Format Ingestion: Files, Message Buses, Cloud Storage */
+  {
+    q:`A team ingests a folder of scanned invoice images, where each file lands as one row of raw bytes plus file metadata, with no tabular schema to infer at all. Which format category does this belong to, and which format does Databricks read it as?`,
+    opts:[
+      `Unstructured; read as Binary, since images have no tabular schema and typically land as one row per file plus metadata`,
+      `Semi-structured; read as CSV, since CSV is the default for any file without a declared schema`,
+      `Structured; read as Parquet, since Parquet is Databricks' fallback for any file it cannot classify`,
+      `This cannot be ingested through Auto Loader; image files require a separate computer-vision pipeline first`
+    ],
+    correct:0,
+    explain:`Images and other files with no tabular structure at all fall into the unstructured category, and Databricks reads formats like this as Binary, landing one row per file with the raw bytes plus file metadata. CSV is semi-structured with an inferable schema, not a generic default, Parquet self-describes and is not a fallback format, and Auto Loader's cloudFiles source supports Binary as one of its formats directly.`
+  },
+  {
+    q:`A mobile app publishes user-interaction events continuously, and a fraud-detection service needs to react to each event within a few seconds, with no requirement that events ever land as files in cloud storage first. Which ingestion path fits, and why do both Auto Loader modes fall short here?`,
+    opts:[
+      `Auto Loader with directory listing, since it is the simplest mode with no cloud setup required`,
+      `Auto Loader with file notification, since that mode is built specifically for low-latency use cases`,
+      `A scheduled COPY INTO run every 30 seconds against a staging path`,
+      `Structured Streaming reading directly from the message bus with format("kafka"); both Auto Loader modes discover files that have already landed, and no file is ever written in this scenario`
+    ],
+    correct:3,
+    explain:`Kafka, Kinesis, and Event Hubs are read directly with Structured Streaming's format("kafka"), removing the file hop entirely and keeping latency low. Both Auto Loader discovery modes, directory listing and file notification, and COPY INTO all assume data has already landed as files in cloud storage; file notification only changes how new files are discovered once they exist, it does not remove the requirement that a file exists in the first place.`
+  },
+  /* Ch 12 - Append-Only Pipelines: Batch and Streaming on Delta */
+  {
+    q:`A downstream job reads a Delta table with <code>readStream.table()</code>. A separate scheduled process runs a <code>MERGE</code> against that table nightly to deduplicate late-arriving records. What happens to the downstream stream the first time this MERGE runs?`,
+    opts:[
+      `Nothing changes, since readStream.table() only reacts to streaming writers, not batch merges`,
+      `It throws an exception by default, since MERGE is not an append-only change and violates the stream's source assumption`,
+      `It silently skips the merged rows and continues streaming only the newest appends`,
+      `It automatically switches to batch mode and reprocesses the whole table nightly from then on`
+    ],
+    correct:1,
+    explain:`Structured Streaming assumes its source is append-only and throws by default the moment an UPDATE, DELETE, MERGE, or OVERWRITE touches the table it is reading, exactly what a dedup MERGE does. Skipping past that safely is an explicit opt-in like skipChangeCommits, not silent default behavior, and the stream does not auto-switch modes on its own. readStream.table() reacts to any commit in the table's log, batch or streaming, which is exactly why a nightly batch MERGE still breaks it.`
+  },
+  {
+    q:`Files land in a staging path a few times per day on an unpredictable schedule. There is no requirement for continuous, low-latency processing, and the team wants to avoid paying for a cluster sitting idle between arrivals. Which write pattern is the better operational fit, and why?`,
+    opts:[
+      `A continuously running Structured Streaming job with outputMode("append"), since continuous processing is always the safer default`,
+      `A Lakeflow streaming table with a fixed ten-second trigger interval`,
+      `COPY INTO triggered on each arrival; it is idempotent, safe to re-run, and needs no cluster running between the unpredictable loads`,
+      `Either pattern is equally good, since both are exactly-once on Delta`
+    ],
+    correct:2,
+    explain:`COPY INTO tracks which source files it has already loaded, so it is safe to re-run on each arrival and needs no cluster sitting idle in between, exactly the constraint described. A continuously running stream or a tight fixed-interval trigger both pay for compute between arrivals that only happen a few times a day, which this scenario explicitly wants to avoid. Both patterns are exactly-once, but that does not make them equally good operationally here.`
+  },
+  /* Ch 13 - Advanced Transformations: Window Functions, Joins, Aggregations */
+  {
+    q:`A report needs each employee's salary rank within their own department, with every employee row still present in the output alongside their rank. Which construct fits, and what happens if PARTITION BY is left out by mistake?`,
+    opts:[
+      `RANK() OVER (ORDER BY salary DESC), and omitting PARTITION BY would rank employees only within their own row, changing nothing`,
+      `GROUP BY dept with RANK(salary), and omitting GROUP BY would simply skip the ranking step`,
+      `A broadcast join against a pre-computed rank lookup table, and PARTITION BY does not apply to joins`,
+      `RANK() OVER (PARTITION BY dept ORDER BY salary DESC), and omitting PARTITION BY would rank every employee against the entire table as one single window instead of within their department`
+    ],
+    correct:3,
+    explain:`PARTITION BY dept splits rows into per-department groups before ORDER BY ranks within each one, so every row keeps its rank while still appearing in the output. Leaving PARTITION BY out does not fail or no-op, it silently collapses the whole result set into a single window, ranking every employee company-wide instead of within their department. GROUP BY collapses rows into one summary per group rather than keeping every row, and RANK() is a window function, not something a join hint applies to.`
+  },
+  {
+    q:`A join between a 400 GB fact table and an 8 MB dimension table runs a full shuffle instead of the expected broadcast, and profiling shows Spark misestimated the dimension table's size. Which fix directly addresses this?`,
+    opts:[
+      `Add a /*+ BROADCAST(d) */ hint to force the broadcast Spark's own size estimate missed`,
+      `Increase spark.sql.autoBroadcastJoinThreshold to a smaller value, so more joins avoid broadcasting`,
+      `Switch the join to a sort-merge join explicitly, since large-small joins should always shuffle`,
+      `Repartition the fact table alphabetically by join key before the join`
+    ],
+    correct:0,
+    explain:`When Spark's own size estimate is wrong and a broadcast-eligible join falls back to a full shuffle, the BROADCAST hint forces the plan Spark should have chosen on its own, which directly fixes this case. Lowering autoBroadcastJoinThreshold would make Spark broadcast less often, the opposite of what is needed, forcing a sort-merge join keeps the expensive shuffle this scenario is trying to avoid, and repartitioning by key does not change whether the small side gets broadcast.`
+  },
+  {
+    q:`A dashboard needs a running total of each customer's spend by order date, with every individual order row still visible in the result set. A GROUP BY customer_id with SUM(amount) is proposed. What is wrong with that approach, and what should replace it?`,
+    opts:[
+      `Nothing is wrong; GROUP BY is the standard way to compute any running total`,
+      `GROUP BY is correct, but it needs a broadcast hint to preserve row-level detail`,
+      `GROUP BY collapses each customer down to one summary row, losing the individual orders; SUM(amount) OVER (PARTITION BY customer_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) keeps every row while adding the running total`,
+      `Neither approach can compute a running total; that requires a separate batch job per customer`
+    ],
+    correct:2,
+    explain:`GROUP BY produces one row per group, which is exactly the opposite of "every individual order row still visible." The window-function form computes the identical running sum while leaving every original order row intact, which is what a per-row running total actually requires. A broadcast hint affects join execution, not aggregation shape, and this is a standard SQL pattern, not something requiring a separate per-customer job.`
+  },
+  /* Ch 14 - Quarantining Bad Data with Expectations */
+  {
+    q:`A required customer_id column starts arriving null for about 3% of rows from a newly onboarded upstream source. The team wants those rows kept out of the production table, but still queryable later so someone can investigate the upstream issue. Which expectation setup fits?`,
+    opts:[
+      `@dp.expect on customer_id, which logs the failures as a warning but still writes the rows to the target table`,
+      `@dp.expect_or_drop on customer_id, paired with a companion quarantine dataset built from the negated condition`,
+      `@dp.expect_or_fail on customer_id, so the whole pipeline update stops until the upstream issue is fixed`,
+      `No expectation at all; a nightly SQL query to find and delete the null rows after the fact`
+    ],
+    correct:1,
+    explain:`Plain expect would let the null rows into production, which the team explicitly does not want, and expect_or_fail would halt the entire update over a partial, non-blocking data issue. expect_or_drop keeps production clean, and a companion dataset selecting everything the same condition rejects preserves those rows for inspection instead of losing them, which a delete-after-the-fact query would do.`
+  },
+  {
+    q:`A pipeline enforces the same two rules, id IS NOT NULL and price > 0, across five different silver tables by retyping the decorator on each one. A reviewer suggests reusing one rule set instead. Which construct does that?`,
+    opts:[
+      `Five separate @dp.expect_or_drop decorators, each hardcoded with both conditions written out`,
+      `A single expectation defined once at the pipeline level that automatically applies to every table`,
+      `@dp.expect_or_fail on just one of the five tables, since expectations propagate downstream automatically`,
+      `@dp.expect_all_or_drop applied to a shared rules dictionary, so all five tables reference the same rule set instead of retyping it`
+    ],
+    correct:3,
+    explain:`expect_all_or_drop (and its expect_all and expect_all_or_fail siblings) takes a whole dictionary of named rules and applies it in one decorator, so the same rules dictionary can be shared across all five tables instead of retyped on each. Expectations are declared per dataset, not at a pipeline level that auto-applies everywhere, and they do not propagate downstream on their own, each table that needs a rule declares it.`
+  },
+  {
+    q:`A silver table enforces price > 0 with a plain @dp.expect (not expect_or_drop or expect_or_fail). A colleague assumes failing rows never reach the table. What actually happens to a row that fails this expectation?`,
+    opts:[
+      `The row is written to the target table anyway; only pass and fail counts are logged, since plain expect does not block or remove anything`,
+      `The row is automatically routed to a quarantine table, since that is the default behavior of any expectation`,
+      `The row is dropped before it reaches the target table, identical to expect_or_drop`,
+      `The entire pipeline update fails, identical to expect_or_fail`
+    ],
+    correct:0,
+    explain:`Plain @dp.expect is the least strict of the three: a failing row is still written to the target table, and only the pass and fail counts are logged for monitoring, nothing is blocked or removed. Automatic quarantine routing does not exist as a default, that requires explicitly building a companion dataset on the negated condition. Dropping the row is expect_or_drop's behavior and failing the update is expect_or_fail's, neither is what plain expect does.`
+  }
+];
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>
