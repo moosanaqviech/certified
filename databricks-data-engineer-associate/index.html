@@ -272,6 +272,26 @@
 
   <div id="units"></div>
 
+  <script>
+  // Self-heal access from a saved token if the cookie was dropped (e.g. a mobile
+  // WebView that does not persist cookies across launches). Skips if already
+  // unlocked; does not consume a device activation.
+  (function(){
+    try{
+      if(/(?:^|;\s*)cc_ui=1(?:;|$)/.test(document.cookie)) return;
+      var t=localStorage.getItem("cc_token");
+      if(!t || sessionStorage.getItem("cc_refresh_done")) return;
+      sessionStorage.setItem("cc_refresh_done","1");
+      fetch("/api/refresh",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token:t})})
+        .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+        .then(function(res){
+          if(res.ok&&res.d&&res.d.ok){ if(res.d.token) localStorage.setItem("cc_token",res.d.token); location.reload(); }
+          else { localStorage.removeItem("cc_token"); }
+        }).catch(function(){});
+    }catch(e){}
+  })();
+  </script>
+
   <!-- PRACTICE EXAM section -->
   <div class="feedback-card">
     <h3>Ready to test yourself?</h3>

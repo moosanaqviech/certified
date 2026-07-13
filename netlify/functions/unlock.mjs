@@ -38,7 +38,9 @@ function unlockedResponse(secret, code) {
   headers.append("set-cookie", `cc_access=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
   // Non-HttpOnly hint so the course page can show the unlocked state (not a security boundary).
   headers.append("set-cookie", `cc_ui=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
-  return new Response(JSON.stringify({ ok: true, code }), { status: 200, headers });
+  // token is returned so the client can persist it (localStorage) and re-auth
+  // via /api/refresh if the cookie is later dropped (e.g. mobile WebViews).
+  return new Response(JSON.stringify({ ok: true, code, token }), { status: 200, headers });
 }
 
 export default async (req) => {

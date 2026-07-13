@@ -185,6 +185,22 @@ function paywallHtml(): string {
     <div class="back"><a href="/databricks-data-engineer-associate/">Back to the free lessons</a></div>
   </div>
 <script>
+  // Self-heal: if a saved token exists (e.g. cookie dropped by a mobile WebView),
+  // silently re-establish access and reload so the real lesson is served. Does
+  // not consume a device activation. Guarded so it runs at most once per session.
+  (function(){
+    try{
+      var t=localStorage.getItem("cc_token");
+      if(!t || sessionStorage.getItem("cc_refresh_done")) return;
+      sessionStorage.setItem("cc_refresh_done","1");
+      fetch("/api/refresh",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token:t})})
+        .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+        .then(function(res){
+          if(res.ok&&res.d&&res.d.ok){ if(res.d.token) localStorage.setItem("cc_token",res.d.token); location.reload(); }
+          else { localStorage.removeItem("cc_token"); }
+        }).catch(function(){});
+    }catch(e){}
+  })();
   var btn=document.getElementById("buy"),err=document.getElementById("err");
   btn.addEventListener("click",async function(){
     btn.disabled=true;btn.textContent="Redirecting to checkout...";err.textContent="";
