@@ -1,12 +1,32 @@
 // Creates a Stripe Checkout Session (one-time payment) and returns its URL.
-// Called by the paywall and the course page "Get full access" button. Uses
-// the Stripe REST API via fetch, so no Stripe SDK dependency is needed.
+// Called by each course's paywall and "Get full access" button. Uses the
+// Stripe REST API via fetch, so no Stripe SDK dependency is needed.
+//
+// Associate and Professional are separate products with separate Stripe
+// Prices. The request body names which course is being purchased; that
+// choice is stamped into the Stripe session's metadata so /api/unlock can
+// trust it after payment instead of taking the course from client input.
+
+const COURSES = {
+  associate: {
+    priceEnv: "STRIPE_PRICE_ID",
+    cancelPath: "/databricks-data-engineer-associate/",
+  },
+  professional: {
+    priceEnv: "STRIPE_PRICE_ID_PROFESSIONAL",
+    cancelPath: "/databricks-data-engineer-professional/",
+  },
+};
 
 export default async (req) => {
   try {
     const key = process.env.STRIPE_SECRET_KEY;
-    const price = process.env.STRIPE_PRICE_ID;
     const site = process.env.SITE_URL || new URL(req.url).origin;
+
+    const input = await req.json().catch(() => ({}));
+    const courseId = COURSES[input.course] ? input.course : "associate";
+    const course = COURSES[courseId];
+    const price = process.env[course.priceEnv];
     if (!key || !price) return json({ error: "Checkout is not configured yet." }, 500);
 
     const body = new URLSearchParams();
@@ -15,8 +35,9 @@ export default async (req) => {
     body.set("line_items[0][quantity]", "1");
     // Enables the promo-code field on Stripe checkout (useful for comps/discounts).
     body.set("allow_promotion_codes", "true");
+    body.set("metadata[course]", courseId);
     body.set("success_url", `${site}/unlock/?session_id={CHECKOUT_SESSION_ID}`);
-    body.set("cancel_url", `${site}/databricks-data-engineer-associate/`);
+    body.set("cancel_url", `${site}${course.cancelPath}`);
 
     const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",

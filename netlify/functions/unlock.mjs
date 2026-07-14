@@ -9,6 +9,11 @@
 // live in Netlify Blobs (no external database). The buyer's own success link is
 // treated as proof of purchase and always unlocks; the shared ACCESS CODE is
 // what the activation limit caps.
+//
+// Associate and Professional are separate products, so every access record
+// and cookie is scoped to a course. Which course a Stripe session paid for
+// comes from that session's own metadata (set by /api/create-checkout), never
+// from client input, so a buyer cannot unlock a course they did not pay for.
 
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
@@ -16,6 +21,15 @@ import crypto from "node:crypto";
 const LIMIT = parseInt(process.env.ACTIVATION_LIMIT || "3", 10);
 const COOKIE_DAYS = 60;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1
+
+const COURSES = {
+  associate: { cookieName: "cc_access", uiCookieName: "cc_ui" },
+  professional: { cookieName: "cc_access_pro", uiCookieName: "cc_ui_pro" },
+};
+
+function courseOf(id) {
+  return COURSES[id] ? id : "associate";
+}
 
 function sign(payloadObj, secret) {
   const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64url");
@@ -30,17 +44,18 @@ function deriveCode(seed, secret) {
   return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`;
 }
 
-function unlockedResponse(secret, code) {
+function unlockedResponse(secret, code, courseId) {
+  const course = COURSES[courseOf(courseId)];
   const maxAge = COOKIE_DAYS * 86400;
   const exp = Math.floor(Date.now() / 1000) + maxAge;
-  const token = sign({ v: 1, exp }, secret);
+  const token = sign({ v: 1, exp, course: courseOf(courseId) }, secret);
   const headers = new Headers({ "content-type": "application/json", "cache-control": "no-store" });
-  headers.append("set-cookie", `cc_access=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
+  headers.append("set-cookie", `${course.cookieName}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
   // Non-HttpOnly hint so the course page can show the unlocked state (not a security boundary).
-  headers.append("set-cookie", `cc_ui=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
+  headers.append("set-cookie", `${course.uiCookieName}=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
   // token is returned so the client can persist it (localStorage) and re-auth
   // via /api/refresh if the cookie is later dropped (e.g. mobile WebViews).
-  return new Response(JSON.stringify({ ok: true, code, token }), { status: 200, headers });
+  return new Response(JSON.stringify({ ok: true, code, token, course: courseOf(courseId) }), { status: 200, headers });
 }
 
 export default async (req) => {
@@ -62,12 +77,15 @@ export default async (req) => {
       const paid = s.payment_status === "paid" || s.status === "complete";
       if (!paid) return json({ error: "Payment not completed" }, 402);
 
-      const code = deriveCode(s.customer || s.id, secret);
+      // The course comes from the session's own metadata (set server-side at
+      // checkout creation), never from the client, so it cannot be spoofed.
+      const courseId = courseOf(s.metadata && s.metadata.course);
+      const code = deriveCode(`${courseId}:${s.customer || s.id}`, secret);
       const rec = await store.get(code, { type: "json" });
       if (!rec) {
-        await store.setJSON(code, { activations: 1, limit: LIMIT, created: Date.now(), source: "stripe" });
+        await store.setJSON(code, { activations: 1, limit: LIMIT, created: Date.now(), source: "stripe", course: courseId });
       }
-      return unlockedResponse(secret, code);
+      return unlockedResponse(secret, code, courseId);
     }
 
     if (input.code) {
@@ -80,7 +98,9 @@ export default async (req) => {
       }
       rec.activations = (rec.activations || 0) + 1;
       await store.setJSON(code, rec);
-      return unlockedResponse(secret, code);
+      // Codes created before Professional existed have no course field; they
+      // were all Associate purchases, so default to that.
+      return unlockedResponse(secret, code, courseOf(rec.course));
     }
 
     return json({ error: "Missing session_id or code" }, 400);

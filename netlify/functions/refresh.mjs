@@ -7,10 +7,25 @@
 // This does NOT consume a device activation: it only re-issues a cookie from an
 // already-valid token (the activation was counted when the code was redeemed).
 // The token is HMAC-signed by the server, so a client cannot forge one.
+//
+// The course a token belongs to travels inside the token's own signed payload
+// (stamped there by /api/unlock), so the right cookie pair is reissued without
+// trusting anything the client sends beyond the token itself. Tokens minted
+// before Professional existed have no course field; they were all Associate,
+// so that's the default.
 
 import crypto from "node:crypto";
 
 const COOKIE_DAYS = 60;
+
+const COURSES = {
+  associate: { cookieName: "cc_access", uiCookieName: "cc_ui" },
+  professional: { cookieName: "cc_access_pro", uiCookieName: "cc_ui_pro" },
+};
+
+function courseOf(id) {
+  return COURSES[id] ? id : "associate";
+}
 
 function b64urlJson(obj) {
   return Buffer.from(JSON.stringify(obj)).toString("base64url");
@@ -40,17 +55,21 @@ export default async (req) => {
     if (!secret) return json({ error: "Not configured" }, 500);
     const { token } = await req.json().catch(() => ({}));
     if (!token) return json({ error: "Missing token" }, 400);
-    if (!verify(token, secret)) return json({ error: "Invalid or expired" }, 401);
+    const payload = verify(token, secret);
+    if (!payload) return json({ error: "Invalid or expired" }, 401);
+
+    const courseId = courseOf(payload.course);
+    const course = COURSES[courseId];
 
     // Re-issue a fresh cookie + token (sliding 60-day expiry). No activation used.
     const maxAge = COOKIE_DAYS * 86400;
     const exp = Math.floor(Date.now() / 1000) + maxAge;
-    const payloadB64 = b64urlJson({ v: 1, exp });
+    const payloadB64 = b64urlJson({ v: 1, exp, course: courseId });
     const newToken = `${payloadB64}.${sign(payloadB64, secret)}`;
     const headers = new Headers({ "content-type": "application/json", "cache-control": "no-store" });
-    headers.append("set-cookie", `cc_access=${newToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
-    headers.append("set-cookie", `cc_ui=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
-    return new Response(JSON.stringify({ ok: true, token: newToken }), { status: 200, headers });
+    headers.append("set-cookie", `${course.cookieName}=${newToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
+    headers.append("set-cookie", `${course.uiCookieName}=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
+    return new Response(JSON.stringify({ ok: true, token: newToken, course: courseId }), { status: 200, headers });
   } catch (_e) {
     return json({ error: "Server error" }, 500);
   }

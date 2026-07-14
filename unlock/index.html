@@ -46,25 +46,31 @@
       <p>Your access code (save it to unlock the course on your other devices):</p>
       <div class="code" id="codeOut">----</div>
       <div class="hint">Works on up to 3 devices.</div>
-      <a class="cta" href="/databricks-data-engineer-associate/">Start learning</a>
+      <a class="cta" id="startLearning" href="/">Start learning</a>
     </div>
 
     <!-- Manual code entry -->
     <div id="entry" hidden>
       <div class="kicker">Restore access</div>
       <h1>Enter your access code</h1>
-      <p>Already bought the course? Paste the code from your unlock page or receipt to unlock this device.</p>
+      <p>Already bought a course? Paste the code from your unlock page or receipt to unlock this device.</p>
       <input id="codeIn" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button class="cta" id="redeem">Unlock this device</button>
       <div class="err" id="err"></div>
-      <div class="muted"><a href="/databricks-data-engineer-associate/">Back to the course</a></div>
+      <div class="muted"><a href="/">Back to Already Certified</a></div>
     </div>
   </div>
 
 <script>
   var $=function(id){return document.getElementById(id);};
   function show(id){["verifying","success","entry"].forEach(function(s){$(s).hidden=(s!==id);});}
-  function showCode(code){$("codeOut").textContent=code;show("success");}
+  var COURSE_PATHS={associate:"/databricks-data-engineer-associate/",professional:"/databricks-data-engineer-professional/"};
+  function coursePath(course){return COURSE_PATHS[course]||"/";}
+  function showCode(code, course){
+    $("codeOut").textContent=code;
+    $("startLearning").href=coursePath(course);
+    show("success");
+  }
 
   var params=new URLSearchParams(location.search);
   var sessionId=params.get("session_id");
@@ -73,13 +79,16 @@
     var r=await fetch("/api/unlock",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
     var d=await r.json().catch(function(){return {};});
     if(!r.ok||!d.ok){throw new Error(d.error||"Could not unlock. Please try again.");}
-    if(d.token){ try{ localStorage.setItem("cc_token", d.token); }catch(e){} }
+    if(d.token){
+      var key = d.course==="professional" ? "cc_token_pro" : "cc_token";
+      try{ localStorage.setItem(key, d.token); }catch(e){}
+    }
     return d;
   }
 
   if(sessionId){
     show("verifying");
-    post({session_id:sessionId}).then(function(d){showCode(d.code);}).catch(function(e){
+    post({session_id:sessionId}).then(function(d){showCode(d.code, d.course);}).catch(function(e){
       show("entry");$("err").textContent=e.message;
     });
   }else{
@@ -90,7 +99,7 @@
     var btn=$("redeem"),err=$("err"),code=$("codeIn").value.trim();
     if(!code){err.textContent="Enter your access code.";return;}
     btn.disabled=true;var label=btn.textContent;btn.textContent="Unlocking...";err.textContent="";
-    try{await post({code:code});location.href="/databricks-data-engineer-associate/";}
+    try{var d=await post({code:code});location.href=coursePath(d.course);}
     catch(e){err.textContent=e.message;btn.disabled=false;btn.textContent=label;}
   });
 </script>
