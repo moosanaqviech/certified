@@ -20,7 +20,7 @@ per-domain minimum), multiple choice and multiple response, Pearson VUE testing
 center or online proctored. Already published and sourced in
 blog/aws-dea-c01-exam-guide-domains-weighting.html.
 
-Structure: 4 units mirroring the 4 official content domains, 35 chapters. Each
+Structure: 4 units mirroring the 4 official content domains, 36 chapters. Each
 chapter maps to official task statement numbers. Trade-off lessons are flagged (TO).
 
 Unit 1: Data Ingestion and Transformation (34%)
@@ -107,8 +107,8 @@ Practice exam plan
         Unit 1 only (13 chapters, 26 min)
         Units 1-2 (22 chapters, 44 min)
         Units 1-3 (30 chapters, 60 min)
-        Full coverage, Units 1-4 (35 chapters, 70 min)
-        Full coverage, second pass with new scenarios (35 chapters, 70 min)
+        Full coverage, Units 1-4 (36 chapters, 72 min)
+        Full coverage, second pass with new scenarios (36 chapters, 72 min)
 
 Terminology rules (must match published blog content)
 
