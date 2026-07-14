@@ -1,9 +1,13 @@
 # CLAUDE.md - Certified (certification exam prep app)
 
 Mobile-first static site of interactive lessons and timed practice exams,
-deployed on Netlify. Live course: Databricks DE Associate (complete).
-In progress: Databricks DE Professional (see curriculum-index-de-professional.md,
-the authoritative source for unit/chapter placement and eyebrow labels).
+deployed on Netlify. Live courses: Databricks DE Associate (complete) and
+Databricks DE Professional (complete, see curriculum-index-de-professional.md
+for unit/chapter placement and eyebrow labels).
+In progress: AWS Data Engineer Associate (DEA-C01) (see
+curriculum-index-aws-dea-c01.md, the authoritative source for unit/chapter
+placement; it is marked Draft until re-checked against the official exam
+guide PDF).
 
 ## Site structure
 
@@ -13,8 +17,11 @@ each course). Each course lives in its own top-level folder and has its own
 
 - `databricks-data-engineer-associate/` - lessons + practice exams for the
   live Associate course.
-- Databricks DE Professional lessons/exams go in a sibling
-  `databricks-data-engineer-professional/` folder as they're authored.
+- `databricks-data-engineer-professional/` - lessons + practice exams for the
+  live Professional course.
+- AWS Data Engineer Associate (DEA-C01) lessons/exams go in a sibling
+  `aws-data-engineer-associate/` folder as they're authored (see
+  curriculum-index-aws-dea-c01.md).
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
@@ -74,6 +81,12 @@ anything. They define card shapes, helper classes, and question rules.
   Declarative Pipelines", never "Delta Live Tables" or "DLT". Liquid
   Clustering is the recommended layout approach; partitioning and Z-Order
   appear only as the contrast case.
+- DEA-C01 terminology: say "Amazon Data Firehose", never "Kinesis Data
+  Firehose"; say "Amazon Managed Service for Apache Flink", never "Kinesis
+  Data Analytics". Both renames are cosmetic only (API/CLI/IAM/CloudWatch
+  identifiers kept the pre-rename names), so IAM policy, CLI, and SDK
+  examples should use the retained identifiers even while prose uses the
+  current service name.
 
 ## Workflow per lesson or exam
 
@@ -89,9 +102,10 @@ anything. They define card shapes, helper classes, and question rules.
    Never wire it into the root `index.html`, that page is the cross-course
    catalog and doesn't list individual lessons.
 
-File naming: `lesson-NN-name.html` (Professional numbering continues from
-the new index, chapters 1-37), `pro-practice-exam-NN.html` for Professional
-exams (Associate keeps `practice-exam-NN.html`).
+File naming: `lesson-NN-name.html` (each course numbers its own chapters
+starting at 01, per that course's curriculum index). Practice exams:
+`practice-exam-NN.html` for Associate, `pro-practice-exam-NN.html` for
+Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate.
 
 ## Revisions
 
