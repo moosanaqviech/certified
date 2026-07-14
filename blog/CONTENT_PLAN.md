@@ -48,7 +48,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | What's new on the Databricks Data Engineer Professional exam vs Associate | "databricks professional exam difficulty" | Yes | blog/databricks-data-engineer-professional-exam-topics.html |
 | 2 | Complete Databricks Data Engineer Professional certification guide (pillar) | "databricks data engineer professional certification guide" | Yes | blog/databricks-data-engineer-professional-certification-guide.html |
-| 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | No | |
+| 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | Yes | blog/databricks-professional-performance-tuning-optimization-exam.html |
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | No | |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
@@ -56,8 +56,8 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | AWS Data Engineer Associate (DEA-C01) exam guide breakdown: domains and weighting | "DEA-C01 exam domains" | Yes | blog/aws-dea-c01-exam-guide-domains-weighting.html |
-| 2 | Amazon Data Firehose and Managed Service for Apache Flink: the renames AWS made | "kinesis firehose renamed" / "kinesis data analytics renamed" | No | |
-| 3 | Kinesis Data Streams vs Amazon Data Firehose vs Managed Flink: which to use when | "kinesis vs firehose vs flink" | No | |
+| 2 | Amazon Data Firehose and Managed Service for Apache Flink: the renames AWS made | "kinesis firehose renamed" / "kinesis data analytics renamed" | Yes | blog/amazon-data-firehose-managed-flink-renamed.html |
+| 3 | Kinesis Data Streams vs Amazon Data Firehose vs Managed Flink: which to use when | "kinesis vs firehose vs flink" | Yes | blog/kinesis-data-streams-vs-firehose-vs-managed-flink.html |
 | 4 | AWS Schema Conversion Tool (SCT): current status and what replaced it | "is aws sct deprecated" | No | |
 | 5 | DEA-C01 vs Databricks Data Engineer certifications: how they compare | "aws vs databricks data engineer certification" | No | |
 | 6 | How to study for the AWS Data Engineer Associate exam as a Databricks-certified engineer | "AWS data engineer cert for databricks users" | No | |

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinesis Data Streams vs Amazon Data Firehose vs Managed Service for Apache Flink</title>
+<meta name="description" content="Three AWS streaming services, three different jobs: Kinesis Data Streams buffers and replays, Amazon Data Firehose delivers, Managed Flink processes state.">
+<link rel="canonical" href="https://certify.courses/blog/kinesis-data-streams-vs-firehose-vs-managed-flink">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kinesis Data Streams vs Amazon Data Firehose vs Managed Service for Apache Flink">
+<meta property="og:description" content="Three AWS streaming services, three different jobs: Kinesis Data Streams buffers and replays, Amazon Data Firehose delivers, Managed Flink processes state.">
+<meta property="og:url" content="https://certify.courses/blog/kinesis-data-streams-vs-firehose-vs-managed-flink">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../index.html">Already Certified</a><span>&rsaquo;</span>
+    <a href="aws-dea-c01-exam-guide-domains-weighting.html">AWS DEA-C01 Exam Domains</a><span>&rsaquo;</span>
+    <span>Kinesis vs Firehose vs Flink</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">AWS Data Engineer Associate &middot; Services</div>
+    <h1>Kinesis Data Streams vs Amazon Data Firehose vs Managed Service for Apache Flink</h1>
+    <p class="lede">All three sit in the same AWS streaming family and all three show up in Domain 1 of the DEA-C01, but they solve <strong>three different problems</strong>. Kinesis Data Streams buffers and replays, Amazon Data Firehose delivers, and Managed Service for Apache Flink processes state. Knowing which one a scenario needs is the actual skill being tested.</p>
+    <p class="updated">Last updated July 2026.</p>
+  </header>
+
+  <section id="table">
+    <h2>What each service actually does</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Kinesis Data Streams</th><th>Amazon Data Firehose</th><th>Managed Flink</th></tr></thead>
+      <tbody>
+        <tr><th>Core job</th><td class="col-h">Durable, ordered, replayable buffer</td><td>Delivers data to a destination</td><td>Stateful stream processing</td></tr>
+        <tr><th>Data retention</th><td class="col-h">24 hours default, up to 365 days</td><td>None; no relationship after delivery</td><td>Depends on the app's state and checkpoints</td></tr>
+        <tr><th>Consumers</th><td class="col-h">Multiple independent consumers</td><td>None, delivery is the endpoint</td><td>Reads from streams like Kinesis or MSK</td></tr>
+        <tr><th>Latency</th><td class="col-h">Sub-second</td><td>Seconds to minutes (buffered)</td><td>Sub-second, in-flight</td></tr>
+        <tr><th>Pricing model</th><td class="col-h">Per shard-hour or per GB (on-demand)</td><td>Per GB ingested and delivered</td><td>Per Kinesis Processing Unit (KPU)</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Retention figures from the <a href="https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html" target="_blank" rel="noopener">Kinesis Data Streams developer guide</a>.</p>
+  </section>
+
+  <section id="when">
+    <h2>Use Kinesis Data Streams when</h2>
+    <p>Multiple independent applications need to read the same stream, you need to replay data from up to a year back, or you need sub-second latency with fine-grained control over sharding and scaling. Data Streams is a durable buffer, not a destination: something still has to read from it and do something with the records.</p>
+
+    <h2>Use Amazon Data Firehose when</h2>
+    <p>The destination is S3, Redshift, OpenSearch Service, Splunk, Snowflake, or another supported target, and the job is reliable delivery without managing consumers or scaling. Firehose supports light transformation through an attached Lambda function, but once it delivers a record, the service has no further relationship with that data. Reprocessing means reading it back out of wherever it landed, not replaying it from Firehose itself.</p>
+
+    <h2>Use Managed Service for Apache Flink when</h2>
+    <p>The workload needs windowed aggregations, stream-to-stream joins, exactly-once stateful processing, or anything that has to remember what it saw earlier. Fraud detection, recommendation engines, and real-time ETL that transforms and enriches records before they land are the typical cases. This is the only one of the three that runs your own application logic against the stream rather than moving or delivering data as-is.</p>
+  </section>
+
+  <section id="together">
+    <h2>They are commonly chained together</h2>
+    <p>A frequent production pattern uses Kinesis Data Streams as the durable entry point, with Managed Service for Apache Flink reading from it as one consumer to do stateful processing, and Amazon Data Firehose reading from it as a separate consumer to land a copy of the raw or processed records into S3 for durable, zero-maintenance archival. This combines low-latency processing with reliable storage without any one service trying to do all three jobs at once.</p>
+  </section>
+
+  <section id="exam">
+    <h2>Where this shows up on the DEA-C01</h2>
+    <p>Domain 1 (Data Ingestion and Transformation) is the largest domain on the exam at 34% of scored questions, and it explicitly lists Kinesis Data Streams for streaming ingestion alongside Amazon MSK. Amazon Data Firehose and Managed Service for Apache Flink both fall inside the same domain's transformation and pipeline task statements. A scenario question that names a specific need (replay, plain delivery, or stateful processing) is almost always testing whether you can tell these three apart, not testing service syntax.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the main difference between Kinesis Data Streams and Amazon Data Firehose?</summary><div class="fa"><p>Kinesis Data Streams is a durable buffer you read from, with data replayable for up to 365 days and support for multiple independent consumers. Amazon Data Firehose delivers data to a destination and has no further relationship with it once delivered; there is no replay from Firehose itself.</p></div></details>
+      <details><summary>Can Amazon Data Firehose read from Kinesis Data Streams?</summary><div class="fa"><p>Yes. A common pattern uses Kinesis Data Streams as the durable source with Firehose as one of several consumers, delivering a copy of the stream into S3 or another destination.</p></div></details>
+      <details><summary>Do I need Apache Flink coding knowledge for the DEA-C01 exam?</summary><div class="fa"><p>The exam guide lists Managed Service for Apache Flink as an in-scope streaming service under Domain 1. Exam questions test when to choose it over the alternatives, not Flink application code itself.</p></div></details>
+      <details><summary>How long does Kinesis Data Streams retain data by default?</summary><div class="fa"><p>24 hours by default, extendable up to 8,760 hours (365 days) using the IncreaseStreamRetentionPeriod operation, with additional charges for retention above the default.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Get the current names right first</h2>
+    <p>Amazon Data Firehose and Managed Service for Apache Flink both carry renamed identities. If the old names are throwing you off in practice material, the rename explainer covers exactly what changed and what did not.</p>
+    <a href="amazon-data-firehose-managed-flink-renamed.html" class="cta">Read the rename explainer &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="amazon-data-firehose-managed-flink-renamed.html">Amazon Data Firehose and Managed Service for Apache Flink: the AWS renames explained &rarr;</a>
+    <a href="aws-dea-c01-exam-guide-domains-weighting.html">AWS Certified Data Engineer Associate (DEA-C01): exam domains and weights &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Kinesis Data Streams vs Amazon Data Firehose vs Managed Service for Apache Flink","description":"Three AWS streaming services, three different jobs: Kinesis Data Streams buffers and replays, Amazon Data Firehose delivers, Managed Flink processes state.","author":{"@type":"Organization","name":"Already Certified"},"publisher":{"@type":"Organization","name":"Already Certified","url":"https://certify.courses/"},"datePublished":"2026-07-14","dateModified":"2026-07-14","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/kinesis-data-streams-vs-firehose-vs-managed-flink"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What is the main difference between Kinesis Data Streams and Amazon Data Firehose?","acceptedAnswer":{"@type":"Answer","text":"Kinesis Data Streams is a durable buffer you read from, with data replayable for up to 365 days and support for multiple independent consumers. Amazon Data Firehose delivers data to a destination and has no further relationship with it once delivered; there is no replay from Firehose itself."}},
+{"@type":"Question","name":"Can Amazon Data Firehose read from Kinesis Data Streams?","acceptedAnswer":{"@type":"Answer","text":"Yes. A common pattern uses Kinesis Data Streams as the durable source with Firehose as one of several consumers, delivering a copy of the stream into S3 or another destination."}},
+{"@type":"Question","name":"Do I need Apache Flink coding knowledge for the DEA-C01 exam?","acceptedAnswer":{"@type":"Answer","text":"The exam guide lists Managed Service for Apache Flink as an in-scope streaming service under Domain 1. Exam questions test when to choose it over the alternatives, not Flink application code itself."}},
+{"@type":"Question","name":"How long does Kinesis Data Streams retain data by default?","acceptedAnswer":{"@type":"Answer","text":"24 hours by default, extendable up to 8,760 hours (365 days) using the IncreaseStreamRetentionPeriod operation, with additional charges for retention above the default."}}
+]}
+</script>
+
+</body>
+</html>
