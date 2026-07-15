@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lesson · Choosing an ingestion method</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0b0a14;
+    --bg-tint: #1e1830;
+    --accent: #9d7cf5;                        /* violet — the decision itself */
+    --accent-glow: rgba(157,124,245,0.12);
+    --accent-ink: #0b0a14;
+    --ci: #e0a04a;                             /* SVG-local: COPY INTO (echoes lesson 6) */
+    --al: #2bc4e0;                             /* SVG-local: Auto Loader (echoes lesson 7) */
+    --lc: #4cc97a;                             /* SVG-local: Lakeflow Connect (echoes lesson 9) */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 220">
+    <rect x="128" y="26" width="64" height="30" rx="9" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="160" y="46" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">new data</text>
+    <path d="M160 56 V70" stroke="var(--ink-faint)" stroke-width="1.6"/>
+    <path d="M160 70 H90 V88" stroke="var(--ink-faint)" stroke-width="1.6" fill="none"/>
+    <path d="M160 70 H230 V88" stroke="var(--ink-faint)" stroke-width="1.6" fill="none"/>
+    <path d="M90 106 V120 M60 120 H90 V138 M90 120 H120 V138" stroke="var(--ink-faint)" stroke-width="1.4" fill="none"/>
+    <rect x="90" y="88" width="0" height="0"/>
+    <rect x="30" y="140" width="60" height="34" rx="8" fill="rgba(224,160,74,0.12)" stroke="var(--ci)" stroke-width="1.8"/>
+    <text x="60" y="161" text-anchor="middle" fill="var(--ci)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">COPY INTO</text>
+    <rect x="98" y="140" width="70" height="34" rx="8" fill="rgba(43,196,224,0.12)" stroke="var(--al)" stroke-width="1.8"/>
+    <text x="133" y="161" text-anchor="middle" fill="var(--al)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Auto Loader</text>
+    <text x="112" y="94" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">files, cloud storage</text>
+    <rect x="196" y="140" width="94" height="34" rx="8" fill="rgba(76,201,122,0.12)" stroke="var(--lc)" stroke-width="1.8"/>
+    <text x="243" y="161" text-anchor="middle" fill="var(--lc)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Lakeflow Connect</text>
+    <text x="230" y="94" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">SaaS apps, databases</text>
+    <text x="160" y="204" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">Three tools you know. One decision left.</text>
+  </svg>`,
+
+  shared: `<svg viewBox="0 0 320 190">
+    <circle cx="70" cy="80" r="30" fill="none" stroke="var(--ci)" stroke-width="2"/>
+    <circle cx="160" cy="80" r="30" fill="none" stroke="var(--al)" stroke-width="2"/>
+    <circle cx="250" cy="80" r="30" fill="none" stroke="var(--lc)" stroke-width="2"/>
+    <text x="70" y="85" text-anchor="middle" fill="var(--ci)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">COPY</text>
+    <text x="160" y="85" text-anchor="middle" fill="var(--al)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">AUTO</text>
+    <text x="250" y="85" text-anchor="middle" fill="var(--lc)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">CONNECT</text>
+    <path d="M100 80 H130 M190 80 H220" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <rect x="90" y="128" width="140" height="38" rx="12" fill="var(--accent)"/>
+    <text x="160" y="152" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="13" font-weight="700">Delta table</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">All three land only the NEW data, incrementally.</text>
+  </svg>`,
+
+  fork: `<svg viewBox="0 0 320 190">
+    <rect x="110" y="18" width="100" height="34" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="160" y="39" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Where does it live?</text>
+    <path d="M160 52 V64 H90 V80" stroke="var(--ink-faint)" stroke-width="1.6" fill="none"/>
+    <path d="M160 52 V64 H230 V80" stroke="var(--ink-faint)" stroke-width="1.6" fill="none"/>
+    <rect x="30" y="80" width="120" height="52" rx="12" fill="rgba(43,196,224,0.08)" stroke="var(--al)" stroke-width="1.6"/>
+    <text x="90" y="102" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">Files in cloud storage</text>
+    <text x="90" y="119" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">CSV, JSON, Parquet...</text>
+    <rect x="170" y="80" width="120" height="52" rx="12" fill="rgba(76,201,122,0.08)" stroke="var(--lc)" stroke-width="1.6"/>
+    <text x="230" y="102" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="12" font-weight="700">An external system</text>
+    <text x="230" y="119" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">SaaS app or database</text>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">This one question splits the whole decision in two.</text>
+  </svg>`,
+
+  ci: `<svg viewBox="0 0 320 170">
+    <rect x="60" y="20" width="200" height="38" rx="10" fill="#11161d" stroke="var(--ci)" stroke-width="1.5"/>
+    <text x="80" y="44" fill="var(--ci)" font-family="ui-monospace, monospace" font-size="13" font-weight="700">COPY INTO</text>
+    <text x="190" y="44" fill="var(--ink-soft)" font-family="ui-monospace, monospace" font-size="11">my_table</text>
+    <g font-family="Hanken Grotesk" font-size="11.5" fill="var(--ink-soft)">
+      <circle cx="56" cy="86" r="3" fill="var(--ci)"/><text x="68" y="90">Files in cloud storage, plain SQL</text>
+      <circle cx="56" cy="110" r="3" fill="var(--ci)"/><text x="68" y="114">Best for thousands of files, periodic batches</text>
+      <circle cx="56" cy="134" r="3" fill="var(--ci)"/><text x="68" y="138">Re-runnable, skips what it already loaded</text>
+    </g>
+  </svg>`,
+
+  al: `<svg viewBox="0 0 320 170">
+    <text x="70" y="34" fill="var(--al)" font-family="ui-monospace, monospace" font-size="13" font-weight="700">cloudFiles</text>
+    <text x="160" y="34" fill="var(--ink-soft)" font-family="ui-monospace, monospace" font-size="11">(streaming source)</text>
+    <g fill="var(--al)" opacity="0.85">
+      <rect x="40" y="52" width="12" height="9" rx="2"/><rect x="58" y="64" width="12" height="9" rx="2"/><rect x="42" y="76" width="12" height="9" rx="2"/>
+      <rect x="60" y="88" width="12" height="9" rx="2"/><rect x="44" y="100" width="12" height="9" rx="2"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="11.5" fill="var(--ink-soft)">
+      <circle cx="130" cy="60" r="3" fill="var(--al)"/><text x="142" y="64">Files in cloud storage, streaming engine</text>
+      <circle cx="130" cy="86" r="3" fill="var(--al)"/><text x="142" y="90">Scales to millions of files, continuous or batch</text>
+      <circle cx="130" cy="112" r="3" fill="var(--al)"/><text x="142" y="116">Handles schema evolution automatically</text>
+    </g>
+  </svg>`,
+
+  lc: `<svg viewBox="0 0 320 170">
+    <circle cx="70" cy="60" r="26" fill="rgba(76,201,122,0.1)" stroke="var(--lc)" stroke-width="2"/>
+    <text x="70" y="65" text-anchor="middle" fill="var(--lc)" font-family="Hanken Grotesk" font-size="10" font-weight="700">Salesforce</text>
+    <path d="M96 60 H124" stroke="var(--lc)" stroke-width="2"/><polygon points="130,60 120,55 120,65" fill="var(--lc)"/>
+    <g font-family="Hanken Grotesk" font-size="11.5" fill="var(--ink-soft)">
+      <circle cx="150" cy="30" r="3" fill="var(--lc)"/><text x="162" y="34">Built-in connectors, no custom code</text>
+      <circle cx="150" cy="56" r="3" fill="var(--lc)"/><text x="162" y="60">For SaaS apps and databases, not raw files</text>
+      <circle cx="150" cy="82" r="3" fill="var(--lc)"/><text x="162" y="86">Managed (simplest) or standard (more control)</text>
+    </g>
+    <text x="160" y="140" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">The tool for data that never becomes a file on its own.</text>
+  </svg>`,
+
+  signal: `<svg viewBox="0 0 320 150">
+    <circle cx="118" cy="76" r="34" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <line x1="143" y1="101" x2="166" y2="124" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700" fill="var(--ink-soft)">
+      <text x="118" y="66" text-anchor="middle">where does</text>
+      <text x="118" y="80" text-anchor="middle">the data</text>
+      <text x="118" y="94" text-anchor="middle">live?</text>
+    </g>
+    <text x="210" y="64" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11">Answer that first,</text>
+    <text x="210" y="80" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11">then read the volume</text>
+    <text x="210" y="96" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11">and cadence detail.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <defs><linearGradient id="dn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4b0fb"/><stop offset="1" stop-color="#7a54e8"/></linearGradient></defs>
+    <circle cx="42" cy="42" r="38" fill="url(#dn)"/>
+    <path d="M28 43 l10 10 l20 -22" fill="none" stroke="#1a1030" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 16%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal">Databricks DE Associate · Unit 2 · Lesson 10</div>
+    <h1 class="reveal">Choosing an<br>ingestion method</h1>
+    <p class="lead reveal">COPY INTO, Auto Loader, Lakeflow Connect: three tools, one job (get new data into Delta). This lesson is the decision tree that picks between them.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — shared ground */
+  { glow: "radial-gradient(520px 320px at 50% 20%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Start here</div>
+    <h2 class="reveal">All three solve the same problem.</h2>
+    <div class="art reveal">${A.shared}</div>
+    <p class="lead reveal">Each one is <strong>incremental</strong>: point it at a source and it lands only the <strong>new</strong> data into a Delta table, skipping what is already loaded. Because all three work, the skill is not "which works", it is matching the tool to the <strong>shape of the source</strong>.</p>` },
+
+  /* 2 — the first fork */
+  { glow: "radial-gradient(520px 320px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Fork 1</div>
+    <h2 class="reveal">Where does the data live?</h2>
+    <div class="art reveal">${A.fork}</div>
+    <p class="lead reveal">If the source is <strong>files sitting in cloud storage</strong>, you are choosing between COPY INTO and Auto Loader. If it lives <strong>inside a SaaS app or a database</strong>, files are not involved at all: that is Lakeflow Connect's job.</p>` },
+
+  /* 3 — option A: COPY INTO */
+  { glow: "radial-gradient(540px 330px at 50% 18%, rgba(224,160,74,0.10), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--ci)"><span style="background:var(--ci);width:8px;height:8px;border-radius:50%;display:inline-block"></span>OPTION A · files, small &amp; periodic</div>
+    <h2 class="reveal">COPY INTO</h2>
+    <div class="art reveal">${A.ci}</div>` },
+
+  /* 4 — option B: Auto Loader */
+  { glow: "radial-gradient(540px 330px at 50% 18%, rgba(43,196,224,0.10), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--al)"><span style="background:var(--al);width:8px;height:8px;border-radius:50%;display:inline-block"></span>OPTION B · files, large &amp; continuous</div>
+    <h2 class="reveal">Auto Loader</h2>
+    <div class="art reveal">${A.al}</div>` },
+
+  /* 5 — option C: Lakeflow Connect */
+  { glow: "radial-gradient(540px 330px at 50% 18%, rgba(76,201,122,0.10), transparent 70%)",
+    html: `
+    <div class="tag reveal" style="color:var(--lc)"><span style="background:var(--lc);width:8px;height:8px;border-radius:50%;display:inline-block"></span>OPTION C · not files at all</div>
+    <h2 class="reveal">Lakeflow Connect</h2>
+    <div class="art reveal">${A.lc}</div>` },
+
+  /* 6 — side by side */
+  { glow: "radial-gradient(520px 320px at 50% 16%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Side by side</div>
+    <h2 class="reveal" style="font-size:25px">Three tools, one row each</h2>
+    <div class="reveal" style="border:1px solid var(--line);border-radius:16px;overflow:hidden;font-size:11.5px;margin-top:4px">
+      <div style="display:grid;grid-template-columns:0.8fr 1fr 1fr 1fr">
+        <div style="padding:9px 8px;background:var(--surface-2);font-weight:700;color:var(--ink-faint)"></div>
+        <div style="padding:9px 8px;background:var(--surface-2);font-weight:700;color:var(--ci)">COPY INTO</div>
+        <div style="padding:9px 8px;background:var(--surface-2);font-weight:700;color:var(--al)">Auto Loader</div>
+        <div style="padding:9px 8px;background:var(--surface-2);font-weight:700;color:var(--lc)">Connect</div>
+
+        <div style="padding:9px 8px;border-top:1px solid var(--line);font-weight:600;color:var(--ink)">Source</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Cloud files</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Cloud files</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">SaaS / database</div>
+
+        <div style="padding:9px 8px;border-top:1px solid var(--line);font-weight:600;color:var(--ink)">Scale</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Thousands</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Millions+</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Per-source limits</div>
+
+        <div style="padding:9px 8px;border-top:1px solid var(--line);font-weight:600;color:var(--ink)">Setup</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">One SQL command</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Streaming source</div>
+        <div style="padding:9px 8px;border-top:1px solid var(--line);color:var(--ink-soft)">Configured connector</div>
+      </div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 — quiz 1 (Lakeflow Connect direction) */
+  { quiz: true, glow: "radial-gradient(520px 320px at 50% 20%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Quick check · 1 of 2</div>
+    <h2 class="reveal" style="font-size:22px">A team needs customer records synced from <strong>Salesforce</strong> into the lakehouse, with no files ever produced by the source. Which method fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Auto Loader pointed at the Salesforce API</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>COPY INTO on a nightly schedule</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Lakeflow Connect</button>
+    </div>
+    <div class="feedback"><b>Lakeflow Connect.</b> The data lives inside Salesforce, not in cloud storage as files, so COPY INTO and Auto Loader have nothing to read. Lakeflow Connect is built specifically to pull from SaaS apps and databases without custom extraction code.</div>` },
+
+  /* 8 — decision signal */
+  { glow: "radial-gradient(540px 340px at 50% 16%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>How to pick</div>
+    <h2 class="reveal">Two questions, in order.</h2>
+    <div class="art reveal" style="min-height:140px">${A.signal}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>1. Where does it live?</b>Cloud storage files → COPY INTO or Auto Loader. SaaS app or database → Lakeflow Connect.</p></div>
+      <div class="pill"><p><b>2. If it's files: how many, how often?</b>Thousands, periodic → COPY INTO. Millions, continuous, or schema drift → Auto Loader.</p></div>
+    </div>` },
+
+  /* 9 — quiz 2 (file-based direction) */
+  { quiz: true, glow: "radial-gradient(520px 320px at 50% 20%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Quick check · 2 of 2</div>
+    <h2 class="reveal" style="font-size:22px">Log files stream into cloud storage continuously, <strong>millions per day</strong>, and new fields get added over time. Which method fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Auto Loader</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Lakeflow Connect</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>COPY INTO on an hourly schedule</button>
+    </div>
+    <div class="feedback"><b>Auto Loader.</b> The source is files in cloud storage, so Lakeflow Connect is not the right family at all. Between the file tools, the volume and schema drift point away from COPY INTO and straight at Auto Loader's streaming engine and automatic schema evolution.</div>` },
+
+  /* 10 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lesson complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The decision tree for Unit 2, in two questions:</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Where does it live?</b>Files in cloud storage, or a SaaS app / database.</p></div>
+      <div class="pill"><p><b>If files: how many, how often?</b>Thousands and periodic is COPY INTO. Millions, continuous, or schema drift is Auto Loader.</p></div>
+      <div class="pill"><p><b>Not files at all?</b>Lakeflow Connect, managed first, standard only when you need more control.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
