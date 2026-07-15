@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Amazon Data Firehose · AWS Data Engineer Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0f0810;            /* page background */
+    --bg-tint: #2a0f1e;       /* ambient glow tint behind the card */
+    --accent: #fb7185;        /* topic color: no-code delivery, distinct from Kinesis cyan/violet */
+    --accent-glow: rgba(251,113,133,0.12);  /* correct-answer fill */
+    --accent-ink: #1a0509;    /* text on top of the accent key chip */
+
+    /* extra named colors, referenced by the SVGs in A */
+    --dest: #34d3a6;          /* destinations: S3, Redshift, OpenSearch */
+    --kds: #22d3ee;           /* Kinesis Data Streams, for the contrast card */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 4 · Amazon Data Firehose: no-code delivery (1.1)
+   Concept lesson: what it is, the Feb 2024 rename (cosmetic only,
+   retained IAM/CLI/CloudWatch identifiers), buffering, optional
+   Lambda transform, and the contrast with Kinesis Data Streams.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <circle cx="26" cy="70" r="4" fill="var(--accent)"/><circle cx="42" cy="86" r="4" fill="var(--accent)"/><circle cx="26" cy="102" r="4" fill="var(--accent)"/>
+    <path d="M52 86 H80" stroke="var(--accent)" stroke-width="1.6"/><polygon points="86,86 76,81 76,91" fill="var(--accent)"/>
+    <rect x="90" y="60" width="140" height="52" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.8"/>
+    <text x="160" y="82" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Amazon Data Firehose</text>
+    <text x="160" y="98" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">no code, no cluster, no consumer app</text>
+    <path d="M232 74 H252" stroke="var(--dest)" stroke-width="1.5"/><polygon points="256,74 248,70 248,78" fill="var(--dest)"/>
+    <path d="M232 86 H252" stroke="var(--dest)" stroke-width="1.5"/><polygon points="256,86 248,82 248,90" fill="var(--dest)"/>
+    <path d="M232 98 H252" stroke="var(--dest)" stroke-width="1.5"/><polygon points="256,98 248,94 248,102" fill="var(--dest)"/>
+    <rect x="260" y="60" width="46" height="20" rx="6" fill="rgba(52,211,166,0.1)" stroke="var(--dest)" stroke-width="1.4"/><text x="283" y="74" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">S3</text>
+    <rect x="260" y="82" width="46" height="20" rx="6" fill="rgba(52,211,166,0.1)" stroke="var(--dest)" stroke-width="1.4"/><text x="283" y="96" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">Redshift</text>
+    <rect x="260" y="104" width="46" height="20" rx="6" fill="rgba(52,211,166,0.1)" stroke="var(--dest)" stroke-width="1.4"/><text x="283" y="118" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="7">OpenSearch</text>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">Point at a source and a destination. That's the job.</text>
+  </svg>`,
+
+  rename: `<svg viewBox="0 0 320 190">
+    <rect x="40" y="20" width="240" height="40" rx="10" fill="rgba(251,113,133,0.08)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="160" y="38" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">console and docs say</text>
+    <text x="160" y="53" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">Amazon Data Firehose</text>
+    <line x1="160" y1="60" x2="160" y2="76" stroke="var(--ink-faint)" stroke-width="1.4"/>
+    <text x="160" y="90" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">under the hood, unchanged since Feb 2024</text>
+    <rect x="20" y="98" width="90" height="34" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="65" y="119" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, monospace" font-size="9">firehose:*</text>
+    <rect x="115" y="98" width="90" height="34" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="160" y="119" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, monospace" font-size="9">aws firehose</text>
+    <rect x="210" y="98" width="94" height="34" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="257" y="119" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, monospace" font-size="8.5">AWS/Firehose</text>
+    <text x="65" y="142" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">IAM action</text>
+    <text x="160" y="142" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">CLI command</text>
+    <text x="257" y="142" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">CloudWatch namespace</text>
+  </svg>`,
+
+  buffer: `<svg viewBox="0 0 320 190">
+    <text x="160" y="20" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">FLUSHES ON WHICHEVER COMES FIRST</text>
+    <rect x="30" y="40" width="120" height="60" rx="12" fill="rgba(251,113,133,0.08)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="90" y="66" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">buffer size</text>
+    <text x="90" y="84" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">measured in MB</text>
+    <text x="160" y="76" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="11" font-weight="700">or</text>
+    <rect x="170" y="40" width="120" height="60" rx="12" fill="rgba(251,113,133,0.08)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="230" y="66" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">buffer interval</text>
+    <text x="230" y="84" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">measured in seconds</text>
+    <path d="M160 110 V126" stroke="var(--ink-faint)" stroke-width="1.6"/><polygon points="160,132 154,122 166,122" fill="var(--ink-faint)"/>
+    <rect x="90" y="136" width="140" height="30" rx="9" fill="var(--surface-2)" stroke="var(--dest)" stroke-width="1.6"/>
+    <text x="160" y="156" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">delivered to the destination</text>
+  </svg>`,
+
+  transform: `<svg viewBox="0 0 320 170">
+    <circle cx="34" cy="70" r="4" fill="var(--accent)"/><circle cx="50" cy="86" r="4" fill="var(--accent)"/>
+    <path d="M60 78 H84" stroke="var(--accent)" stroke-width="1.5"/><polygon points="90,78 80,73 80,83" fill="var(--accent)"/>
+    <rect x="96" y="56" width="128" height="44" rx="11" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="160" y="74" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Firehose delivery stream</text>
+    <rect x="130" y="80" width="60" height="16" rx="5" fill="rgba(255,153,0,0.14)" stroke="var(--dest)" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="160" y="92" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="8" font-weight="700">optional Lambda</text>
+    <path d="M232 78 H256" stroke="var(--dest)" stroke-width="1.5"/><polygon points="262,78 252,73 252,83" fill="var(--dest)"/>
+    <rect x="266" y="58" width="42" height="40" rx="9" fill="rgba(52,211,166,0.1)" stroke="var(--dest)" stroke-width="1.4"/>
+    <text x="287" y="82" text-anchor="middle" fill="var(--dest)" font-family="Hanken Grotesk" font-size="8" font-weight="700">S3</text>
+    <text x="160" y="132" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">Transform, enrich, or convert format in flight</text>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">before the record ever lands.</text>
+  </svg>`,
+
+  contrast: `<svg viewBox="0 0 320 170">
+    <rect x="20" y="34" width="128" height="80" rx="12" fill="rgba(251,113,133,0.06)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="84" y="56" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Firehose</text>
+    <text x="84" y="76" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">delivers, then forgets</text>
+    <text x="84" y="94" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">no replay, no consumer code</text>
+    <rect x="172" y="34" width="128" height="80" rx="12" fill="rgba(34,211,238,0.06)" stroke="var(--kds)" stroke-width="1.6"/>
+    <text x="236" y="56" text-anchor="middle" fill="var(--kds)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Kinesis Data Streams</text>
+    <text x="236" y="76" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">persists, replayable</text>
+    <text x="236" y="94" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">you write the consumer</text>
+    <text x="160" y="140" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Need to reprocess history? That's Chapter 2, not this one.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 4</div>
+    <h1 class="reveal">Amazon Data Firehose</h1>
+    <p class="lead reveal">Every other ingestion tool so far needed a consumer app or a scheduled job. Firehose needs neither: point it at a source and a destination, and it handles the rest.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — what it is */
+  { html: `
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">A no-code delivery pipe, not a stream you manage</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Firehose is fully managed end to end. There is nothing to provision to make records show up at the destination.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Point, don't build</b>Configure a source (Kinesis Data Streams, a direct PUT API call, CloudWatch Logs, and more) and a destination (S3, Redshift, OpenSearch Service, Splunk, Snowflake, or an HTTP endpoint).</p></div>
+      <div class="pill"><p><b>Handles the mechanics for you</b>Batching, compression, encryption, retries, and format conversion all happen automatically between source and destination.</p></div>
+      <div class="pill"><p><b>No shards, no consumer app</b>Unlike Kinesis Data Streams, there is no shard count to size and no consumer code to write and operate.</p></div>
+    </div>` },
+
+  /* 2 — the rename, called out explicitly */
+  { html: `
+    <div class="eyebrow reveal">Naming note</div>
+    <h2 class="reveal" style="font-size:26px">Same service, new name, old identifiers</h2>
+    <div class="art reveal">${A.rename}</div>
+    <p class="lead reveal">AWS dropped "Kinesis" from the name in February 2024: <strong>Amazon Data Firehose</strong> is what the console and exam guide call it now. The rename is cosmetic. IAM actions, the CLI, and CloudWatch all kept their original identifiers, so policies, scripts, and dashboards written years ago still work unchanged.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — buffering */
+  { html: `
+    <div class="eyebrow reveal">Buffering</div>
+    <h2 class="reveal">Near real-time, not instant</h2>
+    <div class="art reveal">${A.buffer}</div>
+    <p class="lead reveal">Firehose batches records and flushes to the destination when a <strong>buffer size</strong> or a <strong>buffer interval</strong> is reached, whichever comes first. That batching is what makes Firehose cheap and simple, and it is also why it delivers in seconds to minutes rather than the sub-second latency a hand-built streaming consumer can hit.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — optional Lambda transform */
+  { html: `
+    <div class="eyebrow reveal">Optional transform</div>
+    <h2 class="reveal">A Lambda function can reshape records in flight</h2>
+    <div class="art reveal">${A.transform}</div>
+    <p class="lead reveal">Firehose can invoke a Lambda function on each batch before delivery: reformatting a record, enriching it with a lookup, or converting it to Parquet or ORC. This is still "no-code" from Firehose's own perspective, the transform logic lives in the Lambda function, not in a pipeline you operate.</p>
+    <div class="spacer"></div>` },
+
+  /* 5 — contrast with Kinesis Data Streams */
+  { html: `
+    <div class="eyebrow reveal">Not to confuse with</div>
+    <h2 class="reveal">Firehose delivers. Streams persist.</h2>
+    <div class="art reveal">${A.contrast}</div>
+    <p class="lead reveal">Once Firehose delivers a batch, that copy of the data is gone from Firehose. There is no retention window and no replay, and no independent consumers reading it many times. If a scenario needs multiple consumers or reprocessing history, that requirement points back to Kinesis Data Streams, not Firehose.</p>` },
+
+  /* 6 — quiz: favors Firehose */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A team needs clickstream events converted to Parquet and loaded into S3 continuously, without writing or operating any consumer application. Which service fits best?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Amazon Data Firehose, with format conversion configured on delivery</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Kinesis Data Streams with a custom consumer application on Amazon EC2</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Kinesis Data Streams, since only a raw stream can write to S3</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> "No consumer application to write or operate" is the signal for Firehose, which delivers to S3 and converts format natively. Option B describes exactly the operational burden the team wants to avoid, and option C is false, Firehose delivers to S3 without any raw Kinesis stream involved.</div>` },
+
+  /* 7 — quiz: needs Kinesis Data Streams, not Firehose */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Three independent applications each need to read the same order events, and one of them must be able to reprocess the last 12 hours after a bug fix. Which approach fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Amazon Data Firehose delivering to all three applications directly</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Kinesis Data Streams, so each consumer reads independently and can replay</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Amazon Data Firehose with a 12-hour buffer interval to allow replay</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Multiple independent readers and a replay requirement are exactly what a persistent, retryable log provides, and Firehose is not that: it delivers once and does not retain data for replay. Increasing the buffer interval, as in option C, only delays the single delivery, it does not create a re-readable history.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 4 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now recognize when a scenario wants no-code delivery instead of a stream you manage yourself.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Point, don't build</b>Source in, destination out, no shards and no consumer app to operate.</p></div>
+      <div class="pill"><p><b>Same identifiers under a new name</b>IAM, CLI, and CloudWatch still use the pre-2024 Firehose names.</p></div>
+      <div class="pill"><p><b>Delivers, does not persist</b>Multiple consumers or replay needs mean Kinesis Data Streams, not Firehose.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
