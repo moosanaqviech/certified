@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Infrastructure as Code and CI/CD for Data Pipelines · AWS Data Engineer Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #04140f;            /* page background */
+    --bg-tint: #0c2a24;       /* ambient glow tint behind the card */
+    --accent: #2dd4bf;        /* topic color: automation and pipelines, teal, distinct from Ch6 emerald */
+    --accent-glow: rgba(45,212,191,0.12);  /* correct-answer fill */
+    --accent-ink: #052019;    /* text on top of the accent key chip */
+
+    /* extra named colors, referenced by the SVGs in A */
+    --code: #f59e0b;          /* source and build stage highlight */
+    --deploy: #a78bfa;        /* deploy stage highlight */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 12 · Infrastructure as Code and CI/CD for Data Pipelines (1.4)
+   Concept lesson: IaC (declarative, versioned, repeatable) with
+   CloudFormation, CDK, and SAM; CI/CD (automated build, test, deploy)
+   with CodePipeline, CodeBuild, and CodeCommit; applied to data
+   pipelines across environments.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="24" y="70" width="90" height="58" rx="12" fill="var(--surface-2)" stroke="var(--code)" stroke-width="1.6"/>
+    <text x="69" y="94" text-anchor="middle" fill="var(--code)" font-family="Hanken Grotesk" font-size="10" font-weight="700">template</text>
+    <text x="69" y="110" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, monospace" font-size="8">in git</text>
+    <path d="M116 99 H146" stroke="var(--accent)" stroke-width="1.6"/><polygon points="152,99 142,94 142,104" fill="var(--accent)"/>
+    <rect x="154" y="70" width="70" height="58" rx="12" fill="rgba(45,212,191,0.10)" stroke="var(--accent)" stroke-width="1.8"/>
+    <text x="189" y="95" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">deploy</text>
+    <text x="189" y="111" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">repeatable</text>
+    <g stroke="var(--deploy)" stroke-width="1.4" fill="none"><path d="M226 84 H252"/><path d="M226 99 H252"/><path d="M226 114 H252"/></g>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700">
+      <rect x="254" y="76" width="52" height="16" rx="5" fill="var(--surface-2)" stroke="var(--deploy)" stroke-width="1.1"/><text x="280" y="87" text-anchor="middle" fill="var(--deploy)">dev</text>
+      <rect x="254" y="91" width="52" height="16" rx="5" fill="var(--surface-2)" stroke="var(--deploy)" stroke-width="1.1"/><text x="280" y="102" text-anchor="middle" fill="var(--deploy)">test</text>
+      <rect x="254" y="106" width="52" height="16" rx="5" fill="var(--surface-2)" stroke="var(--deploy)" stroke-width="1.1"/><text x="280" y="117" text-anchor="middle" fill="var(--deploy)">prod</text>
+    </g>
+    <text x="160" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">Define the pipeline once. Ship it the same way, everywhere.</text>
+  </svg>`,
+
+  iac: `<svg viewBox="0 0 320 170">
+    <rect x="90" y="26" width="140" height="40" rx="10" fill="var(--surface-2)" stroke="var(--code)" stroke-width="1.5"/>
+    <text x="160" y="44" text-anchor="middle" fill="var(--code)" font-family="Hanken Grotesk" font-size="10" font-weight="700">one template</text>
+    <text x="160" y="58" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">version-controlled, reviewed</text>
+    <g stroke="var(--accent)" stroke-width="1.4" fill="none"><path d="M120 66 L70 92"/><path d="M160 66 V92"/><path d="M200 66 L250 92"/></g>
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <rect x="34" y="94" width="72" height="40" rx="10" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="70" y="112" text-anchor="middle" fill="var(--accent)">dev</text><text x="70" y="126" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">identical</text>
+      <rect x="124" y="94" width="72" height="40" rx="10" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="160" y="112" text-anchor="middle" fill="var(--accent)">test</text><text x="160" y="126" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">identical</text>
+      <rect x="214" y="94" width="72" height="40" rx="10" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="250" y="112" text-anchor="middle" fill="var(--accent)">prod</text><text x="250" y="126" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">identical</text>
+    </g>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Same definition builds every environment. No console drift.</text>
+  </svg>`,
+
+  tools: `<svg viewBox="0 0 320 160">
+    <g font-family="Hanken Grotesk" font-size="9.5" font-weight="700">
+      <rect x="30" y="30" width="120" height="34" rx="9" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="90" y="51" text-anchor="middle" fill="var(--accent)">CloudFormation</text>
+      <rect x="170" y="30" width="120" height="34" rx="9" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="230" y="51" text-anchor="middle" fill="var(--accent)">AWS CDK</text>
+      <rect x="30" y="74" width="120" height="34" rx="9" fill="rgba(45,212,191,0.08)" stroke="var(--accent)" stroke-width="1.4"/><text x="90" y="95" text-anchor="middle" fill="var(--accent)">AWS SAM</text>
+      <rect x="170" y="74" width="120" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)"/><text x="230" y="95" text-anchor="middle" fill="var(--ink-soft)">Terraform</text>
+    </g>
+    <text x="90" y="128" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">templates</text>
+    <text x="230" y="128" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">code in Python or TypeScript</text>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">All define stacks of resources you can create and tear down.</text>
+  </svg>`,
+
+  cicd: `<svg viewBox="0 0 320 150">
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <rect x="14" y="52" width="66" height="34" rx="9" fill="rgba(245,158,11,0.10)" stroke="var(--code)" stroke-width="1.4"/><text x="47" y="73" text-anchor="middle" fill="var(--code)">source</text>
+      <rect x="98" y="52" width="66" height="34" rx="9" fill="rgba(245,158,11,0.10)" stroke="var(--code)" stroke-width="1.4"/><text x="131" y="66" text-anchor="middle" fill="var(--code)">build</text><text x="131" y="79" text-anchor="middle" fill="var(--ink-faint)" font-size="7">and test</text>
+      <rect x="182" y="52" width="66" height="34" rx="9" fill="rgba(167,139,250,0.10)" stroke="var(--deploy)" stroke-width="1.4"/><text x="215" y="73" text-anchor="middle" fill="var(--deploy)">deploy</text>
+      <rect x="266" y="52" width="44" height="34" rx="9" fill="rgba(45,212,191,0.10)" stroke="var(--accent)" stroke-width="1.4"/><text x="288" y="73" text-anchor="middle" fill="var(--accent)">live</text>
+    </g>
+    <g stroke="var(--ink-faint)" stroke-width="1.4" fill="none">
+      <path d="M80 69 H96"/><path d="M164 69 H180"/><path d="M248 69 H264"/>
+    </g>
+    <text x="160" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Every commit flows through the same automated stages.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 12</div>
+    <h1 class="reveal">Infrastructure as code and CI/CD</h1>
+    <p class="lead reveal">A pipeline is not just its jobs. It is the buckets, roles, Glue jobs, and workflows behind them. Clicking those together by hand does not scale or repeat. This chapter is about <strong>defining infrastructure as code</strong> and <strong>shipping it automatically</strong>.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — IaC core idea */
+  { html: `
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">Declarative, versioned, repeatable</h2>
+    <div class="art reveal">${A.iac}</div>
+    <p class="lead reveal">Infrastructure as code (IaC) describes your resources in a file instead of console clicks. Because that file is <strong>version-controlled and reviewed</strong>, the same definition builds <strong>dev, test, and prod identically</strong>, no drift between environments and no undocumented manual step to forget.</p>
+    <div class="spacer"></div>` },
+
+  /* 2 — the AWS IaC tools */
+  { html: `
+    <div class="eyebrow reveal">The IaC tools</div>
+    <h2 class="reveal">Templates or real code</h2>
+    <div class="art reveal">${A.tools}</div>
+    <p class="lead reveal"><strong>CloudFormation</strong> defines resources in declarative templates. <strong>AWS CDK</strong> lets you write that infrastructure in Python or TypeScript and synthesizes it to CloudFormation. <strong>AWS SAM</strong> is a shorthand for serverless stacks. (<strong>Terraform</strong> is the common third-party option.) All manage <strong>stacks</strong> you can create, update, and tear down as a unit.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — CI/CD core idea */
+  { html: `
+    <div class="eyebrow reveal">From code to running</div>
+    <h2 class="reveal">CI/CD automates the path to live</h2>
+    <div class="art reveal">${A.cicd}</div>
+    <p class="lead reveal">Continuous integration and delivery replace manual deploys with an automated flow: every commit is <strong>built, tested, and deployed</strong> through the same stages every time. Nothing reaches production by someone running a script from their laptop, so releases are consistent and repeatable.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — the AWS CI/CD tools */
+  { html: `
+    <div class="eyebrow reveal">The CI/CD tools</div>
+    <h2 class="reveal">The AWS developer tools</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A few managed services chain into a full pipeline.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>CodePipeline</b>Orchestrates the stages (source, build, deploy) and moves a change from one to the next.</p></div>
+      <div class="pill"><p><b>CodeBuild</b>Compiles the project, runs tests, and packages the artifacts a deploy will use.</p></div>
+      <div class="pill"><p><b>CodeCommit or GitHub</b>The source stage: a commit to the repository is what starts the pipeline.</p></div>
+    </div>` },
+
+  /* 5 — applied to data pipelines */
+  { html: `
+    <div class="eyebrow reveal">For data pipelines</div>
+    <h2 class="reveal">Why this matters here</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Data infrastructure is exactly the kind that drifts and breaks by hand.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Version the whole pipeline</b>Glue jobs, Step Functions, IAM roles, and buckets all live in code and change through review.</p></div>
+      <div class="pill"><p><b>Promote across accounts</b>The same stack deploys to dev, test, and prod, so what you tested is what runs.</p></div>
+      <div class="pill"><p><b>Test before deploy</b>The build stage can validate transformations and templates before anything reaches production.</p></div>
+    </div>` },
+
+  /* 6 — quiz: IaC */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A team keeps creating Glue jobs and IAM roles by hand in the console, and dev and prod have quietly drifted out of sync. What practice fixes the root cause?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Write a detailed wiki page listing every console click to perform</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Define the resources as code with CloudFormation or CDK and deploy the same template to every environment</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Assign one engineer to click through each environment more carefully</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> IaC makes one reviewed, version-controlled definition build every environment identically, which removes drift at the source. A wiki and a careful engineer still rely on manual steps that can be skipped or done differently, so the environments will drift again.</div>` },
+
+  /* 7 — quiz: CI/CD */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">You want every commit to the pipeline repository to automatically build the project, run its tests, and deploy to a staging environment. Which AWS services fit?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A developer running the build and deploy scripts by hand after each merge</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A cron job on an EC2 instance that redeploys everything each night</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>CodePipeline orchestrating a CodeBuild stage, triggered by the source commit</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> CodePipeline wires source, build, and deploy into one automated flow, with CodeBuild running the build and tests on every commit. A manual run defeats the "automatically on every commit" requirement, and a nightly cron deploys on a timer rather than in response to the change.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 12 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now explain how data infrastructure gets defined once and shipped the same way every time.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>IaC removes drift</b>CloudFormation, CDK, and SAM define resources in code so every environment is built identically.</p></div>
+      <div class="pill"><p><b>CI/CD automates delivery</b>CodePipeline, CodeBuild, and a source repo build, test, and deploy on every commit.</p></div>
+      <div class="pill"><p><b>Pipelines are infrastructure too</b>Glue jobs, workflows, and IAM belong in code and in the automated path.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

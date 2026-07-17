@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lambda for Data Processing: Concurrency and Performance · AWS Data Engineer Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #140b04;            /* page background */
+    --bg-tint: #2e1a0c;       /* ambient glow tint behind the card */
+    --accent: #f97316;        /* topic color: AWS Lambda, its signature orange */
+    --accent-glow: rgba(249,115,22,0.12);  /* correct-answer fill */
+    --accent-ink: #241000;    /* text on top of the accent key chip */
+
+    /* extra named colors, referenced by the SVGs in A */
+    --cold: #60a5fa;          /* cold start, cool blue */
+    --warm: #34d399;          /* provisioned, pre-warmed green */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 13 · Lambda for Data Processing: concurrency and performance tuning (1.4)
+   Concept lesson: Lambda for event-driven data work, reserved vs
+   provisioned concurrency and cold starts, memory as the CPU lever,
+   batching via event source mappings, and knowing the limits.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="20" y="82" width="66" height="36" rx="9" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1.4"/>
+    <text x="53" y="104" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" font-weight="700">events</text>
+    <path d="M88 100 H114" stroke="var(--accent)" stroke-width="1.6"/><polygon points="120,100 110,95 110,105" fill="var(--accent)"/>
+    <g>
+      <rect x="122" y="66" width="70" height="20" rx="6" fill="rgba(249,115,22,0.10)" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="122" y="90" width="70" height="20" rx="6" fill="rgba(249,115,22,0.10)" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="122" y="114" width="70" height="20" rx="6" fill="rgba(249,115,22,0.10)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="157" y="80" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">function</text>
+      <text x="157" y="104" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">function</text>
+      <text x="157" y="128" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">function</text>
+    </g>
+    <text x="157" y="152" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">many run in parallel</text>
+    <path d="M196 100 H222" stroke="var(--accent)" stroke-width="1.6"/><polygon points="228,100 218,95 218,105" fill="var(--accent)"/>
+    <rect x="230" y="82" width="70" height="36" rx="9" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1.4"/>
+    <text x="265" y="104" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" font-weight="700">result</text>
+    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">Small, fast, event-driven. Tuned by a few dials.</text>
+  </svg>`,
+
+  concurrency: `<svg viewBox="0 0 320 180">
+    <text x="80" y="22" text-anchor="middle" fill="var(--cold)" font-family="Hanken Grotesk" font-size="10" font-weight="700">cold start</text>
+    <rect x="30" y="34" width="100" height="40" rx="10" fill="rgba(96,165,250,0.08)" stroke="var(--cold)" stroke-width="1.5"/>
+    <text x="80" y="52" text-anchor="middle" fill="var(--cold)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">spin up first</text>
+    <text x="80" y="66" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">added latency</text>
+    <text x="240" y="22" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="10" font-weight="700">provisioned</text>
+    <rect x="190" y="34" width="100" height="40" rx="10" fill="rgba(52,211,153,0.08)" stroke="var(--warm)" stroke-width="1.5"/>
+    <text x="240" y="52" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">pre-warmed</text>
+    <text x="240" y="66" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">no cold start</text>
+    <line x1="160" y1="30" x2="160" y2="78" stroke="var(--line)" stroke-width="1"/>
+    <rect x="46" y="104" width="228" height="30" rx="9" fill="rgba(249,115,22,0.08)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="160" y="123" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">reserved: caps and guarantees parallel instances</text>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Provisioned warms them. Reserved bounds how many run.</text>
+  </svg>`,
+
+  memory: `<svg viewBox="0 0 320 160">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">ONE SLIDER MOVES BOTH</text>
+    <text x="40" y="60" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="700">memory</text>
+    <rect x="40" y="66" width="240" height="10" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="40" y="66" width="176" height="10" rx="5" fill="var(--accent)"/>
+    <circle cx="216" cy="71" r="9" fill="var(--accent)"/>
+    <text x="40" y="104" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="700">CPU</text>
+    <rect x="40" y="110" width="240" height="10" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="40" y="110" width="176" height="10" rx="5" fill="var(--warm)"/>
+    <circle cx="216" cy="115" r="9" fill="var(--warm)"/>
+    <text x="160" y="148" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">Raise memory and CPU rises with it, proportionally.</text>
+  </svg>`,
+
+  batch: `<svg viewBox="0 0 320 160">
+    <text x="70" y="22" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">stream shard</text>
+    <g>
+      <rect x="24" y="34" width="16" height="12" rx="3" fill="var(--accent)" opacity="0.7"/>
+      <rect x="44" y="34" width="16" height="12" rx="3" fill="var(--accent)" opacity="0.7"/>
+      <rect x="64" y="34" width="16" height="12" rx="3" fill="var(--accent)" opacity="0.7"/>
+      <rect x="84" y="34" width="16" height="12" rx="3" fill="var(--accent)" opacity="0.7"/>
+      <rect x="104" y="34" width="16" height="12" rx="3" fill="var(--accent)" opacity="0.7"/>
+    </g>
+    <path d="M22 58 h104 v10 h-104 z" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="74" y="84" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">batch size</text>
+    <path d="M130 52 H158" stroke="var(--ink-faint)" stroke-width="1.4"/><polygon points="164,52 154,47 154,57" fill="var(--ink-faint)"/>
+    <rect x="166" y="36" width="60" height="32" rx="9" fill="rgba(249,115,22,0.10)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="196" y="56" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">1 invoke</text>
+    <text x="160" y="112" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">The event source mapping hands records over in batches.</text>
+    <text x="160" y="132" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">Bigger batches mean fewer, fuller invocations.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 13</div>
+    <h1 class="reveal">Lambda for data processing</h1>
+    <p class="lead reveal">Lambda has appeared as a target all through this unit. Here it is the worker: a serverless function that transforms and enriches records as events arrive. The exam tests the <strong>dials</strong> that make it fast and the <strong>limits</strong> that mean it is the wrong tool.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — Lambda for data processing */
+  { html: `
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">Event-driven functions, scaled for you</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A Lambda function runs your code in response to an event: a record on a stream, a message on a queue, an object in S3. AWS runs as many copies in parallel as the load needs.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>No servers, pay per use</b>Billed per request and per GB-second of run time, nothing when idle.</p></div>
+      <div class="pill"><p><b>Best for light, fast work</b>Transform, enrich, filter, or route records. Not long-running heavy compute.</p></div>
+    </div>` },
+
+  /* 2 — concurrency */
+  { html: `
+    <div class="eyebrow reveal">Concurrency</div>
+    <h2 class="reveal">Cold starts, reserved, and provisioned</h2>
+    <div class="art reveal">${A.concurrency}</div>
+    <p class="lead reveal">Each parallel copy is a concurrent execution. A brand-new one pays a <strong>cold start</strong> to initialize. <strong>Provisioned concurrency</strong> keeps a pool pre-warmed so latency-sensitive functions skip that delay. <strong>Reserved concurrency</strong> is different: it caps and guarantees how many instances a function may run, protecting the rest of your account.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — memory = CPU */
+  { html: `
+    <div class="eyebrow reveal">The performance lever</div>
+    <h2 class="reveal">Memory is really CPU</h2>
+    <div class="art reveal">${A.memory}</div>
+    <p class="lead reveal">Lambda has one main tuning dial: the <strong>memory setting</strong>. Raising it <strong>proportionally increases CPU</strong> (and network), so a CPU-bound function often runs faster, and sometimes cheaper, at higher memory because it finishes sooner. Timeout only bounds how long it may run; it adds no compute power.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — batching */
+  { html: `
+    <div class="eyebrow reveal">Stream and queue triggers</div>
+    <h2 class="reveal">Batching moves the throughput</h2>
+    <div class="art reveal">${A.batch}</div>
+    <p class="lead reveal">For Kinesis, DynamoDB Streams, and SQS, an <strong>event source mapping</strong> polls the source and delivers records in <strong>batches</strong>. A larger <strong>batch size</strong> means fewer, fuller invocations, and a <strong>parallelization factor</strong> lets several batches from one shard process at once. These settings, not code changes, tune stream throughput.</p>
+    <div class="spacer"></div>` },
+
+  /* 5 — knowing the limits */
+  { html: `
+    <div class="eyebrow reveal">Know the ceiling</div>
+    <h2 class="reveal">When Lambda is the wrong tool</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Tuning only helps inside the limits. Past them, reach for something else.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>15-minute maximum</b>A single invocation cannot run longer. Multi-hour jobs do not fit.</p></div>
+      <div class="pill"><p><b>Bounded memory and storage</b>Up to 10 GB of memory and limited temporary disk. Huge datasets exceed it.</p></div>
+      <div class="pill"><p><b>Use Glue or EMR instead</b>Long-running, large-scale Spark transformations belong on Glue or EMR, not Lambda.</p></div>
+    </div>` },
+
+  /* 6 — quiz: provisioned concurrency */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A latency-sensitive Lambda behind an API sees slow responses at the start of each traffic spike, as new instances initialize. What most directly reduces this?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Provisioned concurrency, keeping a pool of instances pre-warmed</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Reserved concurrency, to cap the number of concurrent instances</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A longer function timeout</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The slow starts are cold starts, and provisioned concurrency keeps instances initialized and ready, so requests skip that delay. Reserved concurrency only bounds how many can run, which does nothing for warm-up, and a longer timeout just permits more run time without removing the startup cost.</div>` },
+
+  /* 7 — quiz: memory = CPU */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A Lambda that does CPU-heavy parsing is running slower than needed at 256 MB of memory. What is the simplest change to speed up each invocation?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Increase the function timeout so it has more time</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Increase the memory setting, which raises CPU proportionally</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Add reserved concurrency so more copies run at once</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Memory and CPU scale together, so raising the memory setting gives a CPU-bound function more processing power and it finishes faster. A longer timeout adds no CPU, and reserved concurrency changes how many invocations run in parallel, not the speed of a single one.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 13 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now tune a Lambda for data work, and recognize when the job has outgrown it. That closes out Unit 1.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Concurrency has two dials</b>Provisioned warms instances against cold starts; reserved caps and guarantees how many run.</p></div>
+      <div class="pill"><p><b>Memory is the CPU lever</b>Raise memory to raise CPU; timeout only bounds run time.</p></div>
+      <div class="pill"><p><b>Respect the limits</b>15 minutes and bounded memory mean big, long jobs belong on Glue or EMR.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
