@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AWS Glue for ETL: Jobs, Triggers, DynamicFrames · AWS Data Engineer Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0d0716;            /* page background */
+    --bg-tint: #241338;       /* ambient glow tint behind the card */
+    --accent: #c084fc;        /* topic color: AWS Glue serverless ETL, orchid, distinct from MSK violet used only in Ch3 */
+    --accent-glow: rgba(192,132,252,0.12);  /* correct-answer fill */
+    --accent-ink: #180a26;    /* text on top of the accent key chip */
+
+    /* extra named colors, referenced by the SVGs in A */
+    --spark: #f59e0b;         /* the Spark engine highlight */
+    --note: #7dd3fc;          /* secondary callout for triggers and bookmarks */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 7 · AWS Glue for ETL: jobs, triggers, DynamicFrames (1.2)
+   Concept lesson: serverless Spark ETL, the job as the unit of work,
+   DynamicFrames for messy schema, the four trigger types, and job
+   bookmarks for incremental runs.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="90" y="70" width="140" height="60" rx="16" fill="rgba(192,132,252,0.08)" stroke="var(--accent)" stroke-width="1.8"/>
+    <text x="160" y="96" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">serverless Spark</text>
+    <text x="160" y="114" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">provisioned and scaled by AWS</text>
+    <g font-family="Hanken Grotesk" font-size="10" font-weight="700">
+      <text x="30" y="104" text-anchor="middle" fill="var(--spark)">E</text>
+      <text x="52" y="104" text-anchor="middle" fill="var(--spark)">T</text>
+      <text x="74" y="104" text-anchor="middle" fill="var(--spark)">L</text>
+    </g>
+    <path d="M84 100 H90" stroke="var(--spark)" stroke-width="1.4"/>
+    <path d="M230 100 H262" stroke="var(--ink-faint)" stroke-width="1.4"/><polygon points="268,100 258,95 258,105" fill="var(--ink-faint)"/>
+    <text x="288" y="96" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">clean</text>
+    <text x="288" y="108" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">tables</text>
+    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="11">You write the transform. Not the cluster.</text>
+  </svg>`,
+
+  jobs: `<svg viewBox="0 0 320 175">
+    <rect x="40" y="26" width="240" height="34" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="160" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">a Glue job runs your script</text>
+    <g font-family="Hanken Grotesk" font-size="9.5" font-weight="700">
+      <rect x="40" y="74" width="120" height="30" rx="9" fill="rgba(192,132,252,0.10)" stroke="var(--accent)" stroke-width="1.4"/><text x="100" y="93" text-anchor="middle" fill="var(--accent)">Spark (PySpark)</text>
+      <rect x="170" y="74" width="110" height="30" rx="9" fill="rgba(192,132,252,0.10)" stroke="var(--accent)" stroke-width="1.4"/><text x="225" y="93" text-anchor="middle" fill="var(--accent)">Python shell</text>
+    </g>
+    <text x="100" y="122" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">large distributed data</text>
+    <text x="225" y="122" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">small, non-Spark tasks</text>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Sized by worker type and number of workers (DPUs).</text>
+  </svg>`,
+
+  dframe: `<svg viewBox="0 0 320 180">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="11" font-weight="700">ONE FIELD, TWO TYPES</text>
+    <g font-family="ui-monospace, monospace" font-size="9">
+      <rect x="40" y="38" width="110" height="26" rx="6" fill="rgba(255,255,255,0.03)" stroke="var(--line)"/><text x="95" y="55" text-anchor="middle" fill="var(--ink-soft)">"price": "9.99"</text>
+      <rect x="170" y="38" width="110" height="26" rx="6" fill="rgba(255,255,255,0.03)" stroke="var(--line)"/><text x="225" y="55" text-anchor="middle" fill="var(--ink-soft)">"price": 9.99</text>
+    </g>
+    <path d="M95 66 C120 90 140 90 158 96" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+    <path d="M225 66 C200 90 180 90 162 96" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+    <rect x="96" y="98" width="128" height="30" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="160" y="117" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">DynamicFrame</text>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Holds a choice of types, then resolveChoice settles it.</text>
+    <text x="160" y="168" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">No rigid schema needed up front.</text>
+  </svg>`,
+
+  triggers: `<svg viewBox="0 0 320 180">
+    <g font-family="Hanken Grotesk" font-size="9.5" font-weight="700">
+      <rect x="26" y="30" width="122" height="30" rx="9" fill="rgba(125,211,252,0.08)" stroke="var(--note)" stroke-width="1.4"/><text x="87" y="49" text-anchor="middle" fill="var(--note)">schedule (cron)</text>
+      <rect x="172" y="30" width="122" height="30" rx="9" fill="rgba(125,211,252,0.08)" stroke="var(--note)" stroke-width="1.4"/><text x="233" y="49" text-anchor="middle" fill="var(--note)">on demand</text>
+      <rect x="26" y="70" width="122" height="30" rx="9" fill="rgba(125,211,252,0.08)" stroke="var(--note)" stroke-width="1.4"/><text x="87" y="89" text-anchor="middle" fill="var(--note)">EventBridge event</text>
+      <rect x="172" y="70" width="122" height="30" rx="9" fill="rgba(125,211,252,0.08)" stroke="var(--note)" stroke-width="1.4"/><text x="233" y="89" text-anchor="middle" fill="var(--note)">job completion</text>
+    </g>
+    <path d="M87 100 V118 M233 100 V118 M87 118 H233" fill="none" stroke="var(--ink-faint)" stroke-width="1.2"/>
+    <rect x="120" y="120" width="80" height="30" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="160" y="139" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">a job starts</text>
+    <text x="160" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Chained job-completion triggers form a workflow.</text>
+  </svg>`,
+
+  bookmark: `<svg viewBox="0 0 320 170">
+    <line x1="24" y1="70" x2="296" y2="70" stroke="var(--line)" stroke-width="1.4"/>
+    <g>
+      <circle cx="60" cy="70" r="7" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1.4"/>
+      <circle cx="110" cy="70" r="7" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1.4"/>
+      <circle cx="160" cy="70" r="7" fill="rgba(192,132,252,0.2)" stroke="var(--accent)" stroke-width="1.8"/>
+      <circle cx="210" cy="70" r="7" fill="rgba(52,211,153,0.14)" stroke="var(--spark)" stroke-width="1.6"/>
+      <circle cx="260" cy="70" r="7" fill="rgba(52,211,153,0.14)" stroke="var(--spark)" stroke-width="1.6"/>
+    </g>
+    <path d="M160 44 l6 12 h-12 z" fill="var(--accent)"/>
+    <text x="160" y="34" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">bookmark</text>
+    <text x="92" y="104" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">already processed</text>
+    <text x="235" y="104" text-anchor="middle" fill="var(--spark)" font-family="Hanken Grotesk" font-size="9" font-weight="700">only the new data</text>
+    <text x="160" y="146" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">The next run picks up where the last one stopped.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 7</div>
+    <h1 class="reveal">AWS Glue for ETL</h1>
+    <p class="lead reveal">So far the data has been captured and moved. Now it gets <strong>transformed</strong>: cleaned, joined, reshaped. Glue is the AWS way to run that work on Apache Spark without provisioning a single server.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — what Glue is */
+  { html: `
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">Serverless Spark, no cluster to run</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Glue runs your extract, transform, and load logic on Apache Spark that AWS provisions and scales for you.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Managed Apache Spark</b>You supply the transformation; Glue handles the engine, the scaling, and the shutdown when the job ends.</p></div>
+      <div class="pill"><p><b>Pay for what runs</b>Billed per DPU-hour (data processing unit) while a job runs, nothing in between.</p></div>
+      <div class="pill"><p><b>Wired to the catalog</b>Jobs read table definitions from the Glue Data Catalog, so schema lives in one place. Crawlers fill it (Chapter 16).</p></div>
+    </div>` },
+
+  /* 2 — jobs */
+  { html: `
+    <div class="eyebrow reveal">Jobs</div>
+    <h2 class="reveal">The job is the unit of work</h2>
+    <div class="art reveal">${A.jobs}</div>
+    <p class="lead reveal">A Glue job runs your script. <strong>Spark jobs</strong> (PySpark or Scala) handle large distributed data; <strong>Python shell jobs</strong> handle small, non-Spark tasks. You size a job with worker type and number of workers, and Glue Studio can author it visually or in code.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — DynamicFrames */
+  { html: `
+    <div class="eyebrow reveal">DynamicFrames</div>
+    <h2 class="reveal">A frame that bends to messy schema</h2>
+    <div class="art reveal">${A.dframe}</div>
+    <p class="lead reveal">A DynamicFrame is Glue's take on a Spark DataFrame, built for semi-structured data with inconsistent or evolving schema. It needs no schema up front and can hold a <strong>choice of types</strong> for a field, which <code>resolveChoice</code> then settles. Call <code>toDF()</code> to drop into plain Spark SQL whenever you want it.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — triggers */
+  { html: `
+    <div class="eyebrow reveal" style="color:var(--note)">Triggers</div>
+    <h2 class="reveal">Four ways a job starts</h2>
+    <div class="art reveal">${A.triggers}</div>
+    <p class="lead reveal">A <strong>schedule</strong> trigger runs on cron, an <strong>on-demand</strong> trigger runs when you call it, an <strong>EventBridge event</strong> can start a job, and a <strong>job-completion</strong> (conditional) trigger fires one job after another succeeds or fails. Chaining conditional triggers is how you build a Glue workflow.</p>
+    <div class="spacer"></div>` },
+
+  /* 5 — job bookmarks */
+  { html: `
+    <div class="eyebrow reveal">Incremental runs</div>
+    <h2 class="reveal">Job bookmarks skip what is done</h2>
+    <div class="art reveal">${A.bookmark}</div>
+    <p class="lead reveal">A <strong>job bookmark</strong> records how far a job has already processed, so the next run picks up only new data instead of reprocessing everything. Paired with a schedule trigger, that turns a full reload into a cheap nightly increment.</p>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: DynamicFrame */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A Glue job reads JSON where one field arrives sometimes as a string and sometimes as a number, and the job keeps failing on the schema mismatch. What is the most direct fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Keep the data in a DynamicFrame and use resolveChoice to settle the field's type</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Convert to a Spark DataFrame first, which infers one rigid schema</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Drop every record where the field's type is ambiguous</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> DynamicFrames exist for exactly this: resolveChoice reconciles the mixed types without failing the job. Forcing a rigid DataFrame schema up front is what triggers the error, and discarding ambiguous records throws away valid data.</div>` },
+
+  /* 7 — quiz: triggers / workflow */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A pipeline must run a cleansing job every night, and only after it succeeds run a second aggregation job. How should you wire this in Glue?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Two separate schedule triggers timed a few minutes apart</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A schedule trigger for the cleansing job, plus a job-completion trigger that starts aggregation on success</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>One job containing both steps so nothing needs a trigger</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A schedule trigger starts the first job, and a conditional job-completion trigger starts the second only when the first succeeds: the Glue workflow pattern. Timing two schedules by guesswork is fragile, and cramming both steps into one job loses the independent retry and monitoring each stage should have.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 7 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now describe how Glue runs ETL, and reach for the right feature per requirement.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Serverless Spark</b>Glue runs and scales the ETL; you write the transform and pay per DPU-hour.</p></div>
+      <div class="pill"><p><b>DynamicFrames bend to messy schema</b>resolveChoice settles mixed types; toDF() drops to plain Spark.</p></div>
+      <div class="pill"><p><b>Triggers and bookmarks</b>Schedule, event, and job-completion triggers orchestrate; bookmarks make runs incremental.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
