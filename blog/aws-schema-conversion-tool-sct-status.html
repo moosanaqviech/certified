@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Is AWS Schema Conversion Tool (SCT) Deprecated? Current Status in 2026</title>
+<meta name="description" content="AWS SCT is not deprecated, but AWS now recommends DMS Schema Conversion for supported OLTP conversions. What each does and which the DEA-C01 tests.">
+<link rel="canonical" href="https://certify.courses/blog/aws-schema-conversion-tool-sct-status">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Is AWS Schema Conversion Tool (SCT) Deprecated? Current Status in 2026">
+<meta property="og:description" content="AWS SCT is not deprecated, but AWS now recommends DMS Schema Conversion for supported OLTP conversions. What each does and which the DEA-C01 tests.">
+<meta property="og:url" content="https://certify.courses/blog/aws-schema-conversion-tool-sct-status">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:0.88em;background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../index.html">Already Certified</a><span>&rsaquo;</span>
+    <a href="aws-dea-c01-exam-guide-domains-weighting.html">AWS DEA-C01 Exam Domains</a><span>&rsaquo;</span>
+    <span>Schema Conversion Tool status</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">AWS Data Engineer Associate &middot; Services</div>
+    <h1>Is AWS Schema Conversion Tool (SCT) Deprecated?</h1>
+    <p class="lede">Short answer: <strong>no, SCT is not deprecated</strong>. It is still available as a downloadable desktop tool. What changed is the default: AWS now recommends <strong>DMS Schema Conversion</strong>, a fully managed feature built on the same SCT conversion engine, for supported OLTP conversions. Here is what each one is and which the DEA-C01 expects you to know.</p>
+    <p class="updated">Last updated July 2026.</p>
+  </header>
+
+  <section id="status">
+    <h2>What actually changed</h2>
+    <p>The AWS Schema Conversion Tool converts a source database's schema and code objects (views, stored procedures, functions) into a format compatible with a different target engine, the classic case being a commercial database like Oracle or SQL Server moving to PostgreSQL. For years, SCT was a desktop application you downloaded and ran locally.</p>
+    <p>AWS then built <strong>DMS Schema Conversion</strong>, a fully managed, web-based feature inside the AWS Database Migration Service console that uses the same conversion engine as SCT. For supported OLTP conversions, AWS now points you to DMS Schema Conversion first. SCT remains available and supported, so this is a shift in the recommended default, not a deprecation.</p>
+  </section>
+
+  <section id="table">
+    <h2>SCT vs DMS Schema Conversion</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">DMS Schema Conversion</th><th>AWS SCT</th></tr></thead>
+      <tbody>
+        <tr><th>Form factor</th><td class="col-h">Managed, web-based, in the DMS console</td><td>Downloadable desktop application</td></tr>
+        <tr><th>Infrastructure</th><td class="col-h">AWS provisions it for you</td><td>You run it on your own machine</td></tr>
+        <tr><th>Conversion engine</th><td class="col-h">Same SCT engine underneath</td><td>The original SCT engine</td></tr>
+        <tr><th>Generative AI assist</th><td class="col-h">Yes, plus rule-based conversion</td><td>Rule-based conversion</td></tr>
+        <tr><th>AWS recommendation</th><td class="col-h">Preferred for supported OLTP conversions</td><td>For desktop needs or broader coverage</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Source: AWS documentation, <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_SchemaConversion.html" target="_blank" rel="noopener">Converting database schemas using DMS Schema Conversion</a> and the <a href="https://docs.aws.amazon.com/SchemaConversionTool/latest/userguide/CHAP_Welcome.html" target="_blank" rel="noopener">AWS SCT user guide</a>.</p>
+  </section>
+
+  <section id="genai">
+    <h2>The generative AI angle</h2>
+    <p>DMS Schema Conversion combines a traditional rule-based approach with generative AI to reduce the number of database objects that need manual conversion. The rule-based engine handles the objects it can convert deterministically, and the generative AI feature offers recommendations for the complex code objects that would otherwise require a human to rewrite by hand. AWS documents this generative AI assistance for conversions such as Oracle and SQL Server to PostgreSQL and Aurora PostgreSQL, with regional availability that expands over time.</p>
+  </section>
+
+  <section id="which">
+    <h2>Which one should you reach for</h2>
+    <ul>
+      <li><strong>DMS Schema Conversion</strong> is the default for a supported OLTP migration where you want a managed experience with no desktop software, assessment reports in the console, and generative AI help on the hard objects.</li>
+      <li><strong>AWS SCT</strong> is the choice when you need the desktop tool specifically, an SCT-only feature, or conversion coverage that DMS Schema Conversion does not yet provide. The two are complementary, not one replacing the other.</li>
+    </ul>
+  </section>
+
+  <section id="exam">
+    <h2>Where this shows up on the DEA-C01</h2>
+    <p>Schema conversion lives in Domain 2 (Data Store Management, 26% of the exam), under the task statement on understanding data cataloging systems and managing schema evolution. The exam expects you to know that schema conversion is how you move a schema between incompatible engines during a migration, and that DMS Schema Conversion is the current managed way to do it. You do not need to memorize every supported source and target pair, but you should recognize the scenario: a heterogeneous migration (for example Oracle to Aurora PostgreSQL) is where schema conversion belongs, while a homogeneous migration between the same engine does not need it.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>Is AWS SCT deprecated or being retired?</summary><div class="fa"><p>No. AWS SCT is still available as a downloadable desktop tool and remains supported. AWS recommends DMS Schema Conversion for supported OLTP conversions, but that is a change in the recommended default, not a deprecation.</p></div></details>
+      <details><summary>What is the difference between SCT and DMS Schema Conversion?</summary><div class="fa"><p>DMS Schema Conversion is a fully managed, web-based feature in the AWS DMS console that uses the same conversion engine as SCT and adds generative AI assistance. AWS SCT is the standalone desktop application you download and run on your own machine.</p></div></details>
+      <details><summary>Does DMS Schema Conversion use generative AI?</summary><div class="fa"><p>Yes. It combines a rule-based conversion engine with generative AI to reduce the number of complex code objects that would otherwise require manual conversion, offering recommendations for objects the rules cannot convert automatically.</p></div></details>
+      <details><summary>When is schema conversion actually needed?</summary><div class="fa"><p>During a heterogeneous migration, when the source and target run different database engines (for example Oracle to Aurora PostgreSQL). A homogeneous migration between the same engine does not need schema conversion.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>See where storage and migration fit</h2>
+    <p>Schema conversion sits inside Domain 2, worth 26% of the DEA-C01. The full domain breakdown shows how data store selection, cataloging, and lifecycle management fit together.</p>
+    <a href="aws-dea-c01-exam-guide-domains-weighting.html" class="cta">See the full domain breakdown &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="aws-dea-c01-exam-guide-domains-weighting.html">AWS Certified Data Engineer Associate (DEA-C01): exam domains and weights &rarr;</a>
+    <a href="kinesis-data-streams-vs-firehose-vs-managed-flink.html">Kinesis Data Streams vs Amazon Data Firehose vs Managed Service for Apache Flink &rarr;</a>
+    <a href="amazon-data-firehose-managed-flink-renamed.html">Amazon Data Firehose and Managed Service for Apache Flink: the AWS renames explained &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Is AWS Schema Conversion Tool (SCT) Deprecated? Current Status in 2026","description":"AWS SCT is not deprecated, but AWS now recommends DMS Schema Conversion for supported OLTP conversions. What each does and which the DEA-C01 tests.","author":{"@type":"Organization","name":"Already Certified"},"publisher":{"@type":"Organization","name":"Already Certified","url":"https://certify.courses/"},"datePublished":"2026-07-16","dateModified":"2026-07-16","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/aws-schema-conversion-tool-sct-status"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is AWS SCT deprecated or being retired?","acceptedAnswer":{"@type":"Answer","text":"No. AWS SCT is still available as a downloadable desktop tool and remains supported. AWS recommends DMS Schema Conversion for supported OLTP conversions, but that is a change in the recommended default, not a deprecation."}},
+{"@type":"Question","name":"What is the difference between SCT and DMS Schema Conversion?","acceptedAnswer":{"@type":"Answer","text":"DMS Schema Conversion is a fully managed, web-based feature in the AWS DMS console that uses the same conversion engine as SCT and adds generative AI assistance. AWS SCT is the standalone desktop application you download and run on your own machine."}},
+{"@type":"Question","name":"Does DMS Schema Conversion use generative AI?","acceptedAnswer":{"@type":"Answer","text":"Yes. It combines a rule-based conversion engine with generative AI to reduce the number of complex code objects that would otherwise require manual conversion, offering recommendations for objects the rules cannot convert automatically."}},
+{"@type":"Question","name":"When is schema conversion actually needed?","acceptedAnswer":{"@type":"Answer","text":"During a heterogeneous migration, when the source and target run different database engines (for example Oracle to Aurora PostgreSQL). A homogeneous migration between the same engine does not need schema conversion."}}
+]}
+</script>
+
+</body>
+</html>
