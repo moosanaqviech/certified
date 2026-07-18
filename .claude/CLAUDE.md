@@ -64,7 +64,11 @@ anything. They define card shapes, helper classes, and question rules.
   Use colons, commas, parentheses, or periods.
 - SVG art: static string literals only, no nested template interpolation
   (backtick parity failures). viewBox around 0 0 320 200. Use palette vars
-  for stroke/fill so art recolors with the theme.
+  for stroke/fill so art recolors with the theme. Gradient stops MUST use
+  style form: <stop style="stop-color:var(--x)"/>, never the attribute form
+  stop-color="var(--x)" (WebKit and the iOS shell do not resolve var() in
+  presentation attributes). Illustration-grade effort goes on the cover
+  only; see the cover-art triage in the authoring skill.
 - Quiz cards: exactly one `data-correct="true"` per card, plus a `.feedback`
   block. Final card carries `last: true`.
 - Lessons: 8 to 12 cards, target 9. A second quiz card is required at 11
