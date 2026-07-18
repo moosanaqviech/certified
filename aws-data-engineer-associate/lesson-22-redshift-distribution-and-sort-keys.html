@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Redshift Performance: Distribution and Sort Keys · AWS Data Engineer Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #140708;            /* page background */
+    --bg-tint: #2e1013;       /* ambient glow tint behind the card */
+    --accent: #ef4444;        /* topic color: Amazon Redshift, warehouse red */
+    --accent-glow: rgba(239,68,68,0.12);  /* correct-answer fill */
+    --accent-ink: #2a0708;    /* text on top of the accent key chip */
+
+    /* extra named colors, referenced by the SVGs in A */
+    --key: #60a5fa;           /* the distribution key co-locating rows */
+    --sorted: #fbbf24;        /* the sort key ordering rows */
+    --deepred: #7f1d1d;       /* deep end of the cover gradient */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 22 · Redshift Performance: distribution keys and sort keys (2.1)
+   Concept lesson: the MPP slice model, distribution styles (KEY, EVEN,
+   ALL) and skew, sort keys with zone maps for block pruning, and how to
+   choose both. Closes Unit 2.
+   Cover is illustration-grade (slice-lane gradient, style-form stops);
+   mid-lesson art stays schematic.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="slice22" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--accent)"/>
+        <stop offset="1" style="stop-color:var(--deepred)"/>
+      </linearGradient>
+    </defs>
+    <text x="160" y="26" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="700">rows spread across slices, sorted within</text>
+    <g>
+      <rect x="30" y="40" width="58" height="120" rx="8" fill="url(#slice22)" opacity="0.16" stroke="var(--accent)" stroke-width="1.3"/>
+      <rect x="98" y="40" width="58" height="120" rx="8" fill="url(#slice22)" opacity="0.16" stroke="var(--accent)" stroke-width="1.3"/>
+      <rect x="166" y="40" width="58" height="120" rx="8" fill="url(#slice22)" opacity="0.16" stroke="var(--accent)" stroke-width="1.3"/>
+      <rect x="234" y="40" width="58" height="120" rx="8" fill="url(#slice22)" opacity="0.16" stroke="var(--accent)" stroke-width="1.3"/>
+    </g>
+    <line x1="30" y1="40" x2="292" y2="40" stroke="#ffffff" stroke-width="1" opacity="0.25"/>
+    <g stroke-width="0">
+      <rect x="38" y="52" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.5"/><rect x="38" y="64" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.7"/><rect x="38" y="76" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.9"/>
+      <rect x="106" y="52" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.5"/><rect x="106" y="64" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.7"/><rect x="106" y="76" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.9"/>
+      <rect x="174" y="52" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.5"/><rect x="174" y="64" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.7"/><rect x="174" y="76" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.9"/>
+      <rect x="242" y="52" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.5"/><rect x="242" y="64" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.7"/><rect x="242" y="76" width="42" height="8" rx="2" fill="var(--sorted)" opacity="0.9"/>
+    </g>
+    <text x="59" y="150" text-anchor="middle" fill="var(--key)" font-family="Hanken Grotesk" font-size="8" font-weight="700">slice</text>
+    <text x="127" y="150" text-anchor="middle" fill="var(--key)" font-family="Hanken Grotesk" font-size="8" font-weight="700">slice</text>
+    <text x="195" y="150" text-anchor="middle" fill="var(--key)" font-family="Hanken Grotesk" font-size="8" font-weight="700">slice</text>
+    <text x="263" y="150" text-anchor="middle" fill="var(--key)" font-family="Hanken Grotesk" font-size="8" font-weight="700">slice</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">Distribution places rows. Sort orders them.</text>
+  </svg>`,
+
+  mpp: `<svg viewBox="0 0 320 150">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">TWO LEVERS ON EVERY QUERY</text>
+    <g font-family="Hanken Grotesk" font-size="9.5" font-weight="700">
+      <rect x="24" y="40" width="130" height="66" rx="11" fill="rgba(96,165,250,0.08)" stroke="var(--key)" stroke-width="1.5"/><text x="89" y="66" text-anchor="middle" fill="var(--key)">distribution</text><text x="89" y="84" text-anchor="middle" fill="var(--ink-faint)" font-size="8">which slice a row lands on</text><text x="89" y="98" text-anchor="middle" fill="var(--ink-faint)" font-size="8">less data movement</text>
+      <rect x="166" y="40" width="130" height="66" rx="11" fill="rgba(251,191,36,0.08)" stroke="var(--sorted)" stroke-width="1.5"/><text x="231" y="66" text-anchor="middle" fill="var(--sorted)">sort</text><text x="231" y="84" text-anchor="middle" fill="var(--ink-faint)" font-size="8">order on disk</text><text x="231" y="98" text-anchor="middle" fill="var(--ink-faint)" font-size="8">less data scanned</text>
+    </g>
+    <text x="160" y="132" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Both aim at the same goal: touch less data.</text>
+  </svg>`,
+
+  dist: `<svg viewBox="0 0 320 160">
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <rect x="16" y="32" width="90" height="70" rx="10" fill="rgba(96,165,250,0.08)" stroke="var(--key)" stroke-width="1.4"/><text x="61" y="54" text-anchor="middle" fill="var(--key)">KEY</text><text x="61" y="72" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">same value,</text><text x="61" y="84" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">same slice</text>
+      <rect x="115" y="32" width="90" height="70" rx="10" fill="rgba(148,163,184,0.06)" stroke="var(--ink-faint)" stroke-width="1.4"/><text x="160" y="54" text-anchor="middle" fill="var(--ink-soft)">EVEN</text><text x="160" y="72" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">round-robin,</text><text x="160" y="84" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">uniform spread</text>
+      <rect x="214" y="32" width="90" height="70" rx="10" fill="rgba(52,211,153,0.07)" stroke="#34d399" stroke-width="1.4"/><text x="259" y="54" text-anchor="middle" fill="#34d399">ALL</text><text x="259" y="72" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">full copy on</text><text x="259" y="84" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">every node</text>
+    </g>
+    <text x="160" y="128" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">KEY co-locates joins, EVEN spreads, ALL replicates small tables.</text>
+  </svg>`,
+
+  skew: `<svg viewBox="0 0 320 150">
+    <text x="160" y="20" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">A BAD KEY MAKES SKEW</text>
+    <g>
+      <rect x="40" y="40" width="40" height="70" rx="5" fill="rgba(239,68,68,0.22)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="100" y="86" width="40" height="24" rx="5" fill="rgba(239,68,68,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="160" y="94" width="40" height="16" rx="5" fill="rgba(239,68,68,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="220" y="90" width="40" height="20" rx="5" fill="rgba(239,68,68,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+    </g>
+    <text x="60" y="126" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">overloaded</text>
+    <text x="200" y="126" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">nearly idle</text>
+    <text x="160" y="144" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">One slow slice holds up the whole query.</text>
+  </svg>`,
+
+  sort: `<svg viewBox="0 0 320 155">
+    <text x="160" y="20" text-anchor="middle" fill="var(--sorted)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">SORTED, SO BLOCKS CAN BE SKIPPED</text>
+    <g font-family="ui-monospace, monospace" font-size="8">
+      <rect x="30" y="34" width="60" height="70" rx="6" fill="rgba(251,191,36,0.06)" stroke="var(--sorted)" stroke-width="1.2"/><text x="60" y="50" text-anchor="middle" fill="var(--ink-faint)">Jan</text><text x="60" y="98" text-anchor="middle" fill="var(--ink-faint)">Mar</text>
+      <rect x="100" y="34" width="60" height="70" rx="6" fill="rgba(251,191,36,0.18)" stroke="var(--sorted)" stroke-width="1.6"/><text x="130" y="50" text-anchor="middle" fill="var(--sorted)">Apr</text><text x="130" y="98" text-anchor="middle" fill="var(--sorted)">Jun</text>
+      <rect x="170" y="34" width="60" height="70" rx="6" fill="rgba(251,191,36,0.06)" stroke="var(--sorted)" stroke-width="1.2"/><text x="200" y="50" text-anchor="middle" fill="var(--ink-faint)">Jul</text><text x="200" y="98" text-anchor="middle" fill="var(--ink-faint)">Sep</text>
+      <rect x="240" y="34" width="60" height="70" rx="6" fill="rgba(251,191,36,0.06)" stroke="var(--sorted)" stroke-width="1.2"/><text x="270" y="50" text-anchor="middle" fill="var(--ink-faint)">Oct</text><text x="270" y="98" text-anchor="middle" fill="var(--ink-faint)">Dec</text>
+    </g>
+    <text x="130" y="120" text-anchor="middle" fill="var(--sorted)" font-family="Hanken Grotesk" font-size="8" font-weight="700">filter Q2 reads here</text>
+    <text x="160" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Zone maps let Redshift skip non-matching blocks.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 22</div>
+    <h1 class="reveal">Redshift distribution and sort keys</h1>
+    <p class="lead reveal">Redshift spreads a table across many <strong>slices</strong> and works them in parallel. Two choices decide whether that parallelism helps or hurts: how rows are <strong>distributed</strong> across slices, and how they are <strong>sorted</strong> within them.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — the MPP setup */
+  { html: `
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">Two levers on every query</h2>
+    <div class="art reveal">${A.mpp}</div>
+    <p class="lead reveal">Because the data lives across slices, the enemy of speed is <strong>moving data between them</strong> and <strong>scanning more than you need</strong>. The <strong>distribution key</strong> controls which slice a row lands on; the <strong>sort key</strong> controls the order of rows on disk. Both aim to touch less data.</p>
+    <div class="spacer"></div>` },
+
+  /* 2 — distribution styles */
+  { html: `
+    <div class="eyebrow reveal">Distribution</div>
+    <h2 class="reveal">KEY, EVEN, or ALL</h2>
+    <div class="art reveal">${A.dist}</div>
+    <p class="lead reveal"><strong>KEY</strong> sends rows with the same key value to the same slice, so joined tables sharing that key are co-located and need no shuffle. <strong>EVEN</strong> spreads rows round-robin when there is no obvious join key. <strong>ALL</strong> copies a whole table to every node, ideal for small dimension tables, wasteful for large ones.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — skew */
+  { html: `
+    <div class="eyebrow reveal">The KEY risk</div>
+    <h2 class="reveal">A bad key creates skew</h2>
+    <div class="art reveal">${A.skew}</div>
+    <p class="lead reveal">KEY distribution only helps if the key's values are <strong>evenly spread</strong>. Choose a column with few or lopsided values and most rows pile onto one slice. That slice becomes a bottleneck: the query runs only as fast as its <strong>most overloaded slice</strong>, while the others sit idle.</p>
+    <div class="spacer"></div>` },
+
+  /* 4 — sort keys and zone maps */
+  { html: `
+    <div class="eyebrow reveal">Sort</div>
+    <h2 class="reveal">Sort keys let blocks be skipped</h2>
+    <div class="art reveal">${A.sort}</div>
+    <p class="lead reveal">A <strong>sort key</strong> stores rows in order on disk. Redshift keeps <strong>zone maps</strong> recording the min and max value in each block, so a query that filters on the sort key can <strong>skip whole blocks</strong> that cannot match. A date sort key over a fact table means a one-quarter report reads a quarter of the blocks.</p>
+    <div class="spacer"></div>` },
+
+  /* 5 — choosing */
+  { html: `
+    <div class="eyebrow reveal">Choosing keys</div>
+    <h2 class="reveal">Match keys to the query</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The queries tell you what to pick.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Distribute on the join column</b>Co-locate large tables joined on the same key to avoid shuffling, if its values spread evenly.</p></div>
+      <div class="pill"><p><b>Sort on the filter column</b>Sort by what queries range over, often a date, so zone maps prune the scan.</p></div>
+      <div class="pill"><p><b>Small tables go ALL</b>Replicate small dimensions so joins never move them across nodes.</p></div>
+    </div>` },
+
+  /* 6 — quiz: distribution co-locate */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Two large tables are frequently joined on customer_id, and the join is slow because rows are shuffled between nodes. Which choice removes the shuffle?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>KEY distribution on customer_id, so matching rows share a slice</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>EVEN distribution on both tables</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>ALL distribution on both large tables</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> KEY distribution on the join column co-locates matching rows on the same slice, so the join needs no cross-node shuffle. EVEN spreads rows without regard to the key, leaving the shuffle in place, and replicating two large tables with ALL wastes huge amounts of storage on every node.</div>` },
+
+  /* 7 — quiz: sort key for filtering */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Queries almost always filter a large fact table by event_date, yet each one scans the whole table. What most directly cuts the data scanned?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Switching the table to EVEN distribution</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A sort key on event_date, so zone maps skip non-matching blocks</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Adding more nodes to the cluster</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Sorting on event_date lets Redshift's zone maps skip the blocks outside the filtered range, so a query reads only the relevant dates. Distribution style controls data placement across slices, not how much each slice scans, and adding nodes still scans the whole table, just with more hardware.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 22 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now tune a Redshift table with the two keys that matter, and you have finished Unit 2.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Distribution places rows</b>KEY co-locates joins, EVEN spreads, ALL replicates small tables; a bad key causes skew.</p></div>
+      <div class="pill"><p><b>Sort orders rows</b>Zone maps skip non-matching blocks, so sort on the column queries filter.</p></div>
+      <div class="pill"><p><b>Match keys to queries</b>Distribute on the join column, sort on the filter column.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
