@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Auditing with AWS CloudTrail · AWS Data Engineer Associate</title>
+<title>Encryption with AWS KMS · AWS Data Engineer Associate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,16 +21,15 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0a0b18;            /* page background */
-    --bg-tint: #16183a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: CloudTrail audit trail, indigo, distinct from Ch5/Ch11 */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #0a0b22;    /* text on top of the accent key chip */
+    --bg: #04140e;            /* page background */
+    --bg-tint: #08281c;       /* ambient glow tint behind the card */
+    --accent: #059669;        /* topic color: KMS encryption, vault emerald */
+    --accent-glow: rgba(5,150,105,0.12);  /* correct-answer fill */
+    --accent-ink: #eafff6;    /* light text on top of the dark emerald chip */
 
     /* extra named colors, referenced by the SVGs in A */
-    --deep: #3730a3;          /* deep end of the cover gradient */
-    --ok: #34d399;            /* the "on by default" marker */
-    --watch: #f43f5e;         /* CloudWatch, in the side-by-side contrast */
+    --deep: #065f46;          /* deep end of the cover gradient */
+    --plain: #64748b;         /* SSE-S3, the opaque S3-managed option */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -154,53 +153,66 @@
 /* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <defs>
-      <linearGradient id="ct28" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" style="stop-color:var(--accent)"/>
-        <stop offset="1" style="stop-color:var(--deep)"/>
-      </linearGradient>
-    </defs>
-    <text x="160" y="24" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="700">who did what, when, from where</text>
-    <g font-family="ui-monospace, monospace" font-size="8.5">
-      <rect x="46" y="42" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="61" fill="var(--accent)" font-weight="700">alice</text><text x="128" y="61" fill="var(--ink-soft)">DeleteTable</text><text x="238" y="61" fill="var(--ink-faint)">09:14</text>
-      <rect x="46" y="80" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="99" fill="var(--accent)" font-weight="700">glue-role</text><text x="128" y="99" fill="var(--ink-soft)">StartJobRun</text><text x="238" y="99" fill="var(--ink-faint)">09:15</text>
-      <rect x="46" y="118" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="137" fill="var(--accent)" font-weight="700">bob</text><text x="128" y="137" fill="var(--ink-soft)">PutBucketPolicy</text><text x="238" y="137" fill="var(--ink-faint)">09:20</text>
-    </g>
-    <text x="160" y="176" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">CloudTrail records the API call behind every change.</text>
+    <defs><linearGradient id="km33" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--deep)"/></linearGradient></defs>
+    <text x="160" y="24" text-anchor="middle" fill="var(--ink-soft)" font-size="10" font-weight="700" font-family="Hanken Grotesk">a key, wrapped inside another key</text>
+    <rect x="38" y="70" width="80" height="70" rx="10" fill="url(#km33)" opacity="0.16" stroke="var(--accent)" stroke-width="1.4"/>
+    <rect x="64" y="98" width="28" height="22" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+    <path d="M70 98 v-6 a8 8 0 0 1 16 0 v6" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="78" y="134" text-anchor="middle" fill="var(--accent)" font-size="8" font-weight="700" font-family="Hanken Grotesk">data</text>
+    <text x="150" y="92" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5" font-family="Hanken Grotesk">data key</text>
+    <path d="M118 105 h62" stroke="var(--accent)" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+    <rect x="184" y="66" width="112" height="78" rx="12" fill="url(#km33)" opacity="0.12" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="240" y="86" text-anchor="middle" fill="var(--accent)" font-size="9" font-weight="700" font-family="Hanken Grotesk">KMS key</text>
+    <circle cx="240" cy="110" r="12" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+    <rect x="250" y="107" width="26" height="5" rx="2" fill="var(--accent)"/>
+    <text x="240" y="136" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5" font-family="Hanken Grotesk">encrypts the data key</text>
+    <text x="160" y="176" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5" font-family="Hanken Grotesk">KMS guards the keys; it never holds your data.</text>
   </svg>`,
 
-  vs: `<svg viewBox="0 0 320 160">
-    <g font-family="Hanken Grotesk" font-weight="700">
-      <rect x="18" y="24" width="132" height="118" rx="12" fill="rgba(244,63,94,0.06)" stroke="var(--watch)" stroke-width="1.4"/>
-      <text x="84" y="48" text-anchor="middle" fill="var(--watch)" font-size="11">CloudWatch</text>
-      <text x="84" y="72" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">how is it running?</text>
-      <text x="84" y="92" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">metrics, logs, alarms</text>
-      <text x="84" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">health, performance</text>
-      <rect x="170" y="24" width="132" height="118" rx="12" fill="rgba(99,102,241,0.09)" stroke="var(--accent)" stroke-width="1.4"/>
-      <text x="236" y="48" text-anchor="middle" fill="var(--accent)" font-size="11">CloudTrail</text>
-      <text x="236" y="72" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">who did what?</text>
-      <text x="236" y="92" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">API call history</text>
-      <text x="236" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">audit, security</text>
+  env: `<svg viewBox="0 0 320 150">
+    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-size="10.5" font-weight="700" font-family="Hanken Grotesk">ENVELOPE ENCRYPTION</text>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700">
+      <rect x="16" y="42" width="82" height="48" rx="9" fill="rgba(5,150,105,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="57" y="62" text-anchor="middle" fill="var(--accent)">plaintext</text><text x="57" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7">your data</text>
+      <path d="M98 66 h24" stroke="var(--accent)" stroke-width="1.5" fill="none"/><text x="110" y="60" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">data key</text>
+      <rect x="122" y="42" width="84" height="48" rx="9" fill="rgba(5,150,105,0.14)" stroke="var(--accent)" stroke-width="1.5"/><text x="164" y="62" text-anchor="middle" fill="var(--accent)">ciphertext</text><text x="164" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7">+ enc data key</text>
+      <path d="M206 66 h24" stroke="var(--accent)" stroke-width="1.5" fill="none"/><text x="218" y="60" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">KMS key</text>
+      <rect x="230" y="42" width="72" height="48" rx="9" fill="rgba(5,150,105,0.06)" stroke="var(--accent)" stroke-width="1.3"/><text x="266" y="62" text-anchor="middle" fill="var(--accent)">stored</text><text x="266" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7">together</text>
     </g>
+    <text x="160" y="122" text-anchor="middle" fill="var(--ink-soft)" font-size="9" font-family="Hanken Grotesk">The data key encrypts data; the KMS key encrypts the data key.</text>
   </svg>`,
 
-  evt: `<svg viewBox="0 0 320 150">
-    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">MANAGEMENT VS DATA EVENTS</text>
+  keys: `<svg viewBox="0 0 320 150">
+    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-size="10.5" font-weight="700" font-family="Hanken Grotesk">TWO KEYS YOU CAN CHOOSE</text>
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="700">
+      <rect x="20" y="34" width="130" height="88" rx="10" fill="rgba(5,150,105,0.06)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="85" y="55" text-anchor="middle" fill="var(--accent)">AWS managed</text>
+      <text x="85" y="74" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">automatic, free</text>
+      <text x="85" y="88" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">no policy to write</text>
+      <text x="85" y="106" text-anchor="middle" fill="var(--ink-soft)" font-size="7.5">no cross-account</text>
+      <rect x="170" y="34" width="130" height="88" rx="10" fill="rgba(5,150,105,0.13)" stroke="var(--accent)" stroke-width="1.7"/>
+      <text x="235" y="55" text-anchor="middle" fill="var(--accent)">customer managed</text>
+      <text x="235" y="74" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">your key policy</text>
+      <text x="235" y="88" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">rotation, disable</text>
+      <text x="235" y="106" text-anchor="middle" fill="var(--ink-soft)" font-size="7.5">cross-account grants</text>
+    </g>
+    <text x="160" y="140" text-anchor="middle" fill="var(--ink-soft)" font-size="9" font-family="Hanken Grotesk">Control costs a little; convenience costs control.</text>
+  </svg>`,
+
+  sse: `<svg viewBox="0 0 320 150">
+    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-size="10.5" font-weight="700" font-family="Hanken Grotesk">SSE-S3 VS SSE-KMS</text>
     <g font-family="Hanken Grotesk" font-size="8.5" font-weight="700">
-      <rect x="20" y="36" width="130" height="84" rx="10" fill="rgba(99,102,241,0.1)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="85" y="58" text-anchor="middle" fill="var(--accent)">Management</text>
-      <text x="85" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">control plane</text>
-      <text x="85" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">create, delete, modify</text>
-      <text x="85" y="108" text-anchor="middle" fill="var(--ok)" font-size="7.5">on by default</text>
-      <rect x="170" y="36" width="130" height="84" rx="10" fill="rgba(99,102,241,0.04)" stroke="var(--ink-faint)" stroke-width="1.3"/>
-      <text x="235" y="58" text-anchor="middle" fill="var(--ink-soft)">Data</text>
-      <text x="235" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">data plane</text>
-      <text x="235" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">S3 GetObject, Invoke</text>
-      <text x="235" y="108" text-anchor="middle" fill="var(--accent)" font-size="7.5">high volume, opt in</text>
+      <rect x="20" y="34" width="130" height="86" rx="10" fill="rgba(100,116,139,0.08)" stroke="var(--plain)" stroke-width="1.3"/>
+      <text x="85" y="55" text-anchor="middle" fill="var(--plain)">SSE-S3</text>
+      <text x="85" y="74" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">S3-owned keys</text>
+      <text x="85" y="88" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">no key control</text>
+      <text x="85" y="104" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">no usage log</text>
+      <rect x="170" y="34" width="130" height="86" rx="10" fill="rgba(5,150,105,0.13)" stroke="var(--accent)" stroke-width="1.7"/>
+      <text x="235" y="55" text-anchor="middle" fill="var(--accent)">SSE-KMS</text>
+      <text x="235" y="74" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">your KMS key</text>
+      <text x="235" y="88" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">key policy control</text>
+      <text x="235" y="104" text-anchor="middle" fill="var(--accent)" font-size="7.5">every use in CloudTrail</text>
     </g>
+    <text x="160" y="138" text-anchor="middle" fill="var(--ink-soft)" font-size="9" font-family="Hanken Grotesk">Need audit or control? Reach for SSE-KMS.</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -216,95 +228,92 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.2"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 28</div>
-    <h1 class="reveal">Auditing with CloudTrail</h1>
-    <p class="lead reveal">Monitoring tells you a pipeline is healthy. <strong>Auditing</strong> answers a different question: who changed it, when, and from where. <strong>AWS CloudTrail</strong> records the API calls behind every action in your account, so a change is never a mystery.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Chapter 33</div>
+    <h1 class="reveal">Encryption with AWS KMS</h1>
+    <p class="lead reveal">Encryption protects data even when everything else fails. <strong>AWS Key Management Service (KMS)</strong> is where the keys live and how services encrypt your data at rest. The core trick is <strong>envelope encryption</strong>: a key, wrapped inside another key.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 — CloudWatch vs CloudTrail */
+  /* 1 — envelope encryption */
   { html: `
-    <div class="eyebrow reveal">Two different questions</div>
-    <h2 class="reveal">Health versus history</h2>
-    <div class="art reveal">${A.vs}</div>
-    <p class="lead reveal"><strong>CloudWatch</strong> (last chapter) tells you <strong>how</strong> a pipeline is running: metrics, logs, alarms. <strong>CloudTrail</strong> tells you <strong>who did what</strong> to it: the record of API calls. When a job breaks because someone changed a role or deleted a table, CloudTrail is where you look.</p>
+    <div class="eyebrow reveal">The core idea</div>
+    <h2 class="reveal">Envelope encryption</h2>
+    <div class="art reveal">${A.env}</div>
+    <p class="lead reveal">Your data is encrypted with a <strong>data key</strong>. That data key is then encrypted by a <strong>KMS key</strong> and stored, wrapped, alongside the ciphertext. To read the data, a service asks KMS to unwrap the data key. KMS <strong>guards the keys and never holds your data</strong>, and this design scales to any volume without sending gigabytes through KMS.</p>
     <div class="spacer"></div>` },
 
-  /* 2 — what it records */
+  /* 2 — key types */
   { html: `
-    <div class="eyebrow reveal">What it records</div>
-    <h2 class="reveal">An entry for every call</h2>
-    <p class="lead reveal" style="margin-bottom:18px">CloudTrail captures each API call as an event, whether it came from a person, a role, or a service.</p>
+    <div class="eyebrow reveal">Key types</div>
+    <h2 class="reveal">Managed for you, or by you</h2>
+    <div class="art reveal">${A.keys}</div>
+    <p class="lead reveal">An <strong>AWS managed key</strong> (like <code>aws/s3</code>) is created and rotated for you at no charge, but you cannot edit its policy or share it across accounts. A <strong>customer managed key</strong> is one you own: you control its <strong>key policy, rotation, and cross-account grants</strong>, and can disable it, for a small monthly cost.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 — key policy + IAM */
+  { html: `
+    <div class="eyebrow reveal">Who may decrypt</div>
+    <h2 class="reveal">The key policy is a second gate</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Access to encrypted data is checked twice, which lets you separate holding data from reading it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Identity and action</b>Who made the call and which operation, for example a role calling StartJobRun or a user calling DeleteTable.</p></div>
-      <div class="pill"><p><b>Context</b>The time, the source IP address, the request parameters, and the response, enough to reconstruct exactly what happened.</p></div>
+      <div class="pill"><p><b>IAM permission</b>The caller must be allowed to reach the resource, for example the S3 object.</p></div>
+      <div class="pill"><p><b>Key policy permission</b>The caller must also be allowed to use the KMS key. Deny it and even a bucket reader cannot decrypt.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 — management vs data events */
+  /* 4 — SSE-S3 vs SSE-KMS */
   { html: `
-    <div class="eyebrow reveal">Two event types</div>
-    <h2 class="reveal">Management vs data events</h2>
-    <div class="art reveal">${A.evt}</div>
-    <p class="lead reveal"><strong>Management events</strong> record control-plane actions (creating, deleting, or modifying resources) and are logged <strong>by default</strong>. <strong>Data events</strong> record data-plane activity such as S3 <code>GetObject</code> or Lambda <code>Invoke</code>: they are high-volume and <strong>off by default</strong>, so you opt in per resource when you need object-level detail.</p>
+    <div class="eyebrow reveal">On S3</div>
+    <h2 class="reveal">SSE-S3 or SSE-KMS</h2>
+    <div class="art reveal">${A.sse}</div>
+    <p class="lead reveal"><strong>SSE-S3</strong> encrypts with keys S3 owns and manages: simple, but you get no control and no record of key use. <strong>SSE-KMS</strong> uses your KMS key, so you control access through the key policy, can grant cross-account with a customer managed key, and get a <strong>CloudTrail entry for every decryption</strong>. Choose SSE-KMS when you need control or an audit trail.</p>
     <div class="spacer"></div>` },
 
-  /* 4 — event history vs trails */
+  /* 5 — across services and cost */
   { html: `
-    <div class="eyebrow reveal">Seeing the events</div>
-    <h2 class="reveal">Event history and trails</h2>
-    <p class="lead reveal" style="margin-bottom:18px">There are two ways to reach the record, for two different needs.</p>
+    <div class="eyebrow reveal">Everywhere else</div>
+    <h2 class="reveal">Same keys, whole platform</h2>
+    <p class="lead reveal" style="margin-bottom:18px">KMS encrypts far more than S3, and there is a cost lever worth knowing.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Event history</b>The last 90 days of management events, searchable for free in the console. Perfect for a quick "who did this?"</p></div>
-      <div class="pill"><p><b>A trail</b>Delivers events to an S3 bucket for retention beyond 90 days, and optionally to CloudWatch Logs. Make it multi-Region.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 — using it */
-  { html: `
-    <div class="eyebrow reveal">In practice</div>
-    <h2 class="reveal">What you reach for it to do</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Three everyday jobs for CloudTrail on a data platform.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Investigate a change</b>Search event history for who modified or deleted the resource that broke the pipeline.</p></div>
-      <div class="pill"><p><b>Retain for compliance</b>A multi-Region trail to S3 keeps the history past 90 days; Chapter 35 goes deeper with CloudTrail Lake.</p></div>
-      <div class="pill"><p><b>Track data access</b>Turn on data events to see object-level reads and writes on a sensitive bucket.</p></div>
+      <div class="pill"><p><b>Across services</b>EBS volumes, RDS and Redshift storage, and Glue can all encrypt at rest with a KMS key.</p></div>
+      <div class="pill"><p><b>S3 Bucket Keys</b>Cache a bucket-level key so S3 stops calling KMS per object, cutting KMS request cost sharply at scale.</p></div>
+      <div class="pill"><p><b>In transit</b>TLS protects data on the wire; KMS is about data at rest.</p></div>
     </div>` },
 
-  /* 6 — quiz: who changed it */
+  /* 6 — quiz: SSE-KMS for audit and control */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">A Glue job started failing after its IAM role permissions were changed. You need to find who changed the role and exactly when. Where do you look?</h2>
+    <h2 class="reveal" style="font-size:20px">A compliance team must audit every decryption of a sensitive S3 dataset and be able to revoke one team's ability to read it without moving the data. What encryption fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>CloudTrail event history, for the management event that modified the role</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>CloudWatch metrics and alarms for the Glue job</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>The VPC Flow Logs for the account</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>SSE-S3 with S3-managed keys</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>SSE-KMS with a customer managed key</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>No encryption, restricting access with a bucket policy instead</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The role change is a management event, so CloudTrail event history shows the identity, action, and timestamp behind it. CloudWatch reports that the job failed and how it performed but never who changed a resource, and VPC Flow Logs record network traffic, not API calls.</div>` },
+    <div class="feedback"><b>Correct.</b> SSE-KMS with a customer managed key logs every decryption in CloudTrail and lets you deny a principal in the key policy, revoking read access without touching the data. SSE-S3 keys are opaque, with no usage log and no policy you can edit, and a bucket policy alone neither encrypts the data nor records key use.</div>` },
 
-  /* 7 — quiz: data events */
+  /* 7 — quiz: bucket keys for cost */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">Security wants an object-level record of every GetObject call on a sensitive S3 bucket, but CloudTrail shows nothing for those reads. Why, and what fixes it?</h2>
+    <h2 class="reveal" style="font-size:20px">A bucket holds hundreds of millions of objects encrypted with SSE-KMS, and KMS request charges have grown large. How do you cut the cost while keeping SSE-KMS?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Management events already cover object reads; check event history again</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Object reads are data events, which are off by default; enable S3 data events on a trail</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Add a CloudWatch alarm on the bucket</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Switch the bucket to SSE-S3</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Enable S3 Bucket Keys on the bucket</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Create a separate KMS key for every object</button>
     </div>
-    <div class="feedback"><b>Correct.</b> GetObject is a data event, and data events are not logged unless you turn them on, so enabling S3 data events on a trail starts capturing them. Management events only cover control-plane actions like changing the bucket policy, not individual object reads, and a CloudWatch alarm measures metrics rather than recording who read an object.</div>` },
+    <div class="feedback"><b>Correct.</b> S3 Bucket Keys let S3 cache a bucket-level key and stop calling KMS on every object operation, which sharply reduces KMS request charges while still using your KMS key. Switching to SSE-S3 would abandon the control and audit you wanted, and a key per object multiplies KMS calls and management instead of reducing them.</div>` },
 
   /* 8 — done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 28 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now trace any change in your account to the API call, and the identity, behind it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 33 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now reason about encrypting data at rest with KMS, and when the extra control of SSE-KMS is worth it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Who did what</b>CloudTrail records every API call: identity, action, time, and source. Health lives in CloudWatch; history lives here.</p></div>
-      <div class="pill"><p><b>Two event types</b>Management events on by default; data events (object-level) high-volume and opt-in.</p></div>
-      <div class="pill"><p><b>History and trails</b>90 days of event history in the console; a multi-Region trail to S3 for longer retention.</p></div>
+      <div class="pill"><p><b>Envelope encryption</b>A data key encrypts the data; a KMS key encrypts the data key. KMS guards keys, not data.</p></div>
+      <div class="pill"><p><b>Managed vs customer key</b>AWS managed is free and automatic; a customer managed key adds policy, rotation, and cross-account control.</p></div>
+      <div class="pill"><p><b>SSE-KMS for audit</b>Every key use is logged and controllable; enable S3 Bucket Keys to keep the cost down.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

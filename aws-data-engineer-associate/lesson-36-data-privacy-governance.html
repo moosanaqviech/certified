@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Auditing with AWS CloudTrail · AWS Data Engineer Associate</title>
+<title>Data Privacy and Governance Frameworks · AWS Data Engineer Associate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,16 +21,18 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0a0b18;            /* page background */
-    --bg-tint: #16183a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: CloudTrail audit trail, indigo, distinct from Ch5/Ch11 */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #0a0b22;    /* text on top of the accent key chip */
+    --bg: #0b0e13;            /* page background */
+    --bg-tint: #1a212c;       /* ambient glow tint behind the card */
+    --accent: #94a3b8;        /* topic color: governance, neutral steel slate */
+    --accent-glow: rgba(148,163,184,0.12);  /* correct-answer fill */
+    --accent-ink: #0b1017;    /* dark text on top of the light slate chip */
 
-    /* extra named colors, referenced by the SVGs in A */
-    --deep: #3730a3;          /* deep end of the cover gradient */
-    --ok: #34d399;            /* the "on by default" marker */
-    --watch: #f43f5e;         /* CloudWatch, in the side-by-side contrast */
+    /* extra named colors, referenced by the SVGs in A (the unit's toolbox) */
+    --deep: #475569;          /* deep end of the cover gradient */
+    --macie: #06b6d4;         /* find PII (Chapter 34) */
+    --lf: #34d399;            /* control access (Chapter 32) */
+    --kms: #059669;           /* encrypt (Chapter 33) */
+    --audit: #7c3aed;         /* audit (Chapter 35) */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -154,53 +156,36 @@
 /* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <defs>
-      <linearGradient id="ct28" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" style="stop-color:var(--accent)"/>
-        <stop offset="1" style="stop-color:var(--deep)"/>
-      </linearGradient>
-    </defs>
-    <text x="160" y="24" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10" font-weight="700">who did what, when, from where</text>
-    <g font-family="ui-monospace, monospace" font-size="8.5">
-      <rect x="46" y="42" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="61" fill="var(--accent)" font-weight="700">alice</text><text x="128" y="61" fill="var(--ink-soft)">DeleteTable</text><text x="238" y="61" fill="var(--ink-faint)">09:14</text>
-      <rect x="46" y="80" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="99" fill="var(--accent)" font-weight="700">glue-role</text><text x="128" y="99" fill="var(--ink-soft)">StartJobRun</text><text x="238" y="99" fill="var(--ink-faint)">09:15</text>
-      <rect x="46" y="118" width="228" height="30" rx="7" fill="url(#ct28)" opacity="0.16" stroke="var(--accent)" stroke-width="1.2"/>
-      <text x="58" y="137" fill="var(--accent)" font-weight="700">bob</text><text x="128" y="137" fill="var(--ink-soft)">PutBucketPolicy</text><text x="238" y="137" fill="var(--ink-faint)">09:20</text>
-    </g>
-    <text x="160" y="176" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10.5">CloudTrail records the API call behind every change.</text>
+    <defs><linearGradient id="gv36" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--deep)"/></linearGradient></defs>
+    <text x="160" y="26" text-anchor="middle" fill="var(--ink-soft)" font-size="10" font-weight="700" font-family="Hanken Grotesk">the rules that keep data safe and lawful</text>
+    <path d="M160 48 l64 22 v40 c0 40 -34 62 -64 74 c-30 -12 -64 -34 -64 -74 v-40 z" fill="url(#gv36)" opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+    <path d="M138 106 l14 14 l30 -32" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="160" y="184" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5" font-family="Hanken Grotesk">Governance: discoverable, secure, compliant data.</text>
   </svg>`,
 
-  vs: `<svg viewBox="0 0 320 160">
-    <g font-family="Hanken Grotesk" font-weight="700">
-      <rect x="18" y="24" width="132" height="118" rx="12" fill="rgba(244,63,94,0.06)" stroke="var(--watch)" stroke-width="1.4"/>
-      <text x="84" y="48" text-anchor="middle" fill="var(--watch)" font-size="11">CloudWatch</text>
-      <text x="84" y="72" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">how is it running?</text>
-      <text x="84" y="92" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">metrics, logs, alarms</text>
-      <text x="84" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">health, performance</text>
-      <rect x="170" y="24" width="132" height="118" rx="12" fill="rgba(99,102,241,0.09)" stroke="var(--accent)" stroke-width="1.4"/>
-      <text x="236" y="48" text-anchor="middle" fill="var(--accent)" font-size="11">CloudTrail</text>
-      <text x="236" y="72" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">who did what?</text>
-      <text x="236" y="92" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">API call history</text>
-      <text x="236" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="8.5">audit, security</text>
+  pillars: `<svg viewBox="0 0 320 150">
+    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-size="10.5" font-weight="700" font-family="Hanken Grotesk">FIVE PILLARS OF DATA GOVERNANCE</text>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700">
+      <rect x="14" y="40" width="56" height="76" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="42" y="82" text-anchor="middle" fill="var(--accent)">Classify</text>
+      <rect x="76" y="40" width="56" height="76" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="104" y="78" text-anchor="middle" fill="var(--accent)">Control</text><text x="104" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">access</text>
+      <rect x="138" y="40" width="56" height="76" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="166" y="82" text-anchor="middle" fill="var(--accent)">Protect</text>
+      <rect x="200" y="40" width="56" height="76" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="228" y="78" text-anchor="middle" fill="var(--accent)">Retain</text><text x="228" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">dispose</text>
+      <rect x="262" y="40" width="44" height="76" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="284" y="82" text-anchor="middle" fill="var(--accent)">Audit</text>
     </g>
+    <text x="160" y="138" text-anchor="middle" fill="var(--ink-soft)" font-size="9" font-family="Hanken Grotesk">Know it, gate it, protect it, keep it right, prove it.</text>
   </svg>`,
 
-  evt: `<svg viewBox="0 0 320 150">
-    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">MANAGEMENT VS DATA EVENTS</text>
-    <g font-family="Hanken Grotesk" font-size="8.5" font-weight="700">
-      <rect x="20" y="36" width="130" height="84" rx="10" fill="rgba(99,102,241,0.1)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="85" y="58" text-anchor="middle" fill="var(--accent)">Management</text>
-      <text x="85" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">control plane</text>
-      <text x="85" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">create, delete, modify</text>
-      <text x="85" y="108" text-anchor="middle" fill="var(--ok)" font-size="7.5">on by default</text>
-      <rect x="170" y="36" width="130" height="84" rx="10" fill="rgba(99,102,241,0.04)" stroke="var(--ink-faint)" stroke-width="1.3"/>
-      <text x="235" y="58" text-anchor="middle" fill="var(--ink-soft)">Data</text>
-      <text x="235" y="76" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">data plane</text>
-      <text x="235" y="90" text-anchor="middle" fill="var(--ink-faint)" font-size="7.5">S3 GetObject, Invoke</text>
-      <text x="235" y="108" text-anchor="middle" fill="var(--accent)" font-size="7.5">high volume, opt in</text>
+  toolbox: `<svg viewBox="0 0 320 160">
+    <text x="160" y="18" text-anchor="middle" fill="var(--accent)" font-size="10.5" font-weight="700" font-family="Hanken Grotesk">THE AWS GOVERNANCE TOOLBOX</text>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700">
+      <rect x="16" y="34" width="88" height="34" rx="8" fill="rgba(6,182,212,0.08)" stroke="var(--macie)" stroke-width="1.3"/><text x="60" y="49" text-anchor="middle" fill="var(--macie)">Macie</text><text x="60" y="61" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">find PII</text>
+      <rect x="116" y="34" width="88" height="34" rx="8" fill="rgba(52,211,153,0.08)" stroke="var(--lf)" stroke-width="1.3"/><text x="160" y="49" text-anchor="middle" fill="var(--lf)">Lake Formation</text><text x="160" y="61" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">control access</text>
+      <rect x="216" y="34" width="88" height="34" rx="8" fill="rgba(5,150,105,0.08)" stroke="var(--kms)" stroke-width="1.3"/><text x="260" y="49" text-anchor="middle" fill="var(--kms)">KMS</text><text x="260" y="61" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">encrypt</text>
+      <rect x="16" y="76" width="88" height="34" rx="8" fill="rgba(124,58,237,0.08)" stroke="var(--audit)" stroke-width="1.3"/><text x="60" y="91" text-anchor="middle" fill="var(--audit)">CloudTrail</text><text x="60" y="103" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">audit</text>
+      <rect x="116" y="76" width="88" height="34" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="160" y="91" text-anchor="middle" fill="var(--accent)">DataBrew</text><text x="160" y="103" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">quality</text>
+      <rect x="216" y="76" width="88" height="34" rx="8" fill="rgba(148,163,184,0.08)" stroke="var(--accent)" stroke-width="1.3"/><text x="260" y="91" text-anchor="middle" fill="var(--accent)">S3 lifecycle</text><text x="260" y="103" text-anchor="middle" fill="var(--ink-faint)" font-size="6.5">retain</text>
     </g>
+    <text x="160" y="132" text-anchor="middle" fill="var(--ink-soft)" font-size="9" font-family="Hanken Grotesk">Each pillar maps to a service you now know.</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -216,95 +201,95 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.2"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 28</div>
-    <h1 class="reveal">Auditing with CloudTrail</h1>
-    <p class="lead reveal">Monitoring tells you a pipeline is healthy. <strong>Auditing</strong> answers a different question: who changed it, when, and from where. <strong>AWS CloudTrail</strong> records the API calls behind every action in your account, so a change is never a mystery.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Chapter 36</div>
+    <h1 class="reveal">Data privacy and governance</h1>
+    <p class="lead reveal">The last chapter steps back. <strong>Governance</strong> is the set of policies and tools that keep data discoverable, high-quality, secure, and compliant. <strong>Privacy</strong> is protecting personal data under the law. This chapter frames both, and ties the whole unit together.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 — CloudWatch vs CloudTrail */
+  /* 1 — what they mean */
   { html: `
-    <div class="eyebrow reveal">Two different questions</div>
-    <h2 class="reveal">Health versus history</h2>
-    <div class="art reveal">${A.vs}</div>
-    <p class="lead reveal"><strong>CloudWatch</strong> (last chapter) tells you <strong>how</strong> a pipeline is running: metrics, logs, alarms. <strong>CloudTrail</strong> tells you <strong>who did what</strong> to it: the record of API calls. When a job breaks because someone changed a role or deleted a table, CloudTrail is where you look.</p>
-    <div class="spacer"></div>` },
-
-  /* 2 — what it records */
-  { html: `
-    <div class="eyebrow reveal">What it records</div>
-    <h2 class="reveal">An entry for every call</h2>
-    <p class="lead reveal" style="margin-bottom:18px">CloudTrail captures each API call as an event, whether it came from a person, a role, or a service.</p>
+    <div class="eyebrow reveal">The frame</div>
+    <h2 class="reveal">Governance and privacy</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Two related goals sit over everything a data engineer builds.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Identity and action</b>Who made the call and which operation, for example a role calling StartJobRun or a user calling DeleteTable.</p></div>
-      <div class="pill"><p><b>Context</b>The time, the source IP address, the request parameters, and the response, enough to reconstruct exactly what happened.</p></div>
+      <div class="pill"><p><b>Governance</b>Make data discoverable, trustworthy, secure, and compliant, with clear ownership and policy.</p></div>
+      <div class="pill"><p><b>Privacy</b>Protect personal data under regulations like GDPR, CCPA, and HIPAA, honoring data residency and individual rights.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 — management vs data events */
+  /* 2 — the five pillars */
   { html: `
-    <div class="eyebrow reveal">Two event types</div>
-    <h2 class="reveal">Management vs data events</h2>
-    <div class="art reveal">${A.evt}</div>
-    <p class="lead reveal"><strong>Management events</strong> record control-plane actions (creating, deleting, or modifying resources) and are logged <strong>by default</strong>. <strong>Data events</strong> record data-plane activity such as S3 <code>GetObject</code> or Lambda <code>Invoke</code>: they are high-volume and <strong>off by default</strong>, so you opt in per resource when you need object-level detail.</p>
+    <div class="eyebrow reveal">The pillars</div>
+    <h2 class="reveal">Five things governance does</h2>
+    <div class="art reveal">${A.pillars}</div>
+    <p class="lead reveal">Good governance runs a loop: <strong>classify</strong> data by sensitivity, <strong>control</strong> who can access it, <strong>protect</strong> it with encryption and masking, <strong>retain</strong> and dispose of it on a schedule, and <strong>audit</strong> to prove all of the above. Each pillar is a habit, not a one-time setup.</p>
     <div class="spacer"></div>` },
 
-  /* 4 — event history vs trails */
+  /* 3 — classification and PII techniques */
   { html: `
-    <div class="eyebrow reveal">Seeing the events</div>
-    <h2 class="reveal">Event history and trails</h2>
-    <p class="lead reveal" style="margin-bottom:18px">There are two ways to reach the record, for two different needs.</p>
+    <div class="eyebrow reveal">Handling personal data</div>
+    <h2 class="reveal">Classify, then de-identify</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Reducing exposure of personal data comes down to labeling it and, where possible, removing the link to a person.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Event history</b>The last 90 days of management events, searchable for free in the console. Perfect for a quick "who did this?"</p></div>
-      <div class="pill"><p><b>A trail</b>Delivers events to an S3 bucket for retention beyond 90 days, and optionally to CloudWatch Logs. Make it multi-Region.</p></div>
+      <div class="pill"><p><b>Anonymization</b>Irreversibly strips identity so data can never be traced back to a person. Best for open analytics.</p></div>
+      <div class="pill"><p><b>Pseudonymization</b>Replaces identifiers with tokens, reversible only with a protected key, so you can re-link when a legitimate need arises.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 — using it */
+  /* 4 — the AWS toolbox */
   { html: `
-    <div class="eyebrow reveal">In practice</div>
-    <h2 class="reveal">What you reach for it to do</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Three everyday jobs for CloudTrail on a data platform.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Investigate a change</b>Search event history for who modified or deleted the resource that broke the pipeline.</p></div>
-      <div class="pill"><p><b>Retain for compliance</b>A multi-Region trail to S3 keeps the history past 90 days; Chapter 35 goes deeper with CloudTrail Lake.</p></div>
-      <div class="pill"><p><b>Track data access</b>Turn on data events to see object-level reads and writes on a sensitive bucket.</p></div>
-    </div>` },
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal">Every pillar has a service</h2>
+    <div class="art reveal">${A.toolbox}</div>
+    <p class="lead reveal">This unit built the toolbox: <strong>Macie</strong> finds sensitive data, <strong>Lake Formation</strong> controls fine-grained access, <strong>KMS</strong> encrypts, <strong>CloudTrail</strong> audits, <strong>DataBrew</strong> checks quality, and <strong>S3 lifecycle</strong> handles retention. Governance is less a single product than these services working as one policy.</p>
+    <div class="spacer"></div>` },
 
-  /* 6 — quiz: who changed it */
+  /* 5 — residency and retention */
+  { html: `
+    <div class="eyebrow reveal">Where and how long</div>
+    <h2 class="reveal">Residency and retention</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Two compliance concerns show up constantly in privacy law.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Data residency</b>Keep data in the Regions the law requires, and be deliberate about where copies and backups land.</p></div>
+      <div class="pill"><p><b>Retention and deletion</b>Enforce lifecycle rules to expire data on schedule, use S3 Object Lock (WORM) where records must be immutable, and honor deletion requests.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: tool to need */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">A Glue job started failing after its IAM role permissions were changed. You need to find who changed the role and exactly when. Where do you look?</h2>
+    <h2 class="reveal" style="font-size:20px">Preparing for a GDPR audit, you must discover and locate all personal data held across your S3 data lake. Which service is the right starting point?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>CloudTrail event history, for the management event that modified the role</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>CloudWatch metrics and alarms for the Glue job</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>The VPC Flow Logs for the account</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>AWS KMS</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Amazon Macie</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>AWS CloudTrail</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The role change is a management event, so CloudTrail event history shows the identity, action, and timestamp behind it. CloudWatch reports that the job failed and how it performed but never who changed a resource, and VPC Flow Logs record network traffic, not API calls.</div>` },
+    <div class="feedback"><b>Correct.</b> Discovering and locating personal data across S3 is exactly what Macie does, so it is the natural first step for a privacy audit. KMS encrypts data but never identifies what is personal, and CloudTrail records API activity, not the contents of your data.</div>` },
 
-  /* 7 — quiz: data events */
+  /* 7 — quiz: anonymize vs pseudonymize */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">Security wants an object-level record of every GetObject call on a sensitive S3 bucket, but CloudTrail shows nothing for those reads. Why, and what fixes it?</h2>
+    <h2 class="reveal" style="font-size:20px">A team wants to analyze user behavior without identifying individuals, but must be able to re-link a record to a person, using a protected key, when support needs it. Which technique fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Management events already cover object reads; check event history again</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Object reads are data events, which are off by default; enable S3 data events on a trail</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Add a CloudWatch alarm on the bucket</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Pseudonymization, replacing identifiers with tokens reversible by a protected key</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Anonymization, irreversibly removing all identifiers</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Encrypting the data at rest with KMS</button>
     </div>
-    <div class="feedback"><b>Correct.</b> GetObject is a data event, and data events are not logged unless you turn them on, so enabling S3 data events on a trail starts capturing them. Management events only cover control-plane actions like changing the bucket policy, not individual object reads, and a CloudWatch alarm measures metrics rather than recording who read an object.</div>` },
+    <div class="feedback"><b>Correct.</b> Pseudonymization swaps identifiers for tokens and keeps a protected mapping, so analysis runs without identities yet a legitimate re-link is still possible. Anonymization is irreversible, which would make the required re-link impossible, and encryption at rest still yields fully identifying data the moment an authorized user decrypts it.</div>` },
 
   /* 8 — done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 28 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now trace any change in your account to the API call, and the identity, behind it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 36 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You have finished Unit 4, and the full course: all four domains of the AWS Data Engineer Associate exam.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Who did what</b>CloudTrail records every API call: identity, action, time, and source. Health lives in CloudWatch; history lives here.</p></div>
-      <div class="pill"><p><b>Two event types</b>Management events on by default; data events (object-level) high-volume and opt-in.</p></div>
-      <div class="pill"><p><b>History and trails</b>90 days of event history in the console; a multi-Region trail to S3 for longer retention.</p></div>
+      <div class="pill"><p><b>Governance is a loop</b>Classify, control, protect, retain, and audit, running continuously.</p></div>
+      <div class="pill"><p><b>Privacy is the law</b>De-identify with anonymization or pseudonymization, and respect residency and retention.</p></div>
+      <div class="pill"><p><b>One toolbox</b>Macie, Lake Formation, KMS, CloudTrail, DataBrew, and S3 lifecycle, working as a single policy.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
