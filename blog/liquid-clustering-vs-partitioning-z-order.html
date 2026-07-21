@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Clustering vs Partitioning and Z-Order: What Databricks Recommends Now</title>
+<meta name="description" content="Databricks now recommends liquid clustering over partitioning and Z-order for new tables. Here is what changed, how CLUSTER BY works, and what the exam expects.">
+<link rel="canonical" href="https://certify.courses/blog/liquid-clustering-vs-partitioning-z-order">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Liquid Clustering vs Partitioning and Z-Order: What Databricks Recommends Now">
+<meta property="og:description" content="Databricks recommends liquid clustering instead of partitioning and Z-order. What changed, how CLUSTER BY works, and what the exam expects.">
+<meta property="og:url" content="https://certify.courses/blog/liquid-clustering-vs-partitioning-z-order">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.9em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:6px 0 14px;}
+  .callout p{margin:0;font-size:15.5px;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../index.html">Already Certified</a><span>&rsaquo;</span>
+    <a href="databricks-data-engineer-associate-certification-guide.html">Certification Guide</a><span>&rsaquo;</span>
+    <span>Liquid Clustering vs Partitioning</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Data Engineer &middot; Concept</div>
+    <h1>Liquid Clustering vs Partitioning and Z-Order</h1>
+    <p class="lede">If you learned Delta Lake a few years ago, you learned to partition tables and run <strong>Z-order</strong> to speed up queries. Databricks now recommends <strong>liquid clustering</strong> instead, for essentially all new tables. Here is what changed and what the exam expects you to know.</p>
+    <p class="updated">Last updated July 2026.</p>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">Liquid clustering replaces both partitioning and Z-order. You declare <code>CLUSTER BY (cols)</code> once, and Delta co-locates related rows so queries skip files they do not need, without the rigid folder structure of partitions or the periodic rewrite of Z-ordering. Databricks documentation recommends liquid clustering over Z-ordering for all new tables, and instead of partitions for most tables.</p>
+  </section>
+
+  <section id="old-way">
+    <h2>Why partitioning and Z-order fell out of favor</h2>
+    <p>Both older techniques work, but both have sharp edges the exam likes to probe.</p>
+    <p><strong>Partitioning</strong> splits a table into physical folders by column value (for example one folder per <code>date</code>). Pick a column with too many distinct values and you get <strong>over-partitioning</strong>: thousands of tiny files and slower queries, not faster ones. Databricks guidance is blunt about the threshold: do not partition tables under 1 TB, and only partition on a column if you expect each partition to hold at least 1 GB. Worse, the partition columns are baked into the table layout, so changing your mind means a full rewrite.</p>
+    <p><strong>Z-order</strong> (via <code>OPTIMIZE ... ZORDER BY</code>) improves data skipping without folders, but it is a maintenance command you have to schedule and re-run as data lands. It is also incompatible with clustering: you cannot use Z-order and liquid clustering on the same table.</p>
+  </section>
+
+  <section id="how">
+    <h2>How liquid clustering works</h2>
+    <p>You set clustering keys at create time or add them later:</p>
+    <ul>
+      <li><code>CREATE TABLE t (...) CLUSTER BY (region, event_date)</code> defines the keys up front.</li>
+      <li><code>ALTER TABLE t CLUSTER BY (customer_id)</code> changes the keys with <strong>no full rewrite</strong>. New data reorganizes as it arrives, so your layout can evolve with your query patterns.</li>
+      <li><code>CLUSTER BY AUTO</code> lets Databricks choose and adapt the clustering columns over time, using predictive optimization to learn from how the table is actually queried.</li>
+    </ul>
+    <p>On Unity Catalog managed tables, <strong>predictive optimization</strong> can run the maintenance work (OPTIMIZE, clustering, and VACUUM) automatically, so you stop babysitting scheduled jobs. That combination, declarative keys plus automatic maintenance, is the whole reason the recommendation shifted.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Liquid clustering</th><th>Partitioning / Z-order</th></tr></thead>
+      <tbody>
+        <tr><th>How you declare it</th><td class="col-h">CLUSTER BY (cols) or CLUSTER BY AUTO</td><td>PARTITIONED BY (cols) and/or OPTIMIZE ZORDER BY</td></tr>
+        <tr><th>Change keys later</th><td class="col-h">Yes, no full rewrite</td><td>Partition columns are fixed; changing them rewrites the table</td></tr>
+        <tr><th>Small-file / skew risk</th><td class="col-h">Managed for you</td><td>High if the partition column is chosen poorly</td></tr>
+        <tr><th>Maintenance</th><td class="col-h">Can be automatic (predictive optimization)</td><td>Z-order is a command you schedule and re-run</td></tr>
+        <tr><th>Databricks guidance</th><td class="col-h">Recommended for new tables</td><td>Contrast case; partition only very large tables by a coarse column</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks docs pages "Use liquid clustering for tables" and "When to partition tables on Databricks."</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <p>The Databricks Data Engineer Associate exam reflects current guidance, so treat liquid clustering as the default answer for data layout and physical optimization questions.</p>
+    <div class="callout"><p><strong>Exam tip:</strong> If a question asks how to speed up queries on a table whose access patterns change, or how to avoid a full rewrite when the layout needs to change, the answer is almost always <code>CLUSTER BY</code>. Partitioning and Z-order are the distractors, correct only for the narrow "very large table, coarse column" case.</p></div>
+    <p>Do not memorize partitioning as the go-to optimization the way older study material teaches it. Know that it still exists, know the 1 TB and 1 GB thresholds, and know that liquid clustering is what Databricks now points you to first.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>Can I use partitioning and liquid clustering on the same table?</summary><div class="fa"><p>No. Liquid clustering replaces partitioning for that table. You also cannot combine liquid clustering with Z-order on the same table; clustering and Z-ordering are mutually exclusive.</p></div></details>
+      <details><summary>When is partitioning still the right choice?</summary><div class="fa"><p>Rarely, and only for large tables partitioned on a coarse, low-cardinality column where each partition holds at least 1 GB. Databricks recommends not partitioning tables under 1 TB at all.</p></div></details>
+      <details><summary>What does CLUSTER BY AUTO do?</summary><div class="fa"><p>It lets Databricks select and adapt the clustering columns over time based on your actual query patterns, using predictive optimization, rather than you fixing the keys manually.</p></div></details>
+      <details><summary>Do I still need to run OPTIMIZE?</summary><div class="fa"><p>On Unity Catalog managed tables, predictive optimization can run OPTIMIZE, clustering, and VACUUM automatically. You can still run OPTIMIZE manually, but the point of the newer approach is that you do not have to schedule it.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Liquid clustering and predictive optimization get their own chapter in the Associate course, with the exact CLUSTER BY syntax and the questions the exam builds around it.</p>
+    <a href="../databricks-data-engineer-associate/lesson-28-liquid-clustering.html" class="cta">Open the Liquid Clustering chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-data-engineer-associate-certification-guide.html">The complete Databricks DE Associate certification guide &rarr;</a>
+    <a href="medallion-architecture-explained-bronze-silver-gold.html">Medallion architecture: bronze, silver and gold layers &rarr;</a>
+    <a href="databricks-professional-performance-tuning-optimization-exam.html">Performance tuning topics on the Professional exam &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; lessons authored from the public Databricks exam guide and documentation.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Liquid Clustering vs Partitioning and Z-Order: What Databricks Recommends Now","description":"Databricks now recommends liquid clustering over partitioning and Z-order for new tables. Here is what changed, how CLUSTER BY works, and what the exam expects.","author":{"@type":"Organization","name":"Already Certified"},"publisher":{"@type":"Organization","name":"Already Certified","url":"https://certify.courses/"},"datePublished":"2026-07-21","dateModified":"2026-07-21","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/liquid-clustering-vs-partitioning-z-order"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Can I use partitioning and liquid clustering on the same table?","acceptedAnswer":{"@type":"Answer","text":"No. Liquid clustering replaces partitioning for that table. You also cannot combine liquid clustering with Z-order on the same table; clustering and Z-ordering are mutually exclusive."}},
+{"@type":"Question","name":"When is partitioning still the right choice?","acceptedAnswer":{"@type":"Answer","text":"Rarely, and only for large tables partitioned on a coarse, low-cardinality column where each partition holds at least 1 GB. Databricks recommends not partitioning tables under 1 TB at all."}},
+{"@type":"Question","name":"What does CLUSTER BY AUTO do?","acceptedAnswer":{"@type":"Answer","text":"It lets Databricks select and adapt the clustering columns over time based on your actual query patterns, using predictive optimization, rather than you fixing the keys manually."}},
+{"@type":"Question","name":"Do I still need to run OPTIMIZE?","acceptedAnswer":{"@type":"Answer","text":"On Unity Catalog managed tables, predictive optimization can run OPTIMIZE, clustering, and VACUUM automatically. You can still run OPTIMIZE manually, but the point of the newer approach is that you do not have to schedule it."}}
+]}
+</script>
+
+</body>
+</html>

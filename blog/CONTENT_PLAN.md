@@ -38,9 +38,9 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | Databricks Data Engineer Associate vs Professional: which to take first | "associate vs professional databricks data engineer" | Yes | blog/databricks-data-engineer-associate-vs-professional.html |
 | 5 | Study plan and prep time for the Databricks Data Engineer Associate exam | "databricks data engineer associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-data-engineer-associate.html |
 | 6 | Medallion architecture explained: bronze, silver and gold layers | "medallion architecture bronze silver gold" | Yes | blog/medallion-architecture-explained-bronze-silver-gold.html |
-| 7 | Liquid Clustering vs partitioning and Z-Order: what Databricks recommends now | "liquid clustering vs partitioning" | No | |
-| 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | No | |
-| 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | No | |
+| 7 | Liquid Clustering vs partitioning and Z-Order: what Databricks recommends now | "liquid clustering vs partitioning" | Yes | blog/liquid-clustering-vs-partitioning-z-order.html |
+| 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | Yes | blog/common-mistakes-databricks-data-engineer-associate-exam.html |
+| 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | Yes | blog/is-databricks-data-engineer-associate-worth-it-2026.html |
 
 ## Databricks Data Engineer Professional
 
@@ -60,7 +60,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Kinesis Data Streams vs Amazon Data Firehose vs Managed Flink: which to use when | "kinesis vs firehose vs flink" | Yes | blog/kinesis-data-streams-vs-firehose-vs-managed-flink.html |
 | 4 | AWS Schema Conversion Tool (SCT): current status and what replaced it | "is aws sct deprecated" | Yes | blog/aws-schema-conversion-tool-sct-status.html |
 | 5 | DEA-C01 vs Databricks Data Engineer certifications: how they compare | "aws vs databricks data engineer certification" | Yes | blog/aws-vs-databricks-data-engineer-certification.html |
-| 6 | How to study for the AWS Data Engineer Associate exam as a Databricks-certified engineer | "AWS data engineer cert for databricks users" | No | |
+| 6 | How to study for the AWS Data Engineer Associate exam as a Databricks-certified engineer | "AWS data engineer cert for databricks users" | Yes | blog/study-aws-data-engineer-associate-as-databricks-engineer.html |
 
 ---
 
