@@ -33,12 +33,12 @@ export const COURSES = {
   "de-assoc": {
     folder: "databricks-data-engineer-associate",
     title: "Databricks DE Associate",
-    priceId: "price_1Ts63z5x25xDLFYz2TdJFfj5",
+    priceId: "STRIPE_PRICE_ID",
   },
   "de-pro": {
     folder: "databricks-data-engineer-professional",
     title: "Databricks DE Professional",
-    priceId: "price_1TtA5q5x25xDLFYzwjgDrSoX",
+    priceId: "STRIPE_PRICE_ID_PROFESSIONAL",
   },
    
 };
