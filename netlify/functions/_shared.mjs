@@ -53,8 +53,16 @@ export function homeFor(courseId) {
 }
 
 export function priceFor(courseId) {
-  const envKey = "STRIPE_PRICE_" + courseId.toUpperCase().replace(/-/g, "_");
-  return process.env[envKey] || (COURSES[courseId] && COURSES[courseId].priceId) || "";
+  const c = COURSES[courseId];
+  if (!c) return "";
+  // Conventional per-course override, e.g. STRIPE_PRICE_DE_PRO.
+  const conv = process.env["STRIPE_PRICE_" + courseId.toUpperCase().replace(/-/g, "_")];
+  if (conv) return conv;
+  // The catalog priceId is either a literal price_... or the NAME of an env var
+  // that holds it (e.g. "STRIPE_PRICE_ID" / "STRIPE_PRICE_ID_PROFESSIONAL").
+  const v = c.priceId || "";
+  if (v && process.env[v]) return process.env[v];
+  return v;
 }
 
 // One access code per buyer (not per course): entering it restores every course

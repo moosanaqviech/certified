@@ -91,6 +91,13 @@ function courseForPath(path: string): Course | null {
 function paidCourseFor(path: string): Course | null {
   const c = courseForPath(path);
   if (!c) return null;
+  // The course home is always free, however the host normalises it: the bare
+  // folder ("/course/"), its index, or the folder with no trailing slash all
+  // resolve to the same page. (Without this, the trailing-slash form yields a
+  // stem of the folder name, which is not in the free set, and the home would
+  // gate itself.)
+  const rest = path.slice(c.prefix.length);
+  if (rest === "" || rest === "index" || rest === "index.html") return null;
   const base = path.substring(path.lastIndexOf("/") + 1);
   // Ignore anything that carries a non-html extension (assets, etc.).
   if (base.includes(".") && !base.endsWith(".html")) return null;
