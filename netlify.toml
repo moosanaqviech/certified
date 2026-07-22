@@ -17,8 +17,26 @@
 # needed here. Per-site behaviour is controlled entirely by env vars:
 #   GATING_ENABLED=true    -> lock the paid lessons (set on the paid site only)
 #   NOINDEX_SITE=true      -> add X-Robots-Tag: noindex (set on the free mirror)
-#   GATE_SIGNING_SECRET    -> HMAC secret shared by the gate and unlock function
+#   GATE_SIGNING_SECRET    -> HMAC secret shared by the gate, unlock, refresh,
+#                             and stripe-webhook functions
 #   STRIPE_SECRET_KEY      -> Stripe restricted key (Checkout Sessions: write)
-#   STRIPE_PRICE_ID        -> the price_... to charge
+#   STRIPE_WEBHOOK_SECRET  -> signing secret for the /api/stripe-webhook endpoint
+#                             (Stripe dashboard -> Webhooks; event
+#                             checkout.session.completed)
 #   SITE_URL               -> https://certify.courses (checkout redirect base)
 #   ACTIVATION_LIMIT       -> devices per purchase (default 3)
+#
+# Multi-course catalog (one Stripe Price per course, one-time payment):
+# each sellable course is one entry in the catalog, kept in two places that
+# must stay in sync (the edge gate runs on Deno and cannot import the Node
+# module): netlify/functions/_shared.mjs (COURSES: folder, title, priceId)
+# and netlify/edge-functions/gate.ts (prefix + free Unit-1 stems + 402 copy).
+# The Stripe Price id lives in the _shared.mjs catalog as data (Price ids are
+# not secrets); a per-course env override wins when set, so test and live modes
+# can differ without a code change:
+#   STRIPE_PRICE_DE_ASSOC=price_...   (course id upper-cased, "-" -> "_")
+#   STRIPE_PRICE_DE_PRO=price_...
+# Entitlements are stored in Netlify Blobs (stores: "entitlements" keyed by
+# Stripe customer/session id, "access-codes" mapping code -> buyer). The
+# stripe-webhook function is the source of truth; the success redirect writes
+# the same record and grantCourse is idempotent.

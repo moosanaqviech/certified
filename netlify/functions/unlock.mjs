@@ -1,47 +1,21 @@
-// Grants course access after payment, and re-grants it on other devices via
-// an access code. Two request shapes (POST JSON):
+// Grants course access after payment, and re-grants a buyer's full set of
+// courses on other devices via an access code. Two request shapes (POST JSON):
 //   { session_id }  -> from the Stripe success redirect: verify the session is
-//                      paid, mint/lookup the buyer's access code, set the cookie.
+//                      paid, read the course from its metadata, record the
+//                      purchase in the ledger, set the cookie for every course
+//                      the buyer owns.
 //   { code }        -> a returning buyer unlocking another device: validate the
-//                      code and enforce the per-purchase activation limit.
+//                      code, enforce the per-buyer device limit, restore all of
+//                      that buyer's courses.
 //
-// Access is a signed (HMAC) cookie the edge gate verifies. Activation counts
-// live in Netlify Blobs (no external database). The buyer's own success link is
-// treated as proof of purchase and always unlocks; the shared ACCESS CODE is
-// what the activation limit caps.
+// Access is a signed (HMAC) cookie the edge gate verifies. Entitlements live in
+// Netlify Blobs keyed by buyer (no external database). The buyer's own success
+// link is proof of purchase and never counts against the device limit; the
+// shared ACCESS CODE is what the limit caps.
 
-import { getStore } from "@netlify/blobs";
-import crypto from "node:crypto";
-
-const LIMIT = parseInt(process.env.ACTIVATION_LIMIT || "3", 10);
-const COOKIE_DAYS = 60;
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1
-
-function sign(payloadObj, secret) {
-  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64url");
-  const sig = crypto.createHmac("sha256", secret).update(payload).digest("base64url");
-  return `${payload}.${sig}`;
-}
-
-function deriveCode(seed, secret) {
-  const h = crypto.createHmac("sha256", secret).update("code:" + seed).digest();
-  let s = "";
-  for (let i = 0; i < 12; i++) s += CODE_ALPHABET[h[i] % CODE_ALPHABET.length];
-  return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`;
-}
-
-function unlockedResponse(secret, code) {
-  const maxAge = COOKIE_DAYS * 86400;
-  const exp = Math.floor(Date.now() / 1000) + maxAge;
-  const token = sign({ v: 1, exp }, secret);
-  const headers = new Headers({ "content-type": "application/json", "cache-control": "no-store" });
-  headers.append("set-cookie", `cc_access=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
-  // Non-HttpOnly hint so the course page can show the unlocked state (not a security boundary).
-  headers.append("set-cookie", `cc_ui=1; Path=/; Secure; SameSite=Lax; Max-Age=${maxAge}`);
-  // token is returned so the client can persist it (localStorage) and re-auth
-  // via /api/refresh if the cookie is later dropped (e.g. mobile WebViews).
-  return new Response(JSON.stringify({ ok: true, code, token }), { status: 200, headers });
-}
+import {
+  isCourse, grantCourse, redeemCode, unlockedHeaders, homeFor, json,
+} from "./_shared.mjs";
 
 export default async (req) => {
   try {
@@ -50,7 +24,6 @@ export default async (req) => {
     if (!secret) return json({ error: "Not configured" }, 500);
 
     const input = await req.json().catch(() => ({}));
-    const store = getStore("access-codes");
 
     if (input.session_id) {
       const r = await fetch(
@@ -62,25 +35,27 @@ export default async (req) => {
       const paid = s.payment_status === "paid" || s.status === "complete";
       if (!paid) return json({ error: "Payment not completed" }, 402);
 
-      const code = deriveCode(s.customer || s.id, secret);
-      const rec = await store.get(code, { type: "json" });
-      if (!rec) {
-        await store.setJSON(code, { activations: 1, limit: LIMIT, created: Date.now(), source: "stripe" });
-      }
-      return unlockedResponse(secret, code);
+      const courseId = (s.metadata && s.metadata.course) || String(input.course || "");
+      if (!isCourse(courseId)) return json({ error: "Unknown course." }, 400);
+
+      const buyerId = s.customer || s.id;
+      const { rec, code } = await grantCourse(buyerId, courseId, "stripe", secret);
+      const { headers, token } = unlockedHeaders(rec.courses, secret);
+      return new Response(
+        JSON.stringify({ ok: true, code, token, courses: rec.courses, home: homeFor(courseId) }),
+        { status: 200, headers },
+      );
     }
 
     if (input.code) {
-      const code = String(input.code).trim().toUpperCase();
-      const rec = await store.get(code, { type: "json" });
-      if (!rec) return json({ error: "That code was not recognised." }, 404);
-      const limit = rec.limit || LIMIT;
-      if ((rec.activations || 0) >= limit) {
-        return json({ error: `This code has already been used on ${limit} devices.` }, 403);
-      }
-      rec.activations = (rec.activations || 0) + 1;
-      await store.setJSON(code, rec);
-      return unlockedResponse(secret, code);
+      const { rec, code, error, status } = await redeemCode(input.code);
+      if (error) return json({ error }, status);
+      const { headers, token } = unlockedHeaders(rec.courses, secret);
+      const primary = rec.courses[rec.courses.length - 1];
+      return new Response(
+        JSON.stringify({ ok: true, code, token, courses: rec.courses, home: homeFor(primary) }),
+        { status: 200, headers },
+      );
     }
 
     return json({ error: "Missing session_id or code" }, 400);
@@ -88,12 +63,5 @@ export default async (req) => {
     return json({ error: "Server error" }, 500);
   }
 };
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
-  });
-}
 
 export const config = { path: "/api/unlock" };

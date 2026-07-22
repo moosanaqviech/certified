@@ -46,7 +46,7 @@
       <p>Your access code (save it to unlock the course on your other devices):</p>
       <div class="code" id="codeOut">----</div>
       <div class="hint">Works on up to 3 devices.</div>
-      <a class="cta" href="/databricks-data-engineer-associate/">Start learning</a>
+      <a class="cta" id="startLink" href="/">Start learning</a>
     </div>
 
     <!-- Manual code entry -->
@@ -57,14 +57,14 @@
       <input id="codeIn" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button class="cta" id="redeem">Unlock this device</button>
       <div class="err" id="err"></div>
-      <div class="muted"><a href="/databricks-data-engineer-associate/">Back to the course</a></div>
+      <div class="muted"><a href="/">Back to all courses</a></div>
     </div>
   </div>
 
 <script>
   var $=function(id){return document.getElementById(id);};
   function show(id){["verifying","success","entry"].forEach(function(s){$(s).hidden=(s!==id);});}
-  function showCode(code){$("codeOut").textContent=code;show("success");}
+  function showCode(d){$("codeOut").textContent=d.code;if(d.home){$("startLink").href=d.home;}show("success");}
 
   var params=new URLSearchParams(location.search);
   var sessionId=params.get("session_id");
@@ -79,7 +79,7 @@
 
   if(sessionId){
     show("verifying");
-    post({session_id:sessionId}).then(function(d){showCode(d.code);}).catch(function(e){
+    post({session_id:sessionId}).then(function(d){showCode(d);}).catch(function(e){
       show("entry");$("err").textContent=e.message;
     });
   }else{
@@ -90,7 +90,7 @@
     var btn=$("redeem"),err=$("err"),code=$("codeIn").value.trim();
     if(!code){err.textContent="Enter your access code.";return;}
     btn.disabled=true;var label=btn.textContent;btn.textContent="Unlocking...";err.textContent="";
-    try{await post({code:code});location.href="/databricks-data-engineer-associate/";}
+    try{var d=await post({code:code});location.href=(d&&d.home)||"/";}
     catch(e){err.textContent=e.message;btn.disabled=false;btn.textContent=label;}
   });
 </script>

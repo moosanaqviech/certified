@@ -278,7 +278,9 @@
   // unlocked; does not consume a device activation.
   (function(){
     try{
-      if(/(?:^|;\s*)cc_ui=1(?:;|$)/.test(document.cookie)) return;
+      var m=document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/);
+      var owned=m?decodeURIComponent(m[1]).split("."):[];
+      if(owned.indexOf("de-assoc")>=0 || owned.indexOf("1")>=0) return;
       var t=localStorage.getItem("cc_token");
       if(!t || sessionStorage.getItem("cc_refresh_done")) return;
       sessionStorage.setItem("cc_refresh_done","1");
@@ -383,14 +385,17 @@ const RING_CIRC = 2 * Math.PI * 23;
 
 /* ---------- paywall (Unit 1 free, Units 2-7 paid) ---------- */
 const FREE_UNITS = 1;
-function unlocked(){ return /(?:^|;\s*)cc_ui=1(?:;|$)/.test(document.cookie); }
+const COURSE_ID = "de-assoc";
+function ccList(){ const m=document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/); return m?decodeURIComponent(m[1]).split("."):[]; }
+// Owns this course? The list carries course ids; "1" is a legacy pre-multi-course cookie.
+function unlocked(){ const l=ccList(); return l.indexOf(COURSE_ID)>=0 || l.indexOf("1")>=0; }
 function gatingOn(){ return /(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie); }
 // Locked only when THIS site enforces the paywall and the visitor has not unlocked.
 function locked(){ return gatingOn() && !unlocked(); }
 function isFreeUnit(u){ return u.n <= FREE_UNITS; }
 async function openCheckout(){
   try{
-    const r = await fetch("/api/create-checkout", { method:"POST" });
+    const r = await fetch("/api/create-checkout", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({course:COURSE_ID}) });
     const d = await r.json();
     if(d && d.url){ location.href = d.url; return; }
     alert((d && d.error) || "Could not start checkout. Please try again.");
