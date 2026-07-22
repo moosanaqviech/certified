@@ -61,6 +61,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | AWS Schema Conversion Tool (SCT): current status and what replaced it | "is aws sct deprecated" | Yes | blog/aws-schema-conversion-tool-sct-status.html |
 | 5 | DEA-C01 vs Databricks Data Engineer certifications: how they compare | "aws vs databricks data engineer certification" | Yes | blog/aws-vs-databricks-data-engineer-certification.html |
 | 6 | How to study for the AWS Data Engineer Associate exam as a Databricks-certified engineer | "AWS data engineer cert for databricks users" | Yes | blog/study-aws-data-engineer-associate-as-databricks-engineer.html |
+| 7 | How to tell if you are ready for the AWS Data Engineer Associate exam (readiness quiz support) | "am I ready for the AWS data engineer exam" | Yes | blog/am-i-ready-aws-data-engineer-associate-exam.html |
 
 ---
 

@@ -78,14 +78,18 @@ class Report:
 BEGIN_RE = {
     "lesson": re.compile(r"LESSON PAYLOAD\s*[\u2014-]\s*BEGIN"),
     "exam": re.compile(r"EXAM PAYLOAD\s*[\u2014-]\s*BEGIN"),
+    "readiness": re.compile(r"READINESS PAYLOAD\s*[\u2014-]\s*BEGIN"),
 }
 END_RE = {
     "lesson": re.compile(r"LESSON PAYLOAD\s*[\u2014-]\s*END"),
     "exam": re.compile(r"EXAM PAYLOAD\s*[\u2014-]\s*END"),
+    "readiness": re.compile(r"READINESS PAYLOAD\s*[\u2014-]\s*END"),
 }
 
 
 def detect_type(text):
+    if BEGIN_RE["readiness"].search(text):
+        return "readiness"
     if BEGIN_RE["lesson"].search(text):
         return "lesson"
     if BEGIN_RE["exam"].search(text):
@@ -417,6 +421,156 @@ def check_exam(payload, rep):
 
 
 # ---------------------------------------------------------------------------
+# Readiness-quiz checks (spec section 10)
+#
+# The readiness quiz forks the exam engine but ships a different payload:
+# an R config object (domains + verdict bands) and a QUESTIONS array whose
+# items carry a `domain` tag. Section 10 of the readiness spec extends the
+# exam checklist with the per-domain and band rules validated below.
+# ---------------------------------------------------------------------------
+
+READINESS_HARNESS = """
+%s
+const out = {
+  questionCount: QUESTIONS.length,
+  correct: QUESTIONS.map(function(q){ return q.correct; }),
+  optCounts: QUESTIONS.map(function(q){ return (q.opts || []).length; }),
+  qDomains: QUESTIONS.map(function(q){ return q.domain; }),
+  domains: (R.domains || []).map(function(d){
+    return { id:d.id, count:d.count, weight:d.weight,
+             prescribe:(d.prescribe==null?"":String(d.prescribe)),
+             href:(d.href==null?"":String(d.href)) };
+  }),
+  bands: (R.bands || []).map(function(b){
+    return { min:b.min, label:(b.label==null?"":String(b.label)),
+             note:(b.note==null?"":String(b.note)) };
+  })
+};
+console.log(JSON.stringify(out));
+"""
+
+
+def check_readiness(payload, rep):
+    ok, data, missing = run_node(READINESS_HARNESS % payload)
+    if missing:
+        rep.warn("node not found: readiness payload checks skipped (install Node.js to enable)")
+        return
+    if not ok:
+        rep.fail(f"payload does not evaluate (syntax error):\n        {data.splitlines()[-1] if data else 'unknown error'}")
+        return
+    rep.ok("payload evaluates without syntax errors")
+    info = json.loads(data)
+
+    n = info["questionCount"]
+    domains = info["domains"]
+    dom_ids = [d["id"] for d in domains]
+
+    # Exactly 12 questions
+    if n == 12:
+        rep.ok("exactly 12 questions")
+    else:
+        rep.fail(f"question count is {n}; a readiness quiz must have exactly 12")
+
+    # Options: exactly 4 each
+    bad_opts = [i for i, k in enumerate(info["optCounts"]) if k != 4]
+    if bad_opts:
+        rep.fail(f"questions with != 4 options: {bad_opts}")
+    else:
+        rep.ok("every question has exactly 4 options")
+
+    # Every question's domain matches an R.domains id
+    unknown = sorted({d for d in info["qDomains"] if d not in dom_ids})
+    if unknown:
+        rep.fail(f"question domain(s) not found in R.domains: {unknown}")
+    else:
+        rep.ok("every question domain matches an R.domains id")
+
+    # Per-domain counts equal R.domains.count, and those sum to 12
+    actual = {i: info["qDomains"].count(i) for i in dom_ids}
+    mismatched = [
+        f'{d["id"]} (questions={actual.get(d["id"], 0)}, R.domains.count={d["count"]})'
+        for d in domains if actual.get(d["id"], 0) != d["count"]
+    ]
+    if mismatched:
+        rep.fail("per-domain question count != R.domains.count: " + "; ".join(mismatched))
+    else:
+        rep.ok("per-domain question counts equal each R.domains.count")
+
+    declared_sum = sum(d["count"] for d in domains)
+    if declared_sum == 12:
+        rep.ok("R.domains.count values sum to 12")
+    else:
+        rep.fail(f"R.domains.count values sum to {declared_sum}, not 12")
+
+    # Counts should track the weights (heavier domain gets >= questions).
+    ordered = sorted(domains, key=lambda d: d["weight"], reverse=True)
+    tracks = all(ordered[i]["count"] <= ordered[i - 1]["count"] for i in range(1, len(ordered)))
+    if ordered and tracks:
+        rep.ok("per-domain counts track the exam weights")
+    elif ordered:
+        rep.warn("per-domain counts do not monotonically track weights; confirm the split is intentional")
+
+    # Correct-answer index range
+    correct = info["correct"]
+    out_of_range = [i for i, c in enumerate(correct) if not isinstance(c, int) or c < 0 or c > 3]
+    if out_of_range:
+        rep.fail(f"correct index out of range (must be 0-3) at questions: {out_of_range}")
+        return
+    letters = [LETTERS[c] for c in correct]
+
+    # Three-in-a-row
+    runs = [i - 2 for i in range(2, len(letters)) if letters[i] == letters[i - 1] == letters[i - 2]]
+    if runs:
+        rep.fail(f"three identical correct answers in a row starting at question(s): {runs}")
+    else:
+        rep.ok("no three identical correct answers in a row")
+
+    # Distribution balance (soft)
+    if n:
+        dist = {L: letters.count(L) for L in LETTERS}
+        shares = {L: dist[L] / n for L in LETTERS}
+        skewed = [f"{L}={dist[L]}" for L in LETTERS if shares[L] < 0.15 or shares[L] > 0.35]
+        summary = " ".join(f"{L}:{dist[L]}" for L in LETTERS)
+        if skewed:
+            rep.warn(f"answer distribution skewed ({summary}); aim for roughly a quarter each")
+        else:
+            rep.ok(f"answer distribution balanced ({summary})")
+
+    # Verdict bands: label + note, descend by min, cover 0
+    bands = info["bands"]
+    if not bands:
+        rep.fail("R.bands is empty; the result screen needs at least one verdict band")
+    else:
+        missing_fields = [i for i, b in enumerate(bands) if not b["label"] or not b["note"]]
+        if missing_fields:
+            rep.fail(f"band(s) missing label or note at index: {missing_fields}")
+        else:
+            rep.ok("every band has a label and a note")
+        descending = all(bands[i]["min"] < bands[i - 1]["min"] for i in range(1, len(bands)))
+        if descending:
+            rep.ok("bands descend by min")
+        else:
+            rep.fail("bands are not strictly descending by min")
+        if any(b["min"] == 0 for b in bands):
+            rep.ok("bands cover 0 (a floor band exists)")
+        else:
+            rep.fail("no band with min:0; the lowest scores would match no band")
+
+    # Every domain has non-placeholder prescribe + href
+    empties = [d["id"] for d in domains if not d["prescribe"].strip() or not d["href"].strip()]
+    if empties:
+        rep.fail(f"domain(s) missing prescribe or href: {empties}")
+    else:
+        rep.ok("every domain has a prescribe line and an href")
+    placeholders = [
+        d["id"] for d in domains
+        if "units 1-4" in d["prescribe"].lower() or d["href"].strip() in ("/aws-dea-c01/#unit-1", "#", "")
+    ]
+    if placeholders:
+        rep.warn(f"domain(s) still look like the template placeholder (fill from the curriculum index): {placeholders}")
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 
@@ -438,6 +592,8 @@ def validate_file(path):
     check_full_script_syntax(text, rep)
     if kind == "lesson":
         check_lesson(payload, rep)
+    elif kind == "readiness":
+        check_readiness(payload, rep)
     else:
         check_exam(payload, rep)
     return rep
