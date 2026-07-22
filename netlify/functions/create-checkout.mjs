@@ -1,12 +1,20 @@
-// Creates a Stripe Checkout Session (one-time payment) and returns its URL.
-// Called by the paywall and the course page "Get full access" button. Uses
-// the Stripe REST API via fetch, so no Stripe SDK dependency is needed.
+// Creates a Stripe Checkout Session (one-time payment) for a single course and
+// returns its URL. Called by the paywall 402 page and each course page's "Get
+// full access" button, which POST { course: "<courseId>" }. Uses the Stripe
+// REST API via fetch, so no Stripe SDK dependency is needed.
+
+import { isCourse, priceFor, homeFor, json } from "./_shared.mjs";
 
 export default async (req) => {
   try {
     const key = process.env.STRIPE_SECRET_KEY;
-    const price = process.env.STRIPE_PRICE_ID;
     const site = process.env.SITE_URL || new URL(req.url).origin;
+
+    const input = await req.json().catch(() => ({}));
+    const course = String(input.course || "").trim();
+    if (!isCourse(course)) return json({ error: "Unknown course." }, 400);
+
+    const price = priceFor(course);
     if (!key || !price) return json({ error: "Checkout is not configured yet." }, 500);
 
     const body = new URLSearchParams();
@@ -15,8 +23,11 @@ export default async (req) => {
     body.set("line_items[0][quantity]", "1");
     // Enables the promo-code field on Stripe checkout (useful for comps/discounts).
     body.set("allow_promotion_codes", "true");
+    // Carried through to the success redirect and the webhook so both know which
+    // course was bought without trusting the client.
+    body.set("metadata[course]", course);
     body.set("success_url", `${site}/unlock/?session_id={CHECKOUT_SESSION_ID}`);
-    body.set("cancel_url", `${site}/databricks-data-engineer-associate/`);
+    body.set("cancel_url", `${site}${homeFor(course)}`);
 
     const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -33,12 +44,5 @@ export default async (req) => {
     return json({ error: "Server error" }, 500);
   }
 };
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
-  });
-}
 
 export const config = { path: "/api/create-checkout" };

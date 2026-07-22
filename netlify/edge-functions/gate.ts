@@ -1,32 +1,73 @@
-// Freemium gate for the Databricks DE Associate course.
+// Freemium gate for every paid course on the site.
 //
-// Runs on every request but only acts on the PAID course pages. Unit 1
-// (lessons 01 to 04 plus Practice Test 1), the course home, the blog, and
-// everything else pass straight through. Behaviour is driven by env vars so
-// the same commit can be free on one Netlify site and gated on another:
+// Runs on every request but only acts on PAID course pages. Each course frees
+// its Unit 1 (plus the course home, the blog, and everything else); the rest is
+// gated. Behaviour is driven by env vars so the same commit can be free on one
+// Netlify site and gated on another:
 //   GATING_ENABLED=true  -> enforce the paywall on paid pages
 //   NOINDEX_SITE=true    -> stamp X-Robots-Tag: noindex on all responses
 //   GATE_SIGNING_SECRET  -> HMAC secret (shared with the unlock function)
 //
 // The gate only READS a signed cookie; it never mints one and needs no
-// dependencies. Access is granted by /api/unlock after Stripe confirms
-// payment. On any internal error the gate fails open so the site can never
-// be taken down by a paywall bug.
+// dependencies. Access is granted by /api/unlock after Stripe confirms payment.
+// The cookie carries the buyer's course list ({ v, exp, c: [...] }); the gate
+// checks the requested course id against it. A legacy cookie with no course
+// scope grants the only course that existed when it was minted (de-assoc). On
+// any internal error the gate fails open so the site can never be taken down by
+// a paywall bug.
+//
+// CATALOG: mirror any change here in netlify/functions/_shared.mjs (the Node
+// side cannot import this file: it runs on Deno at the edge).
 
 import type { Context } from "https://edge.netlify.com";
 
-const COURSE_PREFIX = "/databricks-data-engineer-associate/";
+interface Course {
+  id: string;
+  prefix: string;
+  title: string;
+  home: string;
+  blurb: string;
+  free: Set<string>; // stems (filename without .html) that stay free
+}
 
-// Free = Unit 1. Stems are the filename without the .html extension.
-const FREE_STEMS = new Set<string>([
-  "",
-  "index",
-  "lesson-01-lakehouse",
-  "lesson-02-delta-lake",
-  "lesson-03-unity-catalog",
-  "lesson-04-compute-cost",
-  "practice-exam-01",
-]);
+const COURSES: Course[] = [
+  {
+    id: "de-assoc",
+    prefix: "/databricks-data-engineer-associate/",
+    title: "Databricks DE Associate",
+    home: "/databricks-data-engineer-associate/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 7: every lesson and all timed practice exams, one payment.",
+    free: new Set<string>([
+      "", "index",
+      "lesson-01-lakehouse",
+      "lesson-02-delta-lake",
+      "lesson-03-unity-catalog",
+      "lesson-04-compute-cost",
+      "practice-exam-01",
+    ]),
+  },
+  {
+    id: "de-pro",
+    prefix: "/databricks-data-engineer-professional/",
+    title: "Databricks DE Professional",
+    home: "/databricks-data-engineer-professional/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 10: every lesson and all timed practice exams, one payment.",
+    free: new Set<string>([
+      "", "index",
+      "lesson-01-dabs-project-structure",
+      "lesson-02-libraries-and-dependencies",
+      "lesson-03-python-and-pandas-udfs",
+      "lesson-04-production-pipelines",
+      "lesson-05-automating-jobs",
+      "lesson-06-streaming-tables-vs-materialized-views",
+      "lesson-07-cdc-apply-changes",
+      "lesson-08-structured-streaming-vs-lakeflow",
+      "lesson-09-control-flow-task-config",
+      "lesson-10-testing-pipelines",
+      "pro-practice-exam-01",
+    ]),
+  },
+];
 
 // Display price (front-end anchor only; the real charge is the Stripe Price).
 const PRICE_REGULAR = "$30";
@@ -39,12 +80,21 @@ function stemOf(path: string): string {
   return base.endsWith(".html") ? base.slice(0, -5) : base;
 }
 
-function isPaidPath(path: string): boolean {
-  if (!path.startsWith(COURSE_PREFIX)) return false;
+function courseForPath(path: string): Course | null {
+  for (const c of COURSES) {
+    if (path.startsWith(c.prefix)) return c;
+  }
+  return null;
+}
+
+// Returns the course if this path is a gated (paid) page, else null.
+function paidCourseFor(path: string): Course | null {
+  const c = courseForPath(path);
+  if (!c) return null;
   const base = path.substring(path.lastIndexOf("/") + 1);
   // Ignore anything that carries a non-html extension (assets, etc.).
-  if (base.includes(".") && !base.endsWith(".html")) return false;
-  return !FREE_STEMS.has(stemOf(path));
+  if (base.includes(".") && !base.endsWith(".html")) return null;
+  return c.free.has(stemOf(path)) ? null : c;
 }
 
 function b64urlToBytes(s: string): Uint8Array {
@@ -81,7 +131,8 @@ function safeEqual(a: string, b: string): boolean {
   return r === 0;
 }
 
-async function cookieValid(req: Request, secret: string): Promise<boolean> {
+// True when the request carries a valid, unexpired token granting courseId.
+async function hasAccess(req: Request, secret: string, courseId: string): Promise<boolean> {
   const cookie = req.headers.get("cookie") || "";
   const m = cookie.match(/(?:^|;\s*)cc_access=([^;]+)/);
   if (!m) return false;
@@ -94,7 +145,10 @@ async function cookieValid(req: Request, secret: string): Promise<boolean> {
   if (!safeEqual(sig, expected)) return false;
   try {
     const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(payloadB64)));
-    return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
+    if (typeof payload.exp !== "number" || payload.exp <= Math.floor(Date.now() / 1000)) return false;
+    // Course-scoped token: check membership. Legacy token (no c): de-assoc only.
+    if (Array.isArray(payload.c)) return payload.c.includes(courseId);
+    return courseId === "de-assoc";
   } catch {
     return false;
   }
@@ -107,10 +161,10 @@ export default async (request: Request, context: Context) => {
     const secret = Deno.env.get("GATE_SIGNING_SECRET") || "";
     const path = new URL(request.url).pathname;
 
-    if (gating && secret && isPaidPath(path)) {
-      const ok = await cookieValid(request, secret);
-      if (!ok) {
-        return new Response(paywallHtml(), {
+    if (gating && secret) {
+      const course = paidCourseFor(path);
+      if (course && !(await hasAccess(request, secret, course.id))) {
+        return new Response(paywallHtml(course), {
           status: 402,
           headers: {
             "content-type": "text/html; charset=utf-8",
@@ -127,9 +181,9 @@ export default async (request: Request, context: Context) => {
     if (noindex || isHtml) {
       const r = new Response(res.body, res);
       if (noindex) r.headers.set("x-robots-tag", "noindex");
-      // Readable (non-HttpOnly) hint so the course page knows whether this
-      // site enforces the paywall. Not a security boundary: real enforcement
-      // is the signed cc_access cookie the gate verifies above.
+      // Readable (non-HttpOnly) hint so the course page knows whether this site
+      // enforces the paywall. Not a security boundary: real enforcement is the
+      // signed cc_access cookie the gate verifies above.
       if (isHtml) {
         r.headers.append("set-cookie", `cc_gating=${gating ? "1" : "0"}; Path=/; SameSite=Lax; Max-Age=1800`);
       }
@@ -144,7 +198,7 @@ export default async (request: Request, context: Context) => {
 
 export const config = { path: "/*" };
 
-function paywallHtml(): string {
+function paywallHtml(course: Course): string {
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
@@ -175,14 +229,14 @@ function paywallHtml(): string {
   <div class="card">
     <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
     <div class="kicker">Members only</div>
-    <h1>Unlock the full Databricks DE Associate course</h1>
-    <p>Unit 1 is free. Get lifetime access to Units 2 to 7: every lesson and all timed practice exams, one payment.</p>
+    <h1>Unlock the full ${course.title} course</h1>
+    <p>${course.blurb}</p>
     <div class="price"><span class="now">${PRICE_NOW}</span><span class="was">${PRICE_REGULAR}</span></div>
     <div class="oneoff">One-time payment. Lifetime access.</div>
     <button class="cta" id="buy">Get full access</button>
     <div class="err" id="err"></div>
     <div class="alt">Already purchased? <a href="/unlock/">Enter your access code</a></div>
-    <div class="back"><a href="/databricks-data-engineer-associate/">Back to the free lessons</a></div>
+    <div class="back"><a href="${course.home}">Back to the free lessons</a></div>
   </div>
 <script>
   // Self-heal: if a saved token exists (e.g. cookie dropped by a mobile WebView),
@@ -201,11 +255,12 @@ function paywallHtml(): string {
         }).catch(function(){});
     }catch(e){}
   })();
+  var COURSE=${JSON.stringify(course.id)};
   var btn=document.getElementById("buy"),err=document.getElementById("err");
   btn.addEventListener("click",async function(){
     btn.disabled=true;btn.textContent="Redirecting to checkout...";err.textContent="";
     try{
-      var r=await fetch("/api/create-checkout",{method:"POST"});
+      var r=await fetch("/api/create-checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({course:COURSE})});
       var d=await r.json();
       if(d&&d.url){location.href=d.url;return;}
       throw new Error((d&&d.error)||"Could not start checkout");
