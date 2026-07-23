@@ -67,7 +67,7 @@ Note on the Filename column: published posts are `.html` files in the
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | Complete AWS Machine Learning Engineer Associate (MLA-C01) certification guide (pillar) | "aws machine learning engineer associate certification guide" | No | |
+| 1 | Complete AWS Machine Learning Engineer Associate (MLA-C01) certification guide (pillar) | "aws machine learning engineer associate certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c01-certification-guide.html |
 | 2 | MLA-C01 exam guide breakdown: domains and weighting | "MLA-C01 exam domains" | No | |
 | 3 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | No | |
 | 4 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | No | |
@@ -79,7 +79,7 @@ Note on the Filename column: published posts are `.html` files in the
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | Complete Databricks Machine Learning Associate certification guide (pillar) | "databricks machine learning associate certification guide" | No | |
+| 1 | Complete Databricks Machine Learning Associate certification guide (pillar) | "databricks machine learning associate certification guide" | Yes | blog/databricks-machine-learning-associate-certification-guide.html |
 | 2 | Databricks Machine Learning Associate exam cost, format and question types | "what's on the databricks ml associate exam" | No | |
 | 3 | MLflow for the Databricks Machine Learning Associate exam explained | "mlflow databricks ml associate exam" | No | |
 | 4 | AutoML and Feature Store on Databricks explained | "databricks automl feature store" | No | |
@@ -103,7 +103,7 @@ Note on the Filename column: published posts are `.html` files in the
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | Complete AWS AI Practitioner (AIF-C01) certification guide (pillar) | "aws ai practitioner certification guide" | No | |
+| 1 | Complete AWS AI Practitioner (AIF-C01) certification guide (pillar) | "aws ai practitioner certification guide" | Yes | blog/aws-ai-practitioner-aif-c01-certification-guide.html |
 | 2 | AIF-C01 exam guide breakdown: domains and weighting | "AIF-C01 exam domains" | No | |
 | 3 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | No | |
 | 4 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | No | |
