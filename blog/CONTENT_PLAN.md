@@ -50,6 +50,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 2 | Complete Databricks Data Engineer Professional certification guide (pillar) | "databricks data engineer professional certification guide" | Yes | blog/databricks-data-engineer-professional-certification-guide.html |
 | 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | Yes | blog/databricks-professional-performance-tuning-optimization-exam.html |
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | Yes | blog/how-long-to-prepare-databricks-data-engineer-professional.html |
+| 5 | How to tell if you are ready for the Databricks DE Professional exam (readiness quiz support) | "am I ready for the databricks professional exam" | Yes | blog/am-i-ready-databricks-data-engineer-professional-exam.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
