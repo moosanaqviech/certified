@@ -63,6 +63,66 @@ Note on the Filename column: published posts are `.html` files in the
 | 6 | How to study for the AWS Data Engineer Associate exam as a Databricks-certified engineer | "AWS data engineer cert for databricks users" | Yes | blog/study-aws-data-engineer-associate-as-databricks-engineer.html |
 | 7 | How to tell if you are ready for the AWS Data Engineer Associate exam (readiness quiz support) | "am I ready for the AWS data engineer exam" | Yes | blog/am-i-ready-aws-data-engineer-associate-exam.html |
 
+## AWS Certified Machine Learning Engineer Associate (MLA-C01)
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete AWS Machine Learning Engineer Associate (MLA-C01) certification guide (pillar) | "aws machine learning engineer associate certification guide" | No | |
+| 2 | MLA-C01 exam guide breakdown: domains and weighting | "MLA-C01 exam domains" | No | |
+| 3 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | No | |
+| 4 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | No | |
+| 5 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
+| 6 | Study plan and prep time for the AWS Machine Learning Engineer Associate exam | "MLA-C01 study plan" / "how long to prepare" | No | |
+| 7 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | No | |
+
+## Databricks Machine Learning Associate
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Machine Learning Associate certification guide (pillar) | "databricks machine learning associate certification guide" | No | |
+| 2 | Databricks Machine Learning Associate exam cost, format and question types | "what's on the databricks ml associate exam" | No | |
+| 3 | MLflow for the Databricks Machine Learning Associate exam explained | "mlflow databricks ml associate exam" | No | |
+| 4 | AutoML and Feature Store on Databricks explained | "databricks automl feature store" | No | |
+| 5 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | No | |
+| 6 | Study plan and prep time for the Databricks Machine Learning Associate exam | "databricks ml associate study plan" / "how long to prepare" | No | |
+| 7 | Databricks ML Associate vs AWS Machine Learning Engineer Associate: how they compare | "databricks vs aws machine learning certification" | No | |
+
+## AWS Certified Cloud Practitioner (CLF-C02)
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete AWS Cloud Practitioner (CLF-C02) certification guide (pillar) | "aws cloud practitioner certification guide" | No | |
+| 2 | AWS Cloud Practitioner exam cost, format and question types | "what's on the AWS cloud practitioner exam" | No | |
+| 3 | Core AWS services to know for the CLF-C02 exam | "aws services for cloud practitioner exam" | No | |
+| 4 | AWS pricing and billing concepts for the Cloud Practitioner exam | "aws pricing billing cloud practitioner" | No | |
+| 5 | AWS Cloud Practitioner vs AI Practitioner (AIF-C01): which foundational cert first | "aws cloud practitioner vs ai practitioner" | No | |
+| 6 | Study plan and prep time for the AWS Cloud Practitioner exam | "cloud practitioner study plan" / "how long to prepare" | No | |
+| 7 | Is the AWS Cloud Practitioner certification worth it as a first cert in 2026 | "is aws cloud practitioner worth it" | No | |
+
+## AWS Certified AI Practitioner (AIF-C01)
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete AWS AI Practitioner (AIF-C01) certification guide (pillar) | "aws ai practitioner certification guide" | No | |
+| 2 | AIF-C01 exam guide breakdown: domains and weighting | "AIF-C01 exam domains" | No | |
+| 3 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | No | |
+| 4 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | No | |
+| 5 | AWS AI Practitioner vs Cloud Practitioner (CLF-C02): which foundational cert first | "aws ai practitioner vs cloud practitioner" | No | |
+| 6 | Study plan and prep time for the AWS AI Practitioner exam | "AIF-C01 study plan" / "how long to prepare" | No | |
+| 7 | AWS AI Practitioner vs Machine Learning Engineer Associate: foundational vs associate | "aif-c01 vs mla-c01" | No | |
+
+## Microsoft Azure Fundamentals (AZ-900)
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Microsoft Azure Fundamentals (AZ-900) certification guide (pillar) | "azure fundamentals certification guide" | No | |
+| 2 | Azure Fundamentals exam cost, format and question types | "what's on the AZ-900 exam" | No | |
+| 3 | Core Azure services to know for the AZ-900 exam | "azure services for az-900 exam" | No | |
+| 4 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | No | |
+| 5 | AZ-900 vs AWS Cloud Practitioner: which cloud fundamentals cert to take | "az-900 vs aws cloud practitioner" | No | |
+| 6 | Study plan and prep time for the Azure Fundamentals exam | "az-900 study plan" / "how long to prepare" | No | |
+| 7 | Is Azure Fundamentals worth it in 2026 | "is az-900 worth it" | No | |
+
 ---
 
 ## Adding new topics
