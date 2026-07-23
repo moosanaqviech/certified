@@ -7,7 +7,11 @@ for unit/chapter placement and eyebrow labels).
 In progress: AWS Data Engineer Associate (DEA-C01) (see
 curriculum-index-aws-dea-c01.md, the authoritative source for unit/chapter
 placement; it is marked Draft until re-checked against the official exam
-guide PDF).
+guide PDF) and Databricks Machine Learning Associate (see
+curriculum-index-databricks-ml-associate.md and
+cert-config-databricks-ml-associate.md; also Draft until re-checked against
+the official 1 Mar 2025 exam guide PDF. Only the course catalog page exists
+so far, no lessons authored yet).
 
 ## Site structure
 
@@ -22,6 +26,10 @@ each course). Each course lives in its own top-level folder and has its own
 - AWS Data Engineer Associate (DEA-C01) lessons/exams go in a sibling
   `aws-data-engineer-associate/` folder as they're authored (see
   curriculum-index-aws-dea-c01.md).
+- Databricks Machine Learning Associate lessons/exams go in a sibling
+  `databricks-machine-learning-associate/` folder as they're authored (see
+  curriculum-index-databricks-ml-associate.md). Exam files use the
+  `ml-practice-exam-NN.html` prefix.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
