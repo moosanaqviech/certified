@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>The Databricks ML Workspace · Databricks Machine Learning Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    /* Unit 1 (Databricks Machine Learning): warm coral-red, evoking the
+       Databricks brand. Distinct from the AWS course gold (#ff9900) and the
+       exam gold; no same-unit lesson exists yet to collide with. */
+    --bg: #0f0a09;            /* page background */
+    --bg-tint: #2a1310;       /* ambient glow tint behind the card */
+    --accent: #ff6a52;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(255,106,82,0.12);  /* correct-answer fill */
+    --accent-ink: #1a0a07;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <rect x="10" y="20" width="92" height="46" rx="11" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="56" y="41" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Compute</text>
+    <text x="56" y="56" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">runs the code</text>
+
+    <rect x="114" y="20" width="92" height="46" rx="11" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="160" y="41" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Git folders</text>
+    <text x="160" y="56" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">versions the code</text>
+
+    <rect x="218" y="20" width="92" height="46" rx="11" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="264" y="41" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Lakeflow Jobs</text>
+    <text x="264" y="56" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">schedules the code</text>
+
+    <line x1="56" y1="66" x2="122" y2="114" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 4"/>
+    <line x1="160" y1="66" x2="160" y2="114" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 4"/>
+    <line x1="264" y1="66" x2="198" y2="114" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="3 4"/>
+
+    <rect x="86" y="114" width="148" height="44" rx="13" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+    <text x="160" y="133" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">Your ML project</text>
+    <text x="160" y="149" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">build, version, and ship in one place</text>
+
+    <line x1="160" y1="158" x2="160" y2="176" stroke="var(--line)" stroke-width="1.4"/>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">notebooks &#183; models &#183; scheduled runs</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+/* Card shape: { glow?, quiz?, last?, html }
+   glow  — optional per-card ambient, e.g. "radial-gradient(540px 340px at 50% 20%, var(--accent-glow), transparent 70%)"
+   quiz  — true to gate "Continue" until an answer is picked; needs .choices/.choice[data-correct]/.feedback
+   last  — true on the final card; turns the button into "Restart"            */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 1</div>
+    <h1 class="reveal">Where Your ML Work Runs</h1>
+    <p class="lead reveal">Before any model, know the workbench. Databricks gives machine learning three primitives: compute to run code, Git folders to version it, and Lakeflow Jobs to schedule it. Almost everything in Unit 1 (38% of the exam) sits on top of these three.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — overview: the three primitives */
+  { html: `
+    <div class="eyebrow reveal">The mental map</div>
+    <h2 class="reveal">Three primitives, one project</h2>
+    <p class="lead reveal" style="margin-bottom:18px">An ML project is not a single tool. It is a notebook that has to run somewhere, be tracked over time, and eventually run on its own.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Compute runs the code</b>A cluster is the machine (or machines) your notebook or job executes on. Nothing runs without one.</p></div>
+      <div class="pill"><p><b>Git folders version the code</b>Your notebooks live in a workspace folder synced to a Git repository, so changes are tracked and reviewable.</p></div>
+      <div class="pill"><p><b>Lakeflow Jobs schedule the code</b>When development is done, a Job runs the notebook on its own, on a schedule or a trigger.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — compute */
+  { html: `
+    <div class="eyebrow reveal">Primitive 1 · Compute</div>
+    <h2 class="reveal">All-purpose vs job compute</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Both are clusters. The difference is who starts them and when they stop.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>All-purpose compute</b>You start it, attach a notebook, and explore interactively. It stays running (across users and notebooks) until you stop it or it auto-terminates while idle.</p></div>
+      <div class="pill"><p><b>Job compute</b>A Lakeflow Job creates it for a single run and tears it down the moment the run finishes. It bills at a lower rate, so it is the production default.</p></div>
+      <div class="pill"><p><b>Pick the ML runtime</b>When you create either one, choosing Databricks Runtime for Machine Learning preinstalls the ML libraries and MLflow. More on that next chapter.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — Git folders */
+  { html: `
+    <div class="eyebrow reveal">Primitive 2 · Git folders</div>
+    <h2 class="reveal">Version control for notebooks</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A Git folder (previously called a Repo) is a workspace folder kept in sync with a remote repository on GitHub, GitLab, Azure DevOps, and others.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Branch, commit, pull request</b>Work on a branch, commit changes, and open a pull request for review, the same flow software teams already use, applied to notebooks.</p></div>
+      <div class="pill"><p><b>The backbone of CI/CD</b>Because code lives in Git, an automated pipeline can test it and promote it from development to production.</p></div>
+      <div class="pill"><p><b>It versions code, not models</b>Git folders track your source. Trained models are versioned separately in the MLflow Model Registry (Unit 1, later).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — Lakeflow Jobs */
+  { html: `
+    <div class="eyebrow reveal">Primitive 3 · Lakeflow Jobs</div>
+    <h2 class="reveal">Orchestration and scheduling</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Lakeflow Jobs (previously Workflows, or Databricks Jobs) turn a notebook into an unattended, production run.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Run on a schedule or a trigger</b>A cron schedule or a file-arrival trigger fires the run: nightly retraining, hourly batch scoring, no one clicking Run.</p></div>
+      <div class="pill"><p><b>Multiple tasks, one workflow</b>A Job chains tasks (prep, then train, then score) with dependencies between them, and alerts you when one fails.</p></div>
+      <div class="pill"><p><b>Runs on job compute</b>Each run spins up its own job compute and releases it at the end, so you pay only for the run.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — how they combine */
+  { html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal">Develop interactively, then promote</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The three primitives are one lifecycle, not three separate tools.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>1 · Build</b>Develop the notebook interactively on all-purpose compute, inside a Git folder so every change is tracked.</p></div>
+      <div class="pill"><p><b>2 · Review</b>Commit on a branch and open a pull request, so the training code is reviewed before it ships.</p></div>
+      <div class="pill"><p><b>3 · Ship</b>Schedule the reviewed notebook as a task in a Lakeflow Job, which runs it on job compute automatically.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: compute choice */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">A retraining notebook must run unattended at 2 AM every night and stop as soon as it finishes, at the lowest cost. What should run it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>An all-purpose cluster left running overnight so the notebook is ready to execute</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A Lakeflow Job on a nightly schedule, which starts job compute and tears it down when the run ends</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A Git folder configured to commit the notebook every night</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> An unattended, scheduled run is exactly what a Lakeflow Job on job compute is for: it starts compute for the run and releases it after, at the lower job rate. An always-on all-purpose cluster bills for the 23 idle hours too, and a Git folder only versions code, it does not run anything.</div>` },
+
+  /* 7 — quiz: which primitive versions code */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">Your team wants every change to a training notebook reviewed through a pull request and kept in sync with a GitHub repository. Which workspace feature provides this?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The MLflow Model Registry</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Git folders</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Lakeflow Jobs</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Git folders sync a workspace folder with a remote repository and support the branch, commit, and pull-request flow. The MLflow Model Registry versions trained models, not source code, and Lakeflow Jobs orchestrate and schedule runs, they do not review code.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 1 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You have the workspace map: compute runs it, Git folders version it, Lakeflow Jobs schedule it.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Compute is all-purpose or job</b>All-purpose for interactive work, job compute for scheduled runs at a lower rate.</p></div>
+      <div class="pill"><p><b>Code and models version separately</b>Git folders track source code; the MLflow Model Registry tracks trained models.</p></div>
+      <div class="pill"><p><b>Jobs promote a notebook to production</b>A Lakeflow Job runs a reviewed notebook on its own, on a schedule or a trigger.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

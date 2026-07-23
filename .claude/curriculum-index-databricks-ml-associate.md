@@ -38,7 +38,8 @@ Scope: the Databricks ML platform surface: clusters/Repos/Jobs, Databricks
 Runtime for ML, AutoML, Feature Engineering in Unity Catalog, and MLflow
 (Tracking, Models, Model Registry in Unity Catalog).
 
-    01  The Databricks ML workspace: clusters, Repos, and Jobs for ML
+    01  The Databricks ML workspace: compute, Git folders, and Lakeflow Jobs for ML
+        (formerly clusters, Repos, and Workflows; teach the current names)
     02  Databricks Runtime for Machine Learning: what it preinstalls and when to use it
     03  AutoML: automated model and feature selection
     04  Reading AutoML output: the generated notebooks and the best trial
