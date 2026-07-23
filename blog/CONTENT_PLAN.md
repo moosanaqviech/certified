@@ -91,7 +91,7 @@ Note on the Filename column: published posts are `.html` files in the
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | Complete AWS Cloud Practitioner (CLF-C02) certification guide (pillar) | "aws cloud practitioner certification guide" | No | |
+| 1 | Complete AWS Cloud Practitioner (CLF-C02) certification guide (pillar) | "aws cloud practitioner certification guide" | Yes | blog/aws-cloud-practitioner-clf-c02-certification-guide.html |
 | 2 | AWS Cloud Practitioner exam cost, format and question types | "what's on the AWS cloud practitioner exam" | No | |
 | 3 | Core AWS services to know for the CLF-C02 exam | "aws services for cloud practitioner exam" | No | |
 | 4 | AWS pricing and billing concepts for the Cloud Practitioner exam | "aws pricing billing cloud practitioner" | No | |
