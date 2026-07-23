@@ -115,7 +115,7 @@ Note on the Filename column: published posts are `.html` files in the
 
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
-| 1 | Complete Microsoft Azure Fundamentals (AZ-900) certification guide (pillar) | "azure fundamentals certification guide" | No | |
+| 1 | Complete Microsoft Azure Fundamentals (AZ-900) certification guide (pillar) | "azure fundamentals certification guide" | Yes | blog/azure-fundamentals-az-900-certification-guide.html |
 | 2 | Azure Fundamentals exam cost, format and question types | "what's on the AZ-900 exam" | No | |
 | 3 | Core Azure services to know for the AZ-900 exam | "azure services for az-900 exam" | No | |
 | 4 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | No | |
