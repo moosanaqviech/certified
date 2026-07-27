@@ -64,7 +64,7 @@ certification: databricks-data-engineer-associate | databricks-data-engineer-pro
 date:         YYYY-MM-DD            (datePublished)
 updated:      YYYY-MM-DD            (optional, dateModified; defaults to date)
 author:       Moosa                 (visible byline only, see note in SEO section)
-canonical:    https://alreadycertified.netlify.app/blog/<slug>
+canonical:    https://certify.courses/blog/<slug>
 og_image:     (optional; current posts set none, leave unset to match)
 faq:          (optional; a list of question/answer pairs, only if the post has an FAQ)
 ```
@@ -82,7 +82,7 @@ The six existing cluster posts all ship a fixed set of SEO tags and two
 JSON-LD blocks. `blog/POST_TEMPLATE.html` already contains this scaffolding,
 so filling the template correctly produces it. New posts must match that
 standard, so the generated `<slug>.html` must include all of the following.
-Base URL: `https://alreadycertified.netlify.app`.
+Base URL: `https://certify.courses`.
 
 **Required `<head>` elements (mirror the existing posts exactly):**
 
@@ -103,7 +103,7 @@ Base URL: `https://alreadycertified.netlify.app`.
  "headline": <title>,
  "description": <description>,
  "author":{"@type":"Organization","name":"Already Certified"},
- "publisher":{"@type":"Organization","name":"Already Certified","url":"https://alreadycertified.netlify.app/"},
+ "publisher":{"@type":"Organization","name":"Already Certified","url":"https://certify.courses/"},
  "datePublished": <date>,
  "dateModified": <updated or date>,
  "inLanguage":"en",
