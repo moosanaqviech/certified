@@ -32,8 +32,13 @@ the relevant course), never bolted on as an ad.
 
 1. **Post metadata** (see format below): the values that fill the template's
    head, SEO tags, and JSON-LD.
-2. **Opening (2-4 sentences):** state the question the post answers or the
-   confusion it clears up. No throat-clearing.
+2. **Definitional lead (required):** the opening paragraph, right after the
+   H1 and before the first H2, must be a standalone, extractable answer to
+   the post's core question. First sentence answers it directly; the whole
+   lead is roughly 40 to 60 words and makes sense lifted out of the page with
+   no surrounding context. This is what an AI Overview or assistant quotes,
+   so it carries the definition/answer on its own, names the subject in full
+   (not "it" or "this exam"), and has no throat-clearing.
 3. **Body:** organized under H2/H3 headings that mirror how someone would
    search or skim, not a narrative essay. Use tables for comparisons,
    numbered lists for steps or sequences.
@@ -41,7 +46,9 @@ the relevant course), never bolted on as an ad.
    fact (exam domain weighting, a product rename date, a documented default)
    sourced from official vendor material. This is what separates the post
    from the "top 10 tips" filler that ranks above it today.
-5. **Closing:** a short, honest next step. If Certified's course genuinely
+5. **FAQ (required):** every post ends with a 3 to 5 question FAQ. See the
+   FAQ rules under "SEO and structured data."
+6. **Closing:** a short, honest next step. If Certified's course genuinely
    helps with this exact question, link it. If not, don't force it.
 
 ## Length
@@ -66,7 +73,7 @@ updated:      YYYY-MM-DD            (optional, dateModified; defaults to date)
 author:       Moosa                 (visible byline only, see note in SEO section)
 canonical:    https://certify.courses/blog/<slug>
 og_image:     (optional; current posts set none, leave unset to match)
-faq:          (optional; a list of question/answer pairs, only if the post has an FAQ)
+faq:          (required; 3 to 5 question/answer pairs, see FAQ rules in the SEO section)
 ```
 
 The `slug` is the output filename (`blog/<slug>.html`), the published page's
@@ -74,7 +81,7 @@ clean URL (`/blog/<slug>`), and drives the `canonical` value, so it must
 be unique against the posts already listed in CONTENT_PLAN.md. The `faq`
 list is the single source for both the visible FAQ section and the
 `FAQPage` JSON-LD, so write each question and answer once and use it in both
-places.
+places. It is required, not optional: every post ships 3 to 5 pairs.
 
 ## SEO and structured data
 
@@ -114,7 +121,15 @@ Note: the JSON-LD `author` and `publisher` are the Organization
 "Already Certified," not "Moosa." The `author` frontmatter field is only the
 human-visible byline. This matches every existing post, do not change it.
 
-**JSON-LD `FAQPage`** (second script block, only when `faq` is present):
+**FAQ rules (required on every post):** ship 3 to 5 pairs. Each question is
+phrased as a real search query, the way someone would type or speak it
+("How hard is the DEA-C01 exam?"), not a topic label ("Exam difficulty").
+Each answer leads with a direct, self-contained response in the first one or
+two sentences, then elaborates: the opening sentences must stand alone as
+the answer, because that is the span an assistant lifts. No em dashes, and
+keep answers to two or three sentences.
+
+**JSON-LD `FAQPage`** (second script block, present on every post):
 
 ```
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -125,8 +140,7 @@ human-visible byline. This matches every existing post, do not change it.
 ```
 
 The questions and answers in this block must be identical to the visible
-FAQ section rendered from the same `faq` frontmatter. If the post has no
-FAQ, omit this block entirely rather than emitting an empty one.
+FAQ section rendered from the same `faq` frontmatter.
 
 **Sitemap:** add a `<url>` entry to `sitemap.xml` with `loc` = canonical,
 `lastmod` = `updated` (or `date`), and `priority` `0.9` (the value the other
@@ -134,8 +148,8 @@ cluster posts use; lessons use `0.6`).
 
 **No leftover placeholders:** the finished `<slug>.html` must contain no
 `{{PLACEHOLDER}}` tokens and none of the template's instructional HTML
-comments. Delete any body component (comparison table, FAQ, pick cards) the
-post does not use.
+comments. Delete any optional body component (comparison table, pick cards)
+the post does not use. The FAQ is not optional: every post keeps it.
 
 The no-em-dash rule applies here too: titles, descriptions, OG tags, and
 every JSON-LD string must use colons, commas, parentheses, or periods.
