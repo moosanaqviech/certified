@@ -41,6 +41,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 7 | Liquid Clustering vs partitioning and Z-Order: what Databricks recommends now | "liquid clustering vs partitioning" | Yes | blog/liquid-clustering-vs-partitioning-z-order.html |
 | 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | Yes | blog/common-mistakes-databricks-data-engineer-associate-exam.html |
 | 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | Yes | blog/is-databricks-data-engineer-associate-worth-it-2026.html |
+| 10 | Is Delta Live Tables still on the Databricks DE Associate exam (exam-version query) | "is delta live tables still on the exam" / "databricks DE associate syllabus changes" | Yes | blog/is-delta-live-tables-still-on-databricks-data-engineer-associate-exam.html |
 
 ## Databricks Data Engineer Professional
 
