@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Pandas UDFs and the Pandas Function APIs · Databricks Machine Learning Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    /* Unit 3 (Model Development): violet, shared across the unit. */
+    --bg: #0d0a16;            /* page background */
+    --bg-tint: #241a3d;       /* ambient glow tint behind the card */
+    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
+    --accent-ink: #100a1c;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.2">BATCHES, NOT ROWS</text>
+
+    <text x="70" y="46" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">plain UDF</text>
+    <g fill="var(--ink-soft)" fill-opacity="0.5">
+      <rect x="30" y="54" width="80" height="9" rx="2"/>
+      <rect x="30" y="67" width="80" height="9" rx="2"/>
+      <rect x="30" y="80" width="80" height="9" rx="2"/>
+      <rect x="30" y="93" width="80" height="9" rx="2"/>
+      <rect x="30" y="106" width="80" height="9" rx="2"/>
+    </g>
+    <text x="70" y="132" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">one row at a time</text>
+
+    <text x="160" y="86" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="15">&#8594;</text>
+
+    <text x="248" y="46" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">pandas UDF</text>
+    <rect x="204" y="54" width="88" height="61" rx="7" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="248" y="90" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">a batch</text>
+    <text x="248" y="132" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">a pandas Series</text>
+
+    <text x="160" y="162" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Apache Arrow moves the batch, your code stays pandas</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">vectorized, so it runs far faster</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+/* Card shape: { glow?, quiz?, last?, html }
+   glow  — optional per-card ambient, e.g. "radial-gradient(540px 340px at 50% 20%, var(--accent-glow), transparent 70%)"
+   quiz  — true to gate "Continue" until an answer is picked; needs .choices/.choice[data-correct]/.feedback
+   last  — true on the final card; turns the button into "Restart"            */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 26</div>
+    <h1 class="reveal">Your Python, Vectorized</h1>
+    <p class="lead reveal">Sometimes you need custom Python that Spark has no built-in for. A plain UDF makes that painfully slow. Pandas UDFs hand your function whole batches instead of single rows, which changes the economics entirely.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — why plain UDFs are slow */
+  { html: `
+    <div class="eyebrow reveal">The problem</div>
+    <h2 class="reveal">Row-at-a-time is expensive</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A plain Python UDF pays a cost for every single row, and those costs dominate at scale.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Serialization per row</b>Each value crosses from the JVM to Python and back, one at a time.</p></div>
+      <div class="pill"><p><b>No vectorization</b>Your function is called once per row, so none of pandas' or NumPy's array speed applies.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — the pandas UDF */
+  { html: `
+    <div class="eyebrow reveal">The fix</div>
+    <h2 class="reveal">Pandas UDFs work on batches</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A pandas UDF receives a pandas Series covering many rows and returns a Series, moved efficiently by Apache Arrow.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> pandas_udf
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="al">@pandas_udf</span>(<span class="st">"double"</span>)
+<span class="kw">def</span> scale(s: pd.Series) -&gt; pd.Series:
+    <span class="kw">return</span> (s - s.mean()) / s.std()
+
+df.withColumn(<span class="st">"scaled"</span>, scale(<span class="st">"value"</span>))</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Vectorized inside</b>The body is ordinary pandas, so it runs on arrays rather than looping.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — Arrow */
+  { html: `
+    <div class="eyebrow reveal">What makes it fast</div>
+    <h2 class="reveal">Apache Arrow moves the data</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Arrow is the in-memory columnar format Spark uses to hand batches to Python cheaply.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Columnar, and shared</b>Data moves between the JVM and Python without expensive per-row conversion.</p></div>
+      <div class="pill"><p><b>Batch in, batch out</b>Serialization happens once per batch instead of once per row, which is where the speedup comes from.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — the Function APIs */
+  { html: `
+    <div class="eyebrow reveal">The bigger cousins</div>
+    <h2 class="reveal">Pandas Function APIs</h2>
+    <p class="lead reveal" style="margin-bottom:18px">When you need a whole DataFrame rather than a column, the Function APIs pass one to your function.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>applyInPandas: grouped map</b>After a groupBy, each group arrives as a full pandas DataFrame, and you return a DataFrame.</p></div>
+      <div class="pill"><p><b>mapInPandas: map</b>Your function receives an iterator of pandas DataFrames, one per batch of a partition.</p></div>
+      <div class="pill"><p><b>Mind the memory</b>applyInPandas loads an entire group into memory, so very large groups can be a problem.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — the ML use case */
+  { html: `
+    <div class="eyebrow reveal">The ML payoff</div>
+    <h2 class="reveal">A model per group, in parallel</h2>
+    <p class="lead reveal" style="margin-bottom:18px">This is the pattern the exam cares about: many small models instead of one big one.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>One model per store, region, or device</b>Group the data, then train a separate single-machine model inside each group with applyInPandas.</p></div>
+      <div class="pill"><p><b>Different from Spark ML</b>Spark ML trains one distributed model on all the data; this trains many independent models, one per group, in parallel.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: why pandas UDF */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A plain Python UDF applying custom logic to a billion-row column is far too slow. Why does converting it to a pandas UDF help?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>It processes batches as pandas Series over Arrow, so serialization happens per batch and the code vectorizes</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>It runs the function on the driver instead of the workers</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>It automatically rewrites the Python into Scala</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A pandas UDF receives whole batches as a Series via Arrow, so the per-row serialization cost disappears and the body runs as vectorized pandas. Nothing moves to the driver (that would be slower still), and Spark does not translate Python into Scala.</div>` },
+
+  /* 7 — quiz: applyInPandas */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">You need to train a separate scikit-learn model for each of 500 stores, in parallel across the cluster. Which approach fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A single Spark ML model trained on all stores at once</button>
+      <button class="choice" data-correct="true"><span class="key">B</span><code>groupBy("store").applyInPandas(...)</code>, training one model per group</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Collect all stores to the driver with to_pandas() and loop</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> applyInPandas hands each group to your function as a pandas DataFrame, so 500 independent single-machine models train in parallel across the workers. One Spark ML model would learn a single shared model rather than one per store, and collecting to the driver gives up all the parallelism.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 26 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Pandas UDFs and Function APIs run custom Python at Spark scale, on batches instead of rows.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Series in, Series out</b>A pandas UDF gets batches over Arrow, so the work vectorizes and serialization is per batch.</p></div>
+      <div class="pill"><p><b>Function APIs pass DataFrames</b>applyInPandas for grouped map, mapInPandas for batches of a partition.</p></div>
+      <div class="pill"><p><b>Many models, one per group</b>applyInPandas trains independent single-machine models in parallel, unlike one distributed Spark ML fit.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

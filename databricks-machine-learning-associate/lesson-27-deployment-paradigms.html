@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Deployment Paradigms: Batch, Streaming, Real-Time · Databricks Machine Learning Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    /* Unit 4 (Model Deployment): ocean blue, for production and serving.
+       Distinct from Unit 1 coral, Unit 2 teal, Unit 3 violet, the AWS course
+       cyan (#22d3ee), and the reserved exam gold. Trade-off lesson: the (TO)
+       structure marks it, not a distinct color. */
+    --bg: #060f1a;            /* page background */
+    --bg-tint: #0c2340;       /* ambient glow tint behind the card */
+    --accent: #38a8f0;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(56,168,240,0.12);  /* correct-answer fill */
+    --accent-ink: #04121f;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <text x="160" y="20" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.2">WHEN DOES THE PREDICTION HAPPEN</text>
+
+    <rect x="14" y="36" width="90" height="76" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="59" y="56" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">batch</text>
+    <g fill="var(--ink-soft)" fill-opacity="0.55">
+      <rect x="28" y="66" width="62" height="7" rx="2"/><rect x="28" y="77" width="62" height="7" rx="2"/><rect x="28" y="88" width="62" height="7" rx="2"/>
+    </g>
+    <text x="59" y="106" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">on a schedule</text>
+
+    <rect x="114" y="36" width="90" height="76" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="159" y="56" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">streaming</text>
+    <path d="M126 82 L152 82 L146 74 M152 82 L146 90" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M158 82 L192 82" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="4 3"/>
+    <text x="159" y="106" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">as records arrive</text>
+
+    <rect x="214" y="36" width="92" height="76" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="260" y="56" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">real-time</text>
+    <circle cx="260" cy="82" r="15" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="260" y="86" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">REST</text>
+    <text x="260" y="106" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">on request</text>
+
+    <text x="160" y="146" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">hours &#8594; seconds &#8594; milliseconds</text>
+    <text x="160" y="172" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">same model, three delivery shapes</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+/* Card shape: { glow?, quiz?, last?, html }
+   glow  — optional per-card ambient, e.g. "radial-gradient(540px 340px at 50% 20%, var(--accent-glow), transparent 70%)"
+   quiz  — true to gate "Continue" until an answer is picked; needs .choices/.choice[data-correct]/.feedback
+   last  — true on the final card; turns the button into "Restart"            */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Chapter 27</div>
+    <div class="tag reveal" style="color:var(--accent); border-color:var(--accent);">Trade-off lesson</div>
+    <h1 class="reveal">Batch, Streaming, or Real-Time</h1>
+    <p class="lead reveal">The last unit: getting the model to production. The first decision is not which tool, it is when the prediction has to happen. That single question picks the deployment paradigm.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — shared ground */
+  { html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal">One model, three delivery shapes</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The same registered model can serve all three. What changes is when predictions are produced and where they land.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Same artifact</b>The MLflow model from Unit 1 is what every paradigm loads; you do not retrain to change deployment.</p></div>
+      <div class="pill"><p><b>Timing is the variable</b>Predictions can be computed ahead of time, continuously, or on demand.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — option A: batch */
+  { html: `
+    <div class="eyebrow reveal">Option A</div>
+    <h2 class="reveal">Batch inference</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Score a whole table on a schedule and write the predictions somewhere for later use.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Predictions are precomputed</b>A nightly job scores every customer, and the application just looks up the stored result.</p></div>
+      <div class="pill"><p><b>Highest throughput, lowest cost</b>Compute runs only while the job runs, and it scores millions of rows efficiently.</p></div>
+      <div class="pill"><p><b>Data is as fresh as the last run</b>A prediction made at 2 AM cannot reflect anything that happened at noon.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — option B: streaming */
+  { html: `
+    <div class="eyebrow reveal">Option B</div>
+    <h2 class="reveal">Streaming inference</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A continuously running pipeline scores records shortly after they arrive.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Continuous, not on demand</b>The pipeline reacts to incoming data, typically within seconds, and writes results onward.</p></div>
+      <div class="pill"><p><b>Nobody is waiting on a response</b>The trigger is a new record, not a user request, so latency is measured in seconds.</p></div>
+      <div class="pill"><p><b>Always-on cost</b>The stream runs continuously, so you pay for it between events too.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — option C: real-time */
+  { html: `
+    <div class="eyebrow reveal">Option C</div>
+    <h2 class="reveal">Real-time serving</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The model sits behind a REST endpoint and answers one request at a time, while a caller waits.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Synchronous and per-request</b>An application sends features, blocks, and gets a prediction back in milliseconds.</p></div>
+      <div class="pill"><p><b>Only option when input is unknown in advance</b>You cannot precompute a score for a request that has not happened yet.</p></div>
+      <div class="pill"><p><b>The most infrastructure</b>An endpoint must stay available and scale with traffic, which is why it costs the most to run.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — comparison table */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">Three latencies</h2>
+    <div class="reveal" style="overflow-x:auto; margin-top:12px;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 5px; color:var(--ink-faint); font-weight:600;">Signal</td>
+          <td style="padding:9px 5px; color:var(--accent); font-weight:700;">Batch</td>
+          <td style="padding:9px 5px; color:var(--accent); font-weight:700;">Streaming</td>
+          <td style="padding:9px 5px; color:var(--accent); font-weight:700;">Real-time</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 5px; color:var(--ink-soft);">Latency</td>
+          <td style="padding:9px 5px; color:var(--ink);">Hours</td>
+          <td style="padding:9px 5px; color:var(--ink);">Seconds</td>
+          <td style="padding:9px 5px; color:var(--ink);">Milliseconds</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 5px; color:var(--ink-soft);">Triggered by</td>
+          <td style="padding:9px 5px; color:var(--ink);">A schedule</td>
+          <td style="padding:9px 5px; color:var(--ink);">New records</td>
+          <td style="padding:9px 5px; color:var(--ink);">A request</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 5px; color:var(--ink-soft);">Output</td>
+          <td style="padding:9px 5px; color:var(--ink);">A table</td>
+          <td style="padding:9px 5px; color:var(--ink);">A sink</td>
+          <td style="padding:9px 5px; color:var(--ink);">A response</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 5px; color:var(--ink-soft);">Cost</td>
+          <td style="padding:9px 5px; color:var(--ink);">Lowest</td>
+          <td style="padding:9px 5px; color:var(--ink);">Always on</td>
+          <td style="padding:9px 5px; color:var(--ink);">Highest</td>
+        </tr>
+      </table>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — decision signal */
+  { html: `
+    <div class="eyebrow reveal">Decision signal</div>
+    <h2 class="reveal">Is someone waiting for the answer?</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Two questions in order settle it every time.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Is a caller blocked on it: real-time</b>If an application waits for the prediction to finish a request, only an endpoint works.</p></div>
+      <div class="pill"><p><b>If not, can it wait for the next run: batch</b>When a scheduled refresh is soon enough, batch is the cheapest and simplest answer.</p></div>
+      <div class="pill"><p><b>In between: streaming</b>Nobody is blocked, but a nightly job is too slow, so score records continuously as they land.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 — quiz: favors real-time */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A checkout page must show a personalized offer computed from the cart the shopper just built, before the page renders. Which paradigm fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Batch: score all shoppers nightly and look up the result</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Real-time serving: the page blocks on a per-request prediction from an endpoint</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Streaming: score cart events continuously and write to a table</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The input (this cart) does not exist until the shopper builds it, and the page is waiting, so the prediction must be computed on demand behind an endpoint. A nightly batch could not have scored a cart that did not exist, and a streaming job produces results asynchronously rather than answering the blocked request.</div>` },
+
+  /* 8 — quiz: favors batch */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Marketing needs churn scores for all 20 million customers, refreshed once a day, to build the next morning's campaign list. What is the best fit?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Batch inference: a scheduled job scoring the whole table overnight</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A real-time endpoint queried 20 million times each morning</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A streaming pipeline held open continuously for daily scores</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Nobody is waiting on an individual score and a daily refresh is soon enough, so a scheduled batch job over the full table is the cheapest, highest-throughput option. Calling an endpoint 20 million times pays real-time infrastructure costs for a workload with no latency requirement.</div>` },
+
+  /* 9 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 27 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Batch, streaming, and real-time serve the same model at three latencies; who is waiting decides which.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Hours, seconds, milliseconds</b>Triggered by a schedule, by new records, or by a request.</p></div>
+      <div class="pill"><p><b>Blocked caller means real-time</b>It is the only option when the input is not known in advance.</p></div>
+      <div class="pill"><p><b>Otherwise prefer batch</b>Cheapest and highest throughput; use streaming when a scheduled run is too slow.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
