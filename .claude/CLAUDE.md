@@ -129,3 +129,12 @@ regenerating a file. Drop-in replacement blocks over full rewrites.
 Netlify static hosting; pushing to main deploys. Do not add build steps,
 bundlers, or shared JS imports: every lesson and exam must work as a
 standalone file opened locally.
+
+Do not redirect the old Netlify subdomain to the apex domain. The
+`alreadycertified.netlify.app` subdomain must resolve on its own and must
+never be forwarded to `certify.courses`, so `_redirects` and `netlify.toml`
+must not contain a host redirect from that subdomain. (`certify.courses`
+must also not be set as Netlify's primary domain, since that forces the same
+redirect from the dashboard; that part is not enforceable in code.) The
+`guard-redirects` GitHub Actions check fails any change that reintroduces a
+subdomain host redirect.

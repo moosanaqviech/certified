@@ -1,0 +1,51 @@
+name: Guard redirects
+
+# Enforces one rule: the old Netlify subdomain (alreadycertified.netlify.app)
+# must resolve on its own and must NOT be redirected to the apex domain
+# (certify.courses). This check fails any change that reintroduces such a
+# host redirect in _redirects or netlify.toml. See CLAUDE.md.
+#
+# Note: this cannot guard Netlify's primary-domain setting, which lives in the
+# dashboard, not the repo. If certify.courses is set as the primary domain,
+# Netlify will 301 the subdomain regardless of these files.
+
+on:
+  pull_request:
+    paths:
+      - "_redirects"
+      - "netlify.toml"
+      - ".github/workflows/guard-redirects.yml"
+  push:
+    branches: [main]
+    paths:
+      - "_redirects"
+      - "netlify.toml"
+      - ".github/workflows/guard-redirects.yml"
+
+jobs:
+  no-subdomain-redirect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if the Netlify subdomain is redirected to the apex
+        run: |
+          fail=0
+
+          # _redirects: any non-comment line that references the subdomain is
+          # a host redirect rule (the source host is the first token).
+          if grep -nE '^[[:space:]]*[^#[:space:]].*alreadycertified\.netlify\.app' _redirects 2>/dev/null; then
+            echo "::error file=_redirects::_redirects must not redirect alreadycertified.netlify.app. The subdomain must resolve on its own (see CLAUDE.md)."
+            fail=1
+          fi
+
+          # netlify.toml: a redirect whose "from" is the subdomain.
+          if grep -nE 'from[[:space:]]*=[[:space:]]*"[^"]*alreadycertified\.netlify\.app' netlify.toml 2>/dev/null; then
+            echo "::error file=netlify.toml::netlify.toml must not define a redirect from alreadycertified.netlify.app (see CLAUDE.md)."
+            fail=1
+          fi
+
+          if [ "$fail" -eq 0 ]; then
+            echo "OK: no alreadycertified.netlify.app -> certify.courses host redirect found."
+          fi
+          exit $fail
