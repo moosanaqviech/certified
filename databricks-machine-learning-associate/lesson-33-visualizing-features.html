@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Visualizing Features · Databricks Machine Learning Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    /* Unit 2 (Data Processing): teal, shared across the unit. */
+    --bg: #071210;            /* page background */
+    --bg-tint: #0c2a25;       /* ambient glow tint behind the card */
+    --accent: #2dd4bf;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(45,212,191,0.12);  /* correct-answer fill */
+    --accent-ink: #04140f;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.2">MATCH THE CHART TO THE TYPE</text>
+
+    <text x="82" y="44" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">continuous</text>
+    <rect x="30" y="96" width="14" height="26" rx="2" fill="var(--accent)" fill-opacity="0.45"/>
+    <rect x="47" y="78" width="14" height="44" rx="2" fill="var(--accent)" fill-opacity="0.7"/>
+    <rect x="64" y="60" width="14" height="62" rx="2" fill="var(--accent)"/>
+    <rect x="81" y="72" width="14" height="50" rx="2" fill="var(--accent)" fill-opacity="0.7"/>
+    <rect x="98" y="92" width="14" height="30" rx="2" fill="var(--accent)" fill-opacity="0.45"/>
+    <rect x="115" y="108" width="14" height="14" rx="2" fill="var(--accent)" fill-opacity="0.3"/>
+    <line x1="26" y1="122" x2="134" y2="122" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="80" y="140" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">histogram</text>
+
+    <line x1="152" y1="40" x2="152" y2="146" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+
+    <text x="238" y="44" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">categorical</text>
+    <rect x="176" y="58" width="86" height="13" rx="3" fill="var(--accent)"/>
+    <text x="270" y="68" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">A</text>
+    <rect x="176" y="76" width="60" height="13" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
+    <text x="270" y="86" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">B</text>
+    <rect x="176" y="94" width="38" height="13" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
+    <text x="270" y="104" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">C</text>
+    <rect x="176" y="112" width="20" height="13" rx="3" fill="var(--accent)" fill-opacity="0.35"/>
+    <text x="270" y="122" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">D</text>
+    <text x="222" y="140" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">bar chart of counts</text>
+
+    <text x="160" y="172" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">the feature's type picks the plot</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+/* Card shape: { glow?, quiz?, last?, html }
+   glow  — optional per-card ambient, e.g. "radial-gradient(540px 340px at 50% 20%, var(--accent-glow), transparent 70%)"
+   quiz  — true to gate "Continue" until an answer is picked; needs .choices/.choice[data-correct]/.feedback
+   last  — true on the final card; turns the button into "Restart"            */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 33</div>
+    <h1 class="reveal">Seeing the Feature</h1>
+    <p class="lead reveal">Summary statistics compress a column to a few numbers, and numbers hide shape. A chart shows the skew, the gaps, and the outliers at a glance, but only if you pick the plot that matches the feature type.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — why plot */
+  { html: `
+    <div class="eyebrow reveal">Why plot</div>
+    <h2 class="reveal">Statistics can agree while data differs</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Two columns can share a mean and a standard deviation and still be nothing alike.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Shape is invisible in a summary</b>Bimodal, skewed, and uniform data can produce similar averages.</p></div>
+      <div class="pill"><p><b>Charts surface the problems fast</b>Skew, gaps, spikes at a default value, and stray extremes all show up immediately.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — continuous features */
+  { html: `
+    <div class="eyebrow reveal">Continuous features</div>
+    <h2 class="reveal">Histogram for shape, box plot for spread</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Numeric columns need a view of the whole distribution.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Histogram</b>Bins the values and shows the distribution: is it symmetric, skewed, or multi-peaked.</p></div>
+      <div class="pill"><p><b>Box plot</b>Draws the quartiles and whiskers, so the IQR fences from Chapter 13 become visual and outliers appear as points.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — categorical features */
+  { html: `
+    <div class="eyebrow reveal">Categorical features</div>
+    <h2 class="reveal">Bar chart of counts</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Categories have no order and no spread, so you count them rather than bin them.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>One bar per level</b>The height is how many rows fall in that category.</p></div>
+      <div class="pill"><p><b>It reveals two problems at once</b>A long tail of rare levels warns of high cardinality (Chapter 15), and a dominant level warns of class imbalance if it is the target.</p></div>
+      <div class="pill"><p><b>Not a histogram</b>A histogram bins a continuous range; a bar chart counts discrete labels. The exam cares about that distinction.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — in Databricks */
+  { html: `
+    <div class="eyebrow reveal">In Databricks</div>
+    <h2 class="reveal">display() plots without extra libraries</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You can chart a Spark DataFrame straight from a notebook cell.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">display(df)
+<span class="cm"># then pick a chart type in the cell output,</span>
+<span class="cm"># or open the Data Profile tab for automatic</span>
+<span class="cm"># per-column histograms (Chapter 12)</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Aggregate before plotting</b>Charting works on the rows returned, so summarize large tables first rather than pulling everything back.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — what to act on */
+  { html: `
+    <div class="eyebrow reveal">Reading the picture</div>
+    <h2 class="reveal">Each shape suggests a fix</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A plot is only useful if it changes what you do next.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Long right tail</b>A candidate for the log transform in Chapter 35.</p></div>
+      <div class="pill"><p><b>Isolated far-out points</b>Outliers to investigate, remove, or cap (Chapter 13).</p></div>
+      <div class="pill"><p><b>A spike at one value</b>Often a placeholder like 0 or -1 standing in for missing data (Chapter 14).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: pick the chart */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:21px">You want to see how many rows fall into each of six product categories. Which visualization fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A histogram, binning the category values</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A bar chart of counts, one bar per category</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A box plot of the category column</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Categories are discrete labels, so you count occurrences and draw one bar per level. Histograms bin a continuous range and box plots show quartiles and spread, neither of which is meaningful for unordered labels.</div>` },
+
+  /* 7 — quiz: continuous */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">You need to check whether a numeric income column is skewed and whether it has extreme values. Which pair of plots answers both?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>A histogram for the distribution's shape, and a box plot for quartiles and outliers</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Two bar charts of counts</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A pie chart of income values</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The histogram exposes skew by showing the shape of the distribution, and the box plot marks the quartiles and flags points beyond the whiskers as outliers. Bar and pie charts are for categorical counts and would be meaningless across thousands of distinct income values.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 33 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Pick the plot from the feature type, then let the shape decide the cleanup.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Continuous: histogram and box plot</b>Shape, then quartiles and outliers.</p></div>
+      <div class="pill"><p><b>Categorical: bar chart of counts</b>One bar per level; not a histogram.</p></div>
+      <div class="pill"><p><b>display() charts in place</b>Aggregate first, then plot from the notebook cell.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>

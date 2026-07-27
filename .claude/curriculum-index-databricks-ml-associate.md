@@ -101,16 +101,16 @@ Official objectives, mapped to chapters:
       or dbutils data summaries ...................................... Ch 12
     Remove outliers from a Spark DataFrame based on standard
       deviation or IQR ............................................... Ch 13
-    Create visualizations for categorical or continuous features ..... GAP (33)
+    Create visualizations for categorical or continuous features ..... Ch 33
     Compare two categorical or two continuous features using the
-      appropriate method ............................................. GAP (34)
+      appropriate method ............................................. Ch 34
     Compare and contrast imputing missing values with the mean or
       median or mode value ........................................... Ch 14
     Impute missing values with the mode, mean, or median value ....... Ch 14
     Use one-hot encoding for categorical features .................... Ch 15
     Identify the model types or data sets for which one-hot encoding
       is or is not appropriate ....................................... Ch 15
-    Identify scenarios where log scale transformation is appropriate .. GAP (35)
+    Identify scenarios where log scale transformation is appropriate .. Ch 35
 
 Authored chapters:
 
@@ -132,8 +132,8 @@ Unit 3: Model Development (15 objectives, ~31%)
 Official objectives, mapped to chapters:
 
     Use ML foundations to select the appropriate algorithm for a
-      given model scenario ........................................... GAP (36)
-    Identify methods to mitigate data imbalance in training data ..... GAP (37)
+      given model scenario ........................................... Ch 36
+    Identify methods to mitigate data imbalance in training data ..... Ch 37
     Compare estimators and transformers .............................. Ch 18
     Develop a training pipeline ...................................... Ch 19
     Use Hyperopt's fmin operation to tune hyperparameters ............ Ch 20
@@ -148,9 +148,9 @@ Official objectives, mapped to chapters:
     Use common regression metrics: RMSE, MAE, R-squared .............. Ch 17
     Choose the most appropriate metric for a scenario objective ...... Ch 17
     Identify the need to exponentiate log-transformed variables
-      before calculating metrics or interpreting predictions ......... GAP (35)
+      before calculating metrics or interpreting predictions ......... Ch 35
     Assess the impact of model complexity and the bias-variance
-      tradeoff on model performance .................................. GAP (38)
+      tradeoff on model performance .................................. Ch 38
 
 Authored chapters:
 
@@ -202,16 +202,16 @@ naturally, so 10 objectives become 8 lessons.
     32  Promoting code vs promoting models (TO)        Unit 1   SHIPPED
         (tags objective folded into Ch 10 as a card, rather than a thin
         standalone lesson: tags belong with versions and aliases)  SHIPPED
-    33  Visualizing features: categorical and continuous          Unit 2
-    34  Comparing two features: choosing the right method         Unit 2
-    35  Log-scale transformation, and exponentiating before       Unit 2
+    33  Visualizing features: categorical and continuous  Unit 2  SHIPPED
+    34  Comparing two features: choosing the right method Unit 2  SHIPPED
+    35  Log-scale transformation, and exponentiating      Unit 2  SHIPPED
         interpreting metrics (covers both related objectives)
-    36  Choosing an algorithm for the scenario                    Unit 3
-    37  Handling class imbalance in training data                 Unit 3
-    38  Model complexity and the bias-variance tradeoff           Unit 3
+    36  Choosing an algorithm for the scenario            Unit 3  SHIPPED
+    37  Handling class imbalance in training data         Unit 3  SHIPPED
+    38  Model complexity and the bias-variance tradeoff   Unit 3  SHIPPED
 
 Coverage after these ship: 48 of 48 objectives.
-Current coverage: 41 of 48 (Ch 31, 32, and the Ch 10 tags card closed three).
+Current coverage: 48 of 48. All gap chapters shipped.
 
 ===============================================================================
 Practice exam plan (objective-based, not chapter-based)
