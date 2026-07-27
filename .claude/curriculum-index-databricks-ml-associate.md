@@ -50,7 +50,7 @@ Unit 1: Databricks Machine Learning (18 objectives, ~38%)
 
 Official objectives, mapped to chapters:
 
-    Identify the best practices of an MLOps strategy ................. GAP (31)
+    Identify the best practices of an MLOps strategy ................. Ch 31
     Identify the advantages of using ML runtimes ..................... Ch 02
     Identify how AutoML facilitates model/feature selection .......... Ch 03
     Identify the advantages AutoML brings to model development ....... Ch 03, 04
@@ -68,8 +68,8 @@ Official objectives, mapped to chapters:
     Benefits of registering models in the UC registry over the
       workspace registry ............................................. Ch 10
     Scenarios where promoting code is preferred over promoting
-      models and vice versa .......................................... GAP (32)
-    Set or remove a tag for a model .................................. GAP (33)
+      models and vice versa .......................................... Ch 32
+    Set or remove a tag for a model .................................. Ch 10
     Promote a challenger model to a champion model using aliases ..... Ch 10
 
 Authored chapters:
@@ -101,16 +101,16 @@ Official objectives, mapped to chapters:
       or dbutils data summaries ...................................... Ch 12
     Remove outliers from a Spark DataFrame based on standard
       deviation or IQR ............................................... Ch 13
-    Create visualizations for categorical or continuous features ..... GAP (34)
+    Create visualizations for categorical or continuous features ..... GAP (33)
     Compare two categorical or two continuous features using the
-      appropriate method ............................................. GAP (35)
+      appropriate method ............................................. GAP (34)
     Compare and contrast imputing missing values with the mean or
       median or mode value ........................................... Ch 14
     Impute missing values with the mode, mean, or median value ....... Ch 14
     Use one-hot encoding for categorical features .................... Ch 15
     Identify the model types or data sets for which one-hot encoding
       is or is not appropriate ....................................... Ch 15
-    Identify scenarios where log scale transformation is appropriate .. GAP (36)
+    Identify scenarios where log scale transformation is appropriate .. GAP (35)
 
 Authored chapters:
 
@@ -132,8 +132,8 @@ Unit 3: Model Development (15 objectives, ~31%)
 Official objectives, mapped to chapters:
 
     Use ML foundations to select the appropriate algorithm for a
-      given model scenario ........................................... GAP (37)
-    Identify methods to mitigate data imbalance in training data ..... GAP (38)
+      given model scenario ........................................... GAP (36)
+    Identify methods to mitigate data imbalance in training data ..... GAP (37)
     Compare estimators and transformers .............................. Ch 18
     Develop a training pipeline ...................................... Ch 19
     Use Hyperopt's fmin operation to tune hyperparameters ............ Ch 20
@@ -148,9 +148,9 @@ Official objectives, mapped to chapters:
     Use common regression metrics: RMSE, MAE, R-squared .............. Ch 17
     Choose the most appropriate metric for a scenario objective ...... Ch 17
     Identify the need to exponentiate log-transformed variables
-      before calculating metrics or interpreting predictions ......... GAP (39)
+      before calculating metrics or interpreting predictions ......... GAP (35)
     Assess the impact of model complexity and the bias-variance
-      tradeoff on model performance .................................. GAP (40)
+      tradeoff on model performance .................................. GAP (38)
 
 Authored chapters:
 
@@ -198,19 +198,20 @@ Gap chapters to author (10 uncovered objectives, 8 lessons)
 Numbered from 31 so existing files and links are untouched. Two pairs merge
 naturally, so 10 objectives become 8 lessons.
 
-    31  MLOps on Databricks: strategy and best practices          Unit 1
-    32  Promoting code vs promoting models (TO)                   Unit 1
-    33  Tagging and organizing models in the registry             Unit 1
-        (merge with 32 if 33 proves too thin on its own)
-    34  Visualizing features: categorical and continuous          Unit 2
-    35  Comparing two features: choosing the right method         Unit 2
-    36  Log-scale transformation, and exponentiating before       Unit 2/3
+    31  MLOps strategy and best practices              Unit 1   SHIPPED
+    32  Promoting code vs promoting models (TO)        Unit 1   SHIPPED
+        (tags objective folded into Ch 10 as a card, rather than a thin
+        standalone lesson: tags belong with versions and aliases)  SHIPPED
+    33  Visualizing features: categorical and continuous          Unit 2
+    34  Comparing two features: choosing the right method         Unit 2
+    35  Log-scale transformation, and exponentiating before       Unit 2
         interpreting metrics (covers both related objectives)
-    37  Choosing an algorithm for the scenario                    Unit 3
-    38  Handling class imbalance in training data                 Unit 3
-    39  Model complexity and the bias-variance tradeoff           Unit 3
+    36  Choosing an algorithm for the scenario                    Unit 3
+    37  Handling class imbalance in training data                 Unit 3
+    38  Model complexity and the bias-variance tradeoff           Unit 3
 
 Coverage after these ship: 48 of 48 objectives.
+Current coverage: 41 of 48 (Ch 31, 32, and the Ch 10 tags card closed three).
 
 ===============================================================================
 Practice exam plan (objective-based, not chapter-based)
