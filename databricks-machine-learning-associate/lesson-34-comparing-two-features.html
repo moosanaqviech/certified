@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- ==== EDIT: lesson title ==== -->
-<title>Exploratory Data Analysis · Databricks Machine Learning Associate</title>
+<title>Comparing Two Features · Databricks Machine Learning Associate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,10 +22,7 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 2 (Data Processing): teal, for data exploration and preparation. Chosen
-       distinct from the neighbors already in use: coral (#ff6a52) is Unit 1,
-       AWS streaming uses cyan (#22d3ee), the DE lakehouse uses emerald
-       (#34d3a6), and gold is reserved for exams. */
+    /* Unit 2 (Data Processing): teal, shared across the unit. */
     --bg: #071210;            /* page background */
     --bg-tint: #0c2a25;       /* ambient glow tint behind the card */
     --accent: #2dd4bf;        /* topic color: quiz-correct border, feedback heading */
@@ -154,27 +151,37 @@
 /* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.5">DATA PROFILE</text>
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.2">TWO FEATURES, TWO METHODS</text>
 
-    <rect x="30" y="98" width="18" height="42" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
-    <rect x="54" y="74" width="18" height="66" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
-    <rect x="78" y="54" width="18" height="86" rx="3" fill="var(--accent)"/>
-    <rect x="102" y="86" width="18" height="54" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
-    <rect x="126" y="112" width="18" height="28" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
-    <line x1="26" y1="140" x2="150" y2="140" stroke="var(--line)" stroke-width="1.4"/>
-    <text x="88" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">distribution</text>
+    <text x="80" y="44" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">both continuous</text>
+    <line x1="34" y1="126" x2="34" y2="54" stroke="var(--line)" stroke-width="1.2"/>
+    <line x1="34" y1="126" x2="128" y2="126" stroke="var(--line)" stroke-width="1.2"/>
+    <g fill="var(--accent)">
+      <circle cx="48" cy="116" r="2.6"/><circle cx="58" cy="108" r="2.6"/><circle cx="66" cy="112" r="2.6"/>
+      <circle cx="74" cy="98" r="2.6"/><circle cx="84" cy="92" r="2.6"/><circle cx="92" cy="82" r="2.6"/>
+      <circle cx="102" cy="76" r="2.6"/><circle cx="112" cy="66" r="2.6"/><circle cx="120" cy="62" r="2.6"/>
+    </g>
+    <line x1="44" y1="120" x2="124" y2="60" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <text x="80" y="146" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">scatter + correlation</text>
 
-    <rect x="176" y="44" width="120" height="104" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
-    <text x="190" y="66" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">nulls</text>
-    <text x="282" y="66" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">2%</text>
-    <text x="190" y="90" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">distinct</text>
-    <text x="282" y="90" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">480</text>
-    <text x="190" y="114" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">mean</text>
-    <text x="282" y="114" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">34.2</text>
-    <text x="190" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">max</text>
-    <text x="282" y="138" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">9,900</text>
+    <line x1="152" y1="40" x2="152" y2="152" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
 
-    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">see the data before you model it</text>
+    <text x="238" y="44" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">both categorical</text>
+    <g font-family="Hanken Grotesk" font-size="8">
+      <rect x="196" y="56" width="42" height="20" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="240" y="56" width="42" height="20" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="196" y="78" width="42" height="20" rx="3" fill="var(--accent)" fill-opacity="0.3" stroke="var(--accent)"/>
+      <text x="217" y="92" text-anchor="middle" fill="var(--accent)" font-weight="700">120</text>
+      <rect x="240" y="78" width="42" height="20" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="261" y="92" text-anchor="middle" fill="var(--ink-soft)">18</text>
+      <rect x="196" y="100" width="42" height="20" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="217" y="114" text-anchor="middle" fill="var(--ink-soft)">22</text>
+      <rect x="240" y="100" width="42" height="20" rx="3" fill="var(--accent)" fill-opacity="0.3" stroke="var(--accent)"/>
+      <text x="261" y="114" text-anchor="middle" fill="var(--accent)" font-weight="700">96</text>
+    </g>
+    <text x="238" y="146" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">contingency table</text>
+
+    <text x="160" y="178" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">the pair of types picks the comparison</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -194,105 +201,106 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.2"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 12</div>
-    <h1 class="reveal">Look Before You Model</h1>
-    <p class="lead reveal">Unit 2 is the modeling workflow, and it starts where every project should: understanding the data. Exploratory data analysis profiles a dataset so you catch its problems before a model learns them.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 34</div>
+    <h1 class="reveal">Do These Two Move Together</h1>
+    <p class="lead reveal">Chapter 33 looked at features one at a time. Now compare a pair, because features that carry the same information are redundant, and a feature that tracks the target too closely may be leaking it.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 — why EDA first */
+  /* 1 — why compare */
   { html: `
-    <div class="eyebrow reveal">Why first</div>
-    <h2 class="reveal">A model trusts whatever you feed it</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Training does not question the data. If the input is skewed, full of nulls, or leaking the answer, the model learns that, quietly.</p>
+    <div class="eyebrow reveal">Why compare</div>
+    <h2 class="reveal">Relationships change what you keep</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A pairwise comparison answers questions a single-column profile cannot.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Garbage in, confident garbage out</b>A model can score well on broken data and still fail in production, so you check the data first.</p></div>
-      <div class="pill"><p><b>Cheaper to catch now</b>Finding a 90%-null column during EDA costs minutes; finding it after deployment costs a lot more.</p></div>
+      <div class="pill"><p><b>Redundancy</b>Two nearly identical features add cost without adding signal, and can destabilize linear models.</p></div>
+      <div class="pill"><p><b>Leakage</b>A feature almost perfectly related to the target is often information you would not have at prediction time.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 — summary statistics */
+  /* 2 — two continuous */
   { html: `
-    <div class="eyebrow reveal">The numbers</div>
-    <h2 class="reveal">Summary statistics, per column</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Summary statistics compress a column into a few numbers that reveal its shape. In Spark, <code>describe()</code> and <code>summary()</code> compute them.</p>
+    <div class="eyebrow reveal">Two continuous features</div>
+    <h2 class="reveal">Scatter plot, then correlation</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Plot them against each other to see the relationship, then put a number on it.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">df.stat.corr(<span class="st">"income"</span>, <span class="st">"spend"</span>)
+<span class="cm"># Pearson correlation: -1 to 1</span></div>
     <div class="pills reveal">
-      <div class="pill"><p><b>Center and spread</b>Count, mean, and standard deviation say where values sit and how much they vary.</p></div>
-      <div class="pill"><p><b>Range and quartiles</b>Min, max, and the 25th, 50th, and 75th percentiles show the spread and hint at outliers.</p></div>
+      <div class="pill"><p><b>Near 1 or -1 means strongly related</b>Positive moves together, negative moves oppositely, near 0 means no linear relationship.</p></div>
+      <div class="pill"><p><b>Correlation only sees straight lines</b>A strong curved relationship can still score near zero, which is why you look at the scatter too.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 — the Databricks data profile */
+  /* 3 — two categorical */
   { html: `
-    <div class="eyebrow reveal">One command</div>
-    <h2 class="reveal">The Databricks data profile</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Databricks builds the whole profile for you: summary stats, distinct and null counts, and a histogram per column.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px">dbutils.data.summarize(df)
-<span class="cm"># or: run display(df) and open the</span>
-<span class="cm"># "Data Profile" tab in the cell output</span></div>
+    <div class="eyebrow reveal">Two categorical features</div>
+    <h2 class="reveal">A contingency table of counts</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Correlation is meaningless for unordered labels, so you cross-tabulate instead: how often does each combination occur.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">df.crosstab(<span class="st">"region"</span>, <span class="st">"churned"</span>).show()
+<span class="cm"># rows x columns of co-occurrence counts</span></div>
     <div class="pills reveal">
-      <div class="pill"><p><b>Approximate by default</b>Distinct counts and percentiles are estimated for speed; ask for precise values when you need them.</p></div>
+      <div class="pill"><p><b>Read it for lopsidedness</b>If one region's rows concentrate in one outcome, the two are related.</p></div>
+      <div class="pill"><p><b>A chi-square test formalizes it</b>It asks whether the observed counts differ from what independence would predict.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 — what to look for */
+  /* 4 — the mixed case */
   { html: `
-    <div class="eyebrow reveal">The red flags</div>
-    <h2 class="reveal">What the profile is telling you</h2>
-    <p class="lead reveal" style="margin-bottom:18px">A profile is only useful if you know what to react to.</p>
+    <div class="eyebrow reveal">The mixed case</div>
+    <h2 class="reveal">One of each: group and compare</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The exam asks about like-for-like pairs, but mixed pairs come up constantly in practice.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Missing and skewed values</b>High null counts and lopsided distributions flag columns that need cleaning or transformation.</p></div>
-      <div class="pill"><p><b>Outliers and high cardinality</b>A max far above the 75th percentile signals outliers; thousands of distinct categories complicate encoding.</p></div>
-      <div class="pill"><p><b>Suspicious correlations</b>A feature almost perfectly correlated with the target can be leakage: information you would not have at prediction time.</p></div>
+      <div class="pill"><p><b>Split the continuous by the category</b>Compare the distribution of the numeric feature within each category, side by side.</p></div>
+      <div class="pill"><p><b>Grouped statistics work too</b>A group-by with mean and standard deviation per category shows whether the groups differ.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 — EDA feeds the next steps */
+  /* 5 — acting on it */
   { html: `
-    <div class="eyebrow reveal">What comes next</div>
-    <h2 class="reveal">EDA sets the cleaning agenda</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Exploration is iterative, and what it surfaces decides the rest of this unit.</p>
+    <div class="eyebrow reveal">What to do about it</div>
+    <h2 class="reveal">Strong relationships need a decision</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Finding the relationship is half the job; the other half is deciding what it means.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Outliers found</b>Feed the outlier handling coming in the next chapter.</p></div>
-      <div class="pill"><p><b>Nulls found</b>Decide an imputation strategy, two chapters on.</p></div>
-      <div class="pill"><p><b>Categoricals found</b>Plan how to encode them before training.</p></div>
+      <div class="pill"><p><b>Two features nearly identical</b>Drop one, or combine them, rather than feeding both.</p></div>
+      <div class="pill"><p><b>A feature near-perfectly predicts the target</b>Suspect leakage and check whether it would exist at prediction time.</p></div>
+      <div class="pill"><p><b>No relationship is also information</b>A feature unrelated to the target may simply not be worth keeping.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 — quiz: the tool */
+  /* 6 — quiz: two categorical */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:21px">You want a quick, full profile of a Spark DataFrame, summary stats, null and distinct counts, and per-column histograms, in one step. What do you use?</h2>
+    <h2 class="reveal" style="font-size:20px">You want to know whether "region" and "subscription tier", both categorical, are related. What is the appropriate method?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span><code>dbutils.data.summarize(df)</code>, or the display() Data Profile tab</button>
-      <button class="choice" data-correct="false"><span class="key">B</span><code>df.count()</code>, then inspect a few rows by hand</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Train a model and read its accuracy</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Pearson correlation between the two columns</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A contingency table of co-occurrence counts, optionally with a chi-square test</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A histogram of each column</button>
     </div>
-    <div class="feedback"><b>Correct.</b> <code>dbutils.data.summarize</code> (and the display Data Profile tab) generates summary statistics, null and distinct counts, and histograms for every column in one step. A row count alone tells you almost nothing about the data, and a model's accuracy is not a substitute for profiling its inputs.</div>` },
+    <div class="feedback"><b>Correct.</b> Categorical features have no numeric order, so you cross-tabulate the counts and can test independence with chi-square. Correlation requires ordered numeric values, and separate histograms describe each feature alone rather than the relationship between them.</div>` },
 
-  /* 7 — quiz: interpreting */
+  /* 7 — quiz: correlation limits */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">In the profile, a numeric feature has a 75th percentile of 40 but a maximum of 9,900. What does this most likely indicate?</h2>
+    <h2 class="reveal" style="font-size:20px">Two continuous features show a Pearson correlation near 0, but the scatter plot traces a clear U shape. What do you conclude?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>The column is perfectly clean and needs no attention</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Outliers: a few extreme values sit far above the bulk of the data</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>The column has too many nulls to use</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>They are related, but not linearly; correlation near 0 only rules out a straight-line relationship</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>They are independent, since correlation is the definitive test</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The correlation must have been computed incorrectly</button>
     </div>
-    <div class="feedback"><b>Correct.</b> When the maximum sits far above the 75th percentile, most values are small but a few are extreme, the signature of outliers worth investigating. That gap is about the spread of values, not about null counts, which the profile reports separately.</div>` },
+    <div class="feedback"><b>Correct.</b> Pearson correlation measures linear association only, so a symmetric curve can genuinely score near zero while the features are strongly related. That is exactly why you plot the pair rather than trusting the coefficient alone.</div>` },
 
   /* 8 — done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 12 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">EDA profiles a dataset so you understand and fix it before a model ever sees it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 34 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Compare a pair with the method their types call for, then act on what you find.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Summary statistics reveal shape</b>Count, mean, spread, range, and quartiles expose skew and outliers.</p></div>
-      <div class="pill"><p><b>One command profiles everything</b>dbutils.data.summarize and the display Data Profile tab give stats, null and distinct counts, and histograms.</p></div>
-      <div class="pill"><p><b>Findings drive the cleanup</b>Outliers, nulls, and categoricals each set up the next chapters in this unit.</p></div>
+      <div class="pill"><p><b>Two continuous: scatter plus correlation</b>df.stat.corr for the number, the plot for the shape.</p></div>
+      <div class="pill"><p><b>Two categorical: contingency table</b>df.crosstab of counts, chi-square to test independence.</p></div>
+      <div class="pill"><p><b>Correlation sees only lines</b>Near zero rules out a linear relationship, not any relationship.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

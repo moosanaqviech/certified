@@ -9,10 +9,12 @@ curriculum-index-aws-dea-c01.md, the authoritative source for unit/chapter
 placement; it is marked Draft until re-checked against the official exam
 guide PDF) and Databricks Machine Learning Associate (see
 curriculum-index-databricks-ml-associate.md and
-cert-config-databricks-ml-associate.md; also Draft until re-checked against
-the official 1 Mar 2025 exam guide PDF. All 30 lessons are authored across
-all 4 units; no practice exams yet, so exam files using the
-ml-practice-exam-NN.html prefix are the remaining work).
+cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
+the official 1 Mar 2025 exam guide PDF. All 30 authored lessons are live and
+cover 38 of the guide's 48 objectives; 8 gap lessons (numbered from 31) and
+the practice exams using the ml-practice-exam-NN.html prefix are the
+remaining work. Exams map to objectives, not chapters: the real exam is 48
+scored questions against 48 objectives).
 
 ## Site structure
 

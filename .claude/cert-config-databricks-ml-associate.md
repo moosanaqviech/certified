@@ -12,13 +12,17 @@ curriculum-index-databricks-ml-associate.md (the locked chapter placement).
     Standard blurb: Bite-sized, visual lessons for the Databricks Certified
       Machine Learning Associate exam, built to teach the trade-off reasoning
       the test rewards, not just facts to cram.
-    Exam guide version: 1 Mar 2025
-    Questions: 45 scored (confirm; some sources report 48 total)
+    Exam guide version: 1 Mar 2025 (VERIFIED against the official PDF,
+      23 Jul 2026; see curriculum-index-databricks-ml-associate.md)
+    Questions: 48 scored multiple-choice or multiple-selection. Unscored items
+      may also appear, unidentified, with extra time factored in.
     Time: 90 minutes
-    Pace: 2 minutes per question
-    Pass threshold: 70% (community-reported; Databricks scores pass/fail on a
-      scaled score and does not publish a fixed cut line, confirm before launch)
+    Pace: 2 minutes per question (48 x 2 = 96, so a full mock runs to the
+      real exam's 90 minutes rather than the nominal pace)
+    Pass threshold: NOT PUBLISHED by Databricks. Never state an official cut
+      score. Use 70% as our own practice target, labelled as our guidance.
     Cost: USD 200
+    Delivery: Online Proctored; no test aides. Validity 2 years.
     Code language: Python for all ML code; SQL may appear for non-ML data
       manipulation only
 
@@ -77,7 +81,7 @@ adjust if it clashes. Record the final --accent hex in each lesson as it ships.
 
     Unit 1  Databricks Machine Learning   warm coral/red    evokes the Databricks
                                           brand and MLflow; platform-tooling unit
-    Unit 2  ML Workflows                  teal/green        data exploration and
+    Unit 2  Data Processing               teal/green        data exploration and
                                           preparation
     Unit 3  Model Development             indigo/violet     computation, tuning,
                                           scale

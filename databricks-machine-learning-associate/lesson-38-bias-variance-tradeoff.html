@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- ==== EDIT: lesson title ==== -->
-<title>Exploratory Data Analysis · Databricks Machine Learning Associate</title>
+<title>Model Complexity and the Bias-Variance Tradeoff · Databricks Machine Learning Associate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,15 +22,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 2 (Data Processing): teal, for data exploration and preparation. Chosen
-       distinct from the neighbors already in use: coral (#ff6a52) is Unit 1,
-       AWS streaming uses cyan (#22d3ee), the DE lakehouse uses emerald
-       (#34d3a6), and gold is reserved for exams. */
-    --bg: #071210;            /* page background */
-    --bg-tint: #0c2a25;       /* ambient glow tint behind the card */
-    --accent: #2dd4bf;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(45,212,191,0.12);  /* correct-answer fill */
-    --accent-ink: #04140f;    /* text on top of the accent key chip */
+    /* Unit 3 (Model Development): violet, shared across the unit. */
+    --bg: #0d0a16;            /* page background */
+    --bg-tint: #241a3d;       /* ambient glow tint behind the card */
+    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
+    --accent-ink: #100a1c;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -154,27 +151,28 @@
 /* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.5">DATA PROFILE</text>
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.2">THE SWEET SPOT</text>
 
-    <rect x="30" y="98" width="18" height="42" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
-    <rect x="54" y="74" width="18" height="66" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
-    <rect x="78" y="54" width="18" height="86" rx="3" fill="var(--accent)"/>
-    <rect x="102" y="86" width="18" height="54" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
-    <rect x="126" y="112" width="18" height="28" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
-    <line x1="26" y1="140" x2="150" y2="140" stroke="var(--line)" stroke-width="1.4"/>
-    <text x="88" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">distribution</text>
+    <line x1="40" y1="150" x2="290" y2="150" stroke="var(--line)" stroke-width="1.2"/>
+    <line x1="40" y1="150" x2="40" y2="40" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="165" y="168" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">model complexity</text>
+    <text x="30" y="96" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" transform="rotate(-90 30 96)">error</text>
 
-    <rect x="176" y="44" width="120" height="104" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
-    <text x="190" y="66" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">nulls</text>
-    <text x="282" y="66" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">2%</text>
-    <text x="190" y="90" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">distinct</text>
-    <text x="282" y="90" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">480</text>
-    <text x="190" y="114" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">mean</text>
-    <text x="282" y="114" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">34.2</text>
-    <text x="190" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">max</text>
-    <text x="282" y="138" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">9,900</text>
+    <path d="M56 56 Q 110 132, 165 138" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="4 3"/>
+    <text x="74" y="50" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">bias</text>
 
-    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">see the data before you model it</text>
+    <path d="M165 138 Q 230 132, 276 54" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="4 3"/>
+    <text x="252" y="48" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">variance</text>
+
+    <path d="M56 70 Q 110 122, 165 122 Q 230 122, 276 66" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+    <circle cx="165" cy="122" r="5" fill="var(--accent)"/>
+    <line x1="165" y1="127" x2="165" y2="150" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="2 3"/>
+    <text x="165" y="112" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">total error</text>
+
+    <text x="72" y="144" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">underfit</text>
+    <text x="262" y="144" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">overfit</text>
+
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">too simple misses the pattern, too complex memorizes the noise</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -194,105 +192,105 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.2"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 12</div>
-    <h1 class="reveal">Look Before You Model</h1>
-    <p class="lead reveal">Unit 2 is the modeling workflow, and it starts where every project should: understanding the data. Exploratory data analysis profiles a dataset so you catch its problems before a model learns them.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 38</div>
+    <h1 class="reveal">Too Simple, Too Complex</h1>
+    <p class="lead reveal">The last chapter of the course. Every hyperparameter you tuned in this unit was really moving one dial: how complex the model is. Understanding that dial explains why tuning works at all.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 — why EDA first */
+  /* 1 — bias */
   { html: `
-    <div class="eyebrow reveal">Why first</div>
-    <h2 class="reveal">A model trusts whatever you feed it</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Training does not question the data. If the input is skewed, full of nulls, or leaking the answer, the model learns that, quietly.</p>
+    <div class="eyebrow reveal">One end</div>
+    <h2 class="reveal">High bias: too simple</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A model that is not flexible enough cannot represent the real pattern, no matter how much data you give it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Garbage in, confident garbage out</b>A model can score well on broken data and still fail in production, so you check the data first.</p></div>
-      <div class="pill"><p><b>Cheaper to catch now</b>Finding a 90%-null column during EDA costs minutes; finding it after deployment costs a lot more.</p></div>
+      <div class="pill"><p><b>This is underfitting</b>A straight line through curved data misses the structure everywhere.</p></div>
+      <div class="pill"><p><b>The tell: both scores are poor</b>Training error and validation error are both high, and close together.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 — summary statistics */
+  /* 2 — variance */
   { html: `
-    <div class="eyebrow reveal">The numbers</div>
-    <h2 class="reveal">Summary statistics, per column</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Summary statistics compress a column into a few numbers that reveal its shape. In Spark, <code>describe()</code> and <code>summary()</code> compute them.</p>
+    <div class="eyebrow reveal">The other end</div>
+    <h2 class="reveal">High variance: too complex</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A very flexible model can fit the training data almost exactly, including the parts that are just noise.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Center and spread</b>Count, mean, and standard deviation say where values sit and how much they vary.</p></div>
-      <div class="pill"><p><b>Range and quartiles</b>Min, max, and the 25th, 50th, and 75th percentiles show the spread and hint at outliers.</p></div>
+      <div class="pill"><p><b>This is overfitting</b>It memorizes the training rows rather than learning the pattern behind them.</p></div>
+      <div class="pill"><p><b>The tell: a wide gap</b>Training error is very low while validation error is much higher.</p></div>
+      <div class="pill"><p><b>It is unstable</b>Retrain on a slightly different sample and you get a noticeably different model.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 — the Databricks data profile */
+  /* 3 — the tradeoff */
   { html: `
-    <div class="eyebrow reveal">One command</div>
-    <h2 class="reveal">The Databricks data profile</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Databricks builds the whole profile for you: summary stats, distinct and null counts, and a histogram per column.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px">dbutils.data.summarize(df)
-<span class="cm"># or: run display(df) and open the</span>
-<span class="cm"># "Data Profile" tab in the cell output</span></div>
+    <div class="eyebrow reveal">The tradeoff</div>
+    <h2 class="reveal">Reducing one raises the other</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Total error is roughly bias plus variance, and complexity pushes them in opposite directions.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Approximate by default</b>Distinct counts and percentiles are estimated for speed; ask for precise values when you need them.</p></div>
+      <div class="pill"><p><b>More complexity lowers bias, raises variance</b>The model can express more, and can also chase noise.</p></div>
+      <div class="pill"><p><b>Less complexity does the reverse</b>Steadier across samples, but it may not capture the real signal.</p></div>
+      <div class="pill"><p><b>The best model sits between</b>The U-shaped total error curve has a minimum, and tuning is the search for it.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 — what to look for */
+  /* 4 — diagnosing */
   { html: `
-    <div class="eyebrow reveal">The red flags</div>
-    <h2 class="reveal">What the profile is telling you</h2>
-    <p class="lead reveal" style="margin-bottom:18px">A profile is only useful if you know what to react to.</p>
+    <div class="eyebrow reveal">Diagnosis</div>
+    <h2 class="reveal">Compare training and validation error</h2>
+    <p class="lead reveal" style="margin-bottom:18px">The two numbers together tell you which problem you have, which no single score can.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Missing and skewed values</b>High null counts and lopsided distributions flag columns that need cleaning or transformation.</p></div>
-      <div class="pill"><p><b>Outliers and high cardinality</b>A max far above the 75th percentile signals outliers; thousands of distinct categories complicate encoding.</p></div>
-      <div class="pill"><p><b>Suspicious correlations</b>A feature almost perfectly correlated with the target can be leakage: information you would not have at prediction time.</p></div>
+      <div class="pill"><p><b>Both high: underfitting</b>Add complexity, add features, or reduce regularization.</p></div>
+      <div class="pill"><p><b>Training low, validation high: overfitting</b>Simplify, regularize more, or get more training data.</p></div>
+      <div class="pill"><p><b>Both low and close: you are done</b>The model generalizes, which is the whole objective.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 — EDA feeds the next steps */
+  /* 5 — the knobs */
   { html: `
-    <div class="eyebrow reveal">What comes next</div>
-    <h2 class="reveal">EDA sets the cleaning agenda</h2>
-    <p class="lead reveal" style="margin-bottom:18px">Exploration is iterative, and what it surfaces decides the rest of this unit.</p>
+    <div class="eyebrow reveal">The dials you already know</div>
+    <h2 class="reveal">Every hyperparameter is a complexity dial</h2>
+    <p class="lead reveal" style="margin-bottom:18px">This reframes the whole unit: tuning is a search along the complexity axis.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Outliers found</b>Feed the outlier handling coming in the next chapter.</p></div>
-      <div class="pill"><p><b>Nulls found</b>Decide an imputation strategy, two chapters on.</p></div>
-      <div class="pill"><p><b>Categoricals found</b>Plan how to encode them before training.</p></div>
+      <div class="pill"><p><b>Tree depth and number of trees</b>Deeper trees fit more detail, and more of it is noise.</p></div>
+      <div class="pill"><p><b>Regularization strength</b>Higher regularization constrains the model, pulling it toward the simple end.</p></div>
+      <div class="pill"><p><b>Cross-validation finds the spot</b>It estimates validation error reliably enough to locate the minimum, which is why Chapter 23 mattered.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 — quiz: the tool */
+  /* 6 — quiz: diagnose overfitting */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:21px">You want a quick, full profile of a Spark DataFrame, summary stats, null and distinct counts, and per-column histograms, in one step. What do you use?</h2>
+    <h2 class="reveal" style="font-size:20px">A model scores 0.99 on training data and 0.71 on validation. What is happening, and what should you do?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span><code>dbutils.data.summarize(df)</code>, or the display() Data Profile tab</button>
-      <button class="choice" data-correct="false"><span class="key">B</span><code>df.count()</code>, then inspect a few rows by hand</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Train a model and read its accuracy</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Overfitting (high variance): simplify the model, increase regularization, or add training data</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Underfitting: make the model considerably more complex</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Nothing is wrong; the training score is what matters</button>
     </div>
-    <div class="feedback"><b>Correct.</b> <code>dbutils.data.summarize</code> (and the display Data Profile tab) generates summary statistics, null and distinct counts, and histograms for every column in one step. A row count alone tells you almost nothing about the data, and a model's accuracy is not a substitute for profiling its inputs.</div>` },
+    <div class="feedback"><b>Correct.</b> A large gap between a near-perfect training score and a much weaker validation score is the signature of memorizing the training data. Adding complexity would widen the gap further, and judging by the training score alone is exactly the mistake the validation split exists to prevent.</div>` },
 
-  /* 7 — quiz: interpreting */
+  /* 7 — quiz: diagnose underfitting */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:20px">In the profile, a numeric feature has a 75th percentile of 40 but a maximum of 9,900. What does this most likely indicate?</h2>
+    <h2 class="reveal" style="font-size:20px">A linear model scores poorly on both training and validation data, with the two scores close together. What does that indicate?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>The column is perfectly clean and needs no attention</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Outliers: a few extreme values sit far above the bulk of the data</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>The column has too many nulls to use</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Overfitting; reduce the model's complexity</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Underfitting (high bias): the model is too simple, so add complexity or better features</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The validation split must be broken</button>
     </div>
-    <div class="feedback"><b>Correct.</b> When the maximum sits far above the 75th percentile, most values are small but a few are extreme, the signature of outliers worth investigating. That gap is about the spread of values, not about null counts, which the profile reports separately.</div>` },
+    <div class="feedback"><b>Correct.</b> Poor performance on both splits, with little gap between them, means the model cannot capture the pattern even on data it has seen, which is high bias. Overfitting would show a low training error with a high validation error, the opposite pattern.</div>` },
 
   /* 8 — done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 12 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">EDA profiles a dataset so you understand and fix it before a model ever sees it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 38 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Complexity trades bias against variance, and the gap between your two scores tells you which way to move.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Summary statistics reveal shape</b>Count, mean, spread, range, and quartiles expose skew and outliers.</p></div>
-      <div class="pill"><p><b>One command profiles everything</b>dbutils.data.summarize and the display Data Profile tab give stats, null and distinct counts, and histograms.</p></div>
-      <div class="pill"><p><b>Findings drive the cleanup</b>Outliers, nulls, and categoricals each set up the next chapters in this unit.</p></div>
+      <div class="pill"><p><b>High bias underfits, high variance overfits</b>Too simple to see the pattern, or complex enough to memorize the noise.</p></div>
+      <div class="pill"><p><b>Diagnose with the training-validation gap</b>Both high means underfit; a wide gap means overfit.</p></div>
+      <div class="pill"><p><b>Tuning searches the complexity axis</b>Depth, regularization, and cross-validation are all ways of finding the minimum.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
