@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Exploratory Data Analysis · Databricks Machine Learning Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    /* Unit 2 (ML Workflows): teal, for data exploration and preparation. Chosen
+       distinct from the neighbors already in use: coral (#ff6a52) is Unit 1,
+       AWS streaming uses cyan (#22d3ee), the DE lakehouse uses emerald
+       (#34d3a6), and gold is reserved for exams. */
+    --bg: #071210;            /* page background */
+    --bg-tint: #0c2a25;       /* ambient glow tint behind the card */
+    --accent: #2dd4bf;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(45,212,191,0.12);  /* correct-answer fill */
+    --accent-ink: #04140f;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <text x="160" y="22" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700" letter-spacing="1.5">DATA PROFILE</text>
+
+    <rect x="30" y="98" width="18" height="42" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
+    <rect x="54" y="74" width="18" height="66" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
+    <rect x="78" y="54" width="18" height="86" rx="3" fill="var(--accent)"/>
+    <rect x="102" y="86" width="18" height="54" rx="3" fill="var(--accent)" fill-opacity="0.7"/>
+    <rect x="126" y="112" width="18" height="28" rx="3" fill="var(--accent)" fill-opacity="0.5"/>
+    <line x1="26" y1="140" x2="150" y2="140" stroke="var(--line)" stroke-width="1.4"/>
+    <text x="88" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">distribution</text>
+
+    <rect x="176" y="44" width="120" height="104" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="190" y="66" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">nulls</text>
+    <text x="282" y="66" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">2%</text>
+    <text x="190" y="90" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">distinct</text>
+    <text x="282" y="90" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">480</text>
+    <text x="190" y="114" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">mean</text>
+    <text x="282" y="114" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="600">34.2</text>
+    <text x="190" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">max</text>
+    <text x="282" y="138" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">9,900</text>
+
+    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">see the data before you model it</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+/* Card shape: { glow?, quiz?, last?, html }
+   glow  — optional per-card ambient, e.g. "radial-gradient(540px 340px at 50% 20%, var(--accent-glow), transparent 70%)"
+   quiz  — true to gate "Continue" until an answer is picked; needs .choices/.choice[data-correct]/.feedback
+   last  — true on the final card; turns the button into "Restart"            */
+const cards = [
+
+  /* 0 — cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 12</div>
+    <h1 class="reveal">Look Before You Model</h1>
+    <p class="lead reveal">Unit 2 is the modeling workflow, and it starts where every project should: understanding the data. Exploratory data analysis profiles a dataset so you catch its problems before a model learns them.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 — why EDA first */
+  { html: `
+    <div class="eyebrow reveal">Why first</div>
+    <h2 class="reveal">A model trusts whatever you feed it</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Training does not question the data. If the input is skewed, full of nulls, or leaking the answer, the model learns that, quietly.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Garbage in, confident garbage out</b>A model can score well on broken data and still fail in production, so you check the data first.</p></div>
+      <div class="pill"><p><b>Cheaper to catch now</b>Finding a 90%-null column during EDA costs minutes; finding it after deployment costs a lot more.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 — summary statistics */
+  { html: `
+    <div class="eyebrow reveal">The numbers</div>
+    <h2 class="reveal">Summary statistics, per column</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Summary statistics compress a column into a few numbers that reveal its shape. In Spark, <code>describe()</code> and <code>summary()</code> compute them.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Center and spread</b>Count, mean, and standard deviation say where values sit and how much they vary.</p></div>
+      <div class="pill"><p><b>Range and quartiles</b>Min, max, and the 25th, 50th, and 75th percentiles show the spread and hint at outliers.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 — the Databricks data profile */
+  { html: `
+    <div class="eyebrow reveal">One command</div>
+    <h2 class="reveal">The Databricks data profile</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Databricks builds the whole profile for you: summary stats, distinct and null counts, and a histogram per column.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">dbutils.data.summarize(df)
+<span class="cm"># or: run display(df) and open the</span>
+<span class="cm"># "Data Profile" tab in the cell output</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Approximate by default</b>Distinct counts and percentiles are estimated for speed; ask for precise values when you need them.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 — what to look for */
+  { html: `
+    <div class="eyebrow reveal">The red flags</div>
+    <h2 class="reveal">What the profile is telling you</h2>
+    <p class="lead reveal" style="margin-bottom:18px">A profile is only useful if you know what to react to.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Missing and skewed values</b>High null counts and lopsided distributions flag columns that need cleaning or transformation.</p></div>
+      <div class="pill"><p><b>Outliers and high cardinality</b>A max far above the 75th percentile signals outliers; thousands of distinct categories complicate encoding.</p></div>
+      <div class="pill"><p><b>Suspicious correlations</b>A feature almost perfectly correlated with the target can be leakage: information you would not have at prediction time.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 — EDA feeds the next steps */
+  { html: `
+    <div class="eyebrow reveal">What comes next</div>
+    <h2 class="reveal">EDA sets the cleaning agenda</h2>
+    <p class="lead reveal" style="margin-bottom:18px">Exploration is iterative, and what it surfaces decides the rest of this unit.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Outliers found</b>Feed the outlier handling coming in the next chapter.</p></div>
+      <div class="pill"><p><b>Nulls found</b>Decide an imputation strategy, two chapters on.</p></div>
+      <div class="pill"><p><b>Categoricals found</b>Plan how to encode them before training.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 — quiz: the tool */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:21px">You want a quick, full profile of a Spark DataFrame, summary stats, null and distinct counts, and per-column histograms, in one step. What do you use?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><code>dbutils.data.summarize(df)</code>, or the display() Data Profile tab</button>
+      <button class="choice" data-correct="false"><span class="key">B</span><code>df.count()</code>, then inspect a few rows by hand</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Train a model and read its accuracy</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>dbutils.data.summarize</code> (and the display Data Profile tab) generates summary statistics, null and distinct counts, and histograms for every column in one step. A row count alone tells you almost nothing about the data, and a model's accuracy is not a substitute for profiling its inputs.</div>` },
+
+  /* 7 — quiz: interpreting */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">In the profile, a numeric feature has a 75th percentile of 40 but a maximum of 9,900. What does this most likely indicate?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The column is perfectly clean and needs no attention</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Outliers: a few extreme values sit far above the bulk of the data</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The column has too many nulls to use</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> When the maximum sits far above the 75th percentile, most values are small but a few are extreme, the signature of outliers worth investigating. That gap is about the spread of values, not about null counts, which the profile reports separately.</div>` },
+
+  /* 8 — done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 12 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">EDA profiles a dataset so you understand and fix it before a model ever sees it.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Summary statistics reveal shape</b>Count, mean, spread, range, and quartiles expose skew and outliers.</p></div>
+      <div class="pill"><p><b>One command profiles everything</b>dbutils.data.summarize and the display Data Profile tab give stats, null and distinct counts, and histograms.</p></div>
+      <div class="pill"><p><b>Findings drive the cleanup</b>Outliers, nulls, and categoricals each set up the next chapters in this unit.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ---------- */
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+let i = 0;
+const answered = {};
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+function render() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+  backBtn.disabled = (i === 0);
+  const c = cards[i];
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (c.last) { nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+  if (c.quiz) wireQuiz(els[i], i);
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+nextBtn.onclick = () => {
+  if (cards[i].last) {
+    for (const k in answered) delete answered[k];
+    els.forEach((el, idx) => {
+      if (cards[idx].quiz) {
+        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
+        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
+      }
+    });
+    go(0); return;
+  }
+  go(i + 1);
+};
+backBtn.onclick = () => go(i - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
+  if (dx > 50 && !backBtn.disabled) backBtn.click();
+});
+
+render();
+</script>
+</body>
+</html>
