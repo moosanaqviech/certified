@@ -42,6 +42,17 @@ Note on the Filename column: published posts are `.html` files in the
 | 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | Yes | blog/common-mistakes-databricks-data-engineer-associate-exam.html |
 | 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | Yes | blog/is-databricks-data-engineer-associate-worth-it-2026.html |
 | 10 | Is Delta Live Tables still on the Databricks DE Associate exam (exam-version query) | "is delta live tables still on the exam" / "databricks DE associate syllabus changes" | Yes | blog/is-delta-live-tables-still-on-databricks-data-engineer-associate-exam.html |
+| 11 | Auto Loader vs COPY INTO: which to use and what the exam asks (comparison, maps to lesson 08) | "auto loader vs copy into databricks" | No | |
+| 12 | Streaming tables vs materialized views in Lakeflow Declarative Pipelines (comparison, objective-level) | "streaming tables vs materialized views databricks" | No | |
+| 13 | Managed vs external tables in Unity Catalog: what changes on DROP (comparison, maps to lesson 32) | "managed vs external tables databricks" | No | |
+| 14 | Databricks expectations explained: WARN, DROP and FAIL data-quality rules (objective-level, lesson 17) | "databricks expectations data quality constraints" | No | |
+| 15 | Unity Catalog privileges and the GRANT hierarchy for the exam (objective-level, lesson 33) | "unity catalog grants privileges exam" | No | |
+| 16 | Column masks and row filters in Unity Catalog explained (objective-level, lessons 34 to 35) | "unity catalog column mask row filter" | No | |
+| 17 | Job trigger types in Lakeflow Jobs: scheduled, file arrival and continuous (comparison, lessons 20 to 21) | "databricks job trigger types file arrival" | No | |
+| 18 | Databricks Asset Bundles vs Git folders: how CI/CD works on the exam (comparison, lessons 22 to 23) | "databricks asset bundles vs git folders" | No | |
+| 19 | Is PySpark on the Databricks Data Engineer Associate exam (exam-scope query) | "is pyspark on databricks data engineer associate exam" | No | |
+| 20 | Databricks Workflows renamed to Lakeflow Jobs: what changed (rename explainer, near-zero competition) | "databricks workflows renamed lakeflow jobs" | No | |
+| 21 | What changed in the May 2026 Databricks DE Associate exam guide (exam-version query) | "databricks data engineer associate exam changes 2026" | No | |
 
 ## Databricks Data Engineer Professional
 
@@ -52,6 +63,10 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | Yes | blog/databricks-professional-performance-tuning-optimization-exam.html |
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | Yes | blog/how-long-to-prepare-databricks-data-engineer-professional.html |
 | 5 | How to tell if you are ready for the Databricks DE Professional exam (readiness quiz support) | "am I ready for the databricks professional exam" | Yes | blog/am-i-ready-databricks-data-engineer-professional-exam.html |
+| 6 | Change Data Capture on Databricks: AUTO CDC (formerly APPLY CHANGES INTO) explained (rename plus objective-level) | "databricks apply changes into auto cdc" | No | |
+| 7 | SCD Type 1 vs Type 2 with AUTO CDC in declarative pipelines (comparison, objective-level) | "scd type 1 vs type 2 databricks" | No | |
+| 8 | Structured Streaming checkpoints and exactly-once processing on the Professional exam (objective-level) | "databricks structured streaming checkpoint exactly once" | No | |
+| 9 | Development vs production mode for Lakeflow Declarative Pipelines (comparison, objective-level) | "lakeflow declarative pipelines development production mode" | No | |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
