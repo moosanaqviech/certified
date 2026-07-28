@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "ML Practice Exam 1",
+  badge: "Databricks Machine Learning Associate",
+  blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
+  coverage: "Section 1: Databricks Machine Learning. One question per official objective, all 18.",
+  minutes: 36,
+  pass: 70          /* our practice target, not an official Databricks cut score */
+};
+
+const QUESTIONS = [
+
+  /* Obj: Identify the best practices of an MLOps strategy (Ch 31) */
+  {
+    q:`A team trains models by running a notebook by hand, saves the resulting file to a workspace path, and keeps no record of which version of the data produced it. Which change most improves their MLOps maturity?`,
+    opts:[
+      "Increase the cluster size so training finishes faster",
+      "Version the code in Git folders, register the model in Unity Catalog, and run training as a scheduled job",
+      "Retrain more often using the same manual process",
+      "Move the saved model file to a larger storage volume"
+    ],
+    correct:1,
+    explain:`Reproducibility needs the code, the data, and the model artifact all versioned, plus a run path that does not depend on a person clicking Run. Faster or more frequent runs of an untracked manual process do not make any past result reproducible, and where the file is stored is not the problem.`
+  },
+
+  /* Obj: Identify the advantages of using ML runtimes (Ch 02) */
+  {
+    q:`Every notebook on a team's ML clusters begins by pip installing scikit-learn, XGBoost, and MLflow, and two clusters have drifted to different library versions. What addresses both the startup cost and the drift?`,
+    opts:[
+      "Pin versions in a requirements file but keep installing at runtime",
+      "Use a larger driver node so the installs complete faster",
+      "Install the libraries once on the driver and share them with the workers",
+      "Create the clusters with Databricks Runtime for Machine Learning, which preinstalls a curated, mutually tested set of ML libraries"
+    ],
+    correct:3,
+    explain:`Databricks Runtime ML ships the ML stack already installed and version-matched, so clusters start ready and every cluster on that runtime has the same versions. Pinning versions still pays the install cost on every launch, and a bigger driver only makes a repeated install marginally faster.`
+  },
+
+  /* Obj: Identify how AutoML facilitates model/feature selection (Ch 03) */
+  {
+    q:`A data scientist receives an unfamiliar tabular dataset and has no strong prior about which algorithm suits it. How does AutoML specifically help with model and feature selection?`,
+    opts:[
+      "It trials several algorithms and produces a data exploration notebook flagging problem columns, surfacing both the best model family and weak features",
+      "It selects features by dropping every column that contains any null values",
+      "It guarantees the optimal model by exhaustively searching every possible algorithm",
+      "It removes the need to evaluate models, because it returns only the winner"
+    ],
+    correct:0,
+    explain:`AutoML attacks both fronts: many algorithms are trialled and ranked, and the data exploration notebook profiles the input and warns about high cardinality, correlation, and nulls. It does not blindly drop null-bearing columns, and it searches a bounded space rather than exhaustively guaranteeing an optimum.`
+  },
+
+  /* Obj: Identify the advantages AutoML brings to model development (Ch 03, 04) */
+  {
+    q:`A bank in a regulated industry wants AutoML's speed, but every preprocessing and training step must be auditable and modifiable by its own data scientists. What makes that possible?`,
+    opts:[
+      "AutoML exports a written summary describing the pipeline in prose",
+      "AutoML returns a compiled model binary that can be decompiled if regulators ask",
+      "AutoML's glass-box approach generates a fully editable notebook containing the real code for each trial",
+      "AutoML hides the preprocessing steps so they cannot be altered during an audit"
+    ],
+    correct:2,
+    explain:`The glass-box design is the point: AutoML writes out the actual, runnable code behind each trial, so the pipeline can be read, explained, and changed. A prose summary is not the pipeline, and any approach that hides or compiles the steps is exactly what an audit cannot accept.`
+  },
+
+  /* Obj: Benefits of feature tables at the account level in UC vs workspace level (Ch 05, 06) */
+  {
+    q:`Two teams working in different workspaces have each built their own version of the same customer features, and nobody can say who is allowed to read them. What is the benefit of keeping feature tables in Unity Catalog at the account level?`,
+    opts:[
+      "Workspace-level feature tables read faster, so the duplication is an acceptable trade",
+      "They are governed once at the account level and are discoverable and reusable across workspaces under a single permission model",
+      "Unity Catalog automatically merges duplicate feature tables created by different teams",
+      "Account-level tables remove the requirement for a primary key"
+    ],
+    correct:1,
+    explain:`Account-level governance is the advantage: one definition, one set of grants, one lineage view, reachable from any workspace that is permitted, which is what stops two teams rebuilding the same features blindly. Unity Catalog does not deduplicate tables for you, and the primary key requirement still stands.`
+  },
+
+  /* Obj: Create a feature store table in Unity Catalog (Ch 06) */
+  {
+    q:`A data scientist has a DataFrame of per-customer aggregates and wants it usable as a feature table in Unity Catalog. What does creating it require?`,
+    opts:[
+      "Call <code>create_table</code> on the FeatureEngineeringClient with a three-level name and a primary key",
+      "Save it as Parquet in a workspace folder and register that path",
+      "Convert it to pandas first, because feature tables are stored as pandas objects",
+      "Define it as a view over the source table, since feature tables must be views"
+    ],
+    correct:0,
+    explain:`A feature table is a governed Delta table in Unity Catalog with a primary key, created through the feature engineering client under a <code>catalog.schema.table</code> name. The primary key is what makes lookups possible; a plain file path, a pandas object, or a view does not provide that contract.`
+  },
+
+  /* Obj: Write data to a feature store table (Ch 06) */
+  {
+    q:`Feature values are recomputed every night and the existing feature table must reflect the new values. What is the appropriate action?`,
+    opts:[
+      "Delete the feature table and recreate it from scratch each night",
+      "Append rows only, because feature tables cannot be updated",
+      "Rename the table each night and repoint every model at the newest name",
+      "Write the recomputed values to the existing feature table using the feature engineering client's write operation"
+    ],
+    correct:3,
+    explain:`The client's write operation updates an existing feature table in place, so consumers keep referring to one stable name. Dropping and recreating it breaks lineage and any permissions granted on it, and renaming per night would force every downstream model and job to change.`
+  },
+
+  /* Obj: Train a model with features from a feature store table (Ch 06) */
+  {
+    q:`A model must be trained on features drawn from a feature table and joined to a labels DataFrame by <code>customer_id</code>, and the resulting model should remember which features it used. What is the right approach?`,
+    opts:[
+      "Join the feature table to the labels manually in Spark SQL, then fit the estimator on the result",
+      "Call <code>score_batch</code> with the labels DataFrame",
+      "Build <code>FeatureLookup</code> entries and pass them to <code>create_training_set</code>, then train on that training set",
+      "Write a pandas UDF that fetches the features for each row during training"
+    ],
+    correct:2,
+    explain:`<code>create_training_set</code> with feature lookups performs the join and records the feature metadata on the model, which is what lets scoring later fetch the same features by key. A manual join produces the right numbers but loses that metadata, and <code>score_batch</code> is for inference, not training.`
+  },
+
+  /* Obj: Score a model using features from a feature store table (Ch 06) */
+  {
+    q:`A model was trained from a feature table using <code>create_training_set</code> and logged with its feature metadata. A nightly batch job now needs to score it. What must the job supply?`,
+    opts:[
+      "A DataFrame of the primary keys; <code>score_batch</code> looks up the current feature values automatically",
+      "A DataFrame in which the job has recomputed every feature column itself",
+      "Nothing, because the model already contains all future feature values",
+      "The original training set, so the model can re-derive its features"
+    ],
+    correct:0,
+    explain:`Because the model carries its feature recipe, you pass only the entity keys and the current values are fetched from the feature table at scoring time, which is exactly what keeps training and serving consistent. Recomputing features in the scoring job is how training and serving skew gets reintroduced.`
+  },
+
+  /* Obj: Describe the differences between online and offline feature tables (Ch 07) */
+  {
+    q:`A fraud model is served behind a real-time endpoint and must read a card's latest features within a few milliseconds of each transaction. Which statement is correct?`,
+    opts:[
+      "The offline Delta feature table is sufficient, since it holds exactly the same values",
+      "The features must be available in an online store, which is built for low-latency single-row lookups, while the offline table serves training and batch scoring",
+      "Online and offline tables hold different values, so the online copy must be computed by a separate pipeline",
+      "Real-time serving cannot use feature tables at all"
+    ],
+    correct:1,
+    explain:`Both hold the same feature values; the difference is the access pattern, and only the online store answers a single-entity lookup in milliseconds. The offline Delta table is optimized for high-throughput bulk reads, which is why it backs training and batch rather than per-request serving.`
+  },
+
+  /* Obj: Identify the best run using the MLflow Client API (Ch 11) */
+  {
+    q:`A tuning sweep produced 300 runs in one experiment, and an automated job must pick the run with the lowest RMSE and register its model. Which approach is correct?`,
+    opts:[
+      "Sort the runs in the tracking UI and paste the winning run id into the job",
+      "Call <code>search_runs</code> with <code>order_by=[\"metrics.rmse DESC\"]</code> and take the first result",
+      "Call <code>search_runs</code> with <code>order_by=[\"metrics.rmse ASC\"]</code> and <code>max_results=1</code>, then register that run's model",
+      "Call <code>search_runs</code> ordered by <code>start_time DESC</code> to take the most recent run"
+    ],
+    correct:2,
+    explain:`Lower RMSE is better, so ascending order puts the best run first and <code>max_results=1</code> returns it in code, which is what an automated job needs. Descending order would surface the worst run, and the most recent run has no relationship to the best one.`
+  },
+
+  /* Obj: Manually log metrics, artifacts, and models in an MLflow Run (Ch 08) */
+  {
+    q:`A team needs to record a custom business metric and a calibration plot image that autologging does not capture. What should they do?`,
+    opts:[
+      "Rely on <code>mlflow.autolog()</code>, which captures any custom metric automatically",
+      "Write the metric to a Delta table and save the plot to a volume, outside MLflow",
+      "Attach both as tags on the experiment",
+      "Inside a <code>start_run</code> block, call <code>log_metric</code> for the metric and <code>log_artifact</code> for the plot"
+    ],
+    correct:3,
+    explain:`Manual logging exists precisely for what autologging cannot know about: open a run and log the custom metric and the file yourself so both live with the run and stay comparable across runs. Autologging only captures what the supported library reports, and storing them outside MLflow breaks that comparison.`
+  },
+
+  /* Obj: Identify information available in the MLflow UI (Ch 08) */
+  {
+    q:`A reviewer opens an MLflow experiment to compare several training attempts. What does the experiment view present?`,
+    opts:[
+      "One row per registered model version, showing its aliases and stages",
+      "One row per run, with that run's parameters, metrics, and links to its artifacts and logged model, sortable by any metric",
+      "The editable source code of every run, changeable in place",
+      "Only the single best run, since other runs are discarded after the search"
+    ],
+    correct:1,
+    explain:`An experiment is a collection of runs, and each row exposes what that run logged: parameters, metrics, artifacts, and the model, which you can sort to rank attempts. Model versions and aliases live in the registry, a separate surface, and every run is retained rather than pruned to the winner.`
+  },
+
+  /* Obj: Register a model using the MLflow Client API in the UC registry (Ch 10) */
+  {
+    q:`A job must register the model produced by a finished run into Unity Catalog as <code>prod.ml.churn</code>. What does that require?`,
+    opts:[
+      "Set the MLflow registry URI to <code>databricks-uc</code>, then register the model under the three-level name",
+      "Register it with a two-level name and let Unity Catalog infer the catalog",
+      "Copy the model files into the catalog's storage location by hand",
+      "Registration into Unity Catalog is only possible through the UI"
+    ],
+    correct:0,
+    explain:`Pointing the registry URI at <code>databricks-uc</code> is what directs registration into Unity Catalog, and every UC object is addressed by the full <code>catalog.schema.name</code>. A two-level name is the legacy Hive style, and registration is fully scriptable rather than UI-only.`
+  },
+
+  /* Obj: Benefits of registering models in the UC registry over the workspace registry (Ch 10) */
+  {
+    q:`Why would a team register models in the Unity Catalog registry rather than the legacy workspace registry?`,
+    opts:[
+      "The workspace registry supports aliases, while Unity Catalog uses fixed stages",
+      "The Unity Catalog registry stores models faster because it does not keep version history",
+      "Models are governed with the same grants and lineage as the data they came from, and one registered model is reachable across workspaces under a single three-level name",
+      "The Unity Catalog registry removes the need to version models at all"
+    ],
+    correct:2,
+    explain:`Unified governance is the benefit: models become securable objects alongside tables and features, with shared grants, lineage, and cross-workspace reach. The alias and stage claim is backwards, since Unity Catalog introduced aliases and stages are the legacy workspace mechanism, and version history is kept, not skipped.`
+  },
+
+  /* Obj: Scenarios where promoting code is preferred over promoting models (Ch 32) */
+  {
+    q:`A team trains a model in development and copies the artifact into production, where it is never fit on production data. Training takes about twenty minutes on a standard cluster. What does Databricks generally recommend?`,
+    opts:[
+      "Keep promoting the artifact, since moving models is the recommended default",
+      "Promote the artifact, but retrain it in development once a month",
+      "Skip staging and train directly in production instead",
+      "Promote the training code through development, staging, and production, and train the production model in production on production data"
+    ],
+    correct:3,
+    explain:`Deploy code is the recommended pattern: the same reviewed code moves between environments and the shipped model is trained in production on the real data. Promoting the artifact is reserved for cases where training is prohibitively expensive or hard to reproduce, which a twenty-minute fit is not.`
+  },
+
+  /* Obj: Set or remove a tag for a model (Ch 10) */
+  {
+    q:`A governance team wants every registered model labelled with the team that owns it, so models can later be filtered by owner. What fits this need?`,
+    opts:[
+      "Set a tag on the registered model, a key-value label used to organize and filter models",
+      "Assign an alias named after the owning team, since aliases carry metadata",
+      "Rename each model so the team name is part of the model name",
+      "Encode the team name in the model's version number"
+    ],
+    correct:0,
+    explain:`Tags are key-value metadata attached to a model or version precisely for describing, organizing, and filtering. An alias is a movable pointer that selects which version to load, not a descriptive label, and folding ownership into a name or version number makes it impossible to query cleanly.`
+  },
+
+  /* Obj: Promote a challenger model to a champion model using aliases (Ch 10) */
+  {
+    q:`Version 8 of a registered model has outperformed the version currently serving production, and it should take over without any change to the serving configuration. What action promotes it?`,
+    opts:[
+      "Delete the older version so version 8 becomes the newest and is served",
+      "Move version 8 into the Production stage",
+      "Reassign the <code>champion</code> alias to version 8, so anything loading <code>models:/...@champion</code> picks it up",
+      "Register version 8 as a separate model with champion in its name"
+    ],
+    correct:2,
+    explain:`An alias is a mutable pointer, so promotion is simply moving <code>champion</code> to the new version and every consumer that loads by alias follows automatically. Stages belong to the legacy workspace registry, deleting history is destructive and unnecessary, and a separate model would break the alias contract consumers rely on.`
+  }
+];
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>
