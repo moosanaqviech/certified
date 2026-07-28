@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from E.name at runtime; this is only a fallback -->
+<title>Practice Exam · Databricks DE Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     EXAM SHELL - frozen. Do not edit anything in this style block.
+     All per-exam customization lives in the EXAM PAYLOAD script section.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .timer.warn{color:var(--gold);}
+  .timer svg{opacity:.7;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .flag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:100px;padding:5px 12px;cursor:pointer;transition:.15s;font-family:var(--body);}
+  .flag.on{color:var(--gold);border-color:var(--gold);background:rgba(227,184,74,0.1);}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* nav dots */
+  .nav-dots{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 4px;justify-content:center;}
+  .dot{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--ink-faint);cursor:pointer;transition:.15s;font-family:var(--body);}
+  .dot.answered{background:var(--surface-2);color:var(--ink);border-color:rgba(255,255,255,0.18);}
+  .dot.current{border-color:var(--gold);color:var(--gold);}
+  .dot.flagged{box-shadow:inset 0 0 0 2px rgba(227,184,74,0.5);}
+
+  /* footer nav */
+  .foot{display:flex;gap:12px;margin-top:24px;}
+  .foot .btn{flex:1;}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:140px;height:140px;margin:6px auto 18px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:38px;font-weight:600;line-height:1;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+  .verdict{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:6px;}
+  .verdict.pass{color:var(--green);}
+  .verdict.fail{color:var(--gold);}
+  .res p{color:var(--ink-soft);font-size:14.5px;max-width:28em;margin:0 auto 22px;}
+  .res-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Practice Exam</span>
+    <span class="timer" id="timer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6" stroke-linecap="round"/></svg>
+      <span id="timerVal">20:00</span>
+    </span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+
+<script>
+/* =====================================================================
+   EXAM PAYLOAD - BEGIN
+   The only section you edit per exam: the E config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+===================================================================== */
+const E = {
+  name: "ML Practice Exam 5: Full Mock II",
+  badge: "Databricks Machine Learning Associate",
+  blurb: "A second full-length mock: 48 questions in 90 minutes, one per official objective, with entirely new scenarios. Pick the single best answer.",
+  coverage: "All four sections, all 48 official objectives, at the real exam's length and pace.",
+  minutes: 90,
+  pass: 70          /* our practice target, not an official Databricks cut score */
+};
+
+/* Second full mock. Every objective is tested through a fifth distinct
+   scenario, so a learner can sit both mocks back to back without meeting
+   a repeated question. */
+
+const QUESTIONS = [
+
+  /* ---------- SECTION 1: Databricks Machine Learning (18) ---------- */
+
+  /* Obj: Best practices of an MLOps strategy (Ch 31) */
+  {
+    q:`A team is adding automated tests to their ML project. Beyond checking the final accuracy, what should the suite cover?`,
+    opts:[
+      "Only the accuracy figure, since that is what the business ultimately cares about",
+      "Only the cluster configuration used for training",
+      "Only whether the notebook runs end to end without raising an error",
+      "The data transformations as unit tests, plus an integration test that runs the whole training pipeline in staging"
+    ],
+    correct:3,
+    explain:`ML code is still code: the transformations deserve unit tests, and the pipeline as a whole deserves an integration run before production sees it. Accuracy alone can look fine while a transformation quietly corrupts a column, and a notebook that merely executes proves nothing about correctness.`
+  },
+
+  /* Obj: Advantages of using ML runtimes (Ch 02) */
+  {
+    q:`A cluster is created with Databricks Runtime 17.0 ML. What is its relationship to Databricks Runtime 17.0?`,
+    opts:[
+      "They are unrelated release lines that happen to share a version number",
+      "17.0 ML is built on top of 17.0, so it contains everything the standard runtime has plus the ML stack",
+      "17.0 ML is a reduced build of 17.0 with Spark removed to save memory",
+      "17.0 ML replaces Spark with a single-node execution engine"
+    ],
+    correct:1,
+    explain:`Each ML runtime is a superset of the matching standard runtime, which is why Spark and Delta behave identically and the ML libraries simply arrive preinstalled. Nothing is removed, so distributed work is unaffected by choosing the ML variant.`
+  },
+
+  /* Obj: How AutoML facilitates model/feature selection (Ch 03) */
+  {
+    q:`How can an AutoML experiment be started on Databricks?`,
+    opts:[
+      "Only through the AutoML wizard in the workspace UI",
+      "Only by calling the Python API from a notebook",
+      "From the AutoML UI, or by calling the <code>databricks.automl</code> API in Python",
+      "By sending a request to a Model Serving endpoint"
+    ],
+    correct:2,
+    explain:`Both entry points exist, which matters because the UI suits exploration while the API allows AutoML to run inside an automated pipeline. Model Serving answers prediction requests and has no role in starting a training search.`
+  },
+
+  /* Obj: Advantages AutoML brings to model development (Ch 03, 04) */
+  {
+    q:`A team disputes whether a complex hand-built model justifies its maintenance cost. How can an AutoML run help settle the argument?`,
+    opts:[
+      "It quickly establishes a strong baseline, so the hand-built model must beat it to justify the added complexity",
+      "It proves the hand-built model is wrong if AutoML produces a different score",
+      "It removes the need for a hand-built model in every case",
+      "It measures the maintenance cost of the hand-built model directly"
+    ],
+    correct:0,
+    explain:`Speed to a credible baseline is one of AutoML's practical advantages, and a baseline turns a subjective argument into a measurable comparison. A different score does not make either model wrong, and AutoML has no view of engineering effort.`
+  },
+
+  /* Obj: Benefits of feature tables at the account level in UC (Ch 05, 06) */
+  {
+    q:`What changes when feature tables move from the legacy workspace feature store into Unity Catalog?`,
+    opts:[
+      "Feature tables gain the ability to have a primary key",
+      "Feature tables become readable without any permissions",
+      "Feature tables lose the ability to be published to an online store",
+      "Feature tables become account-level securable objects, so they are governed and discoverable beyond a single workspace"
+    ],
+    correct:3,
+    explain:`The move is about scope of governance: the same feature table becomes a catalog object with account-wide grants, lineage, and discoverability. Permissions become stricter rather than looser, and online publishing remains available.`
+  },
+
+  /* Obj: Create a feature store table in Unity Catalog (Ch 06) */
+  {
+    q:`A team calls <code>create_table</code> on a DataFrame but does not specify a primary key. What is the consequence?`,
+    opts:[
+      "A key is inferred automatically from the first column",
+      "The table cannot function as a feature table, because lookups have no key to join on",
+      "The table is created but stored outside Unity Catalog",
+      "Nothing, since a primary key is only needed for online publishing"
+    ],
+    correct:1,
+    explain:`Feature lookups resolve an entity's features by key, so without one there is nothing for <code>FeatureLookup</code> or <code>score_batch</code> to join against. Nothing is inferred on your behalf, since guessing a key would silently produce wrong joins.`
+  },
+
+  /* Obj: Write data to a feature store table (Ch 06) */
+  {
+    q:`After a nightly write refreshes a feature table, which consumers see the new values?`,
+    opts:[
+      "Only jobs that are restarted after the write completes",
+      "Only models that are retrained after the write",
+      "Any training set built afterwards and any <code>score_batch</code> call, since both read the table at the moment they run",
+      "None, until the feature table is explicitly republished"
+    ],
+    correct:2,
+    explain:`Consumers read the table when they execute, so the refresh is visible to whatever runs next without any republishing step. That is exactly what makes a scheduled refresh the standard way to keep features current.`
+  },
+
+  /* Obj: Train a model with features from a feature store table (Ch 06) */
+  {
+    q:`When building a training set with feature lookups, what does the labels DataFrame need to contain?`,
+    opts:[
+      "The entity keys used for the lookups, together with the label column",
+      "Every feature value, plus the label",
+      "Only the label column",
+      "The complete feature table, joined in advance"
+    ],
+    correct:0,
+    explain:`The keys are what the lookups join on and the label is what the model learns to predict, so those two things are sufficient. Supplying the features yourself defeats the purpose, since fetching them by key is precisely the job being delegated.`
+  },
+
+  /* Obj: Score a model using features from a feature store table (Ch 06) */
+  {
+    q:`What does <code>fe.score_batch</code> return?`,
+    opts:[
+      "The feature table itself, with an extra column appended",
+      "A DataFrame containing the input rows plus a prediction column, with the features looked up automatically",
+      "A single aggregated prediction covering the whole batch",
+      "A model object ready to be registered"
+    ],
+    correct:1,
+    explain:`You pass keys and receive those rows scored, with the feature retrieval handled behind the scenes. The source feature table is read rather than modified, and scoring produces per-row predictions rather than one aggregate.`
+  },
+
+  /* Obj: Differences between online and offline feature tables (Ch 07) */
+  {
+    q:`A team needs an existing offline feature table to be available for real-time serving. What is the action?`,
+    opts:[
+      "Rebuild the features in a separate table designed specifically for serving",
+      "Convert the offline table into an online table, replacing the original",
+      "Point the serving endpoint directly at the offline Delta table",
+      "Publish the offline feature table to an online store, which is then kept in sync with it"
+    ],
+    correct:3,
+    explain:`Publishing creates a low-latency copy that stays synced with the offline table, so both surfaces serve the same values. Rebuilding the features separately would invite the two definitions to diverge, and a Delta table cannot answer per-request lookups fast enough.`
+  },
+
+  /* Obj: Identify the best run using the MLflow Client API (Ch 11) */
+  {
+    q:`Having located the best run programmatically, what does a job use to load or register that run's model?`,
+    opts:[
+      "The run id, which addresses that run and the artifacts logged with it",
+      "The experiment name on its own",
+      "The metric value the run achieved",
+      "The id of the cluster the run executed on"
+    ],
+    correct:0,
+    explain:`The run id is the handle: it forms the <code>runs:/</code> URI used to load or register the model that run produced. An experiment holds many runs, and neither a metric value nor a cluster id identifies a specific artifact.`
+  },
+
+  /* Obj: Manually log metrics, artifacts, and models in an MLflow Run (Ch 08) */
+  {
+    q:`A Hyperopt search logs to MLflow. How do the individual trials appear?`,
+    opts:[
+      "As separate experiments, one for each trial",
+      "As a single run whose metrics are overwritten by each successive trial",
+      "As nested child runs beneath a parent run representing the <code>fmin</code> call",
+      "They are not logged at all; only the final best setting is recorded"
+    ],
+    correct:2,
+    explain:`Nesting keeps the whole search together as one parent with a child per trial, so the sweep reads as a single coherent experiment. Overwriting metrics or discarding trials would destroy the comparison the search exists to produce.`
+  },
+
+  /* Obj: Identify information available in the MLflow UI (Ch 08) */
+  {
+    q:`A model appears under a run's artifacts but does not show up in the model registry. What does that mean?`,
+    opts:[
+      "The run failed before the model could be saved",
+      "The model file is corrupted and must be logged again",
+      "The model is registered but stays hidden until an alias is assigned",
+      "The model was logged with the run but has not been registered, which is a separate step"
+    ],
+    correct:3,
+    explain:`Logging and registering are distinct actions: logging attaches the model to its run, while registering promotes it into the catalog as a versioned object. A logged artifact is complete and loadable whether or not it is ever registered.`
+  },
+
+  /* Obj: Register a model using the MLflow Client API in the UC registry (Ch 10) */
+  {
+    q:`A notebook registers a model without calling <code>set_registry_uri</code>. Where does the model land, and what does Unity Catalog require?`,
+    opts:[
+      "It targets the workspace's default registry; registering into Unity Catalog requires setting the registry URI to <code>databricks-uc</code> and using a three-level name",
+      "It always registers into Unity Catalog automatically",
+      "Registration fails outright without an explicit registry URI",
+      "It registers into whichever catalog the notebook's default schema points at"
+    ],
+    correct:0,
+    explain:`Directing registration into Unity Catalog is explicit: set the registry URI and use the full <code>catalog.schema.model</code> name. Without that, registration goes to the default target, which is why UC registration is a deliberate two-part change.`
+  },
+
+  /* Obj: Benefits of registering models in the UC registry (Ch 10) */
+  {
+    q:`A team already controls table access with SQL <code>GRANT</code> statements. What does the Unity Catalog registry mean for controlling access to their models?`,
+    opts:[
+      "Models require a separate permissions tool alongside the SQL grants",
+      "Models are securable objects too, so the same grant model and its inheritance apply to them",
+      "Model access is controlled per cluster rather than per user or group",
+      "Anyone able to read the training data can automatically deploy the model"
+    ],
+    correct:1,
+    explain:`Models sit in the catalog beside tables and features, so one grant model covers all of them and privileges inherit from the catalog or schema. That single mechanism is the practical benefit over maintaining a second, model-specific permission system.`
+  },
+
+  /* Obj: Scenarios where promoting code is preferred (Ch 32) */
+  {
+    q:`Which statement about the deploy code pattern is correct?`,
+    opts:[
+      "The model is trained once in development and the artifact is copied forward",
+      "Production never trains a model, it only serves one produced elsewhere",
+      "The model is trained in each environment, including in production on the full production data",
+      "Staging is where the production model is finally produced"
+    ],
+    correct:2,
+    explain:`Promoting code means the code runs in every environment, so the production model is fit in production against real production data. Training once and copying the artifact forward describes deploy models, the exception rather than the default.`
+  },
+
+  /* Obj: Set or remove a tag for a model (Ch 10) */
+  {
+    q:`What does tagging registered models with an owning team enable?`,
+    opts:[
+      "Searching and filtering the catalog's models by that tag, so ownership can be reported on",
+      "Automatic routing of serving traffic to that team's endpoints",
+      "Per-team retraining schedules applied automatically",
+      "Enforcement that only members of that team may read the model"
+    ],
+    correct:0,
+    explain:`Tags are descriptive metadata whose value is discovery: they let you query and organize models by attributes the catalog does not model natively. Access is enforced by grants, and scheduling and routing are configured elsewhere.`
+  },
+
+  /* Obj: Promote a challenger to champion using aliases (Ch 10) */
+  {
+    q:`Which URI loads whichever version currently holds the <code>champion</code> alias of <code>prod.ml.churn</code>?`,
+    opts:[
+      "<code>models:/prod.ml.churn/champion</code>",
+      "<code>runs:/prod.ml.churn@champion</code>",
+      "<code>prod.ml.churn.champion</code>",
+      "<code>models:/prod.ml.churn@champion</code>"
+    ],
+    correct:3,
+    explain:`An alias is referenced with an at sign after the three-level model name, which resolves at load time to whichever version currently carries it. The slash form addresses a numbered version, and <code>runs:/</code> addresses an artifact inside a specific run.`
+  },
+
+  /* ---------- SECTION 2: Data Processing (9) ---------- */
+
+  /* Obj: Compute summary statistics (Ch 12) */
+  {
+    q:`Which call returns count, mean, standard deviation, min, quartiles, and max for the numeric columns of a Spark DataFrame?`,
+    opts:[
+      "<code>df.head()</code>, which returns a sample of rows",
+      "<code>df.summary()</code>, which reports those statistics for each column",
+      "<code>df.printSchema()</code>, which lists the columns and their types",
+      "<code>df.explain()</code>, which shows the query plan"
+    ],
+    correct:1,
+    explain:`<code>summary()</code> is the built-in statistical description, extending <code>describe()</code> with the quartiles. Sampling rows, printing a schema, and explaining a plan all return useful information, but none of it describes the distribution of values.`
+  },
+
+  /* Obj: Remove outliers based on standard deviation or IQR (Ch 13) */
+  {
+    q:`To apply the IQR rule at scale, how are Q1 and Q3 obtained from a large Spark DataFrame?`,
+    opts:[
+      "By collecting the column to the driver and sorting it there",
+      "By calling <code>df.summary()</code> and reading the mean",
+      "By calling <code>df.approxQuantile</code> on the column with the required probabilities and a relative error",
+      "By dividing <code>df.count()</code> into four equal parts"
+    ],
+    correct:2,
+    explain:`<code>approxQuantile</code> computes quantiles across the cluster with a tunable accuracy, which is what makes the IQR rule practical on large data. Collecting the column to the driver defeats the point of a distributed DataFrame, and the mean is not a quartile.`
+  },
+
+  /* Obj: Create visualizations for categorical or continuous features (Ch 33) */
+  {
+    q:`On a box plot of a numeric feature, what do the individual points drawn beyond the whiskers represent?`,
+    opts:[
+      "Missing values in the column",
+      "The mean and the median",
+      "The interquartile range",
+      "Candidate outliers, lying beyond the computed fences"
+    ],
+    correct:3,
+    explain:`The box spans the quartiles and the whiskers reach the fences, so anything plotted past them is flagged as a candidate outlier. Nulls are not plotted at all, and the median is the line inside the box rather than a point outside it.`
+  },
+
+  /* Obj: Compare two features using the appropriate method (Ch 34) */
+  {
+    q:`Two continuous features have a Pearson correlation of -0.85. What does that indicate?`,
+    opts:[
+      "A strong inverse linear relationship: as one rises, the other tends to fall",
+      "No relationship at all, because the value is negative",
+      "A strong positive relationship, since only the magnitude matters",
+      "That one feature causes the other to decrease"
+    ],
+    correct:0,
+    explain:`The magnitude near one signals a strong linear association and the negative sign gives its direction. Correlation describes association rather than causation, so a strong coefficient never establishes that one variable drives the other.`
+  },
+
+  /* Obj: Compare and contrast imputing with mean, median, or mode (Ch 14) */
+  {
+    q:`What is the main downside of imputing missing values rather than dropping the affected rows?`,
+    opts:[
+      "Imputation cannot be applied to numeric columns",
+      "Imputation always reduces the size of the dataset",
+      "The filled values are estimates, so imputing a large share of a column reduces its real variability and can mislead the model",
+      "Imputation requires the target column to be known in advance"
+    ],
+    correct:2,
+    explain:`Every imputed value is a guess placed at a central statistic, so the column becomes artificially concentrated and its variance understated. That is why the share of missing data matters when choosing between filling and dropping.`
+  },
+
+  /* Obj: Impute missing values with mode, mean, or median (Ch 14) */
+  {
+    q:`A Spark ML <code>Imputer</code> is configured with <code>inputCols</code> and <code>outputCols</code> set to the same column names. What is the effect?`,
+    opts:[
+      "The configuration is invalid and raises an error",
+      "The imputed values replace the original columns in the output DataFrame",
+      "Only the first column listed is imputed",
+      "The original columns are dropped from the output entirely"
+    ],
+    correct:1,
+    explain:`Naming the output the same as the input overwrites in place, which keeps the schema stable for the stages that follow. Using different output names is equally valid and simply keeps the original columns alongside the filled ones.`
+  },
+
+  /* Obj: Use one-hot encoding for categorical features (Ch 15) */
+  {
+    q:`A model is scored on new data containing a category value that never appeared during training. What happens by default in <code>StringIndexer</code>, and what addresses it?`,
+    opts:[
+      "It raises an error by default; <code>handleInvalid</code> can be set to skip or keep so unseen labels do not break scoring",
+      "It silently maps the unseen value to index 0",
+      "It creates a new index for the value automatically at scoring time",
+      "It ignores that row's other features but still returns a prediction"
+    ],
+    correct:0,
+    explain:`The indexer learned a fixed label set during fitting, so an unfamiliar value is an error unless you configure how invalid entries should be handled. Silently mapping to an existing index would corrupt predictions without any signal that something was wrong.`
+  },
+
+  /* Obj: When one-hot encoding is or is not appropriate (Ch 15) */
+  {
+    q:`A random forest uses a six-level nominal column. Which statement is most accurate?`,
+    opts:[
+      "One-hot encoding is mandatory for any categorical column",
+      "The column must be dropped, since tree models cannot use categorical data",
+      "The column should be treated as a continuous numeric feature",
+      "Either index encoding or one-hot works: trees split well on an index, and six levels is small enough that one-hot stays cheap"
+    ],
+    correct:3,
+    explain:`The high-cardinality objection to one-hot does not apply at six levels, and trees handle an index encoding comfortably, so both are reasonable here. What is not reasonable is treating unordered labels as a continuous quantity.`
+  },
+
+  /* Obj: Scenarios where log scale transformation is appropriate (Ch 35) */
+  {
+    q:`Which problem is a log transform NOT an appropriate fix for?`,
+    opts:[
+      "A heavily right-skewed continuous column",
+      "A column whose values span several orders of magnitude",
+      "An unordered categorical column stored as text",
+      "A multiplicative relationship you want a linear model to capture"
+    ],
+    correct:2,
+    explain:`A logarithm is defined on positive numbers, so an unordered text category has nothing to transform and needs encoding instead. Skew, wide ranges, and multiplicative effects are precisely the three cases a log addresses well.`
+  },
+
+  /* ---------- SECTION 3: Model Development (15) ---------- */
+
+  /* Obj: Use ML foundations to select the appropriate algorithm (Ch 36) */
+  {
+    q:`A team must predict how many days remain until a machine next needs servicing. What kind of problem is this?`,
+    opts:[
+      "Binary classification, since a machine either needs servicing or does not",
+      "Regression, because the target is a continuous numeric quantity",
+      "Clustering, since the machines fall into natural groups",
+      "Multiclass classification with one class for each possible day"
+    ],
+    correct:1,
+    explain:`The target is a number on a continuous scale, which makes this a regression task and points at metrics like RMSE and MAE. Framing every distinct day as its own class would discard the ordering and produce an unusable number of classes.`
+  },
+
+  /* Obj: Identify methods to mitigate data imbalance (Ch 37) */
+  {
+    q:`A team oversamples the minority class until the training data is balanced. What must they be careful about when evaluating?`,
+    opts:[
+      "Nothing, since the balanced data should be used for evaluation as well",
+      "They should oversample the test set to match the training distribution",
+      "They should now report accuracy, because the classes are balanced",
+      "Evaluation should use data reflecting the real class distribution, or the reported scores will flatter the model"
+    ],
+    correct:3,
+    explain:`Rebalancing is a training-time intervention, so evaluating on artificially balanced data measures a world that will never occur in production. Keeping the validation and test sets at their natural distribution is what keeps the estimate honest.`
+  },
+
+  /* Obj: Compare estimators and transformers (Ch 18) */
+  {
+    q:`Which pair correctly describes what fitting produces in Spark ML?`,
+    opts:[
+      "Fitting a <code>LogisticRegression</code> yields a <code>LogisticRegressionModel</code>, and fitting a <code>Pipeline</code> yields a <code>PipelineModel</code>",
+      "Fitting a <code>LogisticRegression</code> yields another <code>LogisticRegression</code>",
+      "Fitting a <code>Pipeline</code> yields a DataFrame of predictions",
+      "Fitting a transformer yields an estimator"
+    ],
+    correct:0,
+    explain:`Fitting an estimator always produces a transformer, and the naming makes it explicit by appending Model. Predictions come later from calling <code>transform</code> on that fitted model, and transformers are not fit at all.`
+  },
+
+  /* Obj: Develop a training pipeline (Ch 19) */
+  {
+    q:`Why is it valuable to bundle preprocessing and the model into a single Pipeline rather than running the steps separately?`,
+    opts:[
+      "It reduces the number of rows that have to be read from storage",
+      "It allows the model to be trained without a label column",
+      "The fitted PipelineModel carries the learned preprocessing along with the model, so scoring reproduces training exactly and the whole thing logs as one artifact",
+      "It removes the need for a train and test split"
+    ],
+    correct:2,
+    explain:`Bundling means the encoders and the model travel together, so nothing can be forgotten or applied differently at serving time. That single artifact is also what gets logged, registered, and served, which is why the pattern removes a whole class of skew bugs.`
+  },
+
+  /* Obj: Use Hyperopt's fmin operation (Ch 20) */
+  {
+    q:`What does a call to <code>fmin</code> return once the search completes?`,
+    opts:[
+      "A trained model object ready to be registered",
+      "The best hyperparameter setting found during the search",
+      "The full history of every trial and its loss",
+      "The MLflow run id belonging to the best trial"
+    ],
+    correct:1,
+    explain:`<code>fmin</code> reports the winning point in the search space, which you then use to train or select the final model. The complete trial history lives in the trials object, and the model itself is whatever your objective function built.`
+  },
+
+  /* Obj: Perform random, grid, or Bayesian search (Ch 21) */
+  {
+    q:`With a fixed budget of 20 trials across a large continuous search space, why does random search often outperform a coarse grid of the same size?`,
+    opts:[
+      "Random sampling tries many distinct values of each hyperparameter, exploring the influential ones more finely than a grid's few fixed levels",
+      "Random search evaluates each individual trial faster",
+      "Random search is guaranteed to find the global optimum",
+      "Grid search cannot be limited to 20 trials"
+    ],
+    correct:0,
+    explain:`A grid spends its budget on a small set of repeated coordinate values, whereas random sampling gives nearly every trial a fresh value for each hyperparameter. That finer coverage of whichever hyperparameter actually matters is where the advantage comes from.`
+  },
+
+  /* Obj: Parallelize single node models for hyperparameter tuning (Ch 22) */
+  {
+    q:`A tuning job requests a <code>SparkTrials</code> parallelism of 200, but the cluster it runs on can execute only 16 concurrent tasks. What happens?`,
+    opts:[
+      "The search fails to start because the value exceeds the cluster's capacity",
+      "All 200 trials run simultaneously, oversubscribing the cluster",
+      "The cluster autoscales until 200 task slots are available",
+      "Parallelism is reduced to what the cluster can genuinely run at once"
+    ],
+    correct:3,
+    explain:`SparkTrials checks the cluster's capacity and caps parallelism accordingly, so an over-large value is quietly clamped rather than causing a failure. The search still completes; it simply runs at the width the cluster can support.`
+  },
+
+  /* Obj: Benefits and downsides of cross-validation (Ch 23) */
+  {
+    q:`In 4-fold cross-validation, how is each fold used?`,
+    opts:[
+      "All four folds train the model, and the score is taken from the training data",
+      "One fold trains the model and the other three validate it, repeated four times",
+      "Three folds train the model and the remaining one validates, rotating so that every fold validates exactly once",
+      "The folds are merged into one dataset before training begins"
+    ],
+    correct:2,
+    explain:`Each round holds out a different quarter for validation and trains on the rest, so after four rounds every row has been validated exactly once. Scoring on training data would defeat the purpose, and merging the folds would leave no holdout at all.`
+  },
+
+  /* Obj: Perform cross-validation as part of model fitting (Ch 23) */
+  {
+    q:`Which components must be supplied to a Spark ML <code>CrossValidator</code>?`,
+    opts:[
+      "A DataFrame and a number of folds",
+      "An estimator, a parameter grid, an evaluator, and the number of folds",
+      "A fitted model and a test set",
+      "Two estimators, so their performance can be compared"
+    ],
+    correct:1,
+    explain:`The cross validator needs something to fit, a set of settings to try, a way to score each one, and how many folds to rotate through. It is itself an estimator, so the data arrives when you call <code>fit</code> rather than at construction.`
+  },
+
+  /* Obj: Identify the number of models trained (Ch 24) */
+  {
+    q:`A 6-combination grid is run with 3-fold cross-validation. Including the final refit, how many models are trained in total?`,
+    opts:[
+      "18, the combinations multiplied by the folds",
+      "9, the combinations plus the folds",
+      "6, one model per combination",
+      "19: eighteen during the search, plus one refit of the winning setting on the full training data"
+    ],
+    correct:3,
+    explain:`The search itself costs 6 times 3, which is 18 fits, and the cross validator then refits the best setting once on all the training data. Reading the question carefully matters here, since it asks for the total including that final model.`
+  },
+
+  /* Obj: Use common classification metrics (Ch 17) */
+  {
+    q:`What does precision measure?`,
+    opts:[
+      "Of the cases the model predicted positive, the fraction that genuinely were positive",
+      "Of the actual positives in the data, the fraction the model managed to find",
+      "The overall fraction of predictions that were correct",
+      "The area under the ROC curve"
+    ],
+    correct:0,
+    explain:`Precision looks at the predicted positives and asks how many were right, which is what matters when acting on a flag is expensive. The second option describes recall, the complementary measure taken over the actual positives.`
+  },
+
+  /* Obj: Use common regression metrics (Ch 17) */
+  {
+    q:`A team wants an error figure expressed in the target's own units, where a 10-unit miss counts as exactly twice as bad as a 5-unit miss. Which metric fits?`,
+    opts:[
+      "RMSE, which is also expressed in the target's units",
+      "MAE, the mean absolute error, which scales linearly with the size of each error",
+      "R-squared, which is unitless",
+      "Log loss"
+    ],
+    correct:1,
+    explain:`MAE averages the absolute errors, so its penalty grows in direct proportion to how far off each prediction is. RMSE is also in the target's units but squares the errors first, making a 10-unit miss four times as costly as a 5-unit one.`
+  },
+
+  /* Obj: Choose the most appropriate metric for a scenario (Ch 17) */
+  {
+    q:`A model flags accounts for a costly manual investigation, and analyst time is scarce. Which metric matters most?`,
+    opts:[
+      "Recall, so that as many suspicious accounts as possible are caught",
+      "Accuracy, since the large majority of accounts are legitimate",
+      "Precision, so that flagged accounts are usually genuine and analyst time is not wasted",
+      "RMSE"
+    ],
+    correct:2,
+    explain:`When each positive prediction triggers expensive human work, the cost sits with false alarms, which is exactly what precision measures. Recall would be the priority if missing a case were the more damaging error, which reverses this scenario.`
+  },
+
+  /* Obj: Exponentiate log-transformed variables (Ch 35) */
+  {
+    q:`Model A was trained on raw price and model B on log price. How should their RMSEs be compared in the original price units?`,
+    opts:[
+      "Exponentiate model B's predictions back to price, recompute its RMSE, then compare the two figures",
+      "Compare the two RMSE values directly, since RMSE is a standardized measure",
+      "Take the log of model A's predictions, so that both models are assessed on the log scale",
+      "They cannot be compared under any circumstances"
+    ],
+    correct:0,
+    explain:`Two RMSEs are only comparable when both are measured on the same scale, and the question asks specifically for price units. Comparing them as they stand would set an error in log units against an error in currency, which is meaningless.`
+  },
+
+  /* Obj: Assess model complexity and the bias-variance tradeoff (Ch 38) */
+  {
+    q:`A model is overfitting. In bias-variance terms, what does increasing regularization do?`,
+    opts:[
+      "It reduces bias and variance at the same time",
+      "It increases variance while reducing bias",
+      "It affects neither, since regularization only changes training speed",
+      "It constrains the model, lowering variance at the cost of some bias, which improves generalization when the model is overfitting"
+    ],
+    correct:3,
+    explain:`Regularization pulls the model toward the simpler end of the complexity axis, trading a little bias for a worthwhile reduction in variance. That trade is only beneficial when variance is the dominant problem, which overfitting is by definition.`
+  },
+
+  /* ---------- SECTION 4: Model Deployment (6) ---------- */
+
+  /* Obj: Differences and advantages of batch, realtime, and streaming serving (Ch 27) */
+  {
+    q:`Sensor readings arrive continuously and anomalies must reach an operations dashboard within seconds. No caller waits on a response. Which approach fits?`,
+    opts:[
+      "Batch inference running on a nightly schedule",
+      "Real-time serving behind a REST endpoint",
+      "Streaming inference, scoring records as they arrive and writing results to a table the dashboard reads",
+      "A one-off AutoML run over the historical readings"
+    ],
+    correct:2,
+    explain:`Seconds-level freshness over a continuous feed, with no blocked caller, is exactly the middle ground streaming occupies. A nightly batch would be far too stale, and a serving endpoint adds request-response machinery that nothing here needs.`
+  },
+
+  /* Obj: Deploy a custom model to a model endpoint (Ch 30) */
+  {
+    q:`What must be true of a model before a Model Serving endpoint can serve it?`,
+    opts:[
+      "It must be implemented in Scala for adequate performance",
+      "It must be logged in the MLflow model format and registered as a model version the endpoint can reference",
+      "It must be smaller than one megabyte",
+      "It must be copied into a workspace folder the endpoint has access to"
+    ],
+    correct:1,
+    explain:`Serving points at a registered model version, and the MLflow format is what supplies the flavors, signature, and dependencies the endpoint needs to load it. Python models are fully supported, and no manual file copying is involved.`
+  },
+
+  /* Obj: Use pandas to perform batch inference (Ch 28) */
+  {
+    q:`A nightly batch inference job has scored a table. How do downstream applications typically consume those predictions?`,
+    opts:[
+      "They rerun the training notebook to reproduce the scores on demand",
+      "They query a Model Serving endpoint once per row",
+      "They read the model artifact directly from the registry",
+      "They read the predictions table the job wrote, which is why batch serving costs nothing between runs"
+    ],
+    correct:3,
+    explain:`In the batch pattern the table is the interface: the job writes predictions and applications simply read them, so no compute runs between scheduled runs. Calling an endpoint per row would pay real-time costs for a workload that has no latency requirement.`
+  },
+
+  /* Obj: How streaming inference is performed (Ch 29) */
+  {
+    q:`A streaming inference query is configured with a checkpoint location. What does that provide?`,
+    opts:[
+      "A record of what has already been processed, so that a restart resumes rather than rescoring everything",
+      "A cache of the model's weights to speed up loading",
+      "A backup copy of the predictions table",
+      "A schedule controlling how often the stream runs"
+    ],
+    correct:0,
+    explain:`The checkpoint tracks the stream's progress, which is what makes restarts safe and prevents duplicate or missed scoring. It stores processing state rather than model weights or table backups, and a continuous stream has no schedule to control.`
+  },
+
+  /* Obj: Deploy and query a model for realtime inference (Ch 30) */
+  {
+    q:`An endpoint has scale to zero enabled and has sat idle overnight. What should the team expect from the first request in the morning?`,
+    opts:[
+      "The request fails, because the endpoint was shut down",
+      "The request succeeds, but pays a cold-start delay while capacity is provisioned",
+      "The request is answered from a cached prediction",
+      "The endpoint returns errors until it is manually restarted"
+    ],
+    correct:1,
+    explain:`Scaling to zero releases compute while idle, so the next request wakes the endpoint and absorbs that startup latency before being served. Nothing fails or needs restarting, which is exactly the cost and latency trade the setting represents.`
+  },
+
+  /* Obj: Split data between endpoints for realtime inference (Ch 30) */
+  {
+    q:`Why is endpoint traffic splitting preferable to repeatedly reassigning the champion alias when comparing two model versions under live traffic?`,
+    opts:[
+      "Reassigning an alias is not permitted while a model is being served",
+      "Traffic splitting retrains both models continuously during the comparison",
+      "Splitting serves both versions at once in fixed proportions, giving a stable and measurable comparison, whereas flapping an alias produces inconsistent behaviour over time",
+      "Traffic splitting removes the need to monitor either model"
+    ],
+    correct:2,
+    explain:`A percentage split runs both versions concurrently under identical conditions, which is what makes the comparison attributable. Swapping an alias back and forth changes what every user sees from moment to moment, confounding the result with timing.`
+  }
+];
+/* =====================================================================
+   EXAM PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+const PASS = E.pass;
+const SECONDS = E.minutes * 60;
+
+let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const timerEl = document.getElementById("timer");
+const timerVal = document.getElementById("timerVal");
+const topLbl = document.getElementById("topLbl");
+
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+
+document.title = `${E.name} · ${E.badge}`;
+timerVal.textContent = fmt(SECONDS);
+
+function startTimer(){
+  timerEl.style.display="flex";
+  state.tick = setInterval(()=>{
+    state.left--;
+    timerVal.textContent = fmt(state.left);
+    if(state.left<=120) timerEl.classList.add("warn");
+    if(state.left<=0){ clearInterval(state.tick); submit(); }
+  },1000);
+}
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/QUESTIONS.length*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = E.name;
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${E.badge}</div>
+      <h1>${E.name}</h1>
+      <p>${E.blurb}</p>
+      <p style="font-size:13.5px;color:var(--ink-faint)">${E.coverage}</p>
+      <div class="facts">
+        <div class="fact"><b>${QUESTIONS.length}</b><span>questions</span></div>
+        <div class="fact"><b>${fmt(SECONDS)}</b><span>timer</span></div>
+        <div class="fact"><b>${PASS}%</b><span>to pass</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No feedback until you submit. Answers and explanations come at the end, exam-style.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start exam →</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; startTimer(); render(); setProgress(); };
+  setProgress();
+}
+
+function renderTest(){
+  const i = state.i, Q = QUESTIONS[i];
+  topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
+  root.innerHTML = `
+    <div class="qhead">
+      <span class="qnum">QUESTION ${i+1}</span>
+      <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${state.flags[i]?'Flagged':'Flag'}
+      </button>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>
+    <div class="nav-dots">
+      ${QUESTIONS.map((_,j)=>{
+        let cls="dot";
+        if(state.answers[j]!==null) cls+=" answered";
+        if(j===i) cls+=" current";
+        if(state.flags[j]) cls+=" flagged";
+        return `<button class="${cls}" data-go="${j}">${j+1}</button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="btn sec" id="prevBtn" ${i===0?'disabled':''}>← Prev</button>
+      ${i===QUESTIONS.length-1
+        ? `<button class="btn" id="submitBtn">Submit exam</button>`
+        : `<button class="btn sec" id="nextBtn">Next →</button>`}
+    </div>`;
+
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=>{ state.answers[i] = Number(el.dataset.j); render(); setProgress(); };
+  });
+  root.querySelectorAll(".dot").forEach(el=>{
+    el.onclick = ()=>{ state.i = Number(el.dataset.go); render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  });
+  document.getElementById("flagBtn").onclick = ()=>{ state.flags[i] = !state.flags[i]; render(); };
+  const prev = document.getElementById("prevBtn");
+  if(prev) prev.onclick = ()=>{ state.i--; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const next = document.getElementById("nextBtn");
+  if(next) next.onclick = ()=>{ state.i++; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+  const sub = document.getElementById("submitBtn");
+  if(sub) sub.onclick = confirmSubmit;
+  setProgress();
+}
+
+function confirmSubmit(){
+  const un = state.answers.filter(a=>a===null).length;
+  if(un>0){
+    if(!confirm(`${un} question${un>1?'s':''} unanswered. Submit anyway?`)) return;
+  }
+  submit();
+}
+
+function submit(){
+  if(state.tick) clearInterval(state.tick);
+  timerEl.style.display="none";
+  state.submitted=true; state.screen="results"; render(); setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function renderResults(){
+  topLbl.textContent="Results";
+  const c=score(), total=QUESTIONS.length, pct=Math.round(c/total*100), passed=pct>=PASS;
+  const R=62, CIRC=2*Math.PI*R, off=CIRC*(1-pct/100);
+  const col = passed ? "var(--green)" : "var(--gold)";
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle class="tr" cx="70" cy="70" r="${R}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="70" cy="70" r="${R}" fill="none" stroke-width="9" stroke="${col}" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b>${pct}%</b><span>${c} / ${total} correct</span></div>
+      </div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Passed':'Keep going'}</div>
+      <p>${passed
+        ? `That's above the ${PASS}% bar. Review the explanations below to lock in anything you guessed.`
+        : `Below the ${PASS}% pass line, which is normal this early. The review below is where the real learning is.`}</p>
+      <div class="res-actions">
+        <button class="btn" id="reviewBtn">Review answers ↓</button>
+        <button class="btn sec" id="retakeBtn">Retake</button>
+      </div>
+    </div>
+    <div id="review"></div>`;
+  requestAnimationFrame(()=>{ const f=root.querySelector(".fl"); if(f) f.style.strokeDashoffset=off.toFixed(1); });
+  document.getElementById("retakeBtn").onclick=retake;
+  document.getElementById("reviewBtn").onclick=()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+}
+
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>
