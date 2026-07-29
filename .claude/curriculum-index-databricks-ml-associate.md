@@ -39,10 +39,11 @@ Note on a prior error: this index previously named Section 2 "ML Workflows" and
 claimed 45 scored questions and a 70% pass bar. All three were wrong, inherited
 from third-party reproductions that blended guide editions. Corrected here.
 
-Structure: 4 units mirroring the 4 official sections. 30 chapters are authored
-and live; the gap chapters listed at the end are outstanding. Trade-off lessons
-are flagged (TO). Chapters marked (OFF) are supporting material that no official
-objective covers: keep them, but never let them displace an objective.
+Structure: 4 units mirroring the 4 official sections. All 38 chapters are
+authored and live, including the gap chapters listed at the end, so all 48
+objectives are covered. Trade-off lessons are flagged (TO). Chapters marked
+(OFF) are supporting material that no official objective covers: keep them,
+but never let them displace an objective.
 
 ===============================================================================
 Unit 1: Databricks Machine Learning (18 objectives, ~38%)
@@ -224,14 +225,12 @@ The real exam is ~one question per objective, so exams map to OBJECTIVES.
     naming the objective it tests, not just a chapter.
     Pass bar: do NOT publish a percentage as the official cut score. Use 70% as
     a practice target and label it as our own guidance, not Databricks'.
-    Plan (5 exams):
+    Plan (5 exams, all SHIPPED):
         1  Section 1 only (18 objectives, 36 min)
         2  Sections 1-2 (27 objectives, 54 min)
         3  Sections 1-3 (42 objectives, 84 min)
         4  Full mock, all 48 objectives, 90 min (mirrors the real exam exactly)
         5  Full mock, second pass with new scenarios (48 objectives, 90 min)
-    Exams 1-3 may be authored before the gap chapters ship, restricted to
-    objectives that already have a lesson. Exam 4 requires full coverage.
 
 ===============================================================================
 Terminology rules (see cert-config-databricks-ml-associate.md for the full list)

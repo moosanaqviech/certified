@@ -1,20 +1,27 @@
 # CLAUDE.md - Certified (certification exam prep app)
 
 Mobile-first static site of interactive lessons and timed practice exams,
-deployed on Netlify. Live courses: Databricks DE Associate (complete) and
+deployed on Netlify. Live courses: Databricks DE Associate (complete),
 Databricks DE Professional (complete, see curriculum-index-de-professional.md
-for unit/chapter placement and eyebrow labels).
+for unit/chapter placement and eyebrow labels), and Databricks Machine
+Learning Associate (complete, see curriculum-index-databricks-ml-associate.md
+and cert-config-databricks-ml-associate.md; the index is LOCKED, verified
+against the official 1 Mar 2025 exam guide PDF. All 38 lessons and all 5
+practice exams (ml-practice-exam-NN.html) are shipped, covering 48 of the
+guide's 48 objectives. Exams map to objectives, not chapters: the real exam
+is 48 scored questions against 48 objectives, and exams 4 and 5 are full
+48-question mocks).
 In progress: AWS Data Engineer Associate (DEA-C01) (see
 curriculum-index-aws-dea-c01.md, the authoritative source for unit/chapter
 placement; it is marked Draft until re-checked against the official exam
-guide PDF) and Databricks Machine Learning Associate (see
-curriculum-index-databricks-ml-associate.md and
-cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
-the official 1 Mar 2025 exam guide PDF. All 30 authored lessons are live and
-cover 38 of the guide's 48 objectives; 8 gap lessons (numbered from 31) and
-the practice exams using the ml-practice-exam-NN.html prefix are the
-remaining work. Exams map to objectives, not chapters: the real exam is 48
-scored questions against 48 objectives).
+guide PDF).
+
+The ML Associate course targets the Associate exam only. The Databricks ML
+Professional is a separate certification (59 questions, 120 minutes, MLOps
+heavy: drift and Lakehouse Monitoring, Asset Bundles, CI/CD and pipeline
+testing, Optuna and Ray, blue-green and canary rollout). None of that is in
+scope here; if it is ever wanted, it is a new sibling course folder, not an
+extension of the Associate one.
 
 ## Site structure
 
@@ -26,13 +33,12 @@ each course). Each course lives in its own top-level folder and has its own
   live Associate course.
 - `databricks-data-engineer-professional/` - lessons + practice exams for the
   live Professional course.
+- `databricks-machine-learning-associate/` - lessons + practice exams for the
+  live ML Associate course (see curriculum-index-databricks-ml-associate.md).
+  Exam files use the `ml-practice-exam-NN.html` prefix.
 - AWS Data Engineer Associate (DEA-C01) lessons/exams go in a sibling
   `aws-data-engineer-associate/` folder as they're authored (see
   curriculum-index-aws-dea-c01.md).
-- Databricks Machine Learning Associate lessons/exams go in a sibling
-  `databricks-machine-learning-associate/` folder as they're authored (see
-  curriculum-index-databricks-ml-associate.md). Exam files use the
-  `ml-practice-exam-NN.html` prefix.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
