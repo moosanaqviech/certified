@@ -15,6 +15,13 @@ cover 38 of the guide's 48 objectives; 8 gap lessons (numbered from 31) and
 the practice exams using the ml-practice-exam-NN.html prefix are the
 remaining work. Exams map to objectives, not chapters: the real exam is 48
 scored questions against 48 objectives).
+Onboarded but not yet authored: Databricks Generative AI Engineer Associate
+(see curriculum-index-databricks-genai-associate.md and
+cert-config-databricks-genai-associate.md; the index is DRAFT pending a lock,
+built from the official 18 Mar 2026 exam guide PDF. 55 chapters cover all 56
+objectives across 6 units; no lesson or exam exists yet. Exams map to
+objectives and SAMPLE them: the real exam is 45 scored questions against 56
+objectives, so one full mock cannot cover them all).
 
 ## Site structure
 
@@ -33,6 +40,10 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-machine-learning-associate/` folder as they're authored (see
   curriculum-index-databricks-ml-associate.md). Exam files use the
   `ml-practice-exam-NN.html` prefix.
+- Databricks Generative AI Engineer Associate lessons/exams go in a sibling
+  `databricks-generative-ai-engineer-associate/` folder as they're authored
+  (see curriculum-index-databricks-genai-associate.md). Exam files use the
+  `genai-practice-exam-NN.html` prefix.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
@@ -102,6 +113,13 @@ anything. They define card shapes, helper classes, and question rules.
   identifiers kept the pre-rename names), so IAM policy, CLI, and SDK
   examples should use the retained identifiers even while prose uses the
   current service name.
+- GenAI Engineer Associate terminology (18 Mar 2026 guide): say "Mosaic AI
+  Vector Search", "Mosaic AI Agent Framework", "Mosaic AI Gateway" (short
+  form "AI Gateway"), "Foundation Model APIs", "Agent Bricks" (Knowledge
+  Assistant, Multiagent Supervisor, Information Extraction), "Genie Spaces",
+  and "Models in Unity Catalog". Prompts are promoted with MLflow prompt
+  versions and aliases, never by branch merge. The full list is in
+  cert-config-databricks-genai-associate.md.
 
 ## Workflow per lesson or exam
 
@@ -120,7 +138,9 @@ anything. They define card shapes, helper classes, and question rules.
 File naming: `lesson-NN-name.html` (each course numbers its own chapters
 starting at 01, per that course's curriculum index). Practice exams:
 `practice-exam-NN.html` for Associate, `pro-practice-exam-NN.html` for
-Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate.
+Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate,
+`ml-practice-exam-NN.html` for ML Associate, `genai-practice-exam-NN.html`
+for Generative AI Engineer Associate.
 
 ## Revisions
 
