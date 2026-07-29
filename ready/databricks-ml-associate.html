@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from R.cert at runtime; this is only a fallback -->
+<title>Readiness Quiz · Certify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     READINESS SHELL - frozen. Do not edit anything in this style block.
+     All per-cert customization lives in the READINESS PAYLOAD script
+     section (the R config object and the QUESTIONS array).
+
+     The :root token block below is the exam engine's palette, kept
+     identical on purpose: the readiness quiz is assessment-family and
+     must read as a sibling of the practice exams. The domain-accent ramp
+     is the ONLY added color, and it is used solely in the result-screen
+     breakdown and the share card.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  /* Domain-accent ramp. Result breakdown + share card only. These avoid
+     the reserved trio: --green and --red (review correctness) and --gold
+     (brand mark), so a domain bar never reads as right/wrong or as brand. */
+  :root{
+    --acc-1:#6ea8fe;  /* blue       */
+    --acc-2:#a78bfa;  /* violet     */
+    --acc-3:#4dd0e1;  /* cyan       */
+    --acc-4:#f4a259;  /* orange     */
+    --acc-5:#f6a5c0;  /* pink       */
+    --acc-6:#b3c1ff;  /* periwinkle */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:34px;line-height:1.06;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question flow (linear, auto-advance, lesson-style slide) */
+  .qstage{position:relative;flex:1;overflow:hidden;}
+  .qcard{opacity:1;transform:translateX(0);transition:opacity .3s ease,transform .3s cubic-bezier(.2,.7,.2,1);}
+  .qcard.out-left{opacity:0;transform:translateX(-42px);}
+  .qcard.out-right{opacity:0;transform:translateX(42px);}
+  .qcard.in-right{opacity:0;transform:translateX(42px);}
+  .qcard.in-left{opacity:0;transform:translateX(-42px);}
+
+  .qhead{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .qback{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:transparent;border:1px solid var(--line);color:var(--ink-soft);font-size:17px;cursor:pointer;transition:.15s;font-family:var(--body);flex:0 0 auto;}
+  .qback:hover{border-color:rgba(255,255,255,0.2);color:var(--ink);}
+  .qback.hide{visibility:hidden;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;width:100%;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:150px;height:150px;margin:6px auto 6px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:40px;font-weight:600;line-height:1;}
+  .scorering .ctr em{font-style:normal;font-size:13px;color:var(--gold);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:5px;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+
+  /* verdict band */
+  .verdict-band{margin:16px auto 4px;max-width:30em;opacity:0;transform:translateY(10px);transition:opacity .25s ease,transform .25s ease;transition-delay:.55s;}
+  .verdict-band.show{opacity:1;transform:none;}
+  .verdict-band h2{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.1;margin-bottom:6px;}
+  .verdict-band p{color:var(--ink-soft);font-size:14.5px;line-height:1.5;margin:0 auto;}
+
+  /* per-domain breakdown */
+  .dbreak{margin:30px 0 6px;text-align:left;}
+  .sec-head{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:4px;}
+  .sec-sub{font-size:12.5px;color:var(--ink-faint);margin-bottom:16px;}
+  .drow{margin-bottom:16px;}
+  .drow .dtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;gap:10px;}
+  .drow .dname{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .drow .dscore{font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;flex:0 0 auto;}
+  .dtrack{position:relative;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
+  .dfill{height:100%;width:0;border-radius:6px;transition:width .7s cubic-bezier(.2,.7,.2,1);}
+  .dmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.5);border-radius:2px;}
+  .dweight{font-size:11px;color:var(--ink-faint);margin-top:5px;}
+
+  /* prescriptions */
+  .presc{margin:26px 0 6px;text-align:left;}
+  .presc-card{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;}
+  .presc-card:hover{border-color:rgba(255,255,255,0.2);background:var(--surface-2);}
+  .presc-card .pc-dot{flex:0 0 auto;width:10px;height:10px;border-radius:50%;}
+  .presc-card .pc-body{flex:1;}
+  .presc-card .pc-dom{display:block;font-size:12px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .presc-card .pc-line{display:block;font-size:14px;line-height:1.4;color:var(--ink);}
+  .presc-card .pc-go{flex:0 0 auto;color:var(--ink-faint);font-size:18px;}
+
+  /* actions */
+  .res-actions{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+  .res-actions .btn{flex:1;min-width:44%;}
+
+  /* email capture (opt-in, appears after results; hidden when unset) */
+  .email{margin:26px 0 4px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px;}
+  .email label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin-bottom:10px;}
+  .email-row{display:flex;gap:9px;}
+  .email input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--ink);font-family:var(--body);font-size:15px;}
+  .email input::placeholder{color:var(--ink-faint);}
+  .email input:focus{outline:none;border-color:var(--gold);}
+  .email .btn{padding:12px 18px;font-size:15px;}
+  .email .note{font-size:12px;color:var(--ink-faint);margin-top:9px;}
+
+  /* review (reused verbatim from the exam renderer) */
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+
+  /* offscreen canvas host for the share card */
+  .sharehost{position:fixed;left:-99999px;top:0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Readiness Quiz</span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+<div class="sharehost"><canvas id="shareCanvas" width="1080" height="1080"></canvas></div>
+
+<script>
+/* =====================================================================
+   READINESS PAYLOAD - BEGIN
+   The only section you edit per cert: the R config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+
+   Sourced from the Databricks Machine Learning Associate exam guide
+   (1 Mar 2025 edition) and Databricks documentation. R.domains carries the
+   4 official exam sections directly: unlike the DE courses, the four
+   sections divide cleanly into a 12-question quiz with at least 2
+   questions each, so no re-clustering is needed. prescribe / href are
+   drawn from curriculum-index-databricks-ml-associate (4 units, 38
+   chapters).
+===================================================================== */
+const R = {
+  cert:   "Databricks Machine Learning Associate",
+  code:   "Databricks ML Associate",
+  badge:  "Databricks Machine Learning · Associate",
+  intro:  "Twelve scenario questions across all four exam sections. No timer, no signup. At the end you get a per-section readiness readout and exactly what to study next.",
+  courseUrl: "../databricks-machine-learning-associate/index.html",   /* free course home */
+
+  /* The 4 official sections, in exam order. The guide publishes NO section
+     percentages, but it lists exactly 48 objectives against 48 scored
+     questions, so weight here is the objective share rounded to whole
+     points (18/9/15/6 of 48 = 38/19/31/12) and reads as expected question
+     share, not as an official published weighting. count sums to 12 and
+     tracks those shares (4/2/4/2). accent = ramp token. prescribe + href
+     from curriculum-index-databricks-ml-associate; each href deep links to
+     the section's unit. */
+  domains: [
+    { id:"s1", name:"Databricks Machine Learning", weight:38, count:4, accent:"var(--acc-1)",
+      prescribe:"Unit 1 (Ch 1-11, 31-32): AutoML, feature tables in Unity Catalog, online vs offline features, MLflow tracking and models, the Unity Catalog model registry, and MLOps strategy.",
+      href:"../databricks-machine-learning-associate/index.html#unit-1" },
+    { id:"s2", name:"Data Processing", weight:19, count:2, accent:"var(--acc-2)",
+      prescribe:"Unit 2 (Ch 12-17, 33-35): exploratory analysis, outliers, missing values, categorical encoding, splits, evaluation metrics, and feature visualization.",
+      href:"../databricks-machine-learning-associate/index.html#unit-2" },
+    { id:"s3", name:"Model Development", weight:31, count:4, accent:"var(--acc-3)",
+      prescribe:"Unit 3 (Ch 18-26, 36-38): Spark ML pipelines, Hyperopt and search strategies, SparkTrials, cross-validation, the pandas API on Spark, pandas UDFs, class imbalance, and bias-variance.",
+      href:"../databricks-machine-learning-associate/index.html#unit-3" },
+    { id:"s4", name:"Model Deployment", weight:12, count:2, accent:"var(--acc-4)",
+      prescribe:"Unit 4 (Ch 27-30): deployment paradigms, batch inference, streaming inference, and real-time Model Serving endpoints.",
+      href:"../databricks-machine-learning-associate/index.html#unit-4" }
+  ],
+
+  /* Verdict bands on raw correct count out of 12 (not weighted). Descending
+     by min; the first whose min is met wins. */
+  bands: [
+    { min:10, key:"ready",      label:"Exam-ready",       note:"You are scoring where passing candidates score. Tighten your weakest section below, then book it." },
+    { min:7,  key:"close",      label:"Close: 1-2 weeks", note:"A focused week or two on the sections flagged below should get you over the line." },
+    { min:4,  key:"foundation", label:"Foundation needed",note:"The core is forming but has gaps. Work the flagged units in order before drilling practice exams." },
+    { min:0,  key:"start",      label:"Start from Unit 1", note:"Best to build from the ground up across the 38-chapter course. The full free course is the fastest path." }
+  ]
+};
+
+const QUESTIONS = [
+  /* ---------- Section 1: Databricks Machine Learning (4) ---------- */
+
+  /* Q1 - What AutoML actually produces (Ch 3, 4) */
+  {
+    domain:"s1",
+    q:`A team has a labelled table and two days to show whether the problem is learnable at all. They also need to hand the eventual model to engineers who will keep tuning it by hand. What does running AutoML give them?`,
+    opts:[
+      "A deployed serving endpoint that they can call immediately",
+      "A single black-box model whose training code is not available",
+      "A leaderboard of trials plus an editable generated notebook for each one, including the best trial",
+      "A cleaned feature table with no model attached"
+    ],
+    correct:2,
+    explain:`AutoML trains and evaluates a set of trials, ranks them in an MLflow experiment, and generates a real source notebook for each trial, so the team gets both a fast baseline and editable code the engineers can carry forward. The black-box framing (the trap) is what AutoML is specifically designed not to be: it is a glass-box tool, and the generated notebooks are the handoff artifact.`
+  },
+
+  /* Q2 - Online vs offline feature tables (Ch 7) */
+  {
+    domain:"s1",
+    q:`A fraud model is served behind a Model Serving endpoint and must look up per-account features within a few milliseconds of each request. The same features are also used for nightly training runs. What should back the serving path?`,
+    opts:[
+      "An online feature store table synced from the offline table",
+      "The offline Delta feature table, queried directly at request time",
+      "A cached pandas DataFrame loaded into the endpoint at startup",
+      "A materialized view over the offline feature table"
+    ],
+    correct:0,
+    explain:`Online tables are built for low-latency single-row lookups at serving time and stay in sync with the offline table, so training and serving read the same feature definitions without the endpoint paying a Delta scan per request. Querying the offline Delta table directly (the trap) is correct for the nightly training job, where throughput matters and latency does not, but a table scan cannot meet a millisecond budget per request.`
+  },
+
+  /* Q3 - Promoting a challenger with aliases in the Unity Catalog registry (Ch 10) */
+  {
+    domain:"s1",
+    q:`A newly trained model version has beaten the current production version in offline evaluation. Downstream batch and serving code should start using it without any of those consumers being edited. What is the intended mechanism in the Unity Catalog model registry?`,
+    opts:[
+      "Transition the new version to the Production stage",
+      "Delete the old version so the newest version is used by default",
+      "Copy the new version into a separate production model name",
+      "Move the champion alias from the old version to the new one"
+    ],
+    correct:3,
+    explain:`In the Unity Catalog registry, consumers reference a model by alias rather than by version number, so repointing the champion alias at the new version switches every downstream reader at once and makes rollback a second alias move. Stage transitions (the trap) are the workspace registry's older mechanism and are not how Models in Unity Catalog work, and deleting the old version destroys the rollback path.`
+  },
+
+  /* Q4 - Promoting code vs promoting models (Ch 32) */
+  {
+    domain:"s1",
+    q:`Production data lives in a governed catalog that the dev workspace cannot read, and the model must be retrained weekly on the freshest production data. Which promotion strategy fits?`,
+    opts:[
+      "Promote the model: train in dev and register the resulting artifact into production",
+      "Promote the code: move the reviewed training pipeline into production and train there on production data",
+      "Export the production data into dev on a weekly schedule and train there",
+      "Train in dev on a sample, then fine-tune the registered model in production"
+    ],
+    correct:1,
+    explain:`When the training data cannot leave production, you promote the code: the reviewed training pipeline is deployed to the production environment and runs there, so retraining always sees the freshest governed data and the artifact is born in the environment that serves it. Promoting the model (the trap) is the right call when dev can legitimately access representative training data, but here it would force the exact data movement the governance boundary forbids.`
+  },
+
+  /* ---------- Section 2: Data Processing (2) ---------- */
+
+  /* Q5 - Imputation and leakage across splits (Ch 14, 16) */
+  {
+    domain:"s2",
+    q:`A numeric feature has missing values, and the plan is to impute them with the column median before splitting into train and test sets. Why is this a problem, and what should be done instead?`,
+    opts:[
+      "Imputing before the split lets test-set values inform the fill value, so compute the median on the training split and apply it to the test split",
+      "It is not a problem: the median is a summary statistic, so it cannot leak",
+      "Median imputation is invalid for numeric features, so mean imputation should be used instead",
+      "Rows with missing values should always be dropped rather than imputed"
+    ],
+    correct:0,
+    explain:`A median computed over the full dataset is partly derived from the test rows, so imputing before the split leaks test information into training and makes the held-out score optimistic. Fitting the imputation on the training split and applying that stored value to the test split, which is what an Imputer inside a Spark ML Pipeline does, keeps the evaluation honest; treating the median as a harmless statistic is the trap, because leakage is about which rows the value came from, not how simple the value is.`
+  },
+
+  /* Q6 - Choosing an evaluation metric under class imbalance (Ch 17, 37) */
+  {
+    domain:"s2",
+    q:`A binary classifier predicts equipment failure, which occurs in about 0.5% of records. A model that predicts "no failure" for every row scores 99.5% accuracy. Which evaluation approach reflects what the business actually needs?`,
+    opts:[
+      "Accuracy, since the score is already very high",
+      "Root mean squared error on the predicted probabilities",
+      "Precision and recall on the failure class, summarized by F1 or the area under the precision-recall curve",
+      "The R-squared of the fitted model"
+    ],
+    correct:2,
+    explain:`Under heavy imbalance the metric has to be measured on the minority class, so precision and recall on failures, summarized with F1 or the area under the precision-recall curve, expose that the all-negative model catches nothing. Accuracy (the trap) is dominated by the 99.5% majority class and rewards exactly the useless model, and RMSE and R-squared are regression metrics that do not describe a classification decision at all.`
+  },
+
+  /* ---------- Section 3: Model Development (4) ---------- */
+
+  /* Q7 - Fitting encoders inside a Spark ML Pipeline (Ch 15, 18, 19) */
+  {
+    domain:"s3",
+    q:`A workflow one-hot encodes a categorical column, then trains a model, and the same steps must be reproduced exactly at inference time. How should the encoding be expressed in Spark ML?`,
+    opts:[
+      "Encode the column in a separate preprocessing job and save the encoded table",
+      "Put StringIndexer and OneHotEncoder in a Pipeline with the estimator, and fit the Pipeline on the training data",
+      "Apply the encoder to the full dataset before splitting so both splits share the same mapping",
+      "Encode with a pandas UDF applied at both training and inference"
+    ],
+    correct:1,
+    explain:`A Pipeline chains the transformers and the estimator into one object: fitting it learns the category mapping from the training data, and the resulting PipelineModel replays those exact steps at inference, so training and serving cannot drift apart. Encoding the full dataset before the split (the trap) does produce a consistent mapping, but it derives that mapping partly from held-out rows and still leaves the inference path to be rebuilt by hand.`
+  },
+
+  /* Q8 - Counting models across a grid and cross-validation (Ch 24) */
+  {
+    domain:"s3",
+    q:`A grid search tunes two hyperparameters, one with 3 candidate values and one with 4, evaluated with 5-fold cross-validation. How many models are trained during the search itself?`,
+    opts:[
+      "12",
+      "17",
+      "35",
+      "60"
+    ],
+    correct:3,
+    explain:`Grid search evaluates every combination, so 3 times 4 is 12 candidate configurations, and 5-fold cross-validation trains a model per fold for each one, giving 12 times 5 or 60 models during the search. Answering 12 (the trap) counts the configurations and forgets that each is fit once per fold, which is the whole cost of cross-validating a grid.`
+  },
+
+  /* Q9 - Search strategies: grid vs random vs Bayesian (Ch 20, 21) */
+  {
+    domain:"s3",
+    q:`Tuning has six hyperparameters, two of them continuous, and the compute budget allows roughly 60 trials. Which search strategy makes the best use of that budget?`,
+    opts:[
+      "Exhaustive grid search over a coarse grid of all six",
+      "Manual tuning, changing one hyperparameter at a time",
+      "Bayesian search with Hyperopt, which uses earlier trial results to choose the next configuration",
+      "Random search with the budget spent uniformly at random"
+    ],
+    correct:2,
+    explain:`Bayesian search builds a model of the objective from the trials already run and spends each remaining trial where improvement looks most likely, which is what makes 60 evaluations go furthest across six dimensions including continuous ones. Random search (the trap) beats grid search in high dimensions and is a reasonable fallback, but it learns nothing from completed trials, so with a fixed small budget it explores where Bayesian search would already have narrowed in.`
+  },
+
+  /* Q10 - SparkTrials and when it does not apply (Ch 22) */
+  {
+    domain:"s3",
+    q:`A single-node scikit-learn model is being tuned with Hyperopt on a cluster, and the trials currently run one after another on the driver. What change parallelizes the search, and where does that technique stop applying?`,
+    opts:[
+      "Pass SparkTrials to fmin so trials are distributed across the workers; it does not apply to models that are themselves distributed, such as Spark ML models",
+      "Pass SparkTrials to fmin; it applies to any model type, including Spark ML",
+      "Increase max_evals, which causes Hyperopt to parallelize automatically",
+      "Convert the training data to a Spark DataFrame, which distributes the scikit-learn fit"
+    ],
+    correct:0,
+    explain:`SparkTrials hands each Hyperopt trial to a different worker, which parallelizes tuning for single-node libraries like scikit-learn, and the boundary is that a Spark ML model already spreads a single fit across the cluster, so it uses the default Trials class instead. Claiming SparkTrials works for every model type (the trap) misses that limit and would have the cluster try to distribute trials of an already-distributed fit.`
+  },
+
+  /* ---------- Section 4: Model Deployment (2) ---------- */
+
+  /* Q11 - Choosing a deployment paradigm (Ch 27, 30) */
+  {
+    domain:"s4",
+    q:`A recommendation model must return predictions inside the page load when a user opens a product page, with a budget in the tens of milliseconds and traffic that spikes unpredictably. Which deployment paradigm fits?`,
+    opts:[
+      "Batch inference that precomputes recommendations for every user nightly",
+      "A real-time Model Serving endpoint that scales with request volume",
+      "Streaming inference with a Lakeflow Spark Declarative Pipeline writing to a results table",
+      "Batch inference every fifteen minutes into a lookup table"
+    ],
+    correct:1,
+    explain:`A synchronous request that must be answered inside a page load is the definition of the real-time case, and a Model Serving endpoint provides a REST interface with autoscaling for the unpredictable spikes. Streaming inference (the trap) sounds like the low-latency option but is asynchronous: it scores records continuously into a table, in seconds rather than tens of milliseconds, and nothing is waiting on the other end of an HTTP call.`
+  },
+
+  /* Q12 - Batch inference at scale (Ch 28) */
+  {
+    domain:"s4",
+    q:`A logged MLflow model must score a 900 million row Delta table every night, and the current job collects the table to the driver as a pandas DataFrame and calls predict. What should the job do instead?`,
+    opts:[
+      "Increase the driver instance size until the DataFrame fits in memory",
+      "Split the table into chunks and loop over them on the driver",
+      "Deploy the model to a serving endpoint and call it once per row",
+      "Load the model as a Spark UDF with mlflow.pyfunc.spark_udf and apply it to the Spark DataFrame"
+    ],
+    correct:3,
+    explain:`mlflow.pyfunc.spark_udf wraps the logged model as a Spark UDF, so the model is broadcast to the executors and the 900 million rows are scored in parallel across the cluster with the results written straight back to Delta. Scaling up the driver (the trap) treats a distribution problem as a memory problem: the cluster's workers still sit idle, and the job stays bounded by one machine.`
+  }
+];
+/* =====================================================================
+   READINESS PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+
+/* Email-capture endpoint. Stub: leave empty to hide the field entirely.
+   TODO: set to the capture endpoint URL when the backend exists. */
+const EMAIL_ENDPOINT = "";
+
+const TOTAL = QUESTIONS.length;
+
+let state = { screen:"intro", i:0, answers:Array(TOTAL).fill(null), busy:false };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const topLbl = document.getElementById("topLbl");
+
+document.title = `Readiness Quiz · ${R.cert}`;
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/TOTAL*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = "Readiness Quiz";
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${R.badge}</div>
+      <h1>Are you ready for the ${R.code}?</h1>
+      <p>${R.intro}</p>
+      <div class="facts">
+        <div class="fact"><b>${TOTAL}</b><span>questions</span></div>
+        <div class="fact"><b>${R.domains.length}</b><span>domains</span></div>
+        <div class="fact"><b>~8</b><span>minutes</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No timer, no signup. Your per-domain readout and what to study next come at the end.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start &rarr;</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; state.i=0; render(); setProgress(); };
+  setProgress();
+}
+
+/* ---------- linear question flow with slide transition ---------- */
+function renderTest(){
+  root.innerHTML = `<div class="qstage"><div class="qcard" id="qcard"></div></div>`;
+  paintQuestion();
+}
+
+function questionHTML(i){
+  const Q = QUESTIONS[i];
+  return `
+    <div class="qhead">
+      <button class="qback ${i===0?'hide':''}" id="backBtn" aria-label="Back">&larr;</button>
+      <span class="qnum">QUESTION ${i+1} OF ${TOTAL}</span>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>`;
+}
+
+function wireQuestion(i){
+  const card = document.getElementById("qcard");
+  card.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=> selectAnswer(i, Number(el.dataset.j), el);
+  });
+  const back = document.getElementById("backBtn");
+  if(back) back.onclick = ()=> goBack(i);
+}
+
+function paintQuestion(){
+  const i = state.i;
+  topLbl.textContent = `Question ${i+1} / ${TOTAL}`;
+  const card = document.getElementById("qcard");
+  card.className = "qcard";
+  card.innerHTML = questionHTML(i);
+  wireQuestion(i);
+  setProgress();
+}
+
+function selectAnswer(i, j, el){
+  if(state.busy) return;
+  state.answers[i] = j;
+  const card = document.getElementById("qcard");
+  card.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  setProgress();
+  state.busy = true;
+  /* brief beat so the selection registers, then slide out */
+  setTimeout(()=>{
+    card.classList.add("out-left");
+    setTimeout(()=>{
+      if(i === TOTAL-1){ finish(); return; }
+      state.i = i+1;
+      slideIn("in-right");
+    }, 300);
+  }, 250);
+}
+
+function goBack(i){
+  if(state.busy || i===0) return;
+  state.busy = true;
+  const card = document.getElementById("qcard");
+  card.classList.add("out-right");
+  setTimeout(()=>{
+    state.i = i-1;
+    slideIn("in-left");
+  }, 300);
+}
+
+function slideIn(fromClass){
+  const i = state.i;
+  topLbl.textContent = `Question ${i+1} / ${TOTAL}`;
+  const card = document.getElementById("qcard");
+  card.className = "qcard " + fromClass;
+  card.innerHTML = questionHTML(i);
+  wireQuestion(i);
+  setProgress();
+  /* force reflow so the incoming offset is applied before we clear it */
+  void card.offsetWidth;
+  requestAnimationFrame(()=>{
+    card.className = "qcard";
+    setTimeout(()=>{ state.busy = false; }, 320);
+  });
+}
+
+function finish(){
+  state.screen = "results";
+  render();
+  setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- scoring ---------- */
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function domainScores(){
+  return R.domains.map(d=>{
+    let correct=0, count=0;
+    QUESTIONS.forEach((Q,idx)=>{
+      if(Q.domain===d.id){ count++; if(state.answers[idx]===Q.correct) correct++; }
+    });
+    return { d, correct, count, frac: count? correct/count : 0 };
+  });
+}
+
+function bandFor(c){
+  /* R.bands descend by min; first whose min is met wins. Raw count, not weighted. */
+  return R.bands.find(b=> c>=b.min) || R.bands[R.bands.length-1];
+}
+
+/* ---------- results ---------- */
+function renderResults(){
+  topLbl.textContent = "Your readiness";
+  state.busy = false;
+  const c = score(), pct = Math.round(c/TOTAL*100);
+  const band = bandFor(c);
+  const ds = domainScores();
+  const RAD = 66, CIRC = 2*Math.PI*RAD, off = CIRC*(1-pct/100);
+
+  /* prescriptions: any domain below full marks, weakest first
+     (lowest fraction, tie-broken by higher exam weight). */
+  const weak = ds.filter(x=> x.correct < x.count)
+                 .sort((a,b)=> (a.frac-b.frac) || (b.d.weight-a.d.weight));
+
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle class="tr" cx="75" cy="75" r="${RAD}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="75" cy="75" r="${RAD}" fill="none" stroke-width="9" stroke="var(--gold)" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b id="pctNum">0%</b><em>ready</em><span>${c} / ${TOTAL} correct</span></div>
+      </div>
+
+      <div class="verdict-band" id="verdictBand">
+        <h2>${band.label}</h2>
+        <p>${band.note}</p>
+      </div>
+    </div>
+
+    <div class="dbreak">
+      <div class="sec-head">By domain</div>
+      <div class="sec-sub">Your score in each domain against how much it weighs on the exam (the tick).</div>
+      ${ds.map((x,idx)=>{
+        const w = x.frac*100;
+        return `<div class="drow">
+          <div class="dtop">
+            <span class="dname">${x.d.name}</span>
+            <span class="dscore">${x.correct}/${x.count}</span>
+          </div>
+          <div class="dtrack">
+            <div class="dfill" data-w="${w}" style="background:${x.d.accent};transition-delay:${(0.6+idx*0.09).toFixed(2)}s"></div>
+            <div class="dmark" style="left:${x.d.weight}%"></div>
+          </div>
+          <div class="dweight">${x.d.weight}% of exam</div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    ${weak.length ? `<div class="presc">
+      <div class="sec-head">What to study next</div>
+      <div class="sec-sub">Weakest domain first. Each links straight into the free course.</div>
+      ${weak.map(x=>`
+        <a class="presc-card" href="${x.d.href}">
+          <span class="pc-dot" style="background:${x.d.accent}"></span>
+          <span class="pc-body">
+            <span class="pc-dom">${x.d.name} &middot; ${x.correct}/${x.count}</span>
+            <span class="pc-line">${x.d.prescribe}</span>
+          </span>
+          <span class="pc-go">&rarr;</span>
+        </a>`).join("")}
+    </div>` : `<div class="presc">
+      <div class="sec-head">Full marks across every domain</div>
+      <div class="sec-sub">Nothing flagged. Drill a timed practice exam to confirm, then book it.</div>
+    </div>`}
+
+    <div class="res-actions">
+      <button class="btn" id="shareBtn">Share result</button>
+      <button class="btn sec" id="reviewBtn">Review answers</button>
+      <button class="btn sec" id="retakeBtn">Retake</button>
+    </div>
+
+    ${EMAIL_ENDPOINT ? `<form class="email" id="emailForm">
+      <label>Email me my results and a study plan</label>
+      <div class="email-row">
+        <input type="email" id="emailInput" required placeholder="you@example.com" autocomplete="email">
+        <button class="btn" type="submit">Send</button>
+      </div>
+      <div class="note" id="emailNote">One email with your readout and a suggested study order. No spam.</div>
+    </form>` : ``}
+
+    <div id="review"></div>`;
+
+  /* mount animation: ring fill + count-up + verdict + staggered bars */
+  requestAnimationFrame(()=>{
+    const fl = root.querySelector(".fl");
+    if(fl) fl.style.strokeDashoffset = off.toFixed(1);
+    const vb = document.getElementById("verdictBand");
+    if(vb) vb.classList.add("show");
+    root.querySelectorAll(".dfill").forEach(el=>{ el.style.width = el.dataset.w + "%"; });
+    countUp(document.getElementById("pctNum"), pct, 1000);
+  });
+
+  document.getElementById("shareBtn").onclick = shareResult;
+  document.getElementById("retakeBtn").onclick = retake;
+  document.getElementById("reviewBtn").onclick = ()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+  const ef = document.getElementById("emailForm");
+  if(ef) ef.onsubmit = submitEmail;
+}
+
+function countUp(el, target, ms){
+  if(!el) return;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now-start)/ms);
+    const eased = 1 - Math.pow(1-t, 3);
+    el.textContent = Math.round(eased*target) + "%";
+    if(t<1) requestAnimationFrame(frame);
+    else el.textContent = target + "%";
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- review (reused verbatim from the exam renderer) ---------- */
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  &middot;  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake quiz</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+/* ---------- email capture (stub) ---------- */
+function submitEmail(e){
+  e.preventDefault();
+  if(!EMAIL_ENDPOINT) return;
+  const input = document.getElementById("emailInput");
+  const note = document.getElementById("emailNote");
+  const payload = { email: input.value, code: R.code, correct: score(), total: TOTAL, answers: state.answers };
+  fetch(EMAIL_ENDPOINT, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  }).then(()=>{ if(note) note.textContent = "Sent. Check your inbox for your readout."; })
+    .catch(()=>{ if(note) note.textContent = "Could not send just now. Try again in a moment."; });
+}
+
+/* ---------- share card (Canvas, 1080x1080) ---------- */
+function resolveColor(v){
+  v = (v||"").trim();
+  const m = v.match(/^var\((--[a-z0-9-]+)\)$/i);
+  if(m){
+    const c = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+    return c || "#6ea8fe";
+  }
+  return v || "#6ea8fe";
+}
+
+function rr(ctx, x, y, w, h, r){
+  r = Math.min(r, h/2, w/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function drawShareCard(){
+  const cv = document.getElementById("shareCanvas");
+  const ctx = cv.getContext("2d");
+  const W = 1080, H = 1080, M = 88;
+
+  /* Visual Brain palette (marketing artifact, brand-governed) */
+  const GROUND = "#14161c", CREAM = "#e9e6dd", MUTED = "#8b90a0", FAINT = "#62647a";
+  const PANEL = "#1b1e26", GOLD = "#d9a441";
+
+  const c = score(), pct = Math.round(c/TOTAL*100);
+  const ds = domainScores();
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = GROUND; ctx.fillRect(0,0,W,H);
+  ctx.textBaseline = "alphabetic";
+
+  /* eyebrow */
+  ctx.fillStyle = FAINT;
+  ctx.font = '700 26px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText("CERTIFY  ·  READINESS", M, 168);
+
+  /* big figure */
+  ctx.fillStyle = GOLD;
+  ctx.font = '600 210px "Fraunces", Georgia, serif';
+  const figure = pct + "%";
+  ctx.fillText(figure, M-4, 440);
+  const figW = ctx.measureText(figure).width;
+  ctx.fillStyle = CREAM;
+  ctx.font = '500 62px "Fraunces", Georgia, serif';
+  ctx.fillText("ready", M + figW + 26, 440);
+
+  /* cert code */
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText(R.code + "  ·  " + c + " / " + TOTAL + " correct", M, 512);
+
+  /* domain mini-bars, scaled so N rows always sit above the brand mark */
+  const barX = M, barW = W - M*2;
+  const bandTop = 630, bandBottom = 918;
+  const rowH = ds.length > 1 ? Math.min(92, (bandBottom - bandTop) / (ds.length - 1)) : 0;
+  let y = bandTop;
+  ds.forEach(x=>{
+    const acc = resolveColor(x.d.accent);
+    ctx.fillStyle = CREAM;
+    ctx.font = '600 27px "Hanken Grotesk", system-ui, sans-serif';
+    const name = x.d.name.length > 34 ? x.d.name.slice(0,33)+"…" : x.d.name;
+    ctx.fillText(name, barX, y);
+    ctx.fillStyle = MUTED;
+    ctx.textAlign = "right";
+    ctx.fillText(x.correct + "/" + x.count, barX + barW, y);
+    ctx.textAlign = "left";
+    /* track */
+    ctx.fillStyle = PANEL;
+    rr(ctx, barX, y+18, barW, 16, 8); ctx.fill();
+    /* fill */
+    const fw = Math.max(16, barW * x.frac);
+    ctx.fillStyle = acc;
+    rr(ctx, barX, y+18, fw, 16, 8); ctx.fill();
+    y += rowH;
+  });
+
+  /* brand mark: gold check + wordmark, bottom-left */
+  const markY = 1004;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 7;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(M, markY-9);
+  ctx.lineTo(M+13, markY+6);
+  ctx.lineTo(M+38, markY-24);
+  ctx.stroke();
+  ctx.fillStyle = CREAM;
+  ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText("certify.courses", M+56, markY+2);
+
+  return cv;
+}
+
+function shareResult(){
+  const btn = document.getElementById("shareBtn");
+  const restore = ()=>{ if(btn){ btn.disabled=false; btn.textContent="Share result"; } };
+  if(btn){ btn.disabled=true; btn.textContent="Preparing…"; }
+
+  const fonts = [
+    '600 210px "Fraunces"',
+    '500 62px "Fraunces"',
+    '700 26px "Hanken Grotesk"',
+    '600 34px "Hanken Grotesk"'
+  ];
+  const ready = (document.fonts && document.fonts.load)
+    ? Promise.all(fonts.map(f=>document.fonts.load(f))).catch(()=>{})
+    : Promise.resolve();
+
+  ready.then(()=>{
+    const cv = drawShareCard();
+    cv.toBlob(blob=>{
+      if(!blob){ restore(); return; }
+      const c = score(), pct = Math.round(c/TOTAL*100);
+      const file = new File([blob], `readiness-${R.code}.png`, { type:"image/png" });
+      const shareData = {
+        files:[file],
+        title:`${R.code} readiness`,
+        text:`I'm ${pct}% ready for the ${R.code}. Check yours at certify.courses.`
+      };
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        navigator.share(shareData).catch(()=>{}).finally(restore);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `readiness-${R.code}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        restore();
+      }
+    }, "image/png");
+  });
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(TOTAL).fill(null), busy:false };
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>

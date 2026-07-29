@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Title is set from R.cert at runtime; this is only a fallback -->
+<title>Readiness Quiz · Certify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     READINESS SHELL - frozen. Do not edit anything in this style block.
+     All per-cert customization lives in the READINESS PAYLOAD script
+     section (the R config object and the QUESTIONS array).
+
+     The :root token block below is the exam engine's palette, kept
+     identical on purpose: the readiness quiz is assessment-family and
+     must read as a sibling of the practice exams. The domain-accent ramp
+     is the ONLY added color, and it is used solely in the result-screen
+     breakdown and the share card.
+  ===================================================================== */
+  :root{
+    --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
+    --ink-soft:#a7a59f; --ink-faint:#6b6a66; --gold:#e3b84a; --green:#34d3a6; --red:#e8625c;
+    --line:rgba(255,255,255,0.08);
+    --display:"Fraunces",Georgia,serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  /* Domain-accent ramp. Result breakdown + share card only. These avoid
+     the reserved trio: --green and --red (review correctness) and --gold
+     (brand mark), so a domain bar never reads as right/wrong or as brand. */
+  :root{
+    --acc-1:#6ea8fe;  /* blue       */
+    --acc-2:#a78bfa;  /* violet     */
+    --acc-3:#4dd0e1;  /* cyan       */
+    --acc-4:#f4a259;  /* orange     */
+    --acc-5:#f6a5c0;  /* pink       */
+    --acc-6:#b3c1ff;  /* periwinkle */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.5;}
+  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+
+  /* sticky top */
+  .top{position:sticky;top:0;z-index:10;background:rgba(11,13,18,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .top .lbl{font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
+  .pbar{height:3px;background:rgba(255,255,255,0.1);}
+  .pbar i{display:block;height:100%;background:var(--gold);width:0;transition:width .35s ease;}
+
+  .body-wrap{flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;}
+
+  /* intro */
+  .intro{text-align:center;margin:auto 0;padding:30px 0;}
+  .intro .badge{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:18px;}
+  .intro h1{font-family:var(--display);font-weight:600;font-size:34px;line-height:1.06;letter-spacing:-0.02em;margin-bottom:16px;}
+  .intro p{color:var(--ink-soft);font-size:15.5px;max-width:30em;margin:0 auto 14px;}
+  .facts{display:flex;justify-content:center;gap:0;margin:24px 0 28px;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .fact{flex:1;padding:16px 10px;}
+  .fact+.fact{border-left:1px solid var(--line);}
+  .fact b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);}
+  .fact span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:15px 30px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s ease;font-family:var(--body);}
+  .btn:active{transform:scale(.97);}
+  .btn.sec{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.35;pointer-events:none;}
+
+  /* question flow (linear, auto-advance, lesson-style slide) */
+  .qstage{position:relative;flex:1;overflow:hidden;}
+  .qcard{opacity:1;transform:translateX(0);transition:opacity .3s ease,transform .3s cubic-bezier(.2,.7,.2,1);}
+  .qcard.out-left{opacity:0;transform:translateX(-42px);}
+  .qcard.out-right{opacity:0;transform:translateX(42px);}
+  .qcard.in-right{opacity:0;transform:translateX(42px);}
+  .qcard.in-left{opacity:0;transform:translateX(-42px);}
+
+  .qhead{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .qback{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:transparent;border:1px solid var(--line);color:var(--ink-soft);font-size:17px;cursor:pointer;transition:.15s;font-family:var(--body);flex:0 0 auto;}
+  .qback:hover{border-color:rgba(255,255,255,0.2);color:var(--ink);}
+  .qback.hide{visibility:hidden;}
+  .qnum{font-size:13px;font-weight:700;color:var(--ink-faint);letter-spacing:0.04em;}
+  .qtext{font-size:18px;line-height:1.5;font-weight:500;margin-bottom:20px;}
+  .qtext code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;}
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{display:flex;gap:13px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;cursor:pointer;font-family:var(--body);font-size:15px;color:var(--ink);line-height:1.4;transition:border-color .15s,background .15s;width:100%;}
+  .opt:hover{border-color:rgba(255,255,255,0.2);}
+  .opt.sel{border-color:var(--gold);background:rgba(227,184,74,0.08);}
+  .opt .key{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);}
+  .opt.sel .key{background:var(--gold);color:#14110c;}
+
+  /* review states */
+  .opt.correct{border-color:var(--green);background:rgba(52,211,166,0.1);}
+  .opt.correct .key{background:var(--green);color:#072018;}
+  .opt.incorrect{border-color:var(--red);background:rgba(232,98,92,0.1);}
+  .opt.incorrect .key{background:var(--red);color:#2a0a08;}
+  .explain{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--ink-soft);}
+  .explain b{color:var(--ink);}
+
+  /* results */
+  .res{text-align:center;padding:14px 0 10px;}
+  .scorering{position:relative;width:150px;height:150px;margin:6px auto 6px;}
+  .scorering svg{transform:rotate(-90deg);}
+  .scorering .tr{stroke:rgba(255,255,255,0.1);}
+  .scorering .fl{stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .scorering .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .scorering .ctr b{font-family:var(--display);font-size:40px;font-weight:600;line-height:1;}
+  .scorering .ctr em{font-style:normal;font-size:13px;color:var(--gold);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:5px;}
+  .scorering .ctr span{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+
+  /* verdict band */
+  .verdict-band{margin:16px auto 4px;max-width:30em;opacity:0;transform:translateY(10px);transition:opacity .25s ease,transform .25s ease;transition-delay:.55s;}
+  .verdict-band.show{opacity:1;transform:none;}
+  .verdict-band h2{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.1;margin-bottom:6px;}
+  .verdict-band p{color:var(--ink-soft);font-size:14.5px;line-height:1.5;margin:0 auto;}
+
+  /* per-domain breakdown */
+  .dbreak{margin:30px 0 6px;text-align:left;}
+  .sec-head{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:4px;}
+  .sec-sub{font-size:12.5px;color:var(--ink-faint);margin-bottom:16px;}
+  .drow{margin-bottom:16px;}
+  .drow .dtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;gap:10px;}
+  .drow .dname{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .drow .dscore{font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;flex:0 0 auto;}
+  .dtrack{position:relative;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
+  .dfill{height:100%;width:0;border-radius:6px;transition:width .7s cubic-bezier(.2,.7,.2,1);}
+  .dmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.5);border-radius:2px;}
+  .dweight{font-size:11px;color:var(--ink-faint);margin-top:5px;}
+
+  /* prescriptions */
+  .presc{margin:26px 0 6px;text-align:left;}
+  .presc-card{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;}
+  .presc-card:hover{border-color:rgba(255,255,255,0.2);background:var(--surface-2);}
+  .presc-card .pc-dot{flex:0 0 auto;width:10px;height:10px;border-radius:50%;}
+  .presc-card .pc-body{flex:1;}
+  .presc-card .pc-dom{display:block;font-size:12px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .presc-card .pc-line{display:block;font-size:14px;line-height:1.4;color:var(--ink);}
+  .presc-card .pc-go{flex:0 0 auto;color:var(--ink-faint);font-size:18px;}
+
+  /* actions */
+  .res-actions{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+  .res-actions .btn{flex:1;min-width:44%;}
+
+  /* email capture (opt-in, appears after results; hidden when unset) */
+  .email{margin:26px 0 4px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px;}
+  .email label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin-bottom:10px;}
+  .email-row{display:flex;gap:9px;}
+  .email input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--ink);font-family:var(--body);font-size:15px;}
+  .email input::placeholder{color:var(--ink-faint);}
+  .email input:focus{outline:none;border-color:var(--gold);}
+  .email .btn{padding:12px 18px;font-size:15px;}
+  .email .note{font-size:12px;color:var(--ink-faint);margin-top:9px;}
+
+  /* review (reused verbatim from the exam renderer) */
+  .review-head{font-family:var(--display);font-size:18px;font-weight:600;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--line);}
+  .rev-q{margin-top:22px;}
+  .rev-q .rq{font-size:15.5px;font-weight:500;line-height:1.45;margin-bottom:12px;}
+  .rev-q .rq .mark{font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:8px;vertical-align:middle;}
+  .mark.ok{background:rgba(52,211,166,0.15);color:var(--green);}
+  .mark.no{background:rgba(232,98,92,0.15);color:var(--red);}
+
+  /* offscreen canvas host for the share card */
+  .sharehost{position:fixed;left:-99999px;top:0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="lbl" id="topLbl">Readiness Quiz</span>
+  </div>
+  <div class="pbar"><i id="pbar"></i></div>
+
+  <div class="body-wrap" id="root"></div>
+</div>
+<div class="sharehost"><canvas id="shareCanvas" width="1080" height="1080"></canvas></div>
+
+<script>
+/* =====================================================================
+   READINESS PAYLOAD - BEGIN
+   The only section you edit per cert: the R config object and the
+   QUESTIONS array. Everything below the END marker is the frozen engine.
+
+   Sourced from the Databricks Data Engineer Associate exam guide (May 4
+   2026 version, the seven-section restructure) and Databricks
+   documentation. R.domains carries 5 diagnostic clusters rather than the
+   7 exam sections: a 12-question quiz gives an honest per-cluster readout
+   only when every cluster holds at least 2 questions, and clusters are
+   the natural prescription unit. prescribe / href are drawn from the
+   course index (7 units, 35 chapters).
+===================================================================== */
+const R = {
+  cert:   "Databricks Data Engineer Associate",
+  code:   "Databricks DE Associate",
+  badge:  "Databricks Data Engineer · Associate",
+  intro:  "Twelve scenario questions across five readiness clusters that span all seven exam sections. No timer, no signup. At the end you get a per-cluster readiness readout and exactly what to study next.",
+  courseUrl: "../databricks-data-engineer-associate/index.html",   /* free course home */
+
+  /* Five diagnostic clusters. weight = summed official section weights (%):
+     Platform 10 + Governance and Quality 11, Ingestion 21, Transformation
+     and Modeling 22, Jobs 16 + CI/CD 10, Troubleshooting 10. Sums to 100.
+     count sums to 12 and tracks the weights (2/2/3/3/2), with c5 held at a
+     2-question floor: at 10% it rounds to 1, and a single question turns a
+     cluster readout into a coin flip. accent = ramp token. prescribe + href
+     point into the free course; each href deep links to the cluster's
+     lowest unit as the entry point. */
+  domains: [
+    { id:"c1", name:"Platform, Delta Lake, and Governance", weight:21, count:2, accent:"var(--acc-1)",
+      prescribe:"Units 1 and 7 (Ch 1-4, 31-35): the lakehouse, Delta Lake, Unity Catalog, compute and cost, managed vs external tables, grants, masking, and ABAC.",
+      href:"../databricks-data-engineer-associate/index.html#unit-1" },
+    { id:"c2", name:"Ingestion and Loading", weight:21, count:2, accent:"var(--acc-2)",
+      prescribe:"Unit 2 (Ch 5-10): batch, streaming, and incremental patterns, COPY INTO, Auto Loader, Lakeflow Connect, and choosing an ingestion method.",
+      href:"../databricks-data-engineer-associate/index.html#unit-2" },
+    { id:"c3", name:"Transformation and Modeling", weight:22, count:3, accent:"var(--acc-3)",
+      prescribe:"Unit 3 (Ch 11-17): bronze to silver cleaning, joins, column and row manipulation, deduplication, gold-layer objects, and data quality checks.",
+      href:"../databricks-data-engineer-associate/index.html#unit-3" },
+    { id:"c4", name:"Orchestration and CI/CD", weight:26, count:3, accent:"var(--acc-4)",
+      prescribe:"Units 4 and 5 (Ch 18-25): the job DAG, control flow and retries, trigger types, Git Folders, Asset Bundles, environment promotion, and the CLI.",
+      href:"../databricks-data-engineer-associate/index.html#unit-4" },
+    { id:"c5", name:"Monitoring, Optimization, and Troubleshooting", weight:10, count:2, accent:"var(--acc-5)",
+      prescribe:"Unit 6 (Ch 26-30): reading job health, spotting skew, shuffle, and spill in the Spark UI, Liquid Clustering, predictive optimization, and cluster failures.",
+      href:"../databricks-data-engineer-associate/index.html#unit-6" }
+  ],
+
+  /* Verdict bands on raw correct count out of 12 (not weighted). Descending
+     by min; the first whose min is met wins. */
+  bands: [
+    { min:10, key:"ready",      label:"Exam-ready",       note:"You are scoring where passing candidates score. Tighten your weakest cluster below, then book it." },
+    { min:7,  key:"close",      label:"Close: 1-2 weeks", note:"A focused week or two on the clusters flagged below should get you over the line." },
+    { min:4,  key:"foundation", label:"Foundation needed",note:"The core is forming but has gaps. Work the flagged units in order before drilling practice exams." },
+    { min:0,  key:"start",      label:"Start from Unit 1", note:"Best to build from the ground up across the 35-chapter course. The full free course is the fastest path." }
+  ]
+};
+
+const QUESTIONS = [
+  /* ---------- Cluster 1: Platform, Delta Lake, and Governance (2) ---------- */
+
+  /* Q1 - Delta Lake time travel and RESTORE (Ch 2) */
+  {
+    domain:"c1",
+    q:`A scheduled job accidentally overwrote a Delta table with a bad load an hour ago. The table has its default history retention and no separate backup. What is the fastest correct way to get the previous contents back?`,
+    opts:[
+      "Rerun the original upstream pipeline from source to rebuild the table",
+      "RESTORE the table to the version recorded before the bad write",
+      "Recover the underlying Parquet files from cloud storage versioning",
+      "Recreate the table from the last VACUUM output"
+    ],
+    correct:1,
+    explain:`Every write to a Delta table creates a new version in the transaction log, so RESTORE TABLE ... TO VERSION AS OF (or a timestamp) rolls the table back to its state before the bad write, in place and in seconds. Rebuilding from source (the trap) is the answer when history has already been vacuumed away, but here the version is still inside the retention window, and time travel is exactly what Delta keeps that log for.`
+  },
+
+  /* Q2 - Column masking vs row filters vs views (Ch 34) */
+  {
+    domain:"c1",
+    q:`Support staff must query the full customer table, including every row, but must never see raw email addresses. Engineers on the same table do need the raw values. What is the intended Unity Catalog approach?`,
+    opts:[
+      "A column mask on the email column that returns a redacted value for the support group",
+      "A row filter that removes rows containing email addresses for the support group",
+      "A separate view for support staff that omits the email column",
+      "Revoking SELECT on the table from the support group"
+    ],
+    correct:0,
+    explain:`A column mask is a function attached to a single column that rewrites the value returned per principal, so support staff see a redacted email while engineers see the raw one, both querying the same table with every row intact. A row filter (the trap) removes whole rows, which the scenario forbids, and a support-only view is the duplicate-object workaround that column masks are designed to replace.`
+  },
+
+  /* ---------- Cluster 2: Ingestion and Loading (2) ---------- */
+
+  /* Q3 - COPY INTO vs Auto Loader, the COPY INTO direction (Ch 6, 8) */
+  {
+    domain:"c2",
+    q:`A partner drops a predictable set of roughly 40 CSV files into a storage folder once a night. The load must be safe to rerun after a failure without duplicating rows, and the team wants the simplest thing that works. Which fits best?`,
+    opts:[
+      "Auto Loader in file notification mode with a checkpoint",
+      "A full batch read of the folder followed by an overwrite of the target",
+      "COPY INTO, which tracks the files it has already loaded and skips them on a rerun",
+      "A Structured Streaming job with a manually managed checkpoint"
+    ],
+    correct:2,
+    explain:`COPY INTO records which files it has ingested, so rerunning it after a failure skips the already-loaded files and stays idempotent, and at roughly 40 files a night the directory listing costs nothing. Auto Loader (the trap) is the right call at high file volumes or for continuous arrival, where incremental discovery and notification mode pay for the extra checkpoint and setup, but here it is machinery this load does not need.`
+  },
+
+  /* Q4 - Lakeflow Connect managed connectors (Ch 9, 10) */
+  {
+    domain:"c2",
+    q:`A team needs to land Salesforce objects in the lakehouse on a schedule, with incremental change capture, and does not want to own extraction code or API pagination. Which ingestion route fits?`,
+    opts:[
+      "A notebook that calls the Salesforce REST API and writes Parquet to a landing zone",
+      "COPY INTO pointed at an export the Salesforce admin uploads nightly",
+      "Auto Loader over a folder that a third-party export tool populates",
+      "A Lakeflow Connect managed connector for Salesforce"
+    ],
+    correct:3,
+    explain:`Lakeflow Connect managed connectors are built for governed SaaS and database sources: Databricks owns the extraction, incremental change capture, and scheduling, and the data lands in Unity Catalog with no pipeline code to maintain. The hand-written API notebook (the trap) is the standard-connector style answer you fall back to when no managed connector exists for the source, and here one does.`
+  },
+
+  /* ---------- Cluster 3: Transformation and Modeling (3) ---------- */
+
+  /* Q5 - Gold-layer objects: view vs materialized view vs streaming table (Ch 16) */
+  {
+    domain:"c3",
+    q:`A gold-layer aggregation over billions of rows backs an executive dashboard that is opened dozens of times a day. The source tables refresh hourly, and stale results up to an hour old are acceptable. Which object should back the dashboard?`,
+    opts:[
+      "A standard view, so every dashboard load recomputes the aggregate",
+      "A materialized view refreshed on a schedule",
+      "A streaming table appended from the source tables",
+      "A temporary view created in each dashboard session"
+    ],
+    correct:1,
+    explain:`A materialized view stores the computed result and refreshes it on a schedule, so dozens of dashboard loads read precomputed rows instead of rescanning billions, which is exactly the trade the one-hour staleness allowance buys you. A standard view (the trap) always returns fresh results but recomputes the full aggregate on every single load, so the dashboard pays the scan cost dozens of times a day for freshness nobody asked for.`
+  },
+
+  /* Q6 - Deduplication: keeping the latest record per key (Ch 14) */
+  {
+    domain:"c3",
+    q:`A bronze table holds multiple rows per customer_id because the source resends records after edits. Silver must keep exactly one row per customer_id: the one with the most recent updated_at. Which approach is correct?`,
+    opts:[
+      "dropDuplicates on customer_id",
+      "A GROUP BY customer_id with MAX(updated_at) selected alongside the other columns",
+      "A ROW_NUMBER window partitioned by customer_id and ordered by updated_at descending, keeping row number 1",
+      "DISTINCT over the whole row"
+    ],
+    correct:2,
+    explain:`A ROW_NUMBER window partitioned by the key and ordered by the timestamp ranks each customer's rows, so filtering to row number 1 keeps the single most recent record with all of its columns intact. dropDuplicates on customer_id (the trap) does collapse to one row per key, but which row survives is arbitrary, so the surviving record is not reliably the latest one.`
+  },
+
+  /* Q7 - Broadcast joins (Ch 12, with tuning from Ch 15) */
+  {
+    domain:"c3",
+    q:`A join between a 4 TB fact table and a 30 MB country lookup table is slow, and the Spark UI shows a large shuffle on both sides. What is the most effective fix?`,
+    opts:[
+      "Broadcast the small lookup table so each executor joins against a local copy and the fact table is not shuffled",
+      "Repartition both tables on the join key before the join",
+      "Increase the number of shuffle partitions",
+      "Cache the fact table before the join"
+    ],
+    correct:0,
+    explain:`Broadcasting a table small enough to fit in executor memory sends one copy to every executor, so the join happens locally and the 4 TB fact table never has to be shuffled across the network, which is where the time was going. Repartitioning on the join key (the trap) is the fix for a genuine large-to-large join, but here it forces the expensive shuffle the broadcast is meant to eliminate.`
+  },
+
+  /* ---------- Cluster 4: Orchestration and CI/CD (3) ---------- */
+
+  /* Q8 - Trigger types: file arrival vs schedule (Ch 20, 21) */
+  {
+    domain:"c4",
+    q:`An upstream vendor uploads a file to cloud storage at an unpredictable time somewhere between 01:00 and 06:00. The downstream job must run promptly after the file lands, and must not run on days when nothing is delivered. Which trigger fits?`,
+    opts:[
+      "A cron schedule at 06:00, after the latest possible arrival",
+      "A continuous trigger that keeps the job always running",
+      "A cron schedule every 15 minutes with a check that exits when no file is present",
+      "A file arrival trigger on the storage location"
+    ],
+    correct:3,
+    explain:`A file arrival trigger watches the location and starts the job when new files appear, so the run happens promptly after the actual upload and never fires on a day with no delivery. A 06:00 schedule (the trap) is the safe-looking answer, but it adds up to five hours of latency on early arrivals and still burns a run on days the vendor sends nothing.`
+  },
+
+  /* Q9 - Task retries vs full rerun (Ch 18, 19) */
+  {
+    domain:"c4",
+    q:`One task in a six-task job calls an external REST API that intermittently returns a 503, failing perhaps one run in ten. The call is safe to repeat. What is the intended way to handle this?`,
+    opts:[
+      "Wrap the whole job in an outer job that reruns it on failure",
+      "Configure retries with a retry interval on that task",
+      "Split the task into its own job on a more frequent schedule",
+      "Add a downstream task that reruns the job when it sees a failure"
+    ],
+    correct:1,
+    explain:`Task-level retries are built for exactly this case: a transient, safely repeatable failure retries in place after the configured interval, and the other five tasks are untouched. Rerunning the whole job (the trap) redoes five tasks that already succeeded to recover from a hiccup in one, which is what per-task retry policies exist to avoid.`
+  },
+
+  /* Q10 - Databricks Asset Bundles and environment promotion (Ch 23, 24) */
+  {
+    domain:"c4",
+    q:`The same pipeline must run in dev, test, and prod, identical in logic but pointing at different catalogs and cluster sizes per environment. The team wants one source-controlled definition rather than three drifting copies. What should they use?`,
+    opts:[
+      "Three jobs created in the workspace UI, one per environment",
+      "One job whose notebook branches on a widget that names the environment",
+      "A Databricks Asset Bundle with a target per environment, deployed from CI",
+      "A Git Folder checked out at a different branch in each workspace"
+    ],
+    correct:2,
+    explain:`An Asset Bundle declares the job, its tasks, and its resources in version-controlled YAML, and its targets override per environment values such as catalog and cluster size, so one definition deploys to dev, test, and prod from CI. Three UI-created jobs (the trap) look identical on day one and drift apart the first time someone patches prod without touching the others.`
+  },
+
+  /* ---------- Cluster 5: Monitoring, Optimization, and Troubleshooting (2) ---------- */
+
+  /* Q11 - Diagnosing skew in the Spark UI (Ch 27) */
+  {
+    domain:"c5",
+    q:`A stage in the Spark UI shows 199 tasks finishing in under 20 seconds while one task runs for 25 minutes and spills to disk. What does this pattern indicate?`,
+    opts:[
+      "The cluster is undersized and needs more workers",
+      "The job is bound by driver memory",
+      "Too few shuffle partitions were configured for the data volume",
+      "Data skew: one partition holds far more rows than the others"
+    ],
+    correct:3,
+    explain:`When almost every task in a stage finishes quickly and a single task runs orders of magnitude longer and spills, the work is unevenly distributed: one key or partition holds far more rows than the rest, which is the signature of skew. Adding workers (the trap) is the reflex fix for a genuinely undersized cluster, but the straggler task cannot be split across them, so the stage still waits on that one partition.`
+  },
+
+  /* Q12 - Predictive optimization vs manual maintenance (Ch 28) */
+  {
+    domain:"c5",
+    q:`A team maintains a nightly job that runs OPTIMIZE and VACUUM across dozens of Unity Catalog managed tables, and it keeps drifting out of step with which tables actually need maintenance. What is the recommended alternative?`,
+    opts:[
+      "Enable predictive optimization, which decides when to run maintenance on each managed table",
+      "Increase the frequency of the maintenance job to hourly",
+      "Partition every table so files stay small enough not to need compaction",
+      "Run OPTIMIZE inside each ingestion pipeline after every write"
+    ],
+    correct:0,
+    explain:`Predictive optimization runs maintenance operations on Unity Catalog managed tables when Databricks determines they will pay off, so the tables that need compaction get it and the tables that do not are left alone, with no hand-maintained schedule. Running the maintenance job more often (the trap) makes the drift more expensive rather than fixing it, since the problem is choosing which tables to maintain, not how frequently the job fires.`
+  }
+];
+/* =====================================================================
+   READINESS PAYLOAD - END
+===================================================================== */
+
+/* =====================================================================
+   ENGINE - frozen. Do not edit below this line.
+===================================================================== */
+
+/* Email-capture endpoint. Stub: leave empty to hide the field entirely.
+   TODO: set to the capture endpoint URL when the backend exists. */
+const EMAIL_ENDPOINT = "";
+
+const TOTAL = QUESTIONS.length;
+
+let state = { screen:"intro", i:0, answers:Array(TOTAL).fill(null), busy:false };
+
+const root = document.getElementById("root");
+const pbar = document.getElementById("pbar");
+const topLbl = document.getElementById("topLbl");
+
+document.title = `Readiness Quiz · ${R.cert}`;
+
+function setProgress(){
+  if(state.screen==="test"){
+    const answered = state.answers.filter(a=>a!==null).length;
+    pbar.style.width = (answered/TOTAL*100)+"%";
+  } else if(state.screen==="results"){ pbar.style.width="100%"; }
+  else pbar.style.width="0%";
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(state.screen==="intro") return renderIntro();
+  if(state.screen==="test") return renderTest();
+  if(state.screen==="results") return renderResults();
+}
+
+function renderIntro(){
+  topLbl.textContent = "Readiness Quiz";
+  root.innerHTML = `
+    <div class="intro">
+      <div class="badge">${R.badge}</div>
+      <h1>Are you ready for the ${R.code}?</h1>
+      <p>${R.intro}</p>
+      <div class="facts">
+        <div class="fact"><b>${TOTAL}</b><span>questions</span></div>
+        <div class="fact"><b>${R.domains.length}</b><span>domains</span></div>
+        <div class="fact"><b>~8</b><span>minutes</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint)">No timer, no signup. Your per-domain readout and what to study next come at the end.</p>
+      <div style="margin-top:24px"><button class="btn" id="startBtn">Start &rarr;</button></div>
+    </div>`;
+  document.getElementById("startBtn").onclick = ()=>{ state.screen="test"; state.i=0; render(); setProgress(); };
+  setProgress();
+}
+
+/* ---------- linear question flow with slide transition ---------- */
+function renderTest(){
+  root.innerHTML = `<div class="qstage"><div class="qcard" id="qcard"></div></div>`;
+  paintQuestion();
+}
+
+function questionHTML(i){
+  const Q = QUESTIONS[i];
+  return `
+    <div class="qhead">
+      <button class="qback ${i===0?'hide':''}" id="backBtn" aria-label="Back">&larr;</button>
+      <span class="qnum">QUESTION ${i+1} OF ${TOTAL}</span>
+    </div>
+    <div class="qtext">${Q.q}</div>
+    <div class="opts">
+      ${Q.opts.map((o,j)=>`
+        <button class="opt ${state.answers[i]===j?'sel':''}" data-j="${j}">
+          <span class="key">${"ABCD"[j]}</span><span>${o}</span>
+        </button>`).join("")}
+    </div>`;
+}
+
+function wireQuestion(i){
+  const card = document.getElementById("qcard");
+  card.querySelectorAll(".opt").forEach(el=>{
+    el.onclick = ()=> selectAnswer(i, Number(el.dataset.j), el);
+  });
+  const back = document.getElementById("backBtn");
+  if(back) back.onclick = ()=> goBack(i);
+}
+
+function paintQuestion(){
+  const i = state.i;
+  topLbl.textContent = `Question ${i+1} / ${TOTAL}`;
+  const card = document.getElementById("qcard");
+  card.className = "qcard";
+  card.innerHTML = questionHTML(i);
+  wireQuestion(i);
+  setProgress();
+}
+
+function selectAnswer(i, j, el){
+  if(state.busy) return;
+  state.answers[i] = j;
+  const card = document.getElementById("qcard");
+  card.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  setProgress();
+  state.busy = true;
+  /* brief beat so the selection registers, then slide out */
+  setTimeout(()=>{
+    card.classList.add("out-left");
+    setTimeout(()=>{
+      if(i === TOTAL-1){ finish(); return; }
+      state.i = i+1;
+      slideIn("in-right");
+    }, 300);
+  }, 250);
+}
+
+function goBack(i){
+  if(state.busy || i===0) return;
+  state.busy = true;
+  const card = document.getElementById("qcard");
+  card.classList.add("out-right");
+  setTimeout(()=>{
+    state.i = i-1;
+    slideIn("in-left");
+  }, 300);
+}
+
+function slideIn(fromClass){
+  const i = state.i;
+  topLbl.textContent = `Question ${i+1} / ${TOTAL}`;
+  const card = document.getElementById("qcard");
+  card.className = "qcard " + fromClass;
+  card.innerHTML = questionHTML(i);
+  wireQuestion(i);
+  setProgress();
+  /* force reflow so the incoming offset is applied before we clear it */
+  void card.offsetWidth;
+  requestAnimationFrame(()=>{
+    card.className = "qcard";
+    setTimeout(()=>{ state.busy = false; }, 320);
+  });
+}
+
+function finish(){
+  state.screen = "results";
+  render();
+  setProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- scoring ---------- */
+function score(){
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  return c;
+}
+
+function domainScores(){
+  return R.domains.map(d=>{
+    let correct=0, count=0;
+    QUESTIONS.forEach((Q,idx)=>{
+      if(Q.domain===d.id){ count++; if(state.answers[idx]===Q.correct) correct++; }
+    });
+    return { d, correct, count, frac: count? correct/count : 0 };
+  });
+}
+
+function bandFor(c){
+  /* R.bands descend by min; first whose min is met wins. Raw count, not weighted. */
+  return R.bands.find(b=> c>=b.min) || R.bands[R.bands.length-1];
+}
+
+/* ---------- results ---------- */
+function renderResults(){
+  topLbl.textContent = "Your readiness";
+  state.busy = false;
+  const c = score(), pct = Math.round(c/TOTAL*100);
+  const band = bandFor(c);
+  const ds = domainScores();
+  const RAD = 66, CIRC = 2*Math.PI*RAD, off = CIRC*(1-pct/100);
+
+  /* prescriptions: any domain below full marks, weakest first
+     (lowest fraction, tie-broken by higher exam weight). */
+  const weak = ds.filter(x=> x.correct < x.count)
+                 .sort((a,b)=> (a.frac-b.frac) || (b.d.weight-a.d.weight));
+
+  root.innerHTML = `
+    <div class="res">
+      <div class="scorering">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle class="tr" cx="75" cy="75" r="${RAD}" fill="none" stroke-width="9"/>
+          <circle class="fl" cx="75" cy="75" r="${RAD}" fill="none" stroke-width="9" stroke="var(--gold)" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}"/>
+        </svg>
+        <div class="ctr"><b id="pctNum">0%</b><em>ready</em><span>${c} / ${TOTAL} correct</span></div>
+      </div>
+
+      <div class="verdict-band" id="verdictBand">
+        <h2>${band.label}</h2>
+        <p>${band.note}</p>
+      </div>
+    </div>
+
+    <div class="dbreak">
+      <div class="sec-head">By domain</div>
+      <div class="sec-sub">Your score in each domain against how much it weighs on the exam (the tick).</div>
+      ${ds.map((x,idx)=>{
+        const w = x.frac*100;
+        return `<div class="drow">
+          <div class="dtop">
+            <span class="dname">${x.d.name}</span>
+            <span class="dscore">${x.correct}/${x.count}</span>
+          </div>
+          <div class="dtrack">
+            <div class="dfill" data-w="${w}" style="background:${x.d.accent};transition-delay:${(0.6+idx*0.09).toFixed(2)}s"></div>
+            <div class="dmark" style="left:${x.d.weight}%"></div>
+          </div>
+          <div class="dweight">${x.d.weight}% of exam</div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    ${weak.length ? `<div class="presc">
+      <div class="sec-head">What to study next</div>
+      <div class="sec-sub">Weakest domain first. Each links straight into the free course.</div>
+      ${weak.map(x=>`
+        <a class="presc-card" href="${x.d.href}">
+          <span class="pc-dot" style="background:${x.d.accent}"></span>
+          <span class="pc-body">
+            <span class="pc-dom">${x.d.name} &middot; ${x.correct}/${x.count}</span>
+            <span class="pc-line">${x.d.prescribe}</span>
+          </span>
+          <span class="pc-go">&rarr;</span>
+        </a>`).join("")}
+    </div>` : `<div class="presc">
+      <div class="sec-head">Full marks across every domain</div>
+      <div class="sec-sub">Nothing flagged. Drill a timed practice exam to confirm, then book it.</div>
+    </div>`}
+
+    <div class="res-actions">
+      <button class="btn" id="shareBtn">Share result</button>
+      <button class="btn sec" id="reviewBtn">Review answers</button>
+      <button class="btn sec" id="retakeBtn">Retake</button>
+    </div>
+
+    ${EMAIL_ENDPOINT ? `<form class="email" id="emailForm">
+      <label>Email me my results and a study plan</label>
+      <div class="email-row">
+        <input type="email" id="emailInput" required placeholder="you@example.com" autocomplete="email">
+        <button class="btn" type="submit">Send</button>
+      </div>
+      <div class="note" id="emailNote">One email with your readout and a suggested study order. No spam.</div>
+    </form>` : ``}
+
+    <div id="review"></div>`;
+
+  /* mount animation: ring fill + count-up + verdict + staggered bars */
+  requestAnimationFrame(()=>{
+    const fl = root.querySelector(".fl");
+    if(fl) fl.style.strokeDashoffset = off.toFixed(1);
+    const vb = document.getElementById("verdictBand");
+    if(vb) vb.classList.add("show");
+    root.querySelectorAll(".dfill").forEach(el=>{ el.style.width = el.dataset.w + "%"; });
+    countUp(document.getElementById("pctNum"), pct, 1000);
+  });
+
+  document.getElementById("shareBtn").onclick = shareResult;
+  document.getElementById("retakeBtn").onclick = retake;
+  document.getElementById("reviewBtn").onclick = ()=>{ renderReview(); document.getElementById("review").scrollIntoView({behavior:"smooth"}); };
+  const ef = document.getElementById("emailForm");
+  if(ef) ef.onsubmit = submitEmail;
+}
+
+function countUp(el, target, ms){
+  if(!el) return;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now-start)/ms);
+    const eased = 1 - Math.pow(1-t, 3);
+    el.textContent = Math.round(eased*target) + "%";
+    if(t<1) requestAnimationFrame(frame);
+    else el.textContent = target + "%";
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- review (reused verbatim from the exam renderer) ---------- */
+function renderReview(){
+  const wrap=document.getElementById("review");
+  wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
+    const mine=state.answers[idx], ok=mine===Q.correct;
+    return `<div class="rev-q">
+      <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
+      <div class="opts">
+        ${Q.opts.map((o,j)=>{
+          let cls="opt";
+          if(j===Q.correct) cls+=" correct";
+          else if(j===mine) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  &middot;  your answer':''}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+    </div>`;
+  }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake quiz</button></div>`;
+  document.getElementById("retakeBtn2").onclick=retake;
+}
+
+/* ---------- email capture (stub) ---------- */
+function submitEmail(e){
+  e.preventDefault();
+  if(!EMAIL_ENDPOINT) return;
+  const input = document.getElementById("emailInput");
+  const note = document.getElementById("emailNote");
+  const payload = { email: input.value, code: R.code, correct: score(), total: TOTAL, answers: state.answers };
+  fetch(EMAIL_ENDPOINT, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  }).then(()=>{ if(note) note.textContent = "Sent. Check your inbox for your readout."; })
+    .catch(()=>{ if(note) note.textContent = "Could not send just now. Try again in a moment."; });
+}
+
+/* ---------- share card (Canvas, 1080x1080) ---------- */
+function resolveColor(v){
+  v = (v||"").trim();
+  const m = v.match(/^var\((--[a-z0-9-]+)\)$/i);
+  if(m){
+    const c = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+    return c || "#6ea8fe";
+  }
+  return v || "#6ea8fe";
+}
+
+function rr(ctx, x, y, w, h, r){
+  r = Math.min(r, h/2, w/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function drawShareCard(){
+  const cv = document.getElementById("shareCanvas");
+  const ctx = cv.getContext("2d");
+  const W = 1080, H = 1080, M = 88;
+
+  /* Visual Brain palette (marketing artifact, brand-governed) */
+  const GROUND = "#14161c", CREAM = "#e9e6dd", MUTED = "#8b90a0", FAINT = "#62647a";
+  const PANEL = "#1b1e26", GOLD = "#d9a441";
+
+  const c = score(), pct = Math.round(c/TOTAL*100);
+  const ds = domainScores();
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = GROUND; ctx.fillRect(0,0,W,H);
+  ctx.textBaseline = "alphabetic";
+
+  /* eyebrow */
+  ctx.fillStyle = FAINT;
+  ctx.font = '700 26px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText("CERTIFY  ·  READINESS", M, 168);
+
+  /* big figure */
+  ctx.fillStyle = GOLD;
+  ctx.font = '600 210px "Fraunces", Georgia, serif';
+  const figure = pct + "%";
+  ctx.fillText(figure, M-4, 440);
+  const figW = ctx.measureText(figure).width;
+  ctx.fillStyle = CREAM;
+  ctx.font = '500 62px "Fraunces", Georgia, serif';
+  ctx.fillText("ready", M + figW + 26, 440);
+
+  /* cert code */
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText(R.code + "  ·  " + c + " / " + TOTAL + " correct", M, 512);
+
+  /* domain mini-bars, scaled so N rows always sit above the brand mark */
+  const barX = M, barW = W - M*2;
+  const bandTop = 630, bandBottom = 918;
+  const rowH = ds.length > 1 ? Math.min(92, (bandBottom - bandTop) / (ds.length - 1)) : 0;
+  let y = bandTop;
+  ds.forEach(x=>{
+    const acc = resolveColor(x.d.accent);
+    ctx.fillStyle = CREAM;
+    ctx.font = '600 27px "Hanken Grotesk", system-ui, sans-serif';
+    const name = x.d.name.length > 34 ? x.d.name.slice(0,33)+"…" : x.d.name;
+    ctx.fillText(name, barX, y);
+    ctx.fillStyle = MUTED;
+    ctx.textAlign = "right";
+    ctx.fillText(x.correct + "/" + x.count, barX + barW, y);
+    ctx.textAlign = "left";
+    /* track */
+    ctx.fillStyle = PANEL;
+    rr(ctx, barX, y+18, barW, 16, 8); ctx.fill();
+    /* fill */
+    const fw = Math.max(16, barW * x.frac);
+    ctx.fillStyle = acc;
+    rr(ctx, barX, y+18, fw, 16, 8); ctx.fill();
+    y += rowH;
+  });
+
+  /* brand mark: gold check + wordmark, bottom-left */
+  const markY = 1004;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 7;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(M, markY-9);
+  ctx.lineTo(M+13, markY+6);
+  ctx.lineTo(M+38, markY-24);
+  ctx.stroke();
+  ctx.fillStyle = CREAM;
+  ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+  ctx.fillText("certify.courses", M+56, markY+2);
+
+  return cv;
+}
+
+function shareResult(){
+  const btn = document.getElementById("shareBtn");
+  const restore = ()=>{ if(btn){ btn.disabled=false; btn.textContent="Share result"; } };
+  if(btn){ btn.disabled=true; btn.textContent="Preparing…"; }
+
+  const fonts = [
+    '600 210px "Fraunces"',
+    '500 62px "Fraunces"',
+    '700 26px "Hanken Grotesk"',
+    '600 34px "Hanken Grotesk"'
+  ];
+  const ready = (document.fonts && document.fonts.load)
+    ? Promise.all(fonts.map(f=>document.fonts.load(f))).catch(()=>{})
+    : Promise.resolve();
+
+  ready.then(()=>{
+    const cv = drawShareCard();
+    cv.toBlob(blob=>{
+      if(!blob){ restore(); return; }
+      const c = score(), pct = Math.round(c/TOTAL*100);
+      const file = new File([blob], `readiness-${R.code}.png`, { type:"image/png" });
+      const shareData = {
+        files:[file],
+        title:`${R.code} readiness`,
+        text:`I'm ${pct}% ready for the ${R.code}. Check yours at certify.courses.`
+      };
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        navigator.share(shareData).catch(()=>{}).finally(restore);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `readiness-${R.code}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        restore();
+      }
+    }, "image/png");
+  });
+}
+
+function retake(){
+  state = { screen:"intro", i:0, answers:Array(TOTAL).fill(null), busy:false };
+  render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+render();
+</script>
+</body>
+</html>
