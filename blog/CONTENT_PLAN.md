@@ -69,7 +69,7 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete AWS Machine Learning Engineer Associate (MLA-C01) certification guide (pillar) | "aws machine learning engineer associate certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c01-certification-guide.html |
-| 2 | MLA-C01 exam guide breakdown: domains and weighting | "MLA-C01 exam domains" | No | |
+| 2 | MLA-C01 exam guide breakdown: domains and weighting | "MLA-C01 exam domains" | Yes | blog/mla-c01-exam-guide-domains-weighting.html |
 | 3 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | No | |
 | 4 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | No | |
 | 5 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
@@ -81,7 +81,7 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete Databricks Machine Learning Associate certification guide (pillar) | "databricks machine learning associate certification guide" | Yes | blog/databricks-machine-learning-associate-certification-guide.html |
-| 2 | Databricks Machine Learning Associate exam cost, format and question types | "what's on the databricks ml associate exam" | No | |
+| 2 | Databricks Machine Learning Associate exam cost, format and question types | "what's on the databricks ml associate exam" | Yes | blog/databricks-machine-learning-associate-exam-cost-format-registration.html |
 | 3 | MLflow for the Databricks Machine Learning Associate exam explained | "mlflow databricks ml associate exam" | No | |
 | 4 | AutoML and Feature Store on Databricks explained | "databricks automl feature store" | No | |
 | 5 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | No | |
@@ -93,7 +93,7 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete AWS Cloud Practitioner (CLF-C02) certification guide (pillar) | "aws cloud practitioner certification guide" | Yes | blog/aws-cloud-practitioner-clf-c02-certification-guide.html |
-| 2 | AWS Cloud Practitioner exam cost, format and question types | "what's on the AWS cloud practitioner exam" | No | |
+| 2 | AWS Cloud Practitioner exam cost, format and question types | "what's on the AWS cloud practitioner exam" | Yes | blog/aws-cloud-practitioner-exam-cost-format-registration.html |
 | 3 | Core AWS services to know for the CLF-C02 exam | "aws services for cloud practitioner exam" | No | |
 | 4 | AWS pricing and billing concepts for the Cloud Practitioner exam | "aws pricing billing cloud practitioner" | No | |
 | 5 | AWS Cloud Practitioner vs AI Practitioner (AIF-C01): which foundational cert first | "aws cloud practitioner vs ai practitioner" | No | |
