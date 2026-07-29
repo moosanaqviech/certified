@@ -224,7 +224,7 @@ const QUESTIONS = [
       `Yes, Lakeflow Declarative Pipelines have no concept of dependency ordering on their own`,
       `Yes, but only because this involves two tables rather than two views`,
       `No, but only if both share the same trigger interval`,
-      `No; the pipeline parses silver_scans's dlt.read("bronze_scans") reference and builds that dependency edge automatically`
+      `No; the pipeline parses silver_scans's spark.read.table("bronze_scans") reference and builds that dependency edge automatically`
     ],
     correct:3,
     explain:`Lakeflow Declarative Pipelines parse every table function for read references and build the dependency DAG automatically; no external orchestrator is needed.`
@@ -275,12 +275,12 @@ const QUESTIONS = [
     correct:3,
     explain:`A streaming table only ever processes new rows; a materialized view recomputes against silver's current state, so the correction flows through.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
     q:`A solar farm's inverter-status CDC feed replicates across two regional gateways, and a change occasionally arrives out of order, with an older sequence value landing after a newer one already applied. What keeps the target table correct?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied, and only lets a genuinely newer change through`,
-      `apply_changes processes every record strictly in arrival order regardless of sequence_by`,
+      `create_auto_cdc_flow processes every record strictly in arrival order regardless of sequence_by`,
       `The pipeline fails whenever a change arrives out of order`,
       `Out-of-order changes are silently ignored entirely`
     ],
@@ -288,7 +288,7 @@ const QUESTIONS = [
     explain:`sequence_by decides which of several changes to the same key wins by comparing the incoming value against what was already applied, ignoring stale ones.`
   },
   {
-    q:`A solar operator's compliance team needs to know an inverter's approved firmware version as of any past date, not just today. Which apply_changes configuration provides that?`,
+    q:`A solar operator's compliance team needs to know an inverter's approved firmware version as of any past date, not just today. Which AUTO CDC configuration provides that?`,
     opts:[
       `stored_as_scd_type=1, the default`,
       `stored_as_scd_type=2, which retains every version of a row with __START_AT and __END_AT columns`,

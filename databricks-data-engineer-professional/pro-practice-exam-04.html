@@ -232,13 +232,13 @@ const QUESTIONS = [
   {
     q:`An engineer insists a separate orchestration tool is needed to guarantee silver_orders finishes before gold_orders runs in a Lakeflow Declarative Pipeline, since "nothing else could know the order." Is a separate orchestrator required here?`,
     opts:[
-      `No; the pipeline parses gold_orders's function body for a dlt.read("silver_orders") reference and builds that dependency edge automatically at deploy time`,
+      `No; the pipeline parses gold_orders's function body for a spark.read.table("silver_orders") reference and builds that dependency edge automatically at deploy time`,
       `Yes, since Lakeflow Declarative Pipelines have no concept of dependency ordering on their own`,
       `Yes, but only because this involves two different tables rather than two views`,
       `No, but only if both tables happen to share the same trigger interval`
     ],
     correct:0,
-    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like dlt.read("silver_orders") and build the dependency DAG from them automatically; no external orchestrator, trigger alignment, or table-versus-view distinction changes that. This automatic inference is the core of the declarative model.`
+    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like spark.read.table("silver_orders") and build the dependency DAG from them automatically; no external orchestrator, trigger alignment, or table-versus-view distinction changes that. This automatic inference is the core of the declarative model.`
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
@@ -286,20 +286,20 @@ const QUESTIONS = [
     correct:0,
     explain:`A streaming table only ever processes new rows; a recount that updates an existing silver row is invisible to it, or gets misread as a brand-new event. A materialized view recomputes or incrementally maintains its result against silver's current state, so the corrected stock level flows through correctly. foreachBatch is a raw Structured Streaming construct, not something layered onto a Lakeflow streaming table, and running more often does not change what a streaming table is able to see.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
     q:`A subscription-status CDC feed occasionally redelivers a message due to consumer retries after a network blip. Two copies of the same change for subscriber_id 501 arrive, both carrying identical sequence_by values. What keeps the target table correct despite the duplicate delivery?`,
     opts:[
-      `apply_changes rejects the second copy outright as a duplicate sequence value`,
+      `create_auto_cdc_flow rejects the second copy outright as a duplicate sequence value`,
       `keys and sequence_by together make the operation effectively idempotent: applying either copy of an identical, same-key, same-sequence change lands the target in the same state`,
-      `The pipeline fails, since apply_changes cannot process two records with the same sequence_by value`,
+      `The pipeline fails, since create_auto_cdc_flow cannot process two records with the same sequence_by value`,
       `Only whichever copy is processed first is applied; the second is always silently discarded regardless of content`
     ],
     correct:1,
-    explain:`keys identifies which target row a change belongs to, and sequence_by decides which of several changes to that key wins; when both copies carry the same key and the same sequence value, applying either one produces the same result, making a redelivered duplicate effectively harmless. Nothing in apply_changes rejects a repeated sequence value or fails on it, and it is the shared key and sequence value, not arrival order, that explains why the duplicate is harmless.`
+    explain:`keys identifies which target row a change belongs to, and sequence_by decides which of several changes to that key wins; when both copies carry the same key and the same sequence value, applying either one produces the same result, making a redelivered duplicate effectively harmless. Nothing in create_auto_cdc_flow rejects a repeated sequence value or fails on it, and it is the shared key and sequence value, not arrival order, that explains why the duplicate is harmless.`
   },
   {
-    q:`A compliance team must be able to show what a user's consent preferences were on any past date, not just today. Which apply_changes configuration provides that, and what does it add to the target table?`,
+    q:`A compliance team must be able to show what a user's consent preferences were on any past date, not just today. Which AUTO CDC configuration provides that, and what does it add to the target table?`,
     opts:[
       `stored_as_scd_type=1, the default, since it is the simplest option to configure`,
       `apply_as_deletes, since historical answers require removing stale preference rows`,

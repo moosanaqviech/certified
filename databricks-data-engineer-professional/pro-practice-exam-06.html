@@ -224,10 +224,10 @@ const QUESTIONS = [
       `Yes, since Lakeflow Declarative Pipelines have no concept of dependency ordering on their own`,
       `Yes, but only because this involves two different tables rather than two views`,
       `No, but only if both tables happen to share the same trigger interval`,
-      `No; the pipeline parses silver_scans's function body for a dlt.read("bronze_scans") reference and builds that dependency edge automatically`
+      `No; the pipeline parses silver_scans's function body for a spark.read.table("bronze_scans") reference and builds that dependency edge automatically`
     ],
     correct:3,
-    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like dlt.read("bronze_scans") and build the dependency DAG from them automatically; no external orchestrator, trigger alignment, or table-versus-view distinction changes that.`
+    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like spark.read.table("bronze_scans") and build the dependency DAG from them automatically; no external orchestrator, trigger alignment, or table-versus-view distinction changes that.`
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
@@ -275,20 +275,20 @@ const QUESTIONS = [
     correct:3,
     explain:`A streaming table only ever processes new rows; a correction that updates an existing silver row is invisible to it. A materialized view recomputes or incrementally maintains its result against silver's current state, so the correction flows through correctly. foreachBatch is a raw Structured Streaming construct, not something layered onto a Lakeflow streaming table.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
     q:`An agricultural IoT feed replicates soil-sensor calibration changes across two regional gateways, and a change for sensor_id 771 occasionally arrives out of order, with an older sequence value landing after a newer one already applied. What keeps the target table correct?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied for that key, and only lets a genuinely newer change through`,
-      `apply_changes processes every record strictly in arrival order regardless of sequence_by`,
+      `create_auto_cdc_flow processes every record strictly in arrival order regardless of sequence_by`,
       `The pipeline fails whenever a change arrives out of order relative to its sequence value`,
       `Out-of-order changes are silently ignored entirely, regardless of their sequence value`
     ],
     correct:0,
-    explain:`sequence_by is what lets apply_changes decide which of several changes to the same key actually wins; it compares the incoming value against what was already applied and lets a change through only if it is genuinely newer, so a late-arriving older change is correctly ignored. Arrival order at the pipeline plays no role.`
+    explain:`sequence_by is what lets create_auto_cdc_flow decide which of several changes to the same key actually wins; it compares the incoming value against what was already applied and lets a change through only if it is genuinely newer, so a late-arriving older change is correctly ignored. Arrival order at the pipeline plays no role.`
   },
   {
-    q:`A pharmaceutical compliance team needs to answer "what was this batch's approved formulation as of any past date," not just the current one. Which apply_changes configuration provides that?`,
+    q:`A pharmaceutical compliance team needs to answer "what was this batch's approved formulation as of any past date," not just the current one. Which AUTO CDC configuration provides that?`,
     opts:[
       `stored_as_scd_type=1, the default, since it needs the least configuration`,
       `stored_as_scd_type=2, which retains every version of a row and adds __START_AT and __END_AT columns marking when each version was valid`,

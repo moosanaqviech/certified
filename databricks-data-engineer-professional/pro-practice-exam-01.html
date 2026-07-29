@@ -209,17 +209,17 @@ const QUESTIONS = [
     correct:3,
     explain:`The deciding signal is always whether a source can change after landing, not size, schedule, or language. A streaming table only ever sees new rows and would miss or double count a corrected dimension row; a materialized view recomputes or incrementally maintains its result against the current state of both inputs, so the correction flows through. Table size, trigger style, and SQL versus Python are unrelated to this choice.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
-    q:`A CDC pipeline uses <code>apply_changes</code> with <code>keys=["order_id"]</code> and <code>sequence_by="lsn"</code>. During a brief network partition, a batch of updates for order_id 900 is delivered twice, once as a retry and once as the original, both carrying the same lsn value. What happens to the target table?`,
+    q:`A CDC pipeline uses <code>create_auto_cdc_flow</code> with <code>keys=["order_id"]</code> and <code>sequence_by="lsn"</code>. During a brief network partition, a batch of updates for order_id 900 is delivered twice, once as a retry and once as the original, both carrying the same lsn value. What happens to the target table?`,
     opts:[
       `The target ends up correct regardless of which duplicate is applied first, since both share the same key and sequence value`,
-      `The target is corrupted, because apply_changes cannot detect duplicate lsn values and will double-apply the change`,
-      `The pipeline fails outright, since apply_changes rejects any two records sharing a sequence_by value`,
-      `Only the retry copy is applied; apply_changes always prefers the most recently arrived record regardless of sequence_by`
+      `The target is corrupted, because create_auto_cdc_flow cannot detect duplicate lsn values and will double-apply the change`,
+      `The pipeline fails outright, since create_auto_cdc_flow rejects any two records sharing a sequence_by value`,
+      `Only the retry copy is applied; create_auto_cdc_flow always prefers the most recently arrived record regardless of sequence_by`
     ],
     correct:0,
-    explain:`keys and sequence_by together make apply_changes idempotent here: both copies target the same key with the same sequence value, so applying either lands the target in the same state, and reapplying an identical change is a no-op in effect. Nothing in apply_changes rejects a repeated sequence value, and arrival order plays no role since sequence_by, not arrival time, decides what wins.`
+    explain:`keys and sequence_by together make create_auto_cdc_flow idempotent here: both copies target the same key with the same sequence value, so applying either lands the target in the same state, and reapplying an identical change is a no-op in effect. Nothing in create_auto_cdc_flow rejects a repeated sequence value, and arrival order plays no role since sequence_by, not arrival time, decides what wins.`
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {

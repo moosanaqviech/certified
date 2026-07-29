@@ -219,15 +219,15 @@ const QUESTIONS = [
     explain:`schemaLocation is where Auto Loader persists the inferred schema and its evolution history; two tables pointed at the same path share that checkpoint, so one table's schema changes can bleed into the other's history in confusing ways. schemaLocation is required, not optional, for cloudFiles-based tables, and Auto Loader does not detect or resolve this collision automatically, the engineer has to set a distinct path.`
   },
   {
-    q:`A platinum_summary table's function body calls dlt.read("gold_orders"). An engineer wants to add an explicit orchestration step to guarantee gold_orders finishes first, believing the pipeline cannot infer this on its own. Is that step necessary?`,
+    q:`A platinum_summary table's function body calls spark.read.table("gold_orders"). An engineer wants to add an explicit orchestration step to guarantee gold_orders finishes first, believing the pipeline cannot infer this on its own. Is that step necessary?`,
     opts:[
       `Yes, since Lakeflow Declarative Pipelines have no built-in way to sequence tables`,
       `Yes, but only because platinum_summary and gold_orders are more than one layer apart`,
       `No, but only if both tables happen to share the same refresh schedule`,
-      `No; the pipeline parses the dlt.read reference at deploy time and builds the dependency edge automatically`
+      `No; the pipeline parses the spark.read.table reference at deploy time and builds the dependency edge automatically`
     ],
     correct:3,
-    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like dlt.read("gold_orders") and build the dependency DAG from that automatically, regardless of how many layers apart the tables are or whether they share a schedule. No manual orchestration step is needed, that inference is the core of the declarative model.`
+    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like spark.read.table("gold_orders") and build the dependency DAG from that automatically, regardless of how many layers apart the tables are or whether they share a schedule. No manual orchestration step is needed, that inference is the core of the declarative model.`
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
@@ -275,20 +275,20 @@ const QUESTIONS = [
     correct:3,
     explain:`A streaming table only ever processes new rows; an amendment that updates an existing silver row is invisible to it, or gets misread as a brand-new event. A materialized view recomputes or incrementally maintains its result against silver's current state, so the return is reflected correctly. foreachBatch is a raw Structured Streaming construct, not something layered onto a Lakeflow streaming table, and refreshing more often does not change what a streaming table is able to see.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
     q:`An inventory-adjustment CDC feed is replicated across regions, and a change for sku_id 8842 occasionally arrives out of order due to replication lag, with an older sequence value landing after a newer one already applied. What keeps the target table correct despite the out-of-order arrival?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied for that key, and only lets a genuinely newer change through`,
-      `apply_changes processes every record strictly in arrival order regardless of sequence_by`,
+      `create_auto_cdc_flow processes every record strictly in arrival order regardless of sequence_by`,
       `The pipeline fails whenever a change arrives out of order relative to its sequence value`,
       `Out-of-order changes are silently ignored entirely, regardless of their sequence value`
     ],
     correct:0,
-    explain:`sequence_by is what lets apply_changes decide which of several changes to the same key actually wins; it compares the incoming value against what was already applied and lets a change through only if it is genuinely newer, so a late-arriving older change is correctly ignored rather than applied. Arrival order at the pipeline plays no role, and apply_changes does not fail or blanket-ignore records just because they arrive out of order.`
+    explain:`sequence_by is what lets create_auto_cdc_flow decide which of several changes to the same key actually wins; it compares the incoming value against what was already applied and lets a change through only if it is genuinely newer, so a late-arriving older change is correctly ignored rather than applied. Arrival order at the pipeline plays no role, and create_auto_cdc_flow does not fail or blanket-ignore records just because they arrive out of order.`
   },
   {
-    q:`HR needs to answer "who was this employee's manager as of any date in the past," not just the current manager. Which apply_changes configuration provides that, and what does it add to the target table?`,
+    q:`HR needs to answer "who was this employee's manager as of any date in the past," not just the current manager. Which AUTO CDC configuration provides that, and what does it add to the target table?`,
     opts:[
       `stored_as_scd_type=1, the default, since it needs the least configuration`,
       `stored_as_scd_type=2, which retains every version of a row and adds __START_AT and __END_AT columns marking when each version was valid`,

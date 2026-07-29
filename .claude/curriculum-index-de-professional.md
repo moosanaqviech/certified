@@ -16,7 +16,10 @@ Sub-groups: "Using Python and Tools for development" (Ch 1-3), "Building and Tes
     Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader (1.4)
     Automating Jobs: UI, API, and CLI (1.5)
     Streaming Tables vs Materialized Views (TO) (1.6)
-    CDC with the APPLY CHANGES API (1.7)
+    CDC with the AUTO CDC API (1.7)
+      (The guide words objective 1.7 as "APPLY CHANGES API". AUTO CDC is the
+      current product name for the same API, so the chapter teaches AUTO CDC
+      and names the old one once. Filename stays lesson-07-cdc-apply-changes.html.)
     Structured Streaming vs Lakeflow Pipelines (TO) (1.8)
     Control Flow and Task Configuration in Jobs (1.9, 1.10)
     Testing Pipelines: assertDataFrameEqual, transform, Debugger (1.11)
@@ -103,6 +106,10 @@ Practice exam plan
 Terminology rules (November 2025 syllabus)
 
     Say "Lakeflow Spark Declarative Pipelines" (or "Lakeflow Declarative Pipelines"), not "Delta Live Tables" or "DLT".
-    Liquid Clustering is the recommended layout approach; partitioning and Z-Order are taught as the contrast case (Ch 36), not as best practice.
+    Pipeline Python code uses the pyspark.pipelines module: "from pyspark import pipelines as dp", then @dp.table for a streaming table and @dp.materialized_view for a materialized view. The legacy dlt module (@dlt.table for both) still runs and is named once in Ch 4 and Ch 6 as the former API, never used as the primary form.
+    Read another dataset in a pipeline with spark.read.table() or spark.readStream.table(), not dlt.read(), which belongs to the legacy publishing mode.
+    Say "AUTO CDC" and create_auto_cdc_flow(), not "APPLY CHANGES" and apply_changes(). Same signature, and the legacy names still parse. The exam guide still words objective 1.7 the old way, so Ch 7 names it once.
+    Say "Lakeflow Jobs" for the orchestrator, previously called Databricks Workflows. Individual jobs and tasks keep their ordinary names, and API paths (/api/2.1/jobs/...) are unchanged.
+    Liquid Clustering is the recommended layout approach; partitioning and Z-Order are taught as the contrast case (Ch 36), not as best practice. CLUSTER BY AUTO (predictive optimization picks and adapts the keys) is taught alongside explicit CLUSTER BY in Ch 22 and Ch 36.
     Reduced or removed from this exam version: partition hints, bloom filters, manual part-file sizing, Z-Order as a primary technique.
 

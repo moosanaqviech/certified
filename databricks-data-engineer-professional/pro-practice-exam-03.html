@@ -222,12 +222,12 @@ const QUESTIONS = [
     q:`An engineer manually adds a <code>depends_on</code> style comment above <code>gold_orders</code>'s function noting "must run after silver_orders", believing the pipeline needs this hint to sequence the two tables correctly. Is the comment necessary?`,
     opts:[
       `Yes; without an explicit ordering hint the two tables could run in the wrong order`,
-      `No; the pipeline already infers the dependency automatically because gold_orders's function body calls dlt.read("silver_orders")`,
+      `No; the pipeline already infers the dependency automatically because gold_orders's function body calls spark.read.table("silver_orders")`,
       `Yes, but only because Lakeflow Declarative Pipelines ignore read references inside SQL-defined tables`,
       `No, but only because both tables happen to be materialized views in this example`
     ],
     correct:1,
-    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like dlt.read("silver_orders") and build the dependency DAG from that automatically; a plain comment adds nothing the engine actually uses. This inference works regardless of whether the referenced tables are streaming tables or materialized views, and it applies to SQL-defined tables too, not just Python ones.`
+    explain:`Lakeflow Declarative Pipelines parse every table function to find read references like spark.read.table("silver_orders") and build the dependency DAG from that automatically; a plain comment adds nothing the engine actually uses. This inference works regardless of whether the referenced tables are streaming tables or materialized views, and it applies to SQL-defined tables too, not just Python ones.`
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
@@ -275,20 +275,20 @@ const QUESTIONS = [
     correct:1,
     explain:`When nothing already landed ever changes, a streaming table's incremental, process-once semantics fit exactly, with lower latency and no downside. A materialized view would still work, but it pays a recompute or incremental-maintenance cost to guard against upstream changes that this strictly append-only source never actually produces. Volume alone is not the deciding signal, and streaming tables read from Auto Loader routinely, that is one of their most common sources.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
-    q:`An apply_changes call is configured with <code>keys=["order_id"]</code>. A teammate proposes removing keys entirely, arguing sequence_by alone is enough to keep the target table correct. What would actually break without keys?`,
+    q:`An AUTO CDC flow is configured with <code>keys=["order_id"]</code>. A teammate proposes removing keys entirely, arguing sequence_by alone is enough to keep the target table correct. What would actually break without keys?`,
     opts:[
-      `apply_changes would have no way to know which target row a given change belongs to, since keys is what identifies the entity a change record is about`,
+      `create_auto_cdc_flow would have no way to know which target row a given change belongs to, since keys is what identifies the entity a change record is about`,
       `Nothing; sequence_by alone fully determines correctness, keys are only a performance hint`,
       `The pipeline would fail to start, since keys is required only for stored_as_scd_type=2`,
       `Removing keys would only affect delete handling, not inserts or updates`
     ],
     correct:0,
-    explain:`keys is what tells apply_changes which target row a change record refers to; without it, there is no way to match an incoming change, insert, update, or delete, to the entity it is about, so the whole matching logic breaks, not just deletes. sequence_by only decides which of several changes to the same key wins, it does not substitute for identifying the key itself, and keys is required for both SCD Type 1 and Type 2, not just Type 2.`
+    explain:`keys is what tells create_auto_cdc_flow which target row a change record refers to; without it, there is no way to match an incoming change, insert, update, or delete, to the entity it is about, so the whole matching logic breaks, not just deletes. sequence_by only decides which of several changes to the same key wins, it does not substitute for identifying the key itself, and keys is required for both SCD Type 1 and Type 2, not just Type 2.`
   },
   {
-    q:`A customer dimension table needs to answer "what was this customer's billing address as of any past order date," not just the current address. Which apply_changes setting makes that possible, and what does it add to the target table?`,
+    q:`A customer dimension table needs to answer "what was this customer's billing address as of any past order date," not just the current address. Which AUTO CDC setting makes that possible, and what does it add to the target table?`,
     opts:[
       `stored_as_scd_type=1, since it is the default and requires the least configuration`,
       `apply_as_deletes, since historical answers require deleting stale rows`,

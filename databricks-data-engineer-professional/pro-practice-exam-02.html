@@ -208,12 +208,12 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
   {
-    q:`A pipeline defines <code>gold_orders</code> with a function body that calls <code>dlt.read("silver_orders")</code>. No task dependency, trigger, or schedule is configured anywhere for either table. What determines the order these two tables run in?`,
+    q:`A pipeline defines <code>gold_orders</code> with a function body that calls <code>spark.read.table("silver_orders")</code>. No task dependency, trigger, or schedule is configured anywhere for either table. What determines the order these two tables run in?`,
     opts:[
       `Alphabetical order of the table names within the pipeline`,
       `Nothing; both tables run in an arbitrary, unspecified order on every trigger`,
       `A separate Lakeflow Job must be created with an explicit depends_on between the two tables`,
-      `The pipeline parses the dlt.read reference at deploy time and adds a dependency edge, so gold_orders only runs after silver_orders updates`
+      `The pipeline parses the spark.read.table reference at deploy time and adds a dependency edge, so gold_orders only runs after silver_orders updates`
     ],
     correct:3,
     explain:`Lakeflow Declarative Pipelines parse every table function to find read references like this one and build the dependency DAG from them automatically; that reference is the entire dependency declaration. Nothing about table names, arbitrary ordering, or a separate job with manual depends_on is involved, the whole point of the declarative model is that no orchestration config is written by hand.`
@@ -286,28 +286,28 @@ const QUESTIONS = [
     correct:0,
     explain:`A streaming table only ever sees new rows; a re-audit that updates an existing silver row is invisible to it, or gets misread as a new event entirely. A materialized view recomputes or incrementally maintains its result against silver's current state, so a corrected stock count flows through to gold correctly. foreachBatch is a raw Structured Streaming construct, not something layered onto a Lakeflow streaming table, and running more often does not change what a streaming table can see.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
-    q:`An apply_changes pipeline is configured with <code>keys=["customer_id"]</code> but <code>sequence_by</code> is left pointing at a column that is null for about 5% of incoming change records. What is the most likely consequence for those records?`,
+    q:`An AUTO CDC pipeline is configured with <code>keys=["customer_id"]</code> but <code>sequence_by</code> is left pointing at a column that is null for about 5% of incoming change records. What is the most likely consequence for those records?`,
     opts:[
-      `apply_changes automatically falls back to arrival order whenever sequence_by is null`,
+      `create_auto_cdc_flow automatically falls back to arrival order whenever sequence_by is null`,
       `Those records are silently promoted to the newest state regardless of their actual recency, since a null sequence value sorts last`,
-      `Ordering for those records becomes unreliable, since apply_changes cannot correctly determine which of several changes to the same key is newest without a valid sequence value`,
+      `Ordering for those records becomes unreliable, since create_auto_cdc_flow cannot correctly determine which of several changes to the same key is newest without a valid sequence value`,
       `The entire pipeline halts until every record has a non-null sequence value`
     ],
     correct:2,
-    explain:`sequence_by is what lets apply_changes decide which of several changes to the same key actually wins; a missing sequence value for a record removes that guarantee for it specifically, so ordering for that slice of records becomes unreliable rather than automatically correct. apply_changes does not silently substitute arrival order or push null-sequence records to the front, and a partial data quality issue like this does not halt the whole pipeline on its own.`
+    explain:`sequence_by is what lets create_auto_cdc_flow decide which of several changes to the same key actually wins; a missing sequence value for a record removes that guarantee for it specifically, so ordering for that slice of records becomes unreliable rather than automatically correct. create_auto_cdc_flow does not silently substitute arrival order or push null-sequence records to the front, and a partial data quality issue like this does not halt the whole pipeline on its own.`
   },
   {
-    q:`A dimension table only ever needs to answer "what is true right now," with no requirement to ever look up a past value. Which apply_changes configuration fits with the least overhead?`,
+    q:`A dimension table only ever needs to answer "what is true right now," with no requirement to ever look up a past value. Which AUTO CDC configuration fits with the least overhead?`,
     opts:[
       `stored_as_scd_type=2, since keeping history is always the safer choice regardless of requirements`,
       `stored_as_scd_type=1 (the default), which overwrites in place and needs no extra history columns`,
       `apply_as_deletes set to always-true, so every prior version is explicitly deleted`,
-      `Skip apply_changes entirely and use a materialized view instead, since dimensions never need CDC`
+      `Skip AUTO CDC entirely and use a materialized view instead, since dimensions never need CDC`
     ],
     correct:1,
-    explain:`When only the current state matters, SCD Type 1, the default, is the right fit: it overwrites in place with no __START_AT/__END_AT bookkeeping, which is exactly the "least overhead" answer here. Type 2 exists for the opposite requirement, being able to answer what a row looked like at a point in time, which is explicitly not needed here. apply_as_deletes controls how source deletes are handled, not history retention, and this is a genuine CDC use case, not a reason to bypass apply_changes.`
+    explain:`When only the current state matters, SCD Type 1, the default, is the right fit: it overwrites in place with no __START_AT/__END_AT bookkeeping, which is exactly the "least overhead" answer here. Type 2 exists for the opposite requirement, being able to answer what a row looked like at a point in time, which is explicitly not needed here. apply_as_deletes controls how source deletes are handled, not history retention, and this is a genuine CDC use case, not a reason to bypass create_auto_cdc_flow.`
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {

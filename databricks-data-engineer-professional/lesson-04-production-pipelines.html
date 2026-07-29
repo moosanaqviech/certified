@@ -168,11 +168,11 @@ const A = {
     <rect x="115" y="14" width="90" height="38" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
     <text x="160" y="37" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">bronze_orders</text>
     <line x1="160" y1="52" x2="160" y2="76" stroke="var(--accent)" stroke-width="1.5"/>
-    <text x="176" y="68" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9">dlt.read()</text>
+    <text x="176" y="68" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9">spark.read.table()</text>
     <rect x="115" y="76" width="90" height="38" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
     <text x="160" y="99" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">silver_orders</text>
     <line x1="160" y1="114" x2="160" y2="138" stroke="var(--accent)" stroke-width="1.5"/>
-    <text x="176" y="130" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9">dlt.read()</text>
+    <text x="176" y="130" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9">spark.read.table()</text>
     <rect x="115" y="138" width="90" height="38" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
     <text x="160" y="161" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">gold_orders</text>
   </svg>`,
@@ -201,7 +201,7 @@ const cards = [
     <h2 class="reveal">You declare the table, not the plan</h2>
     <p class="lead reveal" style="margin-bottom:18px">A Lakeflow Declarative Pipeline is a set of table definitions. The pipeline figures out the rest.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What you write</b>A Python function decorated with @dlt.table, describing what the table should contain.</p></div>
+      <div class="pill"><p><b>What you write</b>A Python function decorated with @dp.table, describing what the table should contain.</p></div>
       <div class="pill"><p><b>What you get for free</b>Dependency ordering, checkpointing, and retries, none of which you configure by hand.</p></div>
     </div>
     <div class="spacer"></div>` },
@@ -212,14 +212,17 @@ const cards = [
     <h2 class="reveal">One decorator, one table</h2>
     <p class="lead reveal" style="margin-bottom:16px">Every table in the pipeline looks the same: a decorated function that returns a DataFrame.</p>
     <div class="codeblock reveal">
-<span class="kw">import</span> dlt<br>
+<span class="kw">from</span> pyspark <span class="kw">import</span> pipelines <span class="kw">as</span> dp<br>
 <br>
-<span class="al">@dlt.table</span><br>
+<span class="al">@dp.table</span><br>
 <span class="kw">def</span> silver_orders():<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> (<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dlt.read(<span class="st">"bronze_orders"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spark.read.table(<span class="st">"bronze_orders"</span>)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.where(<span class="st">"amount > 0"</span>)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;)
+    </div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The module was renamed</b>pyspark.pipelines was called dlt until 2025. Older code using import dlt and @dlt.table still runs, but new work uses dp.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -229,7 +232,7 @@ const cards = [
     <h2 class="reveal">Auto Loader is the bronze source</h2>
     <p class="lead reveal" style="margin-bottom:14px">cloudFiles reads new files incrementally, tracking what has already been ingested.</p>
     <div class="codeblock reveal">
-<span class="al">@dlt.table</span><br>
+<span class="al">@dp.table</span><br>
 <span class="kw">def</span> bronze_orders():<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> (<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spark.readStream<br>
@@ -260,7 +263,7 @@ const cards = [
   { html: `
     <div class="eyebrow reveal">Concept</div>
     <h2 class="reveal">The DAG comes from the code</h2>
-    <p class="lead reveal" style="margin-bottom:10px">silver_orders calls dlt.read("bronze_orders"). That reference is the entire dependency declaration.</p>
+    <p class="lead reveal" style="margin-bottom:10px">silver_orders calls spark.read.table("bronze_orders"). That reference is the entire dependency declaration.</p>
     <div class="art">${A.dag}</div>
     <div class="pills reveal">
       <div class="pill"><p><b>Auto Loader scales two ways</b>Directory listing checks the folder on every trigger, simple at moderate volume. File notification uses a cloud queue instead, so cost stays flat even at millions of files.</p></div>
@@ -282,7 +285,7 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:22px">A gold table's function calls dlt.read("silver_orders") in its body. What does the pipeline do with that at deploy time?</h2>
+    <h2 class="reveal" style="font-size:22px">A gold table's function calls spark.read.table("silver_orders") in its body. What does the pipeline do with that at deploy time?</h2>
     <div class="choices reveal">
       <button class="choice" data-correct="true"><span class="key">A</span>Adds an edge from silver_orders to gold in the pipeline's DAG, so gold only runs after silver_orders updates</button>
       <button class="choice" data-correct="false"><span class="key">B</span>Nothing yet; the read only happens live when a user queries the gold table</button>
@@ -298,7 +301,7 @@ const cards = [
     <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 4 complete</h2>
     <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now read a declarative pipeline, trace its DAG from table references, and explain what Auto Loader tracks.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Declare, do not orchestrate</b>@dlt.table functions and their read references are the whole pipeline definition.</p></div>
+      <div class="pill"><p><b>Declare, do not orchestrate</b>@dp.table functions and their read references are the whole pipeline definition.</p></div>
       <div class="pill"><p><b>schemaLocation is memory</b>It persists inferred schema and evolution history between runs, not just a folder path.</p></div>
     </div>
     <div class="spacer"></div>` }

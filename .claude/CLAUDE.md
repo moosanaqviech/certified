@@ -99,9 +99,15 @@ anything. They define card shapes, helper classes, and question rules.
   right AND why the top distractor is wrong. Correct letters spread evenly
   across A/B/C/D, never three identical in a row.
 - DE Professional terminology (Nov 2025 syllabus): say "Lakeflow Spark
-  Declarative Pipelines", never "Delta Live Tables" or "DLT". Liquid
-  Clustering is the recommended layout approach; partitioning and Z-Order
-  appear only as the contrast case.
+  Declarative Pipelines", never "Delta Live Tables" or "DLT". Pipeline Python
+  uses `from pyspark import pipelines as dp` with `@dp.table` (streaming
+  table) and `@dp.materialized_view` (materialized view); read upstream
+  datasets with `spark.read.table()`, not the legacy `dlt.read()`. Say
+  "AUTO CDC" and `create_auto_cdc_flow()`, not "APPLY CHANGES" and
+  `apply_changes()`. Say "Lakeflow Jobs", not "Databricks Workflows". Liquid
+  Clustering is the recommended layout approach (including `CLUSTER BY AUTO`);
+  partitioning and Z-Order appear only as the contrast case. Legacy names are
+  named once, as the former API, never used as the primary form.
 - DEA-C01 terminology: say "Amazon Data Firehose", never "Kinesis Data
   Firehose"; say "Amazon Managed Service for Apache Flink", never "Kinesis
   Data Analytics". Both renames are cosmetic only (API/CLI/IAM/CloudWatch

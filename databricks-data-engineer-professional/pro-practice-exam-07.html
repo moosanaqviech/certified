@@ -224,7 +224,7 @@ const QUESTIONS = [
       `Yes, since Lakeflow Declarative Pipelines have no concept of dependency ordering on their own`,
       `Yes, but only because this involves two different tables rather than two views`,
       `No, but only if both tables happen to share the same trigger interval`,
-      `No; the pipeline parses silver_assays's function body for a dlt.read("bronze_assays") reference and builds that dependency edge automatically`
+      `No; the pipeline parses silver_assays's function body for a spark.read.table("bronze_assays") reference and builds that dependency edge automatically`
     ],
     correct:3,
     explain:`Lakeflow Declarative Pipelines parse every table function to find read references and build the dependency DAG from them automatically; no external orchestrator is needed.`
@@ -275,20 +275,20 @@ const QUESTIONS = [
     correct:3,
     explain:`A streaming table only ever processes new rows; a return adjustment that updates an existing silver row is invisible to it. A materialized view recomputes against silver's current state, so the correction flows through.`
   },
-  /* Ch 07 - CDC with the APPLY CHANGES API */
+  /* Ch 07 - CDC with the AUTO CDC API */
   {
     q:`A brewery's fermentation-batch CDC feed replicates across two facility gateways, and a change for batch_id 3391 occasionally arrives out of order, with an older sequence value landing after a newer one already applied. What keeps the target table correct?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied for that key, and only lets a genuinely newer change through`,
-      `apply_changes processes every record strictly in arrival order regardless of sequence_by`,
+      `create_auto_cdc_flow processes every record strictly in arrival order regardless of sequence_by`,
       `The pipeline fails whenever a change arrives out of order relative to its sequence value`,
       `Out-of-order changes are silently ignored entirely, regardless of their sequence value`
     ],
     correct:0,
-    explain:`sequence_by lets apply_changes decide which of several changes to the same key wins by comparing the incoming value against what was already applied, correctly ignoring a late-arriving older change.`
+    explain:`sequence_by lets create_auto_cdc_flow decide which of several changes to the same key wins by comparing the incoming value against what was already applied, correctly ignoring a late-arriving older change.`
   },
   {
-    q:`A brewery's quality team needs to answer "what was this batch's recipe formulation as of any past date," not just the current one. Which apply_changes configuration provides that?`,
+    q:`A brewery's quality team needs to answer "what was this batch's recipe formulation as of any past date," not just the current one. Which AUTO CDC configuration provides that?`,
     opts:[
       `stored_as_scd_type=1, the default, since it needs the least configuration`,
       `stored_as_scd_type=2, which retains every version of a row and adds __START_AT and __END_AT columns marking when each version was valid`,

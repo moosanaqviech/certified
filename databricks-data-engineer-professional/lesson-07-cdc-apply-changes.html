@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- ==== EDIT: lesson title ==== -->
-<title>CDC with the APPLY CHANGES API · DE Professional</title>
+<title>CDC with the AUTO CDC API · DE Professional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -142,7 +142,7 @@
 <script>
 /* ============================================================
    ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
-   Unit 1 · Chapter 7 · CDC with the APPLY CHANGES API (1.7)
+   Unit 1 · Chapter 7 · CDC with the AUTO CDC API (1.7)
    ============================================================ */
 
 /* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
@@ -181,7 +181,7 @@ const cards = [
     html: `
     <div class="spacer" style="flex:0.3"></div>
     <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 7</div>
-    <h1 class="reveal">CDC with the APPLY CHANGES API</h1>
+    <h1 class="reveal">CDC with the AUTO CDC API</h1>
     <p class="lead reveal">Chapter 6 solved upstream updates with a full recompute. When the source is a real change feed, there is a cheaper answer: tell the pipeline how to merge changes instead.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
@@ -196,20 +196,23 @@ const cards = [
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 — concept: apply_changes basics */
+  /* 2 — concept: create_auto_cdc_flow basics */
   { html: `
     <div class="eyebrow reveal">Concept</div>
     <h2 class="reveal">One call replaces a hand-written merge</h2>
-    <p class="lead reveal" style="margin-bottom:16px">dlt.apply_changes() reads the change feed and keeps the target table's current state correct.</p>
+    <p class="lead reveal" style="margin-bottom:16px">dp.create_auto_cdc_flow() reads the change feed and keeps the target table's current state correct.</p>
     <div class="codeblock reveal">
-<span class="kw">import</span> dlt<br>
+<span class="kw">from</span> pyspark <span class="kw">import</span> pipelines <span class="kw">as</span> dp<br>
 <br>
-dlt.<span class="al">apply_changes</span>(<br>
+dp.<span class="al">create_auto_cdc_flow</span>(<br>
 &nbsp;&nbsp;&nbsp;&nbsp;target = <span class="st">"silver_customers"</span>,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;source = <span class="st">"bronze_customer_cdc"</span>,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;keys = [<span class="st">"customer_id"</span>],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;sequence_by = <span class="st">"change_ts"</span><br>
 )
+    </div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>You will see the old name</b>This was apply_changes(), and the SQL form was APPLY CHANGES INTO. The signature is unchanged, the exam guide still words the objective that way, and the legacy names still parse.</p></div>
     </div>` },
 
   /* 3 — concept: keys and sequence_by */
@@ -227,9 +230,9 @@ dlt.<span class="al">apply_changes</span>(<br>
   { html: `
     <div class="eyebrow reveal">Concept</div>
     <h2 class="reveal">Deletes are just another kind of change</h2>
-    <p class="lead reveal" style="margin-bottom:14px">One more parameter tells apply_changes which rows should disappear.</p>
+    <p class="lead reveal" style="margin-bottom:14px">One more parameter tells the flow which rows should disappear.</p>
     <div class="codeblock reveal">
-dlt.<span class="al">apply_changes</span>(<br>
+dp.<span class="al">create_auto_cdc_flow</span>(<br>
 &nbsp;&nbsp;&nbsp;&nbsp;target = <span class="st">"silver_customers"</span>,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;source = <span class="st">"bronze_customer_cdc"</span>,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;keys = [<span class="st">"customer_id"</span>],<br>
@@ -256,16 +259,16 @@ dlt.<span class="al">apply_changes</span>(<br>
     <h2 class="reveal" style="font-size:20px">A change for customer_id 42 lands with change_ts 09:00. A delayed message for the same customer_id then arrives with change_ts 08:55. What happens to it?</h2>
     <div class="choices reveal">
       <button class="choice" data-correct="true"><span class="key">A</span>It is ignored for the current state; 08:55 is older than the 09:00 change already applied</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>It is applied anyway, since apply_changes always applies messages in arrival order</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>The pipeline fails, since apply_changes cannot accept out-of-order messages</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>It is applied anyway, since the flow always applies messages in arrival order</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The pipeline fails, since the flow cannot accept out-of-order messages</button>
     </div>
-    <div class="feedback"><b>Correct.</b> sequence_by exists for exactly this case: apply_changes compares the sequence value of an incoming change to what has already been applied for that key, and only lets it through if it is actually newer. Arrival order at the pipeline has nothing to do with it.</div>` },
+    <div class="feedback"><b>Correct.</b> sequence_by exists for exactly this case: the flow compares the sequence value of an incoming change to what has already been applied for that key, and only lets it through if it is actually newer. Arrival order at the pipeline has nothing to do with it.</div>` },
 
   /* 7 — quiz: SCD2 need */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check</div>
-    <h2 class="reveal" style="font-size:21px">Finance needs to know a customer's billing address on the date of any past order, not just today. Which apply_changes setting fits?</h2>
+    <h2 class="reveal" style="font-size:21px">Finance needs to know a customer's billing address on the date of any past order, not just today. Which AUTO CDC setting fits?</h2>
     <div class="choices reveal">
       <button class="choice" data-correct="true"><span class="key">A</span>stored_as_scd_type=2, so every address change is kept as its own row with a start and end date</button>
       <button class="choice" data-correct="false"><span class="key">B</span>stored_as_scd_type=1, since it is the default and simplest option</button>
@@ -279,9 +282,9 @@ dlt.<span class="al">apply_changes</span>(<br>
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
     <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 7 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now wire a CDC feed into apply_changes and choose whether the target keeps history or not.</p>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now wire a CDC feed into an AUTO CDC flow and choose whether the target keeps history or not.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>One call, three operations</b>apply_changes folds inserts, updates, and deletes from a change feed into a target table, correctly ordered by sequence_by.</p></div>
+      <div class="pill"><p><b>One call, three operations</b>create_auto_cdc_flow folds inserts, updates, and deletes from a change feed into a target table, correctly ordered by sequence_by.</p></div>
       <div class="pill"><p><b>History is a config flag</b>stored_as_scd_type=2 is the difference between a table that only shows now and one that can answer questions about any point in the past.</p></div>
     </div>
     <div class="spacer"></div>` }
