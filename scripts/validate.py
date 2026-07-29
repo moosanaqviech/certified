@@ -360,12 +360,97 @@ EXAM_HARNESS = """
 const out = {
   questionCount: QUESTIONS.length,
   correct: QUESTIONS.map(function(q){ return q.correct; }),
+  multi: QUESTIONS.map(function(q){ return Array.isArray(q.correct); }),
   optCounts: QUESTIONS.map(function(q){ return (q.opts || []).length; }),
   minutes: E.minutes,
   pass: E.pass
 };
 console.log(JSON.stringify(out));
 """
+
+# Multiple-response support. `correct` is a scalar index for single-answer
+# questions and an array of indexes for multiple-response ones. Single-answer
+# questions stay at exactly 4 options; multi questions may run to 6, because
+# the vendors' own multi items typically offer 5 or 6.
+MULTI_OPT_MIN = 4
+MULTI_OPT_MAX = 6
+MULTI_SHARE_WARN = 0.25  # warn above this share; real exams are mostly single
+
+
+def check_answer_shapes(info, rep, single_opts=4):
+    """Validate `correct` against `opts` for both question shapes.
+
+    Returns the list of single-answer letters (for the run and distribution
+    checks) or None if something is broken badly enough to stop.
+    """
+    correct, multi, counts = info["correct"], info["multi"], info["optCounts"]
+    n = len(correct)
+    errs = []
+
+    for i, (c, is_multi, k) in enumerate(zip(correct, multi, counts)):
+        if is_multi:
+            if not (MULTI_OPT_MIN <= k <= MULTI_OPT_MAX):
+                errs.append(f"q{i}: multi question has {k} options, allowed {MULTI_OPT_MIN}-{MULTI_OPT_MAX}")
+            if len(c) < 2:
+                errs.append(f"q{i}: multi `correct` needs at least 2 indexes, found {len(c)}")
+            if len(set(c)) != len(c):
+                errs.append(f"q{i}: multi `correct` has duplicate indexes {c}")
+            if len(c) >= k:
+                errs.append(f"q{i}: multi `correct` selects {len(c)} of {k} options, leaving too few distractors")
+            bad = [x for x in c if not isinstance(x, int) or x < 0 or x >= k]
+            if bad:
+                errs.append(f"q{i}: multi `correct` index out of range for {k} options: {bad}")
+        else:
+            if k != single_opts:
+                errs.append(f"q{i}: single-answer question has {k} options, expected exactly {single_opts}")
+            if not isinstance(c, int) or c < 0 or c >= k:
+                errs.append(f"q{i}: `correct` index {c!r} out of range for {k} options")
+
+    if errs:
+        for e in errs:
+            rep.fail(e)
+        return None
+
+    n_multi = sum(1 for m in multi if m)
+    if n_multi:
+        rep.ok(f"{n - n_multi} single-answer and {n_multi} multiple-response question(s), all well formed")
+        if n and n_multi / n > MULTI_SHARE_WARN:
+            rep.warn(
+                f"{n_multi} of {n} questions are multiple-response "
+                f"({n_multi / n:.0%}); the real exams are mostly single answer"
+            )
+    else:
+        rep.ok(f"every question has exactly {single_opts} options and a valid correct index")
+
+    return [LETTERS[c] for c, m in zip(correct, multi) if not m]
+
+
+def check_letter_spread(letters, n_multi, rep):
+    """Run and distribution checks, over single-answer questions only.
+
+    A multiple-response question has no single correct letter, so including
+    it would corrupt both checks. They are skipped for those questions and
+    the exclusion is reported rather than left implicit.
+    """
+    if n_multi:
+        rep.ok(f"letter checks below cover the {len(letters)} single-answer question(s); {n_multi} multi excluded")
+
+    runs = [i - 2 for i in range(2, len(letters)) if letters[i] == letters[i - 1] == letters[i - 2]]
+    if runs:
+        rep.fail(f"three identical correct answers in a row starting at question(s): {runs}")
+    else:
+        rep.ok("no three identical correct answers in a row")
+
+    n = len(letters)
+    if n:
+        dist = {L: letters.count(L) for L in LETTERS}
+        shares = {L: dist[L] / n for L in LETTERS}
+        skewed = [f"{L}={dist[L]}" for L in LETTERS if shares[L] < 0.15 or shares[L] > 0.35]
+        summary = " ".join(f"{L}:{dist[L]}" for L in LETTERS)
+        if skewed:
+            rep.warn(f"answer distribution skewed ({summary}); aim for roughly a quarter each")
+        else:
+            rep.ok(f"answer distribution balanced ({summary})")
 
 
 def check_exam(payload, rep):
@@ -382,42 +467,10 @@ def check_exam(payload, rep):
     n = info["questionCount"]
     rep.ok(f"{n} question(s)")
 
-    # Option counts
-    bad_opts = [i for i, k in enumerate(info["optCounts"]) if k != 4]
-    if bad_opts:
-        rep.fail(f"questions with != 4 options: {bad_opts}")
-    else:
-        rep.ok("every question has exactly 4 options")
-
-    # Correct-answer index range
-    correct = info["correct"]
-    out_of_range = [i for i, c in enumerate(correct) if not isinstance(c, int) or c < 0 or c > 3]
-    if out_of_range:
-        rep.fail(f"correct index out of range (must be 0-3) at questions: {out_of_range}")
+    letters = check_answer_shapes(info, rep)
+    if letters is None:
         return
-
-    letters = [LETTERS[c] for c in correct]
-
-    # Three-in-a-row
-    runs = []
-    for i in range(2, len(letters)):
-        if letters[i] == letters[i - 1] == letters[i - 2]:
-            runs.append(i - 2)
-    if runs:
-        rep.fail(f"three identical correct answers in a row starting at question(s): {runs}")
-    else:
-        rep.ok("no three identical correct answers in a row")
-
-    # Distribution balance (soft)
-    if n:
-        dist = {L: letters.count(L) for L in LETTERS}
-        shares = {L: dist[L] / n for L in LETTERS}
-        skewed = [f"{L}={dist[L]}" for L in LETTERS if shares[L] < 0.15 or shares[L] > 0.35]
-        summary = " ".join(f"{L}:{dist[L]}" for L in LETTERS)
-        if skewed:
-            rep.warn(f"answer distribution skewed ({summary}); aim for roughly a quarter each")
-        else:
-            rep.ok(f"answer distribution balanced ({summary})")
+    check_letter_spread(letters, sum(1 for m in info["multi"] if m), rep)
 
 
 # ---------------------------------------------------------------------------
@@ -434,6 +487,7 @@ READINESS_HARNESS = """
 const out = {
   questionCount: QUESTIONS.length,
   correct: QUESTIONS.map(function(q){ return q.correct; }),
+  multi: QUESTIONS.map(function(q){ return Array.isArray(q.correct); }),
   optCounts: QUESTIONS.map(function(q){ return (q.opts || []).length; }),
   qDomains: QUESTIONS.map(function(q){ return q.domain; }),
   domains: (R.domains || []).map(function(d){
@@ -477,6 +531,18 @@ def check_readiness(payload, rep):
         rep.fail(f"questions with != 4 options: {bad_opts}")
     else:
         rep.ok("every question has exactly 4 options")
+
+    # Single answer only. Practice exams support multiple-response questions
+    # (`correct` as an array); the readiness quiz deliberately does not, since
+    # its 12-question band scoring assumes one point per single-answer item.
+    multi_idx = [i for i, m in enumerate(info["multi"]) if m]
+    if multi_idx:
+        rep.fail(
+            f"multiple-response `correct` array at question(s) {multi_idx}; "
+            "readiness quizzes are single answer only (practice exams support multi)"
+        )
+        return
+    rep.ok("every question is single answer, as the readiness format requires")
 
     # Every question's domain matches an R.domains id
     unknown = sorted({d for d in info["qDomains"] if d not in dom_ids})

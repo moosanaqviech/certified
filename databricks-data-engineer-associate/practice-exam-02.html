@@ -247,7 +247,19 @@ const PASS = 70;                 // DE Associate passing ≈ 70%
 const SECONDS = 20 * 60;         // 20 min, proportional to real exam pace
 
 /* ---------- state ---------- */
-let state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+/* Answer model: `correct` is a scalar index for single-answer questions and an
+   array of indexes for multiple-response ones. MULTI[i] decides per QUESTION,
+   never per exam, so a single-answer item sitting next to a multi item still
+   replaces its selection on click. Internally every answer is an array, with
+   [] meaning unanswered; KEY() gives the sorted answer key to compare against.
+   Note the init below builds a fresh [] per question: Array(n).fill([]) would
+   share one array across all of them. */
+const MULTI = QUESTIONS.map(Q => Array.isArray(Q.correct));
+const KEY = Q => (Array.isArray(Q.correct) ? Q.correct.slice() : [Q.correct]).sort((a,b)=>a-b);
+const sameSet = (a,b) => a.length===b.length && a.every((v,k)=>v===b[k]);
+const blankAnswers = () => Array.from({length:QUESTIONS.length}, () => []);
+
+let state = { screen:"intro", i:0, answers:blankAnswers(), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
 
 const root = document.getElementById("root");
 const pbar = document.getElementById("pbar");
@@ -269,7 +281,7 @@ function startTimer(){
 
 function setProgress(){
   if(state.screen==="test"){
-    const answered = state.answers.filter(a=>a!==null).length;
+    const answered = state.answers.filter(a=>a.length>0).length;
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
@@ -307,7 +319,7 @@ function renderTest(){
   topLbl.textContent = `Question ${i+1} / ${QUESTIONS.length}`;
   root.innerHTML = `
     <div class="qhead">
-      <span class="qnum">QUESTION ${i+1}</span>
+      <span class="qnum">QUESTION ${i+1}${MULTI[i]?` &middot; SELECT ${["","ONE","TWO","THREE","FOUR","FIVE"][KEY(Q).length]||KEY(Q).length}`:""}</span>
       <button class="flag ${state.flags[i]?'on':''}" id="flagBtn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 21V4h12l-2 4 2 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         ${state.flags[i]?'Flagged':'Flag'}
@@ -316,8 +328,8 @@ function renderTest(){
     <div class="qtext">${Q.q}</div>
     <div class="opts" id="opts">
       ${Q.opts.map((o,idx)=>`
-        <button class="opt ${state.answers[i]===idx?'sel':''}" data-idx="${idx}">
-          <span class="key">${"ABCD"[idx]}</span><span>${o}</span>
+        <button class="opt ${state.answers[i].includes(idx)?'sel':''}" data-idx="${idx}" aria-pressed="${state.answers[i].includes(idx)}">
+          <span class="key">${"ABCDEF"[idx]}</span><span>${o}</span>
         </button>`).join("")}
     </div>
     <div class="nav-dots" id="dots"></div>
@@ -329,7 +341,17 @@ function renderTest(){
     </div>`;
 
   root.querySelectorAll(".opt").forEach(b=>{
-    b.onclick = ()=>{ state.answers[i]=+b.dataset.idx; render(); setProgress(); };
+    b.onclick = ()=>{
+      const j = +b.dataset.idx;
+      if(MULTI[i]){
+        const a = state.answers[i], at = a.indexOf(j);
+        if(at>=0) a.splice(at,1); else a.push(j);
+        a.sort((x,y)=>x-y);
+      } else {
+        state.answers[i] = [j];   /* single answer: replace, never accumulate */
+      }
+      render(); setProgress();
+    };
   });
   document.getElementById("flagBtn").onclick = ()=>{ state.flags[i]=!state.flags[i]; render(); };
   const prev=document.getElementById("prevBtn"); if(prev) prev.onclick=()=>{ if(state.i>0){state.i--;render();setProgress();} };
@@ -342,7 +364,7 @@ function renderDots(){
   const d = document.getElementById("dots"); if(!d) return;
   d.innerHTML = QUESTIONS.map((_,idx)=>{
     let cls="dot";
-    if(state.answers[idx]!==null) cls+=" answered";
+    if(state.answers[idx].length>0) cls+=" answered";
     if(idx===state.i) cls+=" current";
     if(state.flags[idx]) cls+=" flagged";
     return `<button class="${cls}" data-d="${idx}">${idx+1}</button>`;
@@ -351,7 +373,7 @@ function renderDots(){
 }
 
 function confirmSubmit(){
-  const unanswered = state.answers.filter(a=>a===null).length;
+  const unanswered = state.answers.filter(a=>a.length===0).length;
   if(unanswered>0){
     if(!confirm(`You have ${unanswered} unanswered question${unanswered>1?'s':''}. Submit anyway?`)) return;
   }
@@ -366,7 +388,9 @@ function submit(){
 }
 
 function score(){
-  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(state.answers[idx]===Q.correct) c++; });
+  /* All or nothing on multi: a partially correct set scores zero, matching
+     how the real exams grade multiple-response items. */
+  let c=0; QUESTIONS.forEach((Q,idx)=>{ if(sameSet(state.answers[idx], KEY(Q))) c++; });
   return c;
 }
 
@@ -403,15 +427,15 @@ function renderResults(){
 function renderReview(){
   const wrap=document.getElementById("review");
   wrap.innerHTML = `<div class="review-head">Answer review</div>` + QUESTIONS.map((Q,idx)=>{
-    const mine=state.answers[idx], ok=mine===Q.correct;
+    const mine=state.answers[idx], key=KEY(Q), ok=sameSet(mine,key);
     return `<div class="rev-q">
       <div class="rq"><span class="mark ${ok?'ok':'no'}">${ok?'Correct':'Review'}</span>Q${idx+1}. ${Q.q}</div>
       <div class="opts">
         ${Q.opts.map((o,j)=>{
           let cls="opt";
-          if(j===Q.correct) cls+=" correct";
-          else if(j===mine) cls+=" incorrect";
-          return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  ·  your answer':''}</span></div>`;
+          if(key.includes(j)) cls+=" correct";
+          else if(mine.includes(j)) cls+=" incorrect";
+          return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
       <div class="explain"><b>Why:</b> ${Q.explain}</div>
@@ -421,7 +445,7 @@ function renderReview(){
 }
 
 function retake(){
-  state = { screen:"intro", i:0, answers:Array(QUESTIONS.length).fill(null), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
+  state = { screen:"intro", i:0, answers:blankAnswers(), flags:Array(QUESTIONS.length).fill(false), submitted:false, left:SECONDS, tick:null };
   timerEl.classList.remove("warn"); timerVal.textContent=fmt(SECONDS);
   render(); setProgress(); window.scrollTo({top:0,behavior:"smooth"});
 }
