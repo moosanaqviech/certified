@@ -63,9 +63,26 @@ the `blog/` prefix
 
 ## Architecture: frozen engines, injected payloads
 
-Lessons and exams are standalone HTML files built from frozen templates.
-NEVER edit anything below the `ENGINE` marker in either template or in any
-generated file. Never edit the `<style>` block of the test template.
+Lessons and exams are HTML files built from frozen templates. NEVER edit
+anything below the `ENGINE` marker in the test template or in any generated
+exam. Never edit the `<style>` block of the test template.
+
+Lessons no longer inline their engine. It lives once at `/lesson-engine.js`
+and every lesson loads it with a classic script tag placed after its inline
+payload:
+
+    <script>  ...NAV + A + cards...  </script>
+    <script src="../lesson-engine.js?v=1"></script>
+
+Three things about that tag are load-bearing. It must stay a classic script
+(`type="module"` will not load from `file://`). It must come after the
+payload, because the engine reads the payload's top-level `NAV`, `A`, and
+`cards` bindings. And the engine requires `NAV`: a lesson that loads it
+without one renders a blank page, which `scripts/validate.py` fails on.
+
+Editing `lesson-engine.js` changes every lesson at once. Bump the `?v=` on
+every lesson that loads it in the same commit, or a cached old engine can
+pair with a new payload in a returning visitor's browser.
 
 - **Lessons** (`lesson-template.html`): copy template, then touch exactly two
   zones: the 5 palette vars in `:root` (`--bg`, `--bg-tint`, `--accent`,
@@ -157,9 +174,13 @@ regenerating a file. Drop-in replacement blocks over full rewrites.
 
 ## Deployment
 
-Netlify static hosting; pushing to main deploys. Do not add build steps,
-bundlers, or shared JS imports: every lesson and exam must work as a
-standalone file opened locally.
+Netlify static hosting; pushing to main deploys. Do not add build steps or
+bundlers. Every lesson and exam must still work opened straight off disk
+with no server, which is why `/lesson-engine.js` is a plain classic script
+loaded by relative path rather than an ES module or a bundled import. A
+lesson HTML file is no longer portable on its own: it needs
+`lesson-engine.js` one directory above it, and renders nothing without it.
+Exams and readiness quizzes remain fully self-contained.
 
 Do not redirect the old Netlify subdomain to the apex domain. The
 `alreadycertified.netlify.app` subdomain must resolve on its own and must

@@ -263,7 +263,7 @@ def check_full_script_syntax(text, rep):
             first = err[0] if err else "unknown error"
             rep.fail(f"full <script> tag fails to parse (syntax error the isolated payload check cannot see): {first}")
         else:
-            rep.ok("full <script> tag (payload + frozen engine, as shipped) parses cleanly")
+            rep.ok("full inline <script> tag (as shipped) parses cleanly")
     except FileNotFoundError:
         rep.warn("node not found: full-script syntax check skipped (install Node.js to enable)")
     except subprocess.TimeoutExpired:
@@ -651,6 +651,8 @@ def check_readiness(payload, rep):
 # ---------------------------------------------------------------------------
 
 NAV_RE = re.compile(r"const NAV\s*=\s*\{(.*?)\n\};", re.S)
+ENGINE_TAG_RE = re.compile(r'<script src="(\.\./lesson-engine\.js(?:\?v=(\d+))?)"\s*></script>')
+INLINE_ENGINE_RE = re.compile(r"const vp\s*=\s*document\.getElementById\('viewport'\);")
 UNITS_TEST_RE = re.compile(r'test:\s*\{[^}]*?file:\s*"([^"]+)"', re.S)
 FILE_KEY_RE = re.compile(r'file:\s*"([^"]+)"')
 
@@ -681,13 +683,48 @@ def course_order(index_path):
     return FILE_KEY_RE.findall(blk), set(UNITS_TEST_RE.findall(blk))
 
 
+def check_engine(path, text, rep):
+    """Lessons load the engine from /lesson-engine.js instead of inlining it.
+
+    A lesson that inlines its own copy is pre-migration and only warns; one
+    that does both, or neither, is broken.
+    """
+    p = Path(path)
+    tag = ENGINE_TAG_RE.search(text)
+    inlined = bool(INLINE_ENGINE_RE.search(text))
+
+    if tag and inlined:
+        rep.fail("lesson both loads the shared engine and inlines a copy; the two will fight")
+        return True
+    if not tag:
+        if inlined:
+            rep.warn("engine is still inlined in this file rather than loaded from /lesson-engine.js (not yet migrated)")
+        elif "const cards = [" in text:
+            rep.fail("no engine: the lesson neither inlines one nor loads /lesson-engine.js, so nothing will render")
+        return False
+
+    shared = p.parent.parent / "lesson-engine.js"
+    if not shared.exists():
+        rep.fail(f"loads {tag.group(1)} but no lesson-engine.js sits beside {p.parent.name}/")
+    elif tag.group(2) is None:
+        rep.warn(f"loads the shared engine without a ?v= cache buster; a stale cached engine can pair with a new payload")
+    else:
+        rep.ok(f"loads the shared engine ({tag.group(1)})")
+    return True
+
+
 def check_nav(path, text, rep):
     p = Path(path)
     index = p.parent / "index.html"
     nav = parse_nav(text)
+    shared_engine = bool(ENGINE_TAG_RE.search(text))
 
     if nav is None:
-        if "const cards = [" in text and index.exists():
+        if shared_engine:
+            # The shared engine dereferences NAV unconditionally, so a lesson
+            # loading it without one renders a blank page.
+            rep.fail("no NAV block, but this lesson loads the shared engine, which requires one; the page will render nothing")
+        elif "const cards = [" in text and index.exists():
             rep.warn(
                 "no NAV block: the final card still ends in Restart rather than "
                 "chapter navigation (not yet migrated)"
@@ -750,8 +787,9 @@ def validate_file(path):
     rep = Report(path)
     text = Path(path).read_text(encoding="utf-8")
     kind = detect_type(text)
-    # NAV is checked from the raw file, not the payload zone, so it still runs
-    # on the older lessons that were saved without payload markers.
+    # Engine wiring and NAV are checked from the raw file, not the payload
+    # zone, so they still run on lessons saved without payload markers.
+    check_engine(path, text, rep)
     check_nav(path, text, rep)
     if kind is None:
         rep.fail("no LESSON or EXAM payload markers found; is this a Certified content file?")

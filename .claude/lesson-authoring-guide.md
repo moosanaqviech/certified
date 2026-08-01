@@ -1,7 +1,7 @@
 lesson-authoring-guide.md
 # Lesson authoring guide
  
-The shell (`lesson-template.html`) holds all CSS, the page scaffold, the card engine, quiz wiring, and keyboard / swipe navigation. It never changes. To make a lesson you touch exactly two zones:
+The shell (`lesson-template.html`) holds all CSS and the page scaffold. The card engine, quiz wiring, and keyboard / swipe navigation are not in it: they live once at `/lesson-engine.js`, which the template already loads with `<script src="../lesson-engine.js?v=1"></script>` after the payload. Leave that tag alone (it must stay a classic script, and it must stay after the payload). To make a lesson you touch exactly two zones:
  
 1. The **palette** block inside `:root`.
 2. The **payload** block between the `LESSON PAYLOAD — BEGIN / END` markers (`NAV`, `A`, and `cards`).
