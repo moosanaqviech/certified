@@ -637,6 +637,112 @@ def check_readiness(payload, rep):
 
 
 # ---------------------------------------------------------------------------
+# Chapter navigation (NAV)
+#
+# The final card's two buttons ("Chapter catalog" and "Next chapter" /
+# "Practice test") are driven by the NAV block in the lesson payload. That
+# duplicates ordering data the course index.html already owns, so the two
+# have to be checked against each other or they drift apart silently.
+#
+# The play order is read straight from the UNITS array: inside each unit
+# literal `lessons:[...]` precedes `test:{...}`, so an in-order scan of the
+# file: keys already yields "the chapter after the last lesson of a unit is
+# that unit's practice exam", which is exactly the rule NAV.next follows.
+# ---------------------------------------------------------------------------
+
+NAV_RE = re.compile(r"const NAV\s*=\s*\{(.*?)\n\};", re.S)
+UNITS_TEST_RE = re.compile(r'test:\s*\{[^}]*?file:\s*"([^"]+)"', re.S)
+FILE_KEY_RE = re.compile(r'file:\s*"([^"]+)"')
+
+
+def parse_nav(text):
+    """Return the NAV literal as a dict, or None when the file has no NAV."""
+    m = NAV_RE.search(text)
+    if not m:
+        return None
+    body = m.group(1)
+    nav = {}
+    for key in ("catalog", "next", "nextLabel"):
+        km = re.search(r'\b%s\s*:\s*(null|"([^"]*)")' % key, body)
+        if km:
+            nav[key] = None if km.group(1) == "null" else km.group(2)
+    return nav
+
+
+def course_order(index_path):
+    """(ordered files, test files) from a course index.html UNITS array."""
+    src = index_path.read_text(encoding="utf-8")
+    if "const UNITS = [" not in src:
+        return None, None
+    blk = src[src.index("const UNITS = ["):]
+    if "\n];" not in blk:
+        return None, None
+    blk = blk[: blk.index("\n];")]
+    return FILE_KEY_RE.findall(blk), set(UNITS_TEST_RE.findall(blk))
+
+
+def check_nav(path, text, rep):
+    p = Path(path)
+    index = p.parent / "index.html"
+    nav = parse_nav(text)
+
+    if nav is None:
+        if "const cards = [" in text and index.exists():
+            rep.warn(
+                "no NAV block: the final card still ends in Restart rather than "
+                "chapter navigation (not yet migrated)"
+            )
+        return
+
+    missing = [k for k in ("catalog", "next", "nextLabel") if k not in nav]
+    if missing:
+        rep.fail(f"NAV is missing required key(s): {', '.join(missing)}")
+        return
+
+    if nav["catalog"] != "index.html":
+        rep.fail(
+            f'NAV.catalog is "{nav["catalog"]}"; it must be "index.html", '
+            "the course home always sits beside the lesson"
+        )
+
+    if not index.exists():
+        rep.warn("NAV present but there is no sibling index.html to check the chapter order against")
+        return
+
+    ordered, tests = course_order(index)
+    if not ordered:
+        rep.warn("could not read the UNITS array from the sibling index.html; chapter order not checked")
+        return
+    if p.name not in ordered:
+        rep.warn(f"{p.name} is not listed in the sibling index.html; chapter order not checked")
+        return
+
+    i = ordered.index(p.name)
+    exp_next = ordered[i + 1] if i + 1 < len(ordered) else None
+    exp_label = None if exp_next is None else ("Practice test" if exp_next in tests else "Next chapter")
+
+    if nav["next"] != exp_next:
+        rep.fail(
+            f'NAV.next is {nav["next"] or "null"} but the course index puts '
+            f'{exp_next or "nothing"} after this chapter; the lesson and index.html have drifted'
+        )
+        return
+
+    if nav["next"] is None:
+        rep.ok("NAV: last chapter of the course, final card offers Back to catalog")
+    else:
+        if nav["nextLabel"] != exp_label:
+            rep.fail(
+                f'NAV.nextLabel is "{nav["nextLabel"]}" but {nav["next"]} is '
+                f'{"a practice exam" if exp_next in tests else "a lesson"}, so it must be "{exp_label}"'
+            )
+        if not (p.parent / nav["next"]).exists():
+            rep.fail(f"NAV.next points at {nav['next']}, which does not exist in {p.parent.name}/")
+        else:
+            rep.ok(f'NAV: next is {nav["next"]}, matching the course index order')
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 
@@ -644,6 +750,9 @@ def validate_file(path):
     rep = Report(path)
     text = Path(path).read_text(encoding="utf-8")
     kind = detect_type(text)
+    # NAV is checked from the raw file, not the payload zone, so it still runs
+    # on the older lessons that were saved without payload markers.
+    check_nav(path, text, rep)
     if kind is None:
         rep.fail("no LESSON or EXAM payload markers found; is this a Certified content file?")
         return rep

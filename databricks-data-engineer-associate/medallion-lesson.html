@@ -256,6 +256,13 @@
     font-size: 20px;
   }
   .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
 
   /* quiz */
   .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
@@ -308,8 +315,9 @@
 
       <div class="viewport" id="viewport"></div>
 
-      <div class="footer">
+      <div class="footer" id="footer">
         <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
         <button class="btn" id="next">Begin lesson</button>
       </div>
     </div>
@@ -317,6 +325,20 @@
 </div>
 
 <script>
+/* ----------  NAV  (where the final card's two buttons go)  ----------
+   catalog:   this course's index.html, always a plain sibling filename.
+   next:      the next chapter, or the unit's practice exam when this
+              chapter closes a unit. null on the last chapter of a course,
+              which collapses the footer to a single "Back to catalog".
+   nextLabel: "Next chapter" or "Practice test"; the engine adds the arrow.
+   Order here must match the UNITS array in that course's index.html;
+   scripts/validate.py enforces it.                                       */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-12-joins.html",
+  nextLabel: "Next chapter"
+};
+
 /* ----------  ART (inline SVG)  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 220">
@@ -540,25 +562,17 @@ const topbar = document.getElementById('topbar');
 const glow = document.getElementById('glow');
 const nextBtn = document.getElementById('next');
 const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
 let i = 0;
 const answered = {};
 
-// build segments
-cards.forEach(() => {
-  const s = document.createElement('div'); s.className = 'seg';
-  s.innerHTML = '<i></i>'; topbar.appendChild(s);
-});
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
 const segs = [...topbar.children];
 
-// build cards
-const els = cards.map((c, idx) => {
-  const d = document.createElement('div');
-  d.className = 'card'; d.innerHTML = c.html;
-  vp.appendChild(d);
-  return d;
-});
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
 
-function render(dir) {
+function render() {
   cards.forEach((c, idx) => {
     const el = els[idx];
     el.classList.remove('in','out-left');
@@ -568,21 +582,17 @@ function render(dir) {
     segs[idx].classList.toggle('active', idx === i);
   });
   glow.style.background = cards[i].glow || 'transparent';
-
-  // footer logic
-  backBtn.disabled = (i === 0);
   const c = cards[i];
-  if (c.quiz && !answered[i]) {
-    nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer';
-  } else if (c.last) {
-    nextBtn.disabled = false; nextBtn.textContent = 'Restart ↻';
-  } else if (i === 0) {
-    nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson';
-  } else {
-    nextBtn.disabled = false; nextBtn.textContent = 'Continue';
-  }
-
-  // wire quiz
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
   if (c.quiz) wireQuiz(els[i], i);
 }
 
@@ -604,39 +614,28 @@ function wireQuiz(cardEl, idx) {
   });
 }
 
-function go(n) {
-  if (n < 0 || n >= cards.length) return;
-  i = n;
-  render();
-}
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
 
 nextBtn.onclick = () => {
-  if (cards[i].last) { // restart
-    for (const k in answered) delete answered[k];
-    els.forEach((el, idx) => {
-      if (cards[idx].quiz) {
-        el.querySelectorAll('.choice').forEach(o => o.className = 'choice');
-        const f = el.querySelector('.feedback'); if (f) f.classList.remove('show');
-      }
-    });
-    go(0); return;
-  }
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
   go(i + 1);
 };
 backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
 
+/* Keys and swipes only move between cards. Leaving the lesson always takes
+   a deliberate tap, so a stray swipe on the final card cannot navigate away. */
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
-  if (e.key === 'ArrowLeft' && !backBtn.disabled) backBtn.click();
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) go(i + 1);
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
 });
 
-// swipe
 let sx = 0;
 vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
 vp.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - sx;
-  if (dx < -50 && !nextBtn.disabled) nextBtn.click();
-  if (dx > 50 && !backBtn.disabled) backBtn.click();
+  if (dx < -50 && !nextBtn.disabled && !cards[i].last) go(i + 1);
+  if (dx > 50 && i > 0) go(i - 1);
 });
 
 render();
