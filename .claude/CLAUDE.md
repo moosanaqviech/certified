@@ -70,8 +70,8 @@ generated file. Never edit the `<style>` block of the test template.
 - **Lessons** (`lesson-template.html`): copy template, then touch exactly two
   zones: the 5 palette vars in `:root` (`--bg`, `--bg-tint`, `--accent`,
   `--accent-glow` at ~0.12 alpha, `--accent-ink`), and the payload between
-  the `LESSON PAYLOAD - BEGIN / END` markers (the `A` SVG object and the
-  `cards` array). Also set the `<title>`. Extra named palette colors are
+  the `LESSON PAYLOAD - BEGIN / END` markers (the `NAV` block, the `A` SVG
+  object, and the `cards` array). Also set the `<title>`. Extra named palette colors are
   allowed when SVGs in `A` reference them.
 - **Exams** (`test-template.html`): copy template, replace only the payload
   between the `EXAM PAYLOAD - BEGIN / END` markers (`E` config + `QUESTIONS`
@@ -93,6 +93,14 @@ anything. They define card shapes, helper classes, and question rules.
   only; see the cover-art triage in the authoring skill.
 - Quiz cards: exactly one `data-correct="true"` per card, plus a `.feedback`
   block. Final card carries `last: true`.
+- Every lesson carries a `NAV` block at the top of its payload. The final
+  card's footer reads "Chapter catalog" (always `index.html`) and "Next
+  chapter", which points at the next chapter in that course's index.html
+  `UNITS` order, or at the unit's practice exam when the chapter closes a
+  unit, or is `null` on the last chapter of a course (the footer then
+  collapses to a single "Back to catalog"). `NAV` duplicates ordering data
+  index.html owns, so reordering chapters means updating both;
+  `scripts/validate.py` fails any lesson that has drifted from its index.
 - Lessons: 8 to 12 cards, target 9. A second quiz card is required at 11
   or more cards. Chapters exceeding 12 cards should be split, not extended.
 - Trade-off lessons (flagged TO in the index) follow the fixed pattern:
