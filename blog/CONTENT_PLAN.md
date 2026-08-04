@@ -77,7 +77,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | Complete AWS Machine Learning Engineer Associate (MLA-C01) certification guide (pillar) | "aws machine learning engineer associate certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c01-certification-guide.html |
 | 2 | MLA-C01 exam guide breakdown: domains and weighting | "MLA-C01 exam domains" | Yes | blog/mla-c01-exam-guide-domains-weighting.html |
-| 3 | Study plan and prep time for the AWS Machine Learning Engineer Associate exam | "MLA-C01 study plan" / "how long to prepare" | No | |
+| 3 | Study plan and prep time for the AWS Machine Learning Engineer Associate exam | "MLA-C01 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate.html |
 | 4 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | No | |
 | 5 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | No | |
 | 6 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
@@ -112,7 +112,7 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete AWS AI Practitioner (AIF-C01) certification guide (pillar) | "aws ai practitioner certification guide" | Yes | blog/aws-ai-practitioner-aif-c01-certification-guide.html |
-| 2 | AIF-C01 exam guide breakdown: domains and weighting | "AIF-C01 exam domains" | No | |
+| 2 | AIF-C01 exam guide breakdown: domains and weighting | "AIF-C01 exam domains" | Yes | blog/aif-c01-exam-guide-domains-weighting.html |
 | 3 | Study plan and prep time for the AWS AI Practitioner exam | "AIF-C01 study plan" / "how long to prepare" | No | |
 | 4 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | No | |
 | 5 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | No | |
@@ -124,7 +124,7 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete Microsoft Azure Fundamentals (AZ-900) certification guide (pillar) | "azure fundamentals certification guide" | Yes | blog/azure-fundamentals-az-900-certification-guide.html |
-| 2 | Azure Fundamentals exam cost, format and question types | "what's on the AZ-900 exam" | No | |
+| 2 | Azure Fundamentals exam cost, format and question types | "what's on the AZ-900 exam" | Yes | blog/azure-fundamentals-az-900-exam-cost-format.html |
 | 3 | Study plan and prep time for the Azure Fundamentals exam | "az-900 study plan" / "how long to prepare" | No | |
 | 4 | Core Azure services to know for the AZ-900 exam | "azure services for az-900 exam" | No | |
 | 5 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | No | |
