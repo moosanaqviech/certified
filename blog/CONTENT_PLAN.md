@@ -89,7 +89,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | Complete Databricks Machine Learning Associate certification guide (pillar) | "databricks machine learning associate certification guide" | Yes | blog/databricks-machine-learning-associate-certification-guide.html |
 | 2 | Databricks Machine Learning Associate exam cost, format and question types | "what's on the databricks ml associate exam" | Yes | blog/databricks-machine-learning-associate-exam-cost-format.html |
-| 3 | Study plan and prep time for the Databricks Machine Learning Associate exam | "databricks ml associate study plan" / "how long to prepare" | No | |
+| 3 | Study plan and prep time for the Databricks Machine Learning Associate exam | "databricks ml associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-machine-learning-associate.html |
 | 4 | MLflow for the Databricks Machine Learning Associate exam explained | "mlflow databricks ml associate exam" | No | |
 | 5 | AutoML and Feature Store on Databricks explained | "databricks automl feature store" | No | |
 | 6 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | No | |
@@ -101,7 +101,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | Complete AWS Cloud Practitioner (CLF-C02) certification guide (pillar) | "aws cloud practitioner certification guide" | Yes | blog/aws-cloud-practitioner-clf-c02-certification-guide.html |
 | 2 | AWS Cloud Practitioner exam cost, format and question types | "what's on the AWS cloud practitioner exam" | Yes | blog/aws-cloud-practitioner-exam-cost-format-questions.html |
-| 3 | Study plan and prep time for the AWS Cloud Practitioner exam | "cloud practitioner study plan" / "how long to prepare" | No | |
+| 3 | Study plan and prep time for the AWS Cloud Practitioner exam | "cloud practitioner study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-cloud-practitioner.html |
 | 4 | Core AWS services to know for the CLF-C02 exam | "aws services for cloud practitioner exam" | No | |
 | 5 | AWS pricing and billing concepts for the Cloud Practitioner exam | "aws pricing billing cloud practitioner" | No | |
 | 6 | AWS Cloud Practitioner vs AI Practitioner (AIF-C01): which foundational cert first | "aws cloud practitioner vs ai practitioner" | No | |
@@ -113,7 +113,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | Complete AWS AI Practitioner (AIF-C01) certification guide (pillar) | "aws ai practitioner certification guide" | Yes | blog/aws-ai-practitioner-aif-c01-certification-guide.html |
 | 2 | AIF-C01 exam guide breakdown: domains and weighting | "AIF-C01 exam domains" | Yes | blog/aif-c01-exam-guide-domains-weighting.html |
-| 3 | Study plan and prep time for the AWS AI Practitioner exam | "AIF-C01 study plan" / "how long to prepare" | No | |
+| 3 | Study plan and prep time for the AWS AI Practitioner exam | "AIF-C01 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-ai-practitioner.html |
 | 4 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | No | |
 | 5 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | No | |
 | 6 | AWS AI Practitioner vs Cloud Practitioner (CLF-C02): which foundational cert first | "aws ai practitioner vs cloud practitioner" | No | |
