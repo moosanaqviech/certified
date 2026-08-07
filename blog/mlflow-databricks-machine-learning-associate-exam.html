@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLflow for the Databricks Machine Learning Associate Exam, Explained</title>
+<meta name="description" content="What the Databricks ML Associate exam tests about MLflow: manual logging, the MLflow UI, finding the best run with search_runs, and the Unity Catalog registry.">
+<link rel="canonical" href="https://certify.courses/blog/mlflow-databricks-machine-learning-associate-exam">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MLflow for the Databricks Machine Learning Associate Exam, Explained">
+<meta property="og:description" content="Seven of the exam guide's 48 objectives name MLflow directly. Tracking, the Client API, and the Unity Catalog registry with aliases, at exam depth.">
+<meta property="og:url" content="https://certify.courses/blog/mlflow-databricks-machine-learning-associate-exam">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .tiers{display:grid;gap:12px;grid-template-columns:1fr;margin:6px 0;}
+  @media(min-width:600px){.tiers{grid-template-columns:repeat(3,1fr);}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 18px;text-align:center;}
+  .tier.mid{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .tier b{display:block;font-family:var(--display);font-size:30px;font-weight:600;color:var(--gold);line-height:1;margin-bottom:6px;}
+  .tier .who{font-size:13.5px;color:var(--ink-soft);}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:8px;}
+  .plan .wk{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .plan .wk:last-child{border-bottom:none;}
+  .plan .wk .lbl{flex:0 0 76px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--gold);padding-top:1px;}
+  .plan .wk .desc{font-size:15px;color:var(--ink-soft);}
+  .plan .wk .desc b{color:var(--ink);font-weight:600;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../index.html">Already Certified</a><span>&rsaquo;</span>
+    <a href="databricks-machine-learning-associate-certification-guide.html">ML Associate Guide</a><span>&rsaquo;</span>
+    <span>MLflow on the exam</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks ML Associate &middot; Topic Deep Dive</div>
+    <h1>MLflow for the Databricks Machine Learning Associate Exam, Explained</h1>
+    <p class="lede">MLflow appears on the Databricks Certified Machine Learning Associate exam through <strong>seven of the exam guide's 48 objectives</strong>, roughly 15% of the scored questions. They cover three jobs: logging runs with MLflow Tracking, finding the best run with the MLflow Client API, and managing registered models in Unity Catalog with versions, aliases, and tags.</p>
+    <p class="updated">Last updated August 2026.</p>
+  </header>
+
+  <section id="scope">
+    <h2>What the exam actually asks about MLflow</h2>
+    <p>The exam guide lists exactly 48 objectives against 48 scored questions, so each objective is worth about one question. The MLflow objectives sit in Section 1, Databricks Machine Learning, and they are specific:</p>
+    <ul>
+      <li>Manually log metrics, artifacts, and models in an MLflow Run</li>
+      <li>Identify the information available in the MLflow UI</li>
+      <li>Identify the best run using the MLflow Client API</li>
+      <li>Register a model using the MLflow Client API in the Unity Catalog registry</li>
+      <li>Identify the benefits of registering models in Unity Catalog over the workspace registry</li>
+      <li>Set or remove a tag for a model</li>
+      <li>Promote a challenger model to a champion model using aliases</li>
+    </ul>
+    <p>Notice what is absent: nothing about self-hosting an MLflow tracking server, model flavors internals, or the old workspace-registry stage transitions. The exam tests MLflow as Databricks ships it, managed and integrated with Unity Catalog.</p>
+    <p class="fnote">Objectives from the official exam guide PDF (1 Mar 2025 edition) linked from the <a href="https://www.databricks.com/learn/certification/machine-learning-associate" target="_blank" rel="noopener">Databricks ML Associate certification page</a>.</p>
+  </section>
+
+  <section id="tracking">
+    <h2>Tracking: manual logging versus autologging</h2>
+    <p>An MLflow <strong>run</strong> is one execution of training code, grouped under an <strong>experiment</strong>. The exam expects you to know both ways a run gets its contents:</p>
+    <ul>
+      <li><strong>Autologging</strong> captures parameters, metrics, and the model automatically for supported libraries, and Databricks enables it in the ML runtime.</li>
+      <li><strong>Manual logging</strong> is the objective the guide names explicitly: <code>mlflow.log_param()</code> for hyperparameters, <code>mlflow.log_metric()</code> for numbers you compute yourself, <code>mlflow.log_artifact()</code> for files such as plots, and the flavor-specific <code>log_model()</code> calls for the model itself.</li>
+    </ul>
+    <p>The distinction questions test is param versus metric versus artifact: a learning rate is a param, a validation RMSE is a metric, a confusion-matrix PNG is an artifact. The MLflow UI shows all of them per run, side by side across runs, which is the substance of the "information available in the UI" objective: parameters, metrics, artifacts, source, and run comparison.</p>
+  </section>
+
+  <section id="best-run">
+    <h2>Finding the best run with the Client API</h2>
+    <p>The scenario the exam likes: a tuning job produced dozens of runs, and you need the best one programmatically, not by eyeballing the UI. The pattern is <code>search_runs</code> with an ordering:</p>
+    <ul>
+      <li><strong>order_by</strong> sorts runs by a metric, for example <code>["metrics.val_rmse ASC"]</code> for a loss-like metric or <code>DESC</code> for accuracy-like ones.</li>
+      <li><strong>max_results=1</strong> returns just the top run, whose model URI you can then register.</li>
+    </ul>
+    <p>The trap answer in these questions is sorting in the wrong direction for the metric named. Lower is better for RMSE and log loss; higher is better for accuracy, F1, and R-squared. Read which metric the scenario optimises before picking the ordering.</p>
+  </section>
+
+  <section id="registry">
+    <h2>The registry lives in Unity Catalog, and promotion means aliases</h2>
+    <p>Registering a model turns the best run's artifact into a <strong>versioned, governed object</strong>: each registration under the same three-level name (catalog.schema.model) creates a new version. Two exam objectives sit right here:</p>
+    <ul>
+      <li><strong>Why Unity Catalog over the workspace registry:</strong> centralised governance and access control, models shared across workspaces rather than trapped in one, and lineage alongside the data and features the model was built from.</li>
+      <li><strong>Promotion by alias:</strong> an alias like <code>@champion</code> is a named pointer to one version. Promoting a challenger means calling <code>set_registered_model_alias()</code> to move the alias to the new version, and consumers that load <code>models:/catalog.schema.model@champion</code> pick up the change without editing code. Tags, set and removed through the Client API, carry annotations such as validation status.</li>
+    </ul>
+    <div class="callout"><p><strong>Terminology check:</strong> if your study material talks about transitioning models between Staging and Production stages, it describes the older workspace registry. On the current exam, promotion is expressed with Unity Catalog aliases, champion and challenger, not stage transitions.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>How much MLflow is on the Databricks Machine Learning Associate exam?</summary><div class="fa"><p>Seven of the exam guide's 48 objectives name MLflow directly, which at roughly one question per objective is about 15% of the scored exam. They cover manual logging, the MLflow UI, finding the best run with the Client API, and the Unity Catalog registry with versions, aliases, and tags.</p></div></details>
+      <details><summary>What is the difference between a param, a metric, and an artifact in MLflow?</summary><div class="fa"><p>A param is an input you chose, such as a learning rate. A metric is a measured number, such as validation RMSE. An artifact is a file attached to the run, such as a plot or the model itself. The exam tests logging each with the matching call: log_param, log_metric, and log_artifact.</p></div></details>
+      <details><summary>How do you find the best run with the MLflow Client API?</summary><div class="fa"><p>Call search_runs with order_by set to the target metric and max_results=1. Sort ascending for loss-like metrics such as RMSE and descending for accuracy-like metrics, which is the detail exam distractors most often get wrong.</p></div></details>
+      <details><summary>Does the exam use model stages like Staging and Production?</summary><div class="fa"><p>No. Those stage transitions belong to the older workspace registry. The current exam expects models registered in Unity Catalog and promoted by moving an alias, such as champion, to a new version with set_registered_model_alias.</p></div></details>
+      <details><summary>Why does Databricks recommend registering models in Unity Catalog?</summary><div class="fa"><p>The Unity Catalog registry gives centralised governance and access control, makes models available across workspaces instead of one, and keeps lineage with the data and features they were trained on. The workspace registry offers none of that, which is exactly the contrast the exam objective asks for.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Study the MLflow chapters</h2>
+    <p>Chapters 8 to 11 cover Tracking, Models, the Unity Catalog registry, and the best-run Client API pattern, in the same order the objectives list them. Free, and it works on a phone.</p>
+    <a href="../databricks-machine-learning-associate/lesson-08-mlflow-tracking.html" class="cta">Start Chapter 8: MLflow Tracking &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-machine-learning-associate-certification-guide.html">The complete Databricks ML Associate certification guide &rarr;</a>
+    <a href="how-long-to-prepare-databricks-machine-learning-associate.html">How long to prepare for the ML Associate exam &rarr;</a>
+    <a href="databricks-machine-learning-associate-exam-cost-format.html">ML Associate exam cost, format and question types &rarr;</a>
+    <a href="lakeflow-declarative-pipelines-vs-delta-live-tables.html">Lakeflow Declarative Pipelines vs Delta Live Tables &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "Article", "headline": "MLflow for the Databricks Machine Learning Associate Exam, Explained", "description": "What the Databricks ML Associate exam tests about MLflow: manual logging, the MLflow UI, finding the best run with search_runs, and the Unity Catalog registry.", "author": {"@type": "Organization", "name": "Already Certified"}, "publisher": {"@type": "Organization", "name": "Already Certified", "url": "https://certify.courses/"}, "datePublished": "2026-08-07", "dateModified": "2026-08-07", "inLanguage": "en", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://certify.courses/blog/mlflow-databricks-machine-learning-associate-exam"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How much MLflow is on the Databricks Machine Learning Associate exam?", "acceptedAnswer": {"@type": "Answer", "text": "Seven of the exam guide's 48 objectives name MLflow directly, which at roughly one question per objective is about 15% of the scored exam. They cover manual logging, the MLflow UI, finding the best run with the Client API, and the Unity Catalog registry with versions, aliases, and tags."}}, {"@type": "Question", "name": "What is the difference between a param, a metric, and an artifact in MLflow?", "acceptedAnswer": {"@type": "Answer", "text": "A param is an input you chose, such as a learning rate. A metric is a measured number, such as validation RMSE. An artifact is a file attached to the run, such as a plot or the model itself. The exam tests logging each with the matching call: log_param, log_metric, and log_artifact."}}, {"@type": "Question", "name": "How do you find the best run with the MLflow Client API?", "acceptedAnswer": {"@type": "Answer", "text": "Call search_runs with order_by set to the target metric and max_results=1. Sort ascending for loss-like metrics such as RMSE and descending for accuracy-like metrics, which is the detail exam distractors most often get wrong."}}, {"@type": "Question", "name": "Does the exam use model stages like Staging and Production?", "acceptedAnswer": {"@type": "Answer", "text": "No. Those stage transitions belong to the older workspace registry. The current exam expects models registered in Unity Catalog and promoted by moving an alias, such as champion, to a new version with set_registered_model_alias."}}, {"@type": "Question", "name": "Why does Databricks recommend registering models in Unity Catalog?", "acceptedAnswer": {"@type": "Answer", "text": "The Unity Catalog registry gives centralised governance and access control, makes models available across workspaces instead of one, and keeps lineage with the data and features they were trained on. The workspace registry offers none of that, which is exactly the contrast the exam objective asks for."}}]}
+</script>
+
+</body>
+</html>
