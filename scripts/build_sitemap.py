@@ -70,6 +70,27 @@ EXCLUDE_FILES = {"blog/POST_TEMPLATE.html"}
 PRIORITY = {"root": "1.0", "index": "0.9", "blog": "0.9", "quiz": "0.8", "page": "0.6"}
 
 
+def require_full_history():
+    """Fail loudly on a shallow clone rather than emitting wrong lastmod dates.
+
+    git_date() reads each page's date from `git log -1` on that file. In a
+    shallow clone (CI checkouts default to depth 1) almost every file has no
+    commit in range, so every date silently collapses onto the fallback and
+    --check fails on dates alone. Catch that here so the message names the
+    real cause.
+    """
+    out = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        capture_output=True, text=True, check=False,
+    ).stdout.strip()
+    if out == "true":
+        sys.exit(
+            "refusing to run against a shallow clone: per-file lastmod dates\n"
+            "would all collapse onto the head commit. Fetch full history\n"
+            "(actions/checkout with fetch-depth: 0, or `git fetch --unshallow`)."
+        )
+
+
 def git_date(path):
     """Last commit date for a file, or None if git does not know it yet."""
     out = subprocess.run(
@@ -136,6 +157,7 @@ def main():
                     help="exit non-zero if sitemap.xml is out of date")
     args = ap.parse_args()
 
+    require_full_history()
     xml, count = build()
     current = open("sitemap.xml").read() if os.path.exists("sitemap.xml") else ""
     if args.check:

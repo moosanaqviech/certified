@@ -192,11 +192,18 @@ every JSON-LD string must use colons, commas, parentheses, or periods.
 - No unverified superlatives ("the best," "the only") about Certified or
   competitors.
 - Internal links point to other posts/pages in this repo by their relative
-  file path, matching how the existing posts link, not full URLs. Posts live
-  in `blog/`, so a link to a sibling post is a plain filename (another post's
+  path, matching how the existing posts link, not full URLs. Every link must
+  use the same URL form as the target page's own `canonical` tag, because
+  Netlify serves a page at both `/x` and `/x.html` and linking the wrong form
+  makes Google index a duplicate. Posts live in `blog/`, so a link to a
+  sibling post is its bare slug with no extension (`<slug>`, not
   `<slug>.html`), while a link out of `blog/` needs a `../` prefix: the
-  catalog is `../index.html` and a lesson is
+  catalog is `../` (never `../index.html`), a course home is
+  `../databricks-data-engineer-associate/` (never its `index.html`), a
+  readiness quiz is `../ready/<slug>` (no extension), and a lesson or exam
+  keeps its extension:
   `../databricks-data-engineer-associate/lesson-01-lakehouse.html`.
+  `python3 scripts/check_seo.py` enforces this.
 
 ## What NOT to do
 

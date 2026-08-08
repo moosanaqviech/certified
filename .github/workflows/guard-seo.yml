@@ -1,0 +1,39 @@
+name: Guard SEO
+
+# Keeps the site's indexable URLs unambiguous. Netlify serves a static file at
+# more than one URL (/x.html and /x both answer 200; /dir/, /dir/index.html and
+# /dir all answer 200) with no redirect between the forms, so Google will crawl
+# whichever form our own links advertise and report the extra one under
+# "Alternate page with proper canonical tag" in Search Console.
+#
+# This check enforces the two rules that keep that from happening:
+#   1. every indexable page carries exactly one self-referencing canonical
+#   2. every internal link uses the same URL form its target canonicalises to
+#
+# See scripts/check_seo.py for the per-folder URL conventions.
+#
+# `build_sitemap.py --check` is deliberately NOT run here. It derives each
+# lastmod from `git log -1` on that file, so the expected value depends on
+# when the commit lands: a PR authored one day and squash-merged the next
+# regenerates different dates than the branch committed, and the check would
+# fail on main through no fault of the change. Rebuilding the sitemap stays a
+# manual step in the authoring workflow.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Canonical tags and internal link forms
+        run: python3 scripts/check_seo.py
