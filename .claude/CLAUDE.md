@@ -50,16 +50,34 @@ Blog posts and comparison/guide pages (the SEO content, e.g.
 `blog/` folder regardless of which course they're about; do not move them
 into a course folder. They are served at clean `/blog/<slug>` URLs, and the
 daily automation writes new posts there (see `blog/CONTENT_PLAN.md` and
-`blog/BLOG_STYLE_GUIDE.md`). A blog post linking to a sibling post uses a
-plain filename; linking out of `blog/` needs a `../` prefix (the catalog is
-`../index.html`, a lesson is
-`../databricks-data-engineer-associate/lesson-01-lakehouse.html`). Any link
-from a root-level page into a lesson or exam must be prefixed with that
-course's folder
+`blog/BLOG_STYLE_GUIDE.md`). Any link from a root-level page into a lesson or
+exam must be prefixed with that course's folder
 (`databricks-data-engineer-associate/lesson-01-lakehouse.html`, not
-`lesson-01-lakehouse.html`); a root-level page linking to a blog post uses
-the `blog/` prefix
-(`blog/databricks-data-engineer-associate-certification-guide.html`).
+`lesson-01-lakehouse.html`).
+
+## URL forms: link to the canonical form, always
+
+Netlify serves one file at several URLs: `x.html` answers 200 at both
+`/x.html` and `/x`, and `dir/index.html` answers at `/dir/`, `/dir` and
+`/dir/index.html`. Nothing redirects between those forms, so a link to the
+wrong one gets that duplicate crawled and filed under "Alternate page with
+proper canonical tag" in Search Console. Every page therefore declares one
+self-referencing `<link rel="canonical">`, and every internal link must use
+that same form:
+
+| Page | Canonical URL | Link to it as |
+| --- | --- | --- |
+| root catalog | `/` | `../` or `./`, never `index.html` |
+| course home | `/<course>/` | `<course>/`, never `<course>/index.html` |
+| blog post | `/blog/<slug>` | `<slug>` from `blog/`, `blog/<slug>` from root |
+| readiness quiz | `/ready/<slug>` | `ready/<slug>`, no `.html` |
+| lesson or exam | `/<course>/<file>.html` | keeps `.html` |
+| legal page | `/legal/<file>.html` | keeps `.html` |
+
+Lessons and exams keep `.html` because their course index `UNITS` array,
+their `NAV` blocks, the legacy `_redirects` targets and `sitemap.xml` all use
+that form. `python3 scripts/check_seo.py` fails any page missing a canonical
+or linking to a non-canonical form, and runs in CI as `guard-seo`.
 
 ## Architecture: frozen engines, injected payloads
 
