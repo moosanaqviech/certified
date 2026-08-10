@@ -1,0 +1,83 @@
+name: IndexNow
+
+# Pushes changed pages to IndexNow after every deploy to main, so Bing (and
+# the other participating engines, which share submissions) learns about a new
+# blog post or lesson within hours instead of waiting for its own crawl of
+# sitemap.xml. Google does not take part in IndexNow; it keeps using the
+# sitemap, so nothing here replaces that file.
+#
+# Ownership is proved by the <key>.txt file at the repo root, which Netlify
+# serves at https://certify.courses/<key>.txt. The key is public by design, so
+# there is no secret to configure: this workflow runs as-is on a fresh clone.
+#
+# Only URLs present in sitemap.xml are submitted, which is what keeps the
+# paywalled lessons out of it. See scripts/indexnow.py.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.html"
+      - "sitemap.xml"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Which URLs to submit"
+        type: choice
+        options:
+          - changed
+          - all
+        default: changed
+      dry_run:
+        description: "Print the URLs without submitting them"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One submission at a time. Two pushes landing together would otherwise race,
+# and IndexNow rate-limits repeated calls from the same host.
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The changed-page diff needs the commit before this push, which a
+          # depth-1 checkout does not have.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Wait for Netlify to publish this commit
+        # Submitting before the deploy lands would point crawlers at the old
+        # copy of the page. Netlify publishes this site in well under a minute
+        # (no build step, static files only); the poll afterwards confirms the
+        # key file is reachable, which is the one fetch IndexNow makes before
+        # trusting the submission.
+        run: |
+          sleep 90
+          key_url=$(python3 scripts/indexnow.py --key-url)
+          curl --fail --silent --show-error --retry 5 --retry-delay 15 \
+               --retry-all-errors "$key_url" > /dev/null
+          echo "key file is live at $key_url"
+
+      - name: Submit URLs
+        env:
+          SCOPE: ${{ inputs.scope || 'changed' }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+          SINCE: ${{ github.event.before || 'HEAD~1' }}
+        run: |
+          if [ "$SCOPE" = "all" ]; then
+            python3 scripts/indexnow.py --all $DRY_RUN
+          else
+            python3 scripts/indexnow.py --changed --since "$SINCE" $DRY_RUN
+          fi

@@ -187,3 +187,28 @@ must also not be set as Netlify's primary domain, since that forces the same
 redirect from the dashboard; that part is not enforceable in code.) The
 `guard-redirects` GitHub Actions check fails any change that reintroduces a
 subdomain host redirect.
+
+## Search engine submission: sitemap for Google, IndexNow for Bing
+
+Two channels, and they cover different engines. Google only reads
+`sitemap.xml` (regenerate it with `python3 scripts/build_sitemap.py` when
+pages ship). Bing, Yandex, Seznam and Naver also accept a push: the
+`indexnow` GitHub Actions workflow POSTs changed URLs to IndexNow on every
+push to main that touches a `.html` file or `sitemap.xml`, so a new blog post
+gets crawled in hours instead of whenever the sitemap is next read.
+
+Ownership is proved by `c76872b850255d58b2badb72e9eef50a.txt` at the repo
+root, served at `https://certify.courses/<key>.txt`. The key is public by
+design (it only proves that whoever submits URLs can also publish files on
+the host), so it is committed rather than kept in a GitHub secret and the
+workflow needs no configuration. Do not delete or rename that file without
+also changing its contents to match: `scripts/indexnow.py` refuses to run
+unless exactly one root-level `<key>.txt` exists and contains its own key.
+
+`scripts/indexnow.py` only ever submits URLs that appear in `sitemap.xml`,
+which is what keeps paywalled lessons and non-canonical URL forms out of the
+submission. It maps changed files to URLs through `check_seo.py`'s
+`canonical_for()`, so the three scripts share one set of URL rules. Useful
+invocations: `--changed --dry-run` to preview what a push would send,
+`--all` to resubmit the whole site (also available as the `all` scope on the
+workflow's manual run), `--url <URL>` for a single page.
