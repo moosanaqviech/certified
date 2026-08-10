@@ -41,7 +41,10 @@ BASE = "https://certify.courses"
 SKIP_DIRS = {".git", ".github", ".claude", "node_modules", "netlify", "scripts"}
 # Not pages: the Google site-verification stub and the blog post template
 # (its canonical is a {{CANONICAL}} placeholder filled in per post).
-SKIP_FILES = {"googleef9aef6f3bc362a7.html", "blog/POST_TEMPLATE.html"}
+SKIP_FILES = {"googleef9aef6f3bc362a7.html", "blog/POST_TEMPLATE.html",
+              # noindex redirect stub (QR / smart-link target): it declares no
+              # canonical on purpose and 302s away on load, so it is not a page.
+              "get.html"}
 # Served but deliberately kept out of the index with <meta name="robots">.
 NOINDEX_DIRS = {"unlock"}
 
