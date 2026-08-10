@@ -104,6 +104,11 @@ def collect():
     """Yield (loc, path, kind) for every page that belongs in the sitemap."""
     yield f"{BASE}/", "index.html", "root"
 
+    # /app.html is a standalone root-level page (app-store landing / QR target),
+    # not inside a walked content folder, so it is listed explicitly. Its sibling
+    # /get.html is a noindex redirect stub and is deliberately kept out.
+    yield f"{BASE}/app.html", "app.html", "page"
+
     yield f"{BASE}/blog/", "blog/index.html", "index"
     for name in sorted(os.listdir("blog")):
         if not name.endswith(".html") or name == "index.html":
