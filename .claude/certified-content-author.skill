@@ -209,6 +209,91 @@ side-by-side comparison table card, a decision-signal card ("this signal
 picks that option"), then TWO quiz cards testing opposite directions (one
 scenario where option A wins, one where option B wins).
 
+## Engine v2: step-sequenced card builds
+
+`lesson-template-v2.html` is a strict superset of `lesson-template.html`: a
+card with no `steps` field renders and behaves exactly like v1, so everything
+above still applies. v2 adds ONE opt-in per-card feature, a step build, for
+diagrams that assemble piece by piece. The GenAI Engineer Associate course is
+the first to use it. Pick the v2 template when a chapter has at least one
+mechanism worth building in stages; a lesson of only plain cards can use
+either template.
+
+Detecting the engine: v2 files carry `<!-- engine: v2 -->` in the head and
+`const ENGINE_VERSION = 'v2';` in the engine. `scripts/validate.py` keys its
+extra checks off those markers; v1 files are checked exactly as before.
+
+### The step contract (what you write)
+
+- Add `steps: N` to a card (integer, N >= 1, 2 to 4 typical, 5 maximum).
+- Inside that card's html, tag each element that belongs to a build step with
+  `data-step="n"` (1-based, n <= N). Elements with no `data-step` are the
+  baseline, shown when the card enters. This works on SVG groups
+  (`<g data-step="2">`) and on prose (`<p data-step="2">`).
+- Step numbers must be contiguous 1..N with at least one element per step, and
+  nothing may exceed N. Reveal is cumulative: once a step appears it stays.
+- Captions swap instead of accumulating. Put them in a container of class
+  `stepcap`; only the child whose `data-step` equals the current step shows,
+  and `data-step="0"` is the pre-first-tap caption. Every child of a `.stepcap`
+  must carry a `data-step`. This keeps a card from growing unboundedly on a
+  phone while still narrating each reveal.
+- A card may combine `steps` and `quiz`: the steps complete first, then the
+  quiz gate applies as in v1 (author the `.choices`/`.feedback` inside the
+  final step so the question appears only once the build is done).
+
+How it behaves: a tap anywhere on the card, or Continue / ArrowRight, reveals
+the next step; on the last step the next tap advances the card. Swipe left is
+the escape hatch (skip remaining steps and advance in one gesture). Back and
+revisit show the card fully built. There are no step dots or counters in v2.0:
+the reveal itself is the feedback, and the button stays "Continue".
+
+### When to use steps (and when not)
+
+- Steps are for MECHANISM builds: a diagram that assembles meaningfully piece
+  by piece, one idea per step. Text-only cards and covers never use steps.
+- Each step reveals one visual cluster plus its `stepcap` caption of one or two
+  sentences, and the caption must describe exactly what just appeared.
+- Interior schematic rules apply to every non-cover diagram (stepped or not):
+  no hollow nodes (fill at 12 to 14 percent alpha plus a brighter stroke of the
+  same color), one glow anchor maximum per diagram, connectors drawn in the
+  destination's color with flow dots, no floating labels (chips or in-node text
+  only), compose to the full viewBox width, and at least one visual anchor card
+  per three cards.
+
+### Looping motion (guardrails)
+
+- One animated element per diagram maximum, a 2 to 5 second loop, opacity and
+  position only, and the motion must depict the mechanism (dots flow because
+  data flows). If the motion does not teach, omit it.
+- Author looping motion as CSS keyframes inside the SVG's own `<style>` block,
+  never SMIL (`<animate>`, `<animateMotion>`, `<animateTransform>` are rejected
+  by the validator). Wrap it in the reduced-motion guard so it goes still when
+  the viewer asks for less:
+
+  ```
+  <style>
+    .flowdot { animation: flow 2.6s linear infinite; }
+    @keyframes flow { from { transform: translateX(0); } to { transform: translateX(150px); } }
+    @media (prefers-reduced-motion: reduce) { .flowdot { animation: none; } }
+  </style>
+  ```
+
+  The engine already stills the card slide, the entrance reveal, and the step
+  transitions under `prefers-reduced-motion: reduce`; your SVG keyframes are the
+  only motion it cannot see, so this guard is on you.
+
+### SVG step gotchas
+
+- Do NOT put an entrance `.reveal` on a `[data-step]` element; the two reveal
+  systems would fight. Baseline elements get `.reveal`, step elements get
+  `data-step`.
+- Do NOT rely on a `transform=` attribute on a `[data-step]` `<g>`: the step
+  CSS sets `transform` on that element and overrides the attribute. Position the
+  group's children with absolute coordinates instead.
+
+Run `python scripts/validate.py <file>` as always. On a v2 file it additionally
+checks the step contract (contiguous 1..N, stepcap children tagged, no SMIL).
+
 ## Job 3: Authoring a practice exam
 
 1. Read `test-authoring-guide.md` for the `E` config and question object shape.

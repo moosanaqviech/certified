@@ -25,6 +25,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 
 EM_DASH = "\u2014"
@@ -95,6 +96,16 @@ def detect_type(text):
     if BEGIN_RE["exam"].search(text):
         return "exam"
     return None
+
+
+# The v2 lesson engine (step-sequenced card builds) is marked two ways, either
+# of which flags a file as v2: an HTML comment in the head and a JS constant in
+# the engine. Files with neither marker are v1 and keep the original checks.
+ENGINE_V2_RE = re.compile(r"<!--\s*engine:\s*v2\s*-->|ENGINE_VERSION\s*=\s*['\"]v2['\"]")
+
+
+def detect_engine_version(text):
+    return "v2" if ENGINE_V2_RE.search(text) else "v1"
 
 
 def extract_payload(text, kind):
@@ -309,6 +320,9 @@ const out = {
     return {
       quiz: !!c.quiz,
       last: !!c.last,
+      steps: (c.steps === undefined ? null : c.steps),
+      stepsType: typeof c.steps,
+      html: html,
       correctTrue: (html.match(/data-correct=["']true["']/g) || []).length,
       correctFalse: (html.match(/data-correct=["']false["']/g) || []).length,
       hasFeedback: /class=["'][^"']*\\bfeedback\\b/.test(html),
@@ -320,7 +334,7 @@ console.log(JSON.stringify(out));
 """
 
 
-def check_lesson(payload, rep):
+def check_lesson(payload, rep, version="v1"):
     ok, data, missing = run_node(LESSON_HARNESS % payload)
     if missing:
         rep.warn("node not found: syntax, card-count, and quiz-wiring checks skipped (install Node.js to enable)")
@@ -375,6 +389,178 @@ def check_lesson(payload, rep):
         rep.fail(f"last:true is on card {last_idxs[0]}, but the final card is {n - 1}")
     else:
         rep.ok("final card carries last:true")
+
+    # v2-only checks (step-sequenced builds). v1 files skip these entirely.
+    if version == "v2":
+        check_lesson_v2(info, payload, rep)
+
+
+# ---------------------------------------------------------------------------
+# v2 lesson checks (step-sequenced card builds)
+#
+# These run only on files the engine marker identifies as v2 (see
+# detect_engine_version). They validate the payload's step contract:
+#   - a card declaring steps:N must use data-step values exactly 1..N, with no
+#     gaps and at least one element per step, and none exceeding N;
+#   - data-step="0" is allowed only inside a .stepcap caption container;
+#   - every child of a .stepcap container must carry a data-step;
+#   - SMIL animation elements (animate/animateMotion/animateTransform) are
+#     banned in v2 payloads (looping motion must be CSS keyframes; see the
+#     authoring guide's reduced-motion rule).
+# The card html is parsed into a light element tree so .stepcap membership and
+# parent/child relationships can be checked without a full DOM.
+# ---------------------------------------------------------------------------
+
+# Tags that never nest (their end tag is implicit); do not push them on the
+# stack so an SVG <rect .../> or a <br> cannot swallow later siblings.
+VOID_TAGS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+    "meta", "param", "source", "track", "wbr",
+    "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "stop", "use",
+}
+
+
+class _StepNode:
+    __slots__ = ("tag", "attrs", "children", "data_step", "has_stepcap", "in_stepcap")
+
+    def __init__(self, tag, attrs):
+        self.tag = tag
+        self.attrs = attrs
+        self.children = []
+        ds = attrs.get("data-step")
+        self.data_step = None
+        if ds is not None and ds.strip().lstrip("-").isdigit():
+            self.data_step = int(ds.strip())
+        cls = (attrs.get("class") or "").split()
+        self.has_stepcap = "stepcap" in cls
+        self.in_stepcap = False  # set during the walk
+
+
+class _StepParser(HTMLParser):
+    """Builds a shallow element tree, tracking data-step and .stepcap."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.root = _StepNode("#root", {})
+        self.stack = [self.root]
+
+    def _open(self, tag, attrs):
+        node = _StepNode(tag, dict(attrs))
+        self.stack[-1].children.append(node)
+        return node
+
+    def handle_starttag(self, tag, attrs):
+        node = self._open(tag, attrs)
+        if tag.lower() not in VOID_TAGS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        self._open(tag, attrs)  # self-closing: open and close at once
+
+    def handle_endtag(self, tag):
+        for j in range(len(self.stack) - 1, 0, -1):
+            if self.stack[j].tag == tag:
+                del self.stack[j:]
+                return
+
+
+def _walk_steps(node, in_cap, ds_nodes, cap_nodes):
+    """Collect (value, inside_stepcap) for every data-step node, and every
+    .stepcap container, over the whole subtree."""
+    inside = in_cap or node.has_stepcap
+    if node.has_stepcap:
+        cap_nodes.append(node)
+    for ch in node.children:
+        if ch.data_step is not None:
+            ds_nodes.append((ch.data_step, inside or ch.has_stepcap, ch))
+        _walk_steps(ch, inside, ds_nodes, cap_nodes)
+
+
+SMIL_RE = re.compile(r"<\s*(animate|animateMotion|animateTransform)\b")
+
+
+def check_lesson_v2(info, payload, rep):
+    cards = info["cards"]
+    step_cards = 0
+
+    for idx, c in enumerate(cards):
+        html = c.get("html") or ""
+        declared = c.get("steps")
+        parser = _StepParser()
+        parser.feed(html)
+        ds_nodes, cap_nodes = [], []
+        _walk_steps(parser.root, False, ds_nodes, cap_nodes)
+
+        has_ds = len(ds_nodes) > 0
+
+        if declared is None:
+            # No steps field: v1-style card. But data-step without a steps
+            # declaration is an authoring error (nothing would reveal it).
+            if has_ds:
+                rep.fail(f"card {idx}: has data-step elements but no steps:N field to drive them")
+            # stepcap containers still need their children tagged
+            _check_stepcaps(idx, cap_nodes, rep)
+            continue
+
+        # steps declared: validate the value first
+        if c.get("stepsType") != "number" or not float(declared).is_integer() or int(declared) < 1:
+            rep.fail(f"card {idx}: steps must be an integer >= 1, found {declared!r}")
+            continue
+        N = int(declared)
+        step_cards += 1
+
+        if not has_ds:
+            rep.fail(f"card {idx}: declares steps:{N} but has no data-step elements")
+            _check_stepcaps(idx, cap_nodes, rep)
+            continue
+
+        vals = [v for (v, _in, _n) in ds_nodes]
+        # data-step="0" is a stepcap-only caption; elsewhere it is invalid.
+        bad_zero = [n for (v, ins, n) in ds_nodes if v == 0 and not ins]
+        if bad_zero:
+            rep.fail(f'card {idx}: data-step="0" is only valid inside a .stepcap caption container')
+        negatives = [v for v in vals if v < 0]
+        if negatives:
+            rep.fail(f"card {idx}: negative data-step value(s) {sorted(set(negatives))}")
+
+        over = sorted({v for v in vals if v > N})
+        if over:
+            rep.fail(f"card {idx}: data-step value(s) {over} exceed the declared steps:{N}")
+
+        present = {v for v in vals if v >= 1}
+        required = set(range(1, N + 1))
+        missing = sorted(required - present)
+        if missing:
+            rep.fail(f"card {idx}: steps:{N} but no element carries data-step {missing} (gap, or a step has no element)")
+
+        if not missing and not over and not bad_zero and not negatives:
+            rep.ok(f"card {idx}: {N} steps, data-step values cover 1..{N} with no gaps")
+
+        _check_stepcaps(idx, cap_nodes, rep)
+
+    if step_cards:
+        rep.ok(f"v2 engine: {step_cards} step-sequenced card(s) validated")
+    else:
+        rep.ok("v2 engine: no step cards (a valid v2 file may be a pure v1-style lesson)")
+
+    # SMIL animation is banned across the whole payload (rule: CSS keyframes
+    # only, so the reduced-motion guard covers everything). Ignore matches that
+    # sit inside a JS/HTML comment (documentation mentioning the tag names).
+    mask = classify_comment_mask(payload)
+    smil_hits = sorted({line_of(payload, m.start()) for m in SMIL_RE.finditer(payload) if not mask[m.start()]})
+    if smil_hits:
+        where = ", ".join(f"line {ln}" for ln in smil_hits)
+        rep.fail(f"SMIL animation element(s) in the payload ({where}); v2 forbids SMIL, use CSS keyframes inside the SVG <style> under the reduced-motion guard")
+    else:
+        rep.ok("no SMIL animation elements (CSS keyframes only, as v2 requires)")
+
+
+def _check_stepcaps(idx, cap_nodes, rep):
+    """Every direct child element of a .stepcap container must carry data-step."""
+    for cap in cap_nodes:
+        bad = [ch.tag for ch in cap.children if ch.data_step is None]
+        if bad:
+            rep.fail(f"card {idx}: a .stepcap caption container has child <{bad[0]}> with no data-step (all its children must be step-tagged)")
 
 
 # ---------------------------------------------------------------------------
@@ -787,13 +973,15 @@ def validate_file(path):
         rep.fail("could not isolate the payload zone between the BEGIN / END markers")
         return rep
 
-    rep.ok(f"detected {kind} file")
+    version = detect_engine_version(text)
+    suffix = f" ({version} engine)" if kind == "lesson" else ""
+    rep.ok(f"detected {kind} file{suffix}")
     check_backtick_parity(payload, rep)
     check_em_dashes(payload, rep)
     check_stop_color_form(payload, rep)
     check_full_script_syntax(text, rep)
     if kind == "lesson":
-        check_lesson(payload, rep)
+        check_lesson(payload, rep, version)
     elif kind == "readiness":
         check_readiness(payload, rep)
     else:
