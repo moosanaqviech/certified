@@ -225,6 +225,32 @@ def check_em_dashes(payload, rep):
         rep.warn(f"em dash inside a comment ({where}); harmless to readers, but the rule is no em dashes anywhere")
 
 
+# WebKit-safe gradient stops.
+#
+# iOS WebKit (the Capacitor shell) does not resolve CSS var() inside SVG
+# presentation attributes, so a gradient written as
+#   <stop stop-color="var(--x)"/>
+# renders that stop with no color. The style form
+#   <stop style="stop-color:var(--x)"/>
+# resolves correctly. This flags the attribute form in the payload. The
+# regex matches `stop-color=` (an attribute assignment) only, so the
+# style-form `stop-color:` inside a style="" value is left alone, as are
+# fill="var()" / stroke="var()" (different attributes WebKit does resolve).
+STOP_COLOR_ATTR_RE = re.compile(r"stop-color\s*=")
+
+
+def check_stop_color_form(payload, rep):
+    hits = sorted({line_of(payload, m.start()) for m in STOP_COLOR_ATTR_RE.finditer(payload)})
+    if hits:
+        where = ", ".join(f"line {ln}" for ln in hits)
+        rep.fail(
+            f"attribute-form stop-color in payload SVG ({where}); iOS WebKit does not "
+            'resolve var() there. Use the style form: style="stop-color:var(--x)"'
+        )
+    else:
+        rep.ok("gradient stops use the WebKit-safe style form (no attribute-form stop-color)")
+
+
 def run_node(harness):
     """Evaluate the payload with node. Returns (ok, data_or_errtext, node_missing)."""
     try:
@@ -952,6 +978,7 @@ def validate_file(path):
     rep.ok(f"detected {kind} file{suffix}")
     check_backtick_parity(payload, rep)
     check_em_dashes(payload, rep)
+    check_stop_color_form(payload, rep)
     check_full_script_syntax(text, rep)
     if kind == "lesson":
         check_lesson(payload, rep, version)
