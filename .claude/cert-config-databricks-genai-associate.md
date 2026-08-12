@@ -2,8 +2,8 @@ cert-config-databricks-genai-associate.md
 Cert Config: Databricks Certified Generative AI Engineer Associate
 
 Per-certification settings so the frozen engine rules stay generic. Pairs with
-curriculum-index-databricks-genai-associate.md (the chapter placement, DRAFT
-until the user confirms the lock).
+curriculum-index-databricks-genai-associate.md (the chapter placement, LOCKED
+and re-verified against the official PDF on 12 Aug 2026).
 
 ## Identity
 

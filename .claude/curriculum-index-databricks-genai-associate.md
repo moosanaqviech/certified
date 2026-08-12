@@ -1,15 +1,18 @@
 curriculum-index-databricks-genai-associate.md
 Curriculum Index: Databricks Certified Generative AI Engineer Associate
 
-Status: DRAFT, pending user confirmation to LOCK. Built by extracting the text of
-the official exam guide PDF supplied by the user on 29 Jul 2026
+Status: LOCKED, confirmed by the user on 12 Aug 2026 and re-verified the same day
+by extracting the text of the official exam guide PDF supplied a second time
 ("Databricks Certified Generative AI Engineer Associate Exam Guide", the edition
 whose cover text reads "This version covers the currently live version as of
 March 18, 2026"). Every objective below is transcribed from that PDF, not from
-third-party reproductions. Once the user confirms, this file becomes the
-authoritative source for unit and chapter placement: a later request that
-conflicts with it gets flagged with a proposed one-line fix rather than silently
-absorbed.
+third-party reproductions; on the re-check all 56 objectives (6/8/13/15/4/10
+across the six sections), every exam fact, and all ten sample-question answers
+(Q1 A,B / Q2 B / Q3 C / Q4 A / Q5 D / Q6 C / Q7 B / Q8 A / Q9 D,E / Q10 B)
+matched this file exactly. This file is now the authoritative source for unit and
+chapter placement: a later request that conflicts with it gets flagged with a
+proposed one-line fix rather than silently absorbed. Re-verify if Databricks
+publishes a newer edition.
 
 Exam version: exam guide covering the live exam as of 18 Mar 2026.
 Source of truth: the official exam guide PDF, linked from

@@ -60,6 +60,7 @@ FREE_STEMS = {
 OPEN_COURSES = [
     "aws-data-engineer-associate",
     "databricks-machine-learning-associate",
+    "databricks-generative-ai-engineer-associate",
 ]
 
 COURSES = OPEN_COURSES + list(FREE_STEMS)
