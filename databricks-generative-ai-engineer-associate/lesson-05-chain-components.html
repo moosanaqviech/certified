@@ -92,6 +92,12 @@
      (the CSS transform below would override it: position children directly). */
   [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
   [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
 
   .spacer { flex: 1; }
 
@@ -309,7 +315,7 @@ const cards = [
     <div class="eyebrow reveal">Assembly</div>
     <h2 class="reveal" style="font-size:24px">Wiring a RAG chain</h2>
     <div class="art reveal">${A.chain}</div>
-    <div class="stepcap">
+    <div class="stepcaps">
       <p class="lead" data-step="0" style="font-size:14.5px">Desired output: a policy-grounded answer. Tap to wire the chain that produces it.</p>
       <p class="lead" data-step="1" style="font-size:14.5px">The retriever goes first: the question becomes a search, and the top-k chunks become context. No retriever, no grounding.</p>
       <p class="lead" data-step="2" style="font-size:14.5px">The prompt template merges question and chunks into one prompt, with the instructions fixed at design time.</p>
@@ -405,15 +411,21 @@ const els = cards.map((c) => { const d = document.createElement('div'); d.classN
 
 /* v2: apply step visibility for one card WITHOUT touching its .in class, so a
    step reveal never replays the card-entrance .reveal stagger. Cumulative for
-   normal elements (data-step <= current), swap for captions inside .stepcap
-   (data-step === current; data-step="0" is the pre-first-tap caption). */
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
 function applySteps(idx) {
   const cur = stepState[idx] || 0;
   els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
     const s = parseInt(nd.getAttribute('data-step'), 10);
-    const inCap = nd.closest && nd.closest('.stepcap');
-    const on = inCap ? (s === cur) : (s >= 1 && s <= cur);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
     nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
   });
 }
 
