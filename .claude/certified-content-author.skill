@@ -232,11 +232,16 @@ extra checks off those markers; v1 files are checked exactly as before.
   (`<g data-step="2">`) and on prose (`<p data-step="2">`).
 - Step numbers must be contiguous 1..N with at least one element per step, and
   nothing may exceed N. Reveal is cumulative: once a step appears it stays.
-- Captions swap instead of accumulating. Put them in a container of class
-  `stepcap`; only the child whose `data-step` equals the current step shows,
-  and `data-step="0"` is the pre-first-tap caption. Every child of a `.stepcap`
-  must carry a `data-step`. This keeps a card from growing unboundedly on a
-  phone while still narrating each reveal.
+- Captions append by default. Put them in a container of class `stepcaps`:
+  its children accumulate like every other `data-step` element, but when a
+  new step arrives the previously revealed captions get class `step-past`
+  (the engine dims them to 0.55 opacity; the current step's caption stays at
+  opacity 1). `data-step="0"` is the pre-first-tap caption. A container of
+  class `stepcap-swap` opts into swap behavior (only the current step's
+  caption visible) for cards where vertical space is tight. Appending is the
+  default and preferred mode. Legacy class `stepcap` behaves like
+  `stepcap-swap` (the pre-revision GenAI lessons use it); do not use it in
+  new lessons. Every child of a caption container must carry a `data-step`.
 - A card may combine `steps` and `quiz`: the steps complete first, then the
   quiz gate applies as in v1 (author the `.choices`/`.feedback` inside the
   final step so the question appears only once the build is done).
@@ -251,8 +256,12 @@ the reveal itself is the feedback, and the button stays "Continue".
 
 - Steps are for MECHANISM builds: a diagram that assembles meaningfully piece
   by piece, one idea per step. Text-only cards and covers never use steps.
-- Each step reveals one visual cluster plus its `stepcap` caption of one or two
-  sentences, and the caption must describe exactly what just appeared.
+- Each step reveals one visual cluster plus its caption, and the caption must
+  describe exactly what just appeared. Budget captions so the diagram plus
+  ALL appended captions fit a 390pt viewport without scrolling: with 4 steps,
+  captions of one short sentence each; with 2 or 3 steps, up to two
+  sentences. If the content cannot fit appended, either split the card or
+  use `stepcap-swap`, in that order of preference.
 - Interior schematic rules apply to every non-cover diagram (stepped or not):
   no hollow nodes (fill at 12 to 14 percent alpha plus a brighter stroke of the
   same color), one glow anchor maximum per diagram, connectors drawn in the
@@ -292,7 +301,11 @@ the reveal itself is the feedback, and the button stays "Continue".
   group's children with absolute coordinates instead.
 
 Run `python scripts/validate.py <file>` as always. On a v2 file it additionally
-checks the step contract (contiguous 1..N, stepcap children tagged, no SMIL).
+checks the step contract (contiguous 1..N, caption-container children tagged,
+no SMIL). Acceptance for step cards is partly visual, beyond what the
+validator can see: verify a 4-step card with appended captions fits without
+scrolling on a 390x844 viewport, that past captions dim as new steps arrive,
+and that a revisited built card shows the complete caption stack.
 
 ## Job 3: Authoring a practice exam
 

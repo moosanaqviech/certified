@@ -402,13 +402,15 @@ def check_lesson(payload, rep, version="v1"):
 # detect_engine_version). They validate the payload's step contract:
 #   - a card declaring steps:N must use data-step values exactly 1..N, with no
 #     gaps and at least one element per step, and none exceeding N;
-#   - data-step="0" is allowed only inside a .stepcap caption container;
-#   - every child of a .stepcap container must carry a data-step;
+#   - data-step="0" is allowed only inside a caption container (.stepcaps for
+#     the default append behavior, .stepcap-swap for opt-in swap, or legacy
+#     .stepcap which behaves like .stepcap-swap);
+#   - every child of a caption container must carry a data-step;
 #   - SMIL animation elements (animate/animateMotion/animateTransform) are
 #     banned in v2 payloads (looping motion must be CSS keyframes; see the
 #     authoring guide's reduced-motion rule).
-# The card html is parsed into a light element tree so .stepcap membership and
-# parent/child relationships can be checked without a full DOM.
+# The card html is parsed into a light element tree so caption-container
+# membership and parent/child relationships can be checked without a full DOM.
 # ---------------------------------------------------------------------------
 
 # Tags that never nest (their end tag is implicit); do not push them on the
@@ -432,12 +434,15 @@ class _StepNode:
         if ds is not None and ds.strip().lstrip("-").isdigit():
             self.data_step = int(ds.strip())
         cls = (attrs.get("class") or "").split()
-        self.has_stepcap = "stepcap" in cls
+        # Caption containers: .stepcaps (append, the default), .stepcap-swap
+        # (opt-in swap), and legacy .stepcap (behaves like .stepcap-swap).
+        self.has_stepcap = bool({"stepcaps", "stepcap-swap", "stepcap"} & set(cls))
         self.in_stepcap = False  # set during the walk
 
 
 class _StepParser(HTMLParser):
-    """Builds a shallow element tree, tracking data-step and .stepcap."""
+    """Builds a shallow element tree, tracking data-step and caption
+    containers (.stepcaps / .stepcap-swap / legacy .stepcap)."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -465,8 +470,8 @@ class _StepParser(HTMLParser):
 
 
 def _walk_steps(node, in_cap, ds_nodes, cap_nodes):
-    """Collect (value, inside_stepcap) for every data-step node, and every
-    .stepcap container, over the whole subtree."""
+    """Collect (value, inside_caption_container) for every data-step node, and
+    every caption container, over the whole subtree."""
     inside = in_cap or node.has_stepcap
     if node.has_stepcap:
         cap_nodes.append(node)
@@ -498,7 +503,7 @@ def check_lesson_v2(info, payload, rep):
             # declaration is an authoring error (nothing would reveal it).
             if has_ds:
                 rep.fail(f"card {idx}: has data-step elements but no steps:N field to drive them")
-            # stepcap containers still need their children tagged
+            # caption containers still need their children tagged
             _check_stepcaps(idx, cap_nodes, rep)
             continue
 
@@ -515,10 +520,10 @@ def check_lesson_v2(info, payload, rep):
             continue
 
         vals = [v for (v, _in, _n) in ds_nodes]
-        # data-step="0" is a stepcap-only caption; elsewhere it is invalid.
+        # data-step="0" is a caption-only pre-first-tap step; elsewhere invalid.
         bad_zero = [n for (v, ins, n) in ds_nodes if v == 0 and not ins]
         if bad_zero:
-            rep.fail(f'card {idx}: data-step="0" is only valid inside a .stepcap caption container')
+            rep.fail(f'card {idx}: data-step="0" is only valid inside a caption container (.stepcaps, .stepcap-swap, or legacy .stepcap)')
         negatives = [v for v in vals if v < 0]
         if negatives:
             rep.fail(f"card {idx}: negative data-step value(s) {sorted(set(negatives))}")
@@ -556,11 +561,12 @@ def check_lesson_v2(info, payload, rep):
 
 
 def _check_stepcaps(idx, cap_nodes, rep):
-    """Every direct child element of a .stepcap container must carry data-step."""
+    """Every direct child element of a caption container (.stepcaps,
+    .stepcap-swap, or legacy .stepcap) must carry data-step."""
     for cap in cap_nodes:
         bad = [ch.tag for ch in cap.children if ch.data_step is None]
         if bad:
-            rep.fail(f"card {idx}: a .stepcap caption container has child <{bad[0]}> with no data-step (all its children must be step-tagged)")
+            rep.fail(f"card {idx}: a caption container has child <{bad[0]}> with no data-step (all children of .stepcaps / .stepcap-swap must be step-tagged)")
 
 
 # ---------------------------------------------------------------------------

@@ -5,9 +5,12 @@ Builds four lesson fixtures on the fly in a temp directory (so no lesson-like
 HTML is committed into the site tree) and asserts validate.py's behavior:
 
   1. a v1 file: engine detected as v1, existing checks pass unchanged;
-  2. a valid v2 file with a 3-step card + a .stepcap: passes;
+  2. a valid v2 file with three step cards, one per caption container class:
+     .stepcaps (append, the default), .stepcap-swap (opt-in swap), and
+     legacy .stepcap: passes;
   3. a v2 file with a step gap (steps:3 but no data-step 2): must FAIL;
-  4. a v2 file containing a SMIL <animateMotion>: must FAIL.
+  4. a v2 file containing a SMIL <animateMotion>: must FAIL;
+  5. a v2 file whose .stepcaps container has an untagged child: must FAIL.
 
 Each fixture is a real template shell (frozen engine included) with only the
 payload zone swapped, so the full-script syntax check and node payload
@@ -87,7 +90,7 @@ DONE = """  { last: true,
     </div>
     <div class="spacer"></div>` }"""
 
-# A valid 3-step diagram card with a .stepcap caption swap (data-step 0..3).
+# A valid 3-step diagram card with appended captions (.stepcaps, the default).
 STEP3_CARD = """  { steps: 3,
     html: `
     <div class="eyebrow reveal">Mechanism</div>
@@ -98,11 +101,58 @@ STEP3_CARD = """  { steps: 3,
       <g data-step="2"><rect x="240" y="80" width="60" height="40" rx="8" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
       <g data-step="3"><line x1="80" y1="100" x2="130" y2="100" stroke="var(--accent)" stroke-width="2"/></g>
     </svg></div>
-    <div class="stepcap">
+    <div class="stepcaps">
       <p class="lead" data-step="0">Tap to build the pipeline.</p>
       <p class="lead" data-step="1">First the source lands.</p>
       <p class="lead" data-step="2">Then the sink appears.</p>
       <p class="lead" data-step="3">Finally data flows between them.</p>
+    </div>
+    <div class="spacer"></div>` }"""
+
+# A valid 2-step card opting into caption swap (.stepcap-swap).
+STEP_SWAP_CARD = """  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Mechanism</div>
+    <h2 class="reveal">A tight card that swaps captions</h2>
+    <div class="art reveal"><svg viewBox="0 0 320 200">
+      <g data-step="1"><rect x="20" y="80" width="60" height="40" rx="8" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+      <g data-step="2"><rect x="240" y="80" width="60" height="40" rx="8" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+    </svg></div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0">Tap to begin the build.</p>
+      <p class="lead" data-step="1">The first block arrives.</p>
+      <p class="lead" data-step="2">The second block completes it.</p>
+    </div>
+    <div class="spacer"></div>` }"""
+
+# A valid 2-step card using the legacy .stepcap class (still accepted).
+STEP_LEGACY_CARD = """  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Mechanism</div>
+    <h2 class="reveal">A pre-revision card with legacy captions</h2>
+    <div class="art reveal"><svg viewBox="0 0 320 200">
+      <g data-step="1"><rect x="20" y="80" width="60" height="40" rx="8" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+      <g data-step="2"><rect x="240" y="80" width="60" height="40" rx="8" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+    </svg></div>
+    <div class="stepcap">
+      <p class="lead" data-step="0">Tap to begin the build.</p>
+      <p class="lead" data-step="1">The first block arrives.</p>
+      <p class="lead" data-step="2">The second block completes it.</p>
+    </div>
+    <div class="spacer"></div>` }"""
+
+# .stepcaps container with an untagged child: must fail.
+STEP_UNTAGGED_CAP_CARD = """  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Mechanism</div>
+    <div class="art reveal"><svg viewBox="0 0 320 200">
+      <g data-step="1"><rect x="20" y="80" width="60" height="40" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+      <g data-step="2"><rect x="240" y="80" width="60" height="40" fill="var(--accent-glow)" stroke="var(--accent)"/></g>
+    </svg></div>
+    <div class="stepcaps">
+      <p class="lead">This caption forgot its data-step.</p>
+      <p class="lead" data-step="1">The first block arrives.</p>
+      <p class="lead" data-step="2">The second block completes it.</p>
     </div>
     <div class="spacer"></div>` }"""
 
@@ -137,12 +187,14 @@ def payload(*cards):
 # Nine cards each, one quiz, a final last:true card.
 V1_PAYLOAD = payload(COVER, concept(1), concept(2), concept(3), concept(4),
                      concept(5), concept(6), QUIZ, DONE)
-V2_VALID = payload(COVER, STEP3_CARD, concept(2), concept(3), concept(4),
-                   concept(5), concept(6), QUIZ, DONE)
+V2_VALID = payload(COVER, STEP3_CARD, STEP_SWAP_CARD, STEP_LEGACY_CARD,
+                   concept(4), concept(5), concept(6), QUIZ, DONE)
 V2_GAP = payload(COVER, STEP_GAP_CARD, concept(2), concept(3), concept(4),
                  concept(5), concept(6), QUIZ, DONE)
 V2_SMIL = payload(COVER, STEP_SMIL_CARD, concept(2), concept(3), concept(4),
                   concept(5), concept(6), QUIZ, DONE)
+V2_UNTAGGED_CAP = payload(COVER, STEP_UNTAGGED_CAP_CARD, concept(2), concept(3),
+                          concept(4), concept(5), concept(6), QUIZ, DONE)
 
 
 def run(shell, pl, tmp, name):
@@ -171,11 +223,13 @@ def main():
         expect(not any("v2 engine" in m for m in r.passes + r.errors),
                "no v2-only checks run on a v1 file")
 
-        print("Fixture 2: valid v2 lesson with a 3-step card")
+        print("Fixture 2: valid v2 lesson, one step card per caption class")
         r = run(V2_SHELL, V2_VALID, tmp, "fixture-v2-valid.html")
         expect(not r.failed, "valid v2 fixture passes with no errors")
         expect(any("v2 engine" in m for m in r.passes), "engine detected as v2")
         expect(any("3 steps" in m for m in r.passes), "3-step card reported as covering 1..3")
+        expect(any("3 step-sequenced" in m for m in r.passes),
+               "all three caption classes (.stepcaps/.stepcap-swap/.stepcap) accepted")
 
         print("Fixture 3: v2 lesson with a step gap (must fail)")
         r = run(V2_SHELL, V2_GAP, tmp, "fixture-v2-gap.html")
@@ -187,6 +241,12 @@ def main():
         r = run(V2_SHELL, V2_SMIL, tmp, "fixture-v2-smil.html")
         expect(r.failed, "SMIL fixture fails")
         expect(any("SMIL" in m for m in r.errors), "the SMIL element is the reported error")
+
+        print("Fixture 5: .stepcaps container with an untagged child (must fail)")
+        r = run(V2_SHELL, V2_UNTAGGED_CAP, tmp, "fixture-v2-untagged-cap.html")
+        expect(r.failed, "untagged caption child fixture fails")
+        expect(any("caption container" in m and "no data-step" in m for m in r.errors),
+               "the untagged caption child is the reported error")
 
     print()
     if failures:
