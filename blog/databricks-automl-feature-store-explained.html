@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoML and Feature Store on Databricks, Explained</title>
+<meta name="description" content="Databricks AutoML trains models and returns editable notebooks; Feature Engineering in Unity Catalog serves one set of features to training and scoring alike.">
+<link rel="canonical" href="https://certify.courses/blog/databricks-automl-feature-store-explained">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AutoML and Feature Store on Databricks, Explained">
+<meta property="og:description" content="The glass-box AutoML workflow, feature tables as Unity Catalog Delta tables with primary keys, and the online vs offline split, at ML Associate exam depth.">
+<meta property="og:url" content="https://certify.courses/blog/databricks-automl-feature-store-explained">
+<meta property="og:site_name" content="Already Certified">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Already Certified</a><span>&rsaquo;</span>
+    <a href="databricks-machine-learning-associate-certification-guide">ML Associate Guide</a><span>&rsaquo;</span>
+    <span>AutoML and Feature Store</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks ML Associate &middot; Topic Deep Dive</div>
+    <h1>AutoML and Feature Store on Databricks, Explained</h1>
+    <p class="lede">Databricks AutoML trains and tunes a spread of models automatically and hands back <strong>editable notebooks, a glass box rather than a black box</strong>, while Feature Engineering in Unity Catalog stores computed features in governed Delta tables with primary keys so training and serving read identical values. Both are core to the Databricks Machine Learning Associate exam.</p>
+    <p class="updated">Last updated August 2026.</p>
+  </header>
+
+  <section id="exam">
+    <h2>Where they sit on the exam</h2>
+    <p>The Databricks Machine Learning Associate exam guide lists 48 objectives, and the exam runs approximately one scored question per objective. <strong>Eight of those objectives name AutoML or feature tables</strong>: two on how AutoML accelerates model and feature selection, and six on feature store tables, from creating and writing them through training and scoring to the online-versus-offline distinction. That is roughly eight questions, all inside the exam's Databricks Machine Learning section, which is the largest section of the guide.</p>
+    <p class="fnote">Objective counts from the official Databricks Machine Learning Associate exam guide (1 Mar 2025 version).</p>
+  </section>
+
+  <section id="automl">
+    <h2>AutoML: the glass box</h2>
+    <p>Point AutoML at a table and a target column and it automates the first pass of a modeling project: it profiles the data, handles imputation and encoding, trains a spread of algorithms, distributes the hyperparameter tuning, and ranks every trial by a primary metric, logging each one as an MLflow run.</p>
+    <p>What makes it <em>Databricks</em> AutoML is what comes back. Most AutoML tools return a sealed model. Databricks AutoML generates the <strong>full source notebook for each trial</strong>, so a finished run leaves three artifacts:</p>
+    <ul>
+      <li><strong>A data exploration notebook:</strong> a profile of the dataset with summary statistics and warnings about nulls, high cardinality, and correlations.</li>
+      <li><strong>A best trial notebook:</strong> the complete, editable code behind the highest-scoring model, imported into your workspace as a starting point you can modify and rerun.</li>
+      <li><strong>An MLflow experiment:</strong> every trial logged as a run; for classification and regression, the non-best trial notebooks are kept as MLflow artifacts.</li>
+    </ul>
+    <p>That glass-box design is why AutoML survives audit-heavy environments, and it is exactly the advantage the exam asks about: the pipeline can be read, explained, and changed. AutoML covers <strong>classification, regression, and forecasting</strong>, trialing familiar open-source libraries (scikit-learn, XGBoost, LightGBM for the supervised tasks, Prophet and ARIMA-family models for forecasting), and you can launch it from the UI wizard or the Python API.</p>
+    <p class="fnote">Problem types, libraries, and the generated-notebook behavior from the official Databricks AutoML documentation.</p>
+  </section>
+
+  <section id="feature">
+    <h2>Feature Store: compute features once</h2>
+    <p>The problem feature stores solve is duplication and its consequence, skew. When every notebook derives its own "average spend per customer", the same idea gets implemented slightly differently in training and serving, and the model quietly sees different inputs in production than it learned on.</p>
+    <p>Feature Engineering in Unity Catalog does not bolt on a separate system: <strong>a feature table is a Delta table in Unity Catalog with a primary key constraint</strong>. The key is what lookups use to fetch an entity's features, and because the table is a normal governed Unity Catalog object, it gets the same grants, lineage, and discovery as everything else, reusable across every project in the account rather than trapped in one workspace (the advantage over the legacy Workspace Feature Store).</p>
+    <p>The workflow the exam tests is one client, three moves:</p>
+    <ul>
+      <li><strong>Create and write:</strong> <code>FeatureEngineeringClient.create_table</code> defines the table with its primary key and populates it from a DataFrame.</li>
+      <li><strong>Train:</strong> a <code>FeatureLookup</code> joins features onto your labels by key, and <code>create_training_set</code> assembles the training data.</li>
+      <li><strong>Score:</strong> a model logged from that training set remembers which features it used, so <code>score_batch</code> takes a DataFrame of primary keys and looks the current feature values up itself.</li>
+    </ul>
+    <p>That last step is the point: training and serving read the same table, so there is no skew to debug.</p>
+  </section>
+
+  <section id="onlineoffline">
+    <h2>Online vs offline feature tables</h2>
+    <p>The same features can be read two ways, and the exam guide asks for the difference explicitly:</p>
+    <table class="cmp">
+      <thead><tr><th>Signal</th><th class="col-h">Offline</th><th>Online</th></tr></thead>
+      <tbody>
+        <tr><th>Read pattern</th><td class="col-h">Millions of rows in bulk</td><td>One row per request</td></tr>
+        <tr><th>Latency</th><td class="col-h">Seconds to minutes</td><td>Milliseconds</td></tr>
+        <tr><th>Used by</th><td class="col-h">Training and batch scoring</td><td>Real-time model serving</td></tr>
+        <tr><th>Storage</th><td class="col-h">Delta table in Unity Catalog</td><td>Managed online store, synced from the offline table</td></tr>
+      </tbody>
+    </table>
+    <p>The offline table is the source of truth and the default; the online store exists only because a Delta table cannot serve single-row lookups fast enough for a live endpoint. One question settles every scenario: <strong>is the prediction served live, per request, or over a batch?</strong> Live points online, everything else stays offline.</p>
+  </section>
+
+  <section id="together">
+    <h2>Where the two meet</h2>
+    <p>They are not separate islands. AutoML can pull existing feature tables in to augment its training data, so features engineered once in Unity Catalog feed automated baselines too. In practice the pairing is a loop: AutoML gets you a strong first model fast, its data exploration notebook flags weak or problematic columns, and the features worth keeping graduate into a feature table that every later model, manual or automated, reads from the same place.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is Databricks AutoML and how is it different from other AutoML tools?</summary><div class="fa"><p>Databricks AutoML automatically prepares data, trains a spread of algorithms, and tunes hyperparameters for classification, regression, and forecasting problems. The difference is its glass-box approach: it generates the full, editable source notebook for each trial rather than returning a sealed model, so the pipeline can be audited and modified.</p></div></details>
+      <details><summary>What makes a table a feature table in Unity Catalog?</summary><div class="fa"><p>A primary key constraint. Any Delta table in Unity Catalog with a primary key can serve as a feature table, and the key is what feature lookups use to fetch each entity's values. There is no separate storage system to maintain.</p></div></details>
+      <details><summary>What is the difference between online and offline feature tables in Databricks?</summary><div class="fa"><p>An offline feature table is a Delta table in Unity Catalog built for bulk reads during training and batch scoring. An online store is a managed low-latency copy synced from it, serving single-row lookups in milliseconds for real-time model serving. The offline table is the default; go online only when a live endpoint needs per-request feature lookups.</p></div></details>
+      <details><summary>How much of the Databricks ML Associate exam covers AutoML and the feature store?</summary><div class="fa"><p>Eight of the exam guide's 48 objectives name AutoML or feature store tables, which works out to roughly eight scored questions on a 48-question exam. They cover AutoML's role in model and feature selection, creating and consuming feature tables, and the online versus offline distinction.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Study these chapters interactively</h2>
+    <p>Chapters 3 to 7 of our free ML Associate course cover AutoML, its generated notebooks, Unity Catalog for ML, and both feature table chapters, in the same order the objectives list them. Works on a phone.</p>
+    <a href="../databricks-machine-learning-associate/lesson-03-automl.html" class="cta">Start Chapter 3: AutoML &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-machine-learning-associate-certification-guide">The complete Databricks ML Associate certification guide &rarr;</a>
+    <a href="mlflow-databricks-machine-learning-associate-exam">MLflow for the ML Associate exam, explained &rarr;</a>
+    <a href="databricks-machine-learning-associate-exam-cost-format">ML Associate exam cost, format and question types &rarr;</a>
+    <a href="how-long-to-prepare-databricks-machine-learning-associate">How long to prepare for the ML Associate exam &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "Article", "headline": "AutoML and Feature Store on Databricks, Explained", "description": "Databricks AutoML trains models and returns editable notebooks; Feature Engineering in Unity Catalog serves one set of features to training and scoring alike.", "author": {"@type": "Organization", "name": "Already Certified"}, "publisher": {"@type": "Organization", "name": "Already Certified", "url": "https://certify.courses/"}, "datePublished": "2026-08-13", "dateModified": "2026-08-13", "inLanguage": "en", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://certify.courses/blog/databricks-automl-feature-store-explained"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Databricks AutoML and how is it different from other AutoML tools?", "acceptedAnswer": {"@type": "Answer", "text": "Databricks AutoML automatically prepares data, trains a spread of algorithms, and tunes hyperparameters for classification, regression, and forecasting problems. The difference is its glass-box approach: it generates the full, editable source notebook for each trial rather than returning a sealed model, so the pipeline can be audited and modified."}}, {"@type": "Question", "name": "What makes a table a feature table in Unity Catalog?", "acceptedAnswer": {"@type": "Answer", "text": "A primary key constraint. Any Delta table in Unity Catalog with a primary key can serve as a feature table, and the key is what feature lookups use to fetch each entity's values. There is no separate storage system to maintain."}}, {"@type": "Question", "name": "What is the difference between online and offline feature tables in Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "An offline feature table is a Delta table in Unity Catalog built for bulk reads during training and batch scoring. An online store is a managed low-latency copy synced from it, serving single-row lookups in milliseconds for real-time model serving. The offline table is the default; go online only when a live endpoint needs per-request feature lookups."}}, {"@type": "Question", "name": "How much of the Databricks ML Associate exam covers AutoML and the feature store?", "acceptedAnswer": {"@type": "Answer", "text": "Eight of the exam guide's 48 objectives name AutoML or feature store tables, which works out to roughly eight scored questions on a 48-question exam. They cover AutoML's role in model and feature selection, creating and consuming feature tables, and the online versus offline distinction."}}]}
+</script>
+
+</body>
+</html>
