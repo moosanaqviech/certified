@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
-<title>Agent Bricks: Knowledge Assistant, Multiagent Supervisor, Information Extraction · Databricks GenAI Engineer Associate</title>
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-07-agent-bricks.html">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Re-ranking: The Second Pass That Fixes First-Pass Retrieval · Databricks GenAI Engineer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-15-re-ranking.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,14 +28,11 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0c0913;            /* page background */
-    --bg-tint: #251a3a;       /* ambient glow tint behind the card */
-    --accent: #c9a0ff;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(201,160,255,0.12);  /* correct-answer fill */
-    --accent-ink: #150a24;    /* text on top of the accent key chip */
-    --ka: #c9a0ff;            /* option 1: Knowledge Assistant */
-    --ms: #8fb8ff;            /* option 2: Multiagent Supervisor */
-    --ie: #ff9de2;            /* option 3: Information Extraction */
+    --bg: #060f09;            /* page background */
+    --bg-tint: #0f2c1a;       /* ambient glow tint behind the card */
+    --accent: #4ade80;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(74,222,128,0.12);  /* correct-answer fill */
+    --accent-ink: #04170b;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -191,48 +193,78 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-08-sourcing-documents.html",
-  nextLabel: "Next chapter"
+  next:      "genai-practice-exam-01.html",
+  nextLabel: "Practice test"
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <linearGradient id="c7a" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:#54398a"/>
-        <stop offset="1" style="stop-color:#2c1d52"/>
+      <linearGradient id="c15n" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#1c5c34"/>
+        <stop offset="1" style="stop-color:#0c3018"/>
       </linearGradient>
-      <radialGradient id="c7glow" cx="0.5" cy="0.42" r="0.62">
-        <stop offset="0" style="stop-color:rgba(201,160,255,0.30)"/>
-        <stop offset="1" style="stop-color:rgba(201,160,255,0)"/>
+      <radialGradient id="c15glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(74,222,128,0.28)"/>
+        <stop offset="1" style="stop-color:rgba(74,222,128,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="140" ry="76" fill="url(#c7glow)"/>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c15glow)"/>
     <g>
-      <rect x="24" y="72" width="84" height="56" rx="12" fill="url(#c7a)" stroke="var(--ka)" stroke-width="1.5"/>
-      <path d="M40 90 h52 M40 101 h52 M40 112 h34" stroke="rgba(241,241,246,0.55)" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="94" cy="88" r="7" fill="none" stroke="var(--ka)" stroke-width="2"/>
-      <path d="M99 93 l6 6" stroke="var(--ka)" stroke-width="2" stroke-linecap="round"/>
-      <text x="66" y="146" text-anchor="middle" fill="var(--ka)" font-family="Hanken Grotesk" font-size="9" font-weight="700">KNOWLEDGE</text>
+      <rect x="26" y="28" width="96" height="146" rx="10" fill="url(#c15n)" stroke="rgba(163,240,190,0.55)"/>
+      <text x="74" y="46" text-anchor="middle" fill="#a3f0be" font-family="Hanken Grotesk" font-size="8" font-weight="700">FIRST PASS</text>
+      <rect x="36" y="54" width="76" height="14" rx="4" fill="rgba(232,98,92,0.28)"/>
+      <rect x="36" y="72" width="76" height="14" rx="4" fill="rgba(232,98,92,0.28)"/>
+      <rect x="36" y="90" width="76" height="14" rx="4" fill="rgba(74,222,128,0.4)"/>
+      <rect x="36" y="108" width="76" height="14" rx="4" fill="rgba(232,98,92,0.28)"/>
+      <rect x="36" y="126" width="76" height="14" rx="4" fill="rgba(74,222,128,0.4)"/>
+      <rect x="36" y="144" width="76" height="14" rx="4" fill="rgba(232,98,92,0.28)"/>
     </g>
     <g>
-      <rect x="118" y="56" width="84" height="72" rx="12" fill="url(#c7a)" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="160" cy="78" r="9" fill="var(--ms)"/>
-      <path d="M160 87 v10 M160 97 l-20 12 M160 97 l20 12 M160 97 v14" stroke="var(--ms)" stroke-width="1.5" fill="none"/>
-      <circle cx="138" cy="113" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="160" cy="115" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="182" cy="113" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <text x="160" y="146" text-anchor="middle" fill="var(--ms)" font-family="Hanken Grotesk" font-size="9" font-weight="700">SUPERVISOR</text>
+      <path d="M126 97 C 150 97, 152 60, 172 60 M126 133 C 150 133, 152 78, 172 74" stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+      <circle cx="160" cy="100" r="0" fill="none"/>
     </g>
     <g>
-      <rect x="212" y="72" width="84" height="56" rx="12" fill="url(#c7a)" stroke="var(--ie)" stroke-width="1.5"/>
-      <path d="M228 88 h24" stroke="rgba(241,241,246,0.55)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M258 84 h22 M258 92 h22" stroke="var(--ie)" stroke-width="1.5"/>
-      <path d="M228 102 h52 M228 112 h52 M245 96 v22 M262 96 v22" stroke="var(--ie)" stroke-width="1" opacity="0.8"/>
-      <text x="254" y="146" text-anchor="middle" fill="var(--ie)" font-family="Hanken Grotesk" font-size="9" font-weight="700">EXTRACTION</text>
+      <rect x="196" y="28" width="96" height="146" rx="10" fill="url(#c15n)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="244" y="46" text-anchor="middle" fill="#a3f0be" font-family="Hanken Grotesk" font-size="8" font-weight="700">RE-RANKED</text>
+      <rect x="206" y="54" width="76" height="14" rx="4" fill="rgba(74,222,128,0.45)"/>
+      <rect x="206" y="72" width="76" height="14" rx="4" fill="rgba(74,222,128,0.45)"/>
+      <rect x="206" y="90" width="76" height="14" rx="4" fill="rgba(232,98,92,0.22)"/>
+      <rect x="206" y="108" width="76" height="14" rx="4" fill="rgba(232,98,92,0.22)"/>
+      <path d="M206 132 h76" stroke="rgba(163,240,190,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="244" y="150" text-anchor="middle" fill="#a3f0be" font-family="Hanken Grotesk" font-size="7.5">only the top goes to the LLM</text>
     </g>
-    <text x="160" y="28" text-anchor="middle" fill="#dccdf5" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">three bricks, one decision</text>
+  </svg>`,
+
+  twostage: `<svg viewBox="0 0 320 204">
+    <g>
+      <path d="M20 26 a30 12 0 0 1 60 0 v20 a30 12 0 0 1 -60 0 z" fill="rgba(74,222,128,0.14)" stroke="var(--accent)" stroke-width="1.4"/>
+      <ellipse cx="50" cy="26" rx="30" ry="12" fill="#0f2c1a" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="50" y="72" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">millions of vectors</text>
+    </g>
+    <g data-step="1">
+      <path d="M84 40 h36" stroke="var(--accent)" stroke-width="1.8"/>
+      <path d="M114 36 l6 4 l-6 4" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <rect x="124" y="14" width="82" height="52" rx="10" fill="rgba(74,222,128,0.12)" stroke="var(--accent)"/>
+      <text x="165" y="34" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Stage 1: ANN</text>
+      <text x="165" y="50" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">fast, approximate</text>
+      <text x="240" y="34" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">top 20</text>
+      <text x="240" y="46" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">candidates</text>
+    </g>
+    <g data-step="2">
+      <path d="M165 66 v22" stroke="var(--accent)" stroke-width="1.8"/>
+      <path d="M161 82 l4 6 l4 -6" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <rect x="104" y="90" width="122" height="52" rx="10" fill="rgba(74,222,128,0.14)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="165" y="110" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Stage 2: re-ranker</text>
+      <text x="165" y="126" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">reads query + chunk together</text>
+    </g>
+    <g data-step="3">
+      <path d="M165 142 v22" stroke="var(--accent)" stroke-width="1.8"/>
+      <path d="M161 158 l4 6 l4 -6" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <rect x="118" y="164" width="94" height="34" rx="10" fill="rgba(74,222,128,0.18)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="165" y="185" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">best 3 to the LLM</text>
+    </g>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -248,162 +280,97 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 7 · Trade-off</div>
-    <h1 class="reveal">Agent Bricks: three shapes of done-for-you</h1>
-    <p class="lead reveal">Knowledge Assistant, Multiagent Supervisor, Information Extraction: each brick solves one problem shape <strong>without writing agent code</strong>. The skill is matching the shape.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 15</div>
+    <h1 class="reveal">Re-ranking</h1>
+    <p class="lead reveal">First-pass retrieval is built for speed over millions of vectors, so its ordering is approximate. Re-ranking is the <strong>slower, smarter second pass</strong> that fixes the order where it counts: at the top.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why the first pass is not enough */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">What every brick gives you</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Agent Bricks are <strong>prebuilt, declarative agents</strong>: you configure a use case, Databricks builds and tunes the agent behind it.</p>
+    <div class="eyebrow reveal">The gap</div>
+    <h2 class="reveal">Fast search trades away exact order</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Vector search compares a query embedding against chunk embeddings computed <strong>before any query existed</strong>, using approximate nearest neighbor shortcuts for speed.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Configure, not code</b>You supply data, instructions, and examples through a UI. No orchestration code, no serving setup.</p></div>
-      <div class="pill"><p><b>Optimization built in</b>Each brick auto-tunes against its task and evaluates itself with LLM judges plus feedback you and your SMEs provide.</p></div>
-      <div class="pill"><p><b>Same governed floor</b>Sources come from Unity Catalog, the result is an endpoint, and MLflow Tracing records what it does: the Chapter 1 stack, pre-wired.</p></div>
+      <div class="pill"><p><b>Independent embeddings</b>Query and chunk never look at each other; similarity is geometry between two vectors made separately. Nuance gets lost in the compression.</p></div>
+      <div class="pill"><p><b>The symptom</b>The truly best chunk is in the candidates, just not on top: rank 8 instead of rank 1. Good recall@20, poor precision@3.</p></div>
+      <div class="pill"><p><b>Why it matters</b>Only the top few chunks fit the prompt. Evidence at rank 8 might as well not exist.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : option A, Knowledge Assistant */
+  /* 2 : what a re-ranker is */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ka)">Option 1</div>
-    <h2 class="reveal">Knowledge Assistant</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A question-and-answer chatbot over your documents that answers <strong>with citations</strong>.</p>
+    <div class="eyebrow reveal">The idea</div>
+    <h2 class="reveal">A second model re-scores the candidates</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A re-ranker (typically a cross-encoder) reads the <strong>query and a candidate chunk together</strong> and outputs a relevance score for the pair.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Feed it documents</b>Files in Unity Catalog volumes (pdf, txt, md, ppt, doc), tables, or an existing Vector Search index.</p></div>
-      <div class="pill"><p><b>Get grounded answers</b>Its Instructed Retriever approach goes beyond plain RAG, and every answer cites the source it drew from.</p></div>
-      <div class="pill"><p><b>Improve in plain language</b>SMEs correct it with natural-language guidelines and example questions, not retraining.</p></div>
+      <div class="pill"><p><b>Why it ranks better</b>Seeing both texts at once lets it weigh exactly how this chunk addresses this query, which two independent embeddings cannot express.</p></div>
+      <div class="pill"><p><b>Why it cannot go first</b>Scoring every chunk in the corpus per query would take a model call per chunk. It only works on a short list someone else produced.</p></div>
+      <div class="pill"><p><b>The division of labor</b>Vector search nominates candidates cheaply; the re-ranker orders them well. Neither replaces the other.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : option B, Multiagent Supervisor */
+  /* 3 : two-stage flow (step build) */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The pipeline</div>
+    <h2 class="reveal" style="font-size:24px">Retrieve wide, re-rank, keep narrow</h2>
+    <div class="art reveal">${A.twostage}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Two stages with opposite economics. Tap to run the flow.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Stage 1: approximate vector search sweeps millions of chunks in milliseconds and nominates a generous candidate set, say the top 20. Cast wide so the best chunk is somewhere in the net.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Stage 2: the re-ranker scores each of the 20 candidates against the query. Twenty careful comparisons is affordable; twenty million was not.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Keep only the re-ranked best few for the prompt. The LLM now reads the strongest evidence instead of the geometrically nearest.</p>
+    </div>` },
+
+  /* 4 : on databricks + cost */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ms)">Option 2</div>
-    <h2 class="reveal">Multiagent Supervisor</h2>
-    <p class="lead reveal" style="margin-bottom:16px">One front door that <strong>routes work across specialist agents</strong> and stitches their results into a single answer.</p>
+    <div class="eyebrow reveal">On Databricks</div>
+    <h2 class="reveal">Built into the query path, priced in latency</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Mosaic AI Vector Search offers <strong>reranking as a query-time option</strong>, alongside hybrid search (which fuses vector and keyword results before any re-ranker runs).</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it orchestrates</b>Genie Spaces for structured data, Knowledge Assistants, model serving endpoints, Unity Catalog functions, and MCP servers.</p></div>
-      <div class="pill"><p><b>Delegation and synthesis</b>It breaks the request up, sends each part to the right subagent, and composes one response.</p></div>
-      <div class="pill"><p><b>Permission aware</b>Users only reach subagents they have access to; the supervisor steers around the rest.</p></div>
+      <div class="pill"><p><b>What it costs</b>An extra scoring pass sits between retrieval and the prompt, so answer latency rises. Quality is bought with milliseconds.</p></div>
+      <div class="pill"><p><b>The exam's own trade</b>The guide's sample sizing scenario turns reranking OFF for a latency-critical workload: when the latency budget is the binding constraint, this is the dial that gives it back.</p></div>
+      <div class="pill"><p><b>Related, not identical</b>Hybrid search improves candidate generation; re-ranking improves candidate ordering. Questions love to swap them.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : option C, Information Extraction */
-  { html: `
-    <div class="eyebrow reveal" style="color:var(--ie)">Option 3</div>
-    <h2 class="reveal">Information Extraction</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Turns a pile of unstructured documents into a <strong>structured table</strong>, at scale.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Schema from a sentence</b>Describe what you want in natural language and it generates the JSON schema of fields to extract.</p></div>
-      <div class="pill"><p><b>Preview, then bulk</b>Refine the schema against sample documents, then run the whole corpus into Delta tables.</p></div>
-      <div class="pill"><p><b>Built on ai_extract</b>It is Chapter 3's extraction task, productized: contracts to terms, invoices to line items, notes to fields.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : comparison table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three bricks in one view</h2>
-    <div class="reveal" style="margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--ka); font-weight:700;">Knowledge</td>
-          <td style="padding:8px 5px; color:var(--ms); font-weight:700;">Supervisor</td>
-          <td style="padding:8px 5px; color:var(--ie); font-weight:700;">Extraction</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">You have</td>
-          <td style="padding:8px 5px; color:var(--ink);">documents</td>
-          <td style="padding:8px 5px; color:var(--ink);">many agents, domains</td>
-          <td style="padding:8px 5px; color:var(--ink);">documents</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Users want</td>
-          <td style="padding:8px 5px; color:var(--ink);">answers, cited</td>
-          <td style="padding:8px 5px; color:var(--ink);">one assistant for all</td>
-          <td style="padding:8px 5px; color:var(--ink);">a filled table</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Output</td>
-          <td style="padding:8px 5px; color:var(--ink);">chat + citations</td>
-          <td style="padding:8px 5px; color:var(--ink);">synthesized answer</td>
-          <td style="padding:8px 5px; color:var(--ink);">rows in Delta</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Runs as</td>
-          <td style="padding:8px 5px; color:var(--ink);">chat endpoint</td>
-          <td style="padding:8px 5px; color:var(--ink);">routing endpoint</td>
-          <td style="padding:8px 5px; color:var(--ink);">batch pipeline</td>
-        </tr>
-      </table>
-    </div>
-    <p class="lead reveal" style="font-size:14px; margin-top:14px">Same platform underneath; what differs is the problem shape each one expects.</p>
-    <div class="spacer"></div>` },
-
-  /* 6 : decision signals */
-  { html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal">Hear the phrase, pick the brick</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Exam scenarios hide the answer in how the requirement is worded.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ka)">"Answer questions about our docs"</b>Interactive Q&amp;A, one corpus, citations required: Knowledge Assistant.</p></div>
-      <div class="pill"><p><b style="color:var(--ms)">"One assistant across HR, finance, and support"</b>Multiple domains or existing agents behind a single entry point: Multiagent Supervisor.</p></div>
-      <div class="pill"><p><b style="color:var(--ie)">"Get these fields out of every contract"</b>Documents in, columns out, nobody chatting: Information Extraction.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : quiz 1, supervisor direction */
+  /* 5 : quiz 1 */
   { quiz: true,
     html: `
-    <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">Employees want a single assistant that answers handbook questions AND pulls spend figures from a Genie Space over finance tables. Which approach fits?</h2>
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">Evaluation shows recall@20 is excellent, but the truly relevant chunk usually sits around rank 7 to 10, below the k = 3 the prompt can carry. Latency budget has slack. What is the targeted fix?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A Knowledge Assistant over the handbook, with finance tables added as another source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An Information Extraction agent run across both domains</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Two separate assistants, and let employees pick the right one</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A Multiagent Supervisor routing between a Knowledge Assistant and the Genie Space</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Raise k to 10 so the relevant chunk makes it into the prompt</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Add a re-ranking pass over the top 20, then keep the best 3</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Re-chunk the corpus with more overlap</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Swap the embedding model for one with a longer context length</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Two specialist surfaces behind one front door is exactly the Supervisor's job: it delegates each question and synthesizes the reply. The lone Knowledge Assistant is the trap: it answers over documents, but structured spend queries belong to Genie, and stuffing finance tables into a document corpus serves neither.</div>` },
+    <div class="feedback"><b>Correct.</b> The evidence is already in the candidate set; only its order is wrong, which is precisely the job of a re-ranker. Raising k (A) is the tempting distractor: it drags seven noise chunks into the prompt to smuggle in one good one, spending context budget on the problem instead of fixing the ordering.</div>` },
 
-  /* 8 : quiz 2, extraction direction */
+  /* 6 : quiz 2 (opposite direction) */
   { quiz: true,
     html: `
-    <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Legal has 40,000 vendor contracts in a Unity Catalog volume and wants renewal date, parties, and liability cap as columns in a Delta table. Which brick?</h2>
+    <div class="eyebrow reveal">One more</div>
+    <h2 class="reveal" style="font-size:22px">A voice assistant's RAG backend must answer within a tight latency budget, and users notice every delay. Retrieval quality is already acceptable. How should re-ranking be configured?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Information Extraction, with a schema for the three fields</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Knowledge Assistant, so legal can ask about any contract</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Multiagent Supervisor coordinating a contract agent per vendor</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A custom Agent Framework agent with a retriever over the volume</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Enable re-ranking over a wider top 50 for maximum quality</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Re-rank only, skipping the vector search stage to save a step</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Move re-ranking before retrieval so it runs in parallel</button>
+      <button class="choice" data-correct="true"><span class="key">D</span>Leave re-ranking off: quality is met, and the pass would spend latency the budget does not have</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The requirement is documents in, named columns out, in bulk: Information Extraction's exact shape, schema first, then the whole corpus. The Knowledge Assistant tempts because the input is the same contracts, but it produces conversational answers on demand, not the populated table legal asked for.</div>` },
+    <div class="feedback"><b>Correct.</b> Re-ranking buys ordering quality with latency; when quality already meets the bar and latency is the binding constraint, the right setting is off, exactly the reasoning in the guide's own sizing scenario. Option B misunderstands the architecture: a re-ranker can only score candidates that a first-pass retrieval produced, and it cannot run "before" retrieval (C) for the same reason.</div>` },
 
-  /* 9 : the boundary */
-  { html: `
-    <div class="eyebrow reveal">When no brick fits</div>
-    <h2 class="reveal">Bricks first, framework when you must</h2>
-    <p class="lead reveal" style="margin-bottom:16px">"How and when to use Agent Bricks" includes knowing <strong>when not to</strong>.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Reach for a brick</b>When the problem matches one of the three shapes. You trade code-level control for speed, built-in evaluation, and auto-optimization.</p></div>
-      <div class="pill"><p><b>Drop to Agent Framework</b>Custom orchestration logic, unusual output contracts, or a framework your team already owns: that is Chapter 6 territory, written by hand.</p></div>
-      <div class="pill"><p><b>Or mix</b>A Supervisor can route to custom agent endpoints too, so hand-built and brick-built agents can serve side by side.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 10 : done */
+  /* 7 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 1 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match the problem shape, and the brick picks itself.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 2 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Source, extract, filter, chunk, store, measure, re-rank: the data side of RAG, end to end.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ka)">Knowledge Assistant</b>Cited answers over your documents, improved by SME guidelines.</p></div>
-      <div class="pill"><p><b style="color:var(--ms)">Multiagent Supervisor</b>One entry point delegating across Genie Spaces, agents, and tools.</p></div>
-      <div class="pill"><p><b style="color:var(--ie)">Information Extraction</b>Corpus to columns via a schema, built on ai_extract.</p></div>
-      <div class="pill"><p><b>No brick fits?</b>Agent Framework code, and the two can mix behind a Supervisor.</p></div>
+      <div class="pill"><p><b>The role</b>A re-ranker re-scores first-pass candidates by reading query and chunk together, fixing order at the top.</p></div>
+      <div class="pill"><p><b>The economics</b>Cheap search nominates wide; the expensive scorer runs only on the short list.</p></div>
+      <div class="pill"><p><b>The dial</b>Quality up, latency up. Latency-critical workloads run with it off.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
