@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Choosing a Model: Model Cards, Marketplace Metadata, and Your Own Experiment Metrics · Databricks GenAI Engineer Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-23-model-cards-and-metrics.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #051014;            /* page background */
+    --bg-tint: #0c2b36;       /* ambient glow tint behind the card */
+    --accent: #31c8e8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(49,200,232,0.12);  /* correct-answer fill */
+    --accent-ink: #03151c;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-24-tuning-chunking-with-eval.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="c23g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#14586e"/>
+        <stop offset="1" style="stop-color:#0a2e3e"/>
+      </linearGradient>
+      <radialGradient id="c23glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(49,200,232,0.30)"/>
+        <stop offset="1" style="stop-color:rgba(49,200,232,0)"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c23glow)"/>
+    <path d="M16 168 C 70 150, 120 184, 170 166 S 260 150, 306 164" stroke="rgba(49,200,232,0.30)" stroke-width="1.5" fill="none"/>
+    <g>
+      <rect x="28" y="30" width="112" height="128" rx="12" fill="url(#c23g)" stroke="rgba(150,225,244,0.6)"/>
+      <rect x="40" y="44" width="58" height="8" rx="4" fill="rgba(241,241,246,0.85)"/>
+      <path d="M40 64 h88 M40 75 h72 M40 86 h82" stroke="rgba(241,241,246,0.4)" stroke-width="3" stroke-linecap="round"/>
+      <rect x="40" y="98" width="58" height="15" rx="7.5" fill="rgba(49,200,232,0.18)" stroke="var(--accent)"/>
+      <text x="69" y="109" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">LICENSE</text>
+      <rect x="40" y="132" width="9" height="14" rx="2" fill="rgba(241,241,246,0.32)"/>
+      <rect x="54" y="126" width="9" height="20" rx="2" fill="rgba(241,241,246,0.32)"/>
+      <rect x="68" y="136" width="9" height="10" rx="2" fill="rgba(241,241,246,0.32)"/>
+      <rect x="82" y="129" width="9" height="17" rx="2" fill="rgba(241,241,246,0.32)"/>
+    </g>
+    <path d="M148 94 h26 m-8 -7 l8 7 l-8 7" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g>
+      <rect x="182" y="30" width="112" height="128" rx="12" fill="url(#c23g)" stroke="rgba(150,225,244,0.6)"/>
+      <path d="M196 142 h84" stroke="rgba(241,241,246,0.35)" stroke-width="1.5"/>
+      <rect x="200" y="108" width="14" height="34" rx="3" fill="rgba(241,241,246,0.30)"/>
+      <rect x="221" y="92" width="14" height="50" rx="3" fill="rgba(241,241,246,0.30)"/>
+      <rect x="242" y="68" width="14" height="74" rx="3" fill="var(--accent)"/>
+      <rect x="263" y="100" width="14" height="42" rx="3" fill="rgba(241,241,246,0.30)"/>
+      <circle cx="249" cy="54" r="9" fill="var(--accent)"/>
+      <path d="M245 54 l3 3 l6 -6" stroke="var(--accent-ink)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="84" y="178" text-anchor="middle" fill="rgba(241,241,246,0.55)" font-family="Hanken Grotesk" font-size="9" font-weight="600">the model card</text>
+    <text x="238" y="178" text-anchor="middle" fill="rgba(241,241,246,0.55)" font-family="Hanken Grotesk" font-size="9" font-weight="600">your MLflow runs</text>
+  </svg>`,
+
+  funnel: `<svg viewBox="0 0 320 186">
+    <g>
+      <rect x="10" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+      <rect x="61" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+      <rect x="112" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+      <rect x="163" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+      <rect x="214" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+      <rect x="265" y="4" width="45" height="20" rx="10" fill="rgba(49,200,232,0.10)" stroke="rgba(49,200,232,0.45)"/>
+    </g>
+    <g data-step="1">
+      <path d="M160 24 v10" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="8" y="34" width="304" height="32" rx="10" fill="rgba(49,200,232,0.13)" stroke="var(--accent)"/>
+      <text x="22" y="54" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Model card screen</text>
+      <text x="298" y="54" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">license · language · task · context</text>
+    </g>
+    <g data-step="2">
+      <path d="M160 66 v10" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="76" y="76" width="50" height="22" rx="11" fill="rgba(49,200,232,0.16)" stroke="rgba(49,200,232,0.7)"/>
+      <rect x="135" y="76" width="50" height="22" rx="11" fill="rgba(49,200,232,0.16)" stroke="rgba(49,200,232,0.7)"/>
+      <rect x="194" y="76" width="50" height="22" rx="11" fill="rgba(49,200,232,0.16)" stroke="rgba(49,200,232,0.7)"/>
+    </g>
+    <g data-step="3">
+      <path d="M160 98 v10" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="8" y="108" width="304" height="32" rx="10" fill="rgba(49,200,232,0.13)" stroke="var(--accent)"/>
+      <text x="22" y="128" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Your eval set, MLflow runs</text>
+      <text x="298" y="128" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">same data · same scorers</text>
+    </g>
+    <g data-step="4">
+      <path d="M160 140 v10" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="110" y="150" width="100" height="28" rx="14" fill="rgba(49,200,232,0.20)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="160" y="168" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">Winner</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 : cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 23</div>
+    <h1 class="reveal">Choosing a model</h1>
+    <p class="lead reveal">Which model wins for your task? Two kinds of evidence answer it: published metadata, and your own experiments. <strong>Cards shortlist, your metrics decide.</strong></p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 : selection funnel step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The route</div>
+    <h2 class="reveal" style="font-size:24px">From catalog to winner</h2>
+    <div class="art reveal">${A.funnel}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Hubs and marketplaces list thousands of candidates. Tap to narrow them to one.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">The model card screens first: wrong license, wrong language, wrong task type, or a context window shorter than your prompts is an instant elimination.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">What survives is a shortlist of a few plausible candidates, roughly ordered by their published benchmark scores.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Every candidate then runs on your own eval set: one MLflow run per model, same data, same scorers.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">The winner is the run with the best task metrics at acceptable latency and cost. Your numbers make the call, not the leaderboard.</p>
+    </div>` },
+
+  /* 2 : what a model card tells you */
+  { html: `
+    <div class="eyebrow reveal">Evidence source 1</div>
+    <h2 class="reveal">Read the card before the weights</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A model card is the model's self-description. Four sections carry the <strong>selection signal</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Task and languages</b>What it was built to do (chat, embedding, code) and which languages it actually covers.</p></div>
+      <div class="pill"><p><b>Size and context</b>Parameter count hints at serving cost and latency; context length caps how much prompt plus retrieved context fits.</p></div>
+      <div class="pill"><p><b>License and restrictions</b>Whether commercial use is allowed at all, and under what acceptable-use terms.</p></div>
+      <div class="pill"><p><b>Training data and benchmarks</b>What it learned from, plus published scores (MMLU and friends) that measure generic ability.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : where the metadata lives */
+  { html: `
+    <div class="eyebrow reveal">Where you read it</div>
+    <h2 class="reveal">Hubs and the Marketplace</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same reading skill works in <strong>three places</strong> you will meet on Databricks.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Hugging Face</b>The card is the model's README with structured metadata on top: license, languages, datasets, evaluation results, all filterable in hub search.</p></div>
+      <div class="pill"><p><b>Databricks Marketplace</b>AI model listings ship the provider's model card; installing a listing lands the model in a catalog you govern as Models in Unity Catalog.</p></div>
+      <div class="pill"><p><b>Foundation Model APIs</b>The hosted-models docs list context length and license terms per model: the same screening data, with nothing to download.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : screening rule */
+  { html: `
+    <div class="eyebrow reveal">How to use it</div>
+    <h2 class="reveal">Cards filter, benchmarks only rank</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Metadata answers "could this model possibly work here", never "will it work best".</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Hard eliminations</b>License that forbids your commercial use, no support for your language, wrong task type, context too short for your prompts. Out, instantly.</p></div>
+      <div class="pill"><p><b>Soft ranking</b>Benchmark scores order the survivors roughly. They were measured on someone else's task with someone else's data.</p></div>
+      <div class="pill"><p><b>Never a verdict</b>Two models a few benchmark points apart are indistinguishable until they meet your data.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : the bake-off as an experiment */
+  { html: `
+    <div class="eyebrow reveal">Evidence source 2</div>
+    <h2 class="reveal">The bake-off is an experiment</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Each shortlisted candidate runs on your eval set as its own <strong>MLflow experiment run</strong>, so results stay comparable and reproducible.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">import</span> mlflow<br><br><span class="kw">for</span> name <span class="kw">in</span> shortlist:<br>&nbsp;&nbsp;<span class="kw">with</span> mlflow.start_run(run_name=name):<br>&nbsp;&nbsp;&nbsp;&nbsp;mlflow.log_param(<span class="st">"model"</span>, name)<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="al">mlflow.genai.evaluate</span>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data=eval_set,&nbsp;<span class="cm"># your task, your data</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;predict_fn=app_for(name),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scorers=scorers)&nbsp;<span class="cm"># same judges for all</span></div>
+    <p class="lead reveal" style="font-size:14.5px">One run per model against the same data and scorers turns the experiment page into a side-by-side table you can sort by any metric.</p>` },
+
+  /* 6 : metrics that decide */
+  { html: `
+    <div class="eyebrow reveal">Reading the runs</div>
+    <h2 class="reveal">Match the metric to the task</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The deciding metric is whichever one <strong>measures your task</strong>, never a generic score.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Classification-like output</b>Accuracy and F1 against labeled expected answers: routing, extraction, sentiment.</p></div>
+      <div class="pill"><p><b>Generated prose</b>LLM-as-a-judge scorers for correctness, relevance, and groundedness, because there is no single right string to match.</p></div>
+      <div class="pill"><p><b>Always alongside</b>Latency and cost per request. A slightly better answer that blows the latency budget still loses.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : quiz */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">A leaderboard ranks model X first on MMLU. On your 300-ticket eval set, run as MLflow runs with the same judge scorers, model Y scores higher on correctness and answers faster. Which ships?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Model X: a public benchmark is more rigorous than an internal eval</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Neither yet: rerun MMLU yourself to verify model X's rank first</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Model Y: your eval set measures the actual task, the leaderboard does not</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Model X, after fine-tuning it until it beats model Y</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Published scores shortlist candidates; your own experiment metrics decide, because they were measured on your task, your data, and your judges. Option A inverts the rule: MMLU says X is generally capable, not that it handles your tickets better. Rerunning MMLU (B) would only reproduce someone else's task with more effort.</div>` },
+
+  /* 8 : the stance */
+  { html: `
+    <div class="eyebrow reveal">The stance</div>
+    <h2 class="reveal">Two objectives, one rule</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The exam splits this into two objectives, but both ask the same question with <strong>different evidence on the table</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Secondhand vs firsthand</b>Metadata and benchmarks are someone else's measurements; experiment metrics are yours. Firsthand evidence wins every conflict.</p></div>
+      <div class="pill"><p><b>Exam signal</b>When a scenario mentions an internal eval, any option that picks a model on benchmark rank alone is the planted distractor.</p></div>
+      <div class="pill"><p><b>Repeat on every swap</b>A new endpoint ships? It enters as one more run against the same eval set, not as an automatic upgrade.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 9 : done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Model chosen</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Cards shortlist, benchmarks rank roughly, your metrics decide.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The card screens</b>License, language, task type, context length: instant eliminations, read on the hub or a Marketplace listing.</p></div>
+      <div class="pill"><p><b>Benchmarks rank roughly</b>Someone else's task; a tie-breaker for the shortlist at best.</p></div>
+      <div class="pill"><p><b>Your runs decide</b>One MLflow run per candidate on your eval set: task metric plus latency and cost per request.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
