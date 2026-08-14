@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
-<title>Agent Bricks: Knowledge Assistant, Multiagent Supervisor, Information Extraction · Databricks GenAI Engineer Associate</title>
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-07-agent-bricks.html">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Extracting Content: Choosing the Python Package for the Format · Databricks GenAI Engineer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-09-extracting-content.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,14 +28,11 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0c0913;            /* page background */
-    --bg-tint: #251a3a;       /* ambient glow tint behind the card */
-    --accent: #c9a0ff;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(201,160,255,0.12);  /* correct-answer fill */
-    --accent-ink: #150a24;    /* text on top of the accent key chip */
-    --ka: #c9a0ff;            /* option 1: Knowledge Assistant */
-    --ms: #8fb8ff;            /* option 2: Multiagent Supervisor */
-    --ie: #ff9de2;            /* option 3: Information Extraction */
+    --bg: #060f09;            /* page background */
+    --bg-tint: #0f2c1a;       /* ambient glow tint behind the card */
+    --accent: #4ade80;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(74,222,128,0.12);  /* correct-answer fill */
+    --accent-ink: #04170b;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -191,7 +193,7 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-08-sourcing-documents.html",
+  next:      "lesson-10-filtering-extraneous-content.html",
   nextLabel: "Next chapter"
 };
 
@@ -199,40 +201,67 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <linearGradient id="c7a" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:#54398a"/>
-        <stop offset="1" style="stop-color:#2c1d52"/>
+      <linearGradient id="c9n" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#1c5c34"/>
+        <stop offset="1" style="stop-color:#0c3018"/>
       </linearGradient>
-      <radialGradient id="c7glow" cx="0.5" cy="0.42" r="0.62">
-        <stop offset="0" style="stop-color:rgba(201,160,255,0.30)"/>
-        <stop offset="1" style="stop-color:rgba(201,160,255,0)"/>
+      <radialGradient id="c9glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(74,222,128,0.28)"/>
+        <stop offset="1" style="stop-color:rgba(74,222,128,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="140" ry="76" fill="url(#c7glow)"/>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c9glow)"/>
     <g>
-      <rect x="24" y="72" width="84" height="56" rx="12" fill="url(#c7a)" stroke="var(--ka)" stroke-width="1.5"/>
-      <path d="M40 90 h52 M40 101 h52 M40 112 h34" stroke="rgba(241,241,246,0.55)" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="94" cy="88" r="7" fill="none" stroke="var(--ka)" stroke-width="2"/>
-      <path d="M99 93 l6 6" stroke="var(--ka)" stroke-width="2" stroke-linecap="round"/>
-      <text x="66" y="146" text-anchor="middle" fill="var(--ka)" font-family="Hanken Grotesk" font-size="9" font-weight="700">KNOWLEDGE</text>
+      <rect x="16" y="22" width="50" height="62" rx="8" fill="url(#c9n)" stroke="rgba(163,240,190,0.55)"/>
+      <text x="41" y="58" text-anchor="middle" fill="#d8fbe4" font-family="Hanken Grotesk" font-size="10" font-weight="700">PDF</text>
+      <rect x="16" y="118" width="50" height="62" rx="8" fill="url(#c9n)" stroke="rgba(163,240,190,0.55)"/>
+      <text x="41" y="154" text-anchor="middle" fill="#d8fbe4" font-family="Hanken Grotesk" font-size="9" font-weight="700">&lt;html&gt;</text>
+      <rect x="76" y="70" width="50" height="62" rx="8" fill="url(#c9n)" stroke="rgba(163,240,190,0.55)"/>
+      <circle cx="101" cy="93" r="10" fill="none" stroke="rgba(241,241,246,0.6)" stroke-width="2"/>
+      <path d="M88 120 l10 -10 l7 6 l10 -12" fill="none" stroke="rgba(241,241,246,0.6)" stroke-width="2" stroke-linecap="round"/>
+      <text x="101" y="126" text-anchor="middle" fill="#d8fbe4" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SCAN</text>
     </g>
+    <path d="M130 101 h28" stroke="var(--accent)" stroke-width="2"/>
     <g>
-      <rect x="118" y="56" width="84" height="72" rx="12" fill="url(#c7a)" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="160" cy="78" r="9" fill="var(--ms)"/>
-      <path d="M160 87 v10 M160 97 l-20 12 M160 97 l20 12 M160 97 v14" stroke="var(--ms)" stroke-width="1.5" fill="none"/>
-      <circle cx="138" cy="113" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="160" cy="115" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <circle cx="182" cy="113" r="5" fill="none" stroke="var(--ms)" stroke-width="1.5"/>
-      <text x="160" y="146" text-anchor="middle" fill="var(--ms)" font-family="Hanken Grotesk" font-size="9" font-weight="700">SUPERVISOR</text>
+      <rect x="162" y="72" width="66" height="58" rx="14" fill="rgba(74,222,128,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
+      <path d="M178 92 l-8 9 l8 9 M212 92 l8 9 l-8 9 M199 88 l-8 26" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="195" y="146" text-anchor="middle" fill="#d8fbe4" font-family="Hanken Grotesk" font-size="9" font-weight="700">EXTRACTOR</text>
     </g>
+    <path d="M232 101 h24" stroke="var(--accent)" stroke-width="2"/>
     <g>
-      <rect x="212" y="72" width="84" height="56" rx="12" fill="url(#c7a)" stroke="var(--ie)" stroke-width="1.5"/>
-      <path d="M228 88 h24" stroke="rgba(241,241,246,0.55)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M258 84 h22 M258 92 h22" stroke="var(--ie)" stroke-width="1.5"/>
-      <path d="M228 102 h52 M228 112 h52 M245 96 v22 M262 96 v22" stroke="var(--ie)" stroke-width="1" opacity="0.8"/>
-      <text x="254" y="146" text-anchor="middle" fill="var(--ie)" font-family="Hanken Grotesk" font-size="9" font-weight="700">EXTRACTION</text>
+      <rect x="260" y="60" width="48" height="80" rx="9" fill="url(#c9n)" stroke="var(--accent)" stroke-width="1.5"/>
+      <path d="M270 76 h28 M270 88 h28 M270 100 h28 M270 112 h28 M270 124 h16" stroke="rgba(241,241,246,0.65)" stroke-width="2.5" stroke-linecap="round"/>
     </g>
-    <text x="160" y="28" text-anchor="middle" fill="#dccdf5" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">three bricks, one decision</text>
+  </svg>`,
+
+  decide: `<svg viewBox="0 0 320 196">
+    <g>
+      <rect x="92" y="4" width="136" height="30" rx="10" fill="rgba(74,222,128,0.14)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="160" y="23" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">What is the file?</text>
+    </g>
+    <g data-step="1">
+      <path d="M120 34 C 90 48, 70 52, 62 62" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+      <rect x="8" y="64" width="108" height="52" rx="10" fill="rgba(74,222,128,0.12)" stroke="var(--accent)"/>
+      <text x="62" y="85" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">Digital-born PDF</text>
+      <text x="62" y="102" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo" font-size="9.5">pypdf</text>
+    </g>
+    <g data-step="2">
+      <path d="M160 34 v28" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+      <rect x="126" y="64" width="68" height="52" rx="10" fill="rgba(74,222,128,0.12)" stroke="var(--accent)"/>
+      <text x="160" y="85" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">HTML</text>
+      <text x="160" y="102" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo" font-size="9.5">BeautifulSoup</text>
+    </g>
+    <g data-step="3">
+      <path d="M200 34 C 230 48, 250 52, 258 62" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+      <rect x="204" y="64" width="108" height="52" rx="10" fill="rgba(74,222,128,0.12)" stroke="var(--accent)"/>
+      <text x="258" y="85" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">Scan or image</text>
+      <text x="258" y="102" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo" font-size="9.5">pytesseract (OCR)</text>
+    </g>
+    <g data-step="4">
+      <rect x="60" y="136" width="200" height="52" rx="10" fill="rgba(74,222,128,0.14)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="160" y="157" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">Mixed pile of formats</text>
+      <text x="160" y="174" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo" font-size="9.5">unstructured</text>
+    </g>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -248,162 +277,109 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 7 · Trade-off</div>
-    <h1 class="reveal">Agent Bricks: three shapes of done-for-you</h1>
-    <p class="lead reveal">Knowledge Assistant, Multiagent Supervisor, Information Extraction: each brick solves one problem shape <strong>without writing agent code</strong>. The skill is matching the shape.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 9</div>
+    <h1 class="reveal">Extracting content</h1>
+    <p class="lead reveal">Before anything can be chunked or embedded, files must become text. The skill is <strong>matching the Python package to the source format</strong>, and the exam tests exactly that match.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why extraction caps quality */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">What every brick gives you</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Agent Bricks are <strong>prebuilt, declarative agents</strong>: you configure a use case, Databricks builds and tunes the agent behind it.</p>
+    <div class="eyebrow reveal">The stakes</div>
+    <h2 class="reveal">Extraction quality caps everything downstream</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Chunking, embedding, and retrieval all operate on whatever text extraction produced. Garbled or empty extraction is <strong>invisible until answers fail</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Configure, not code</b>You supply data, instructions, and examples through a UI. No orchestration code, no serving setup.</p></div>
-      <div class="pill"><p><b>Optimization built in</b>Each brick auto-tunes against its task and evaluates itself with LLM judges plus feedback you and your SMEs provide.</p></div>
-      <div class="pill"><p><b>Same governed floor</b>Sources come from Unity Catalog, the result is an endpoint, and MLflow Tracing records what it does: the Chapter 1 stack, pre-wired.</p></div>
+      <div class="pill"><p><b>Wrong tool, silent failure</b>A PDF text extractor pointed at a scanned document returns nothing, without an error. The document quietly vanishes from the corpus.</p></div>
+      <div class="pill"><p><b>One question first</b>Is the text digitally encoded in the file, or is it pixels in an image? That single distinction picks between a parser and OCR.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : option A, Knowledge Assistant */
+  /* 2 : decision tree (step build) */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The match</div>
+    <h2 class="reveal" style="font-size:24px">Format picks the package</h2>
+    <div class="art reveal">${A.decide}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Every source file lands in one of a few branches. Tap to walk them.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Digital-born PDFs carry an embedded text layer. <code>pypdf</code> (the successor to PyPDF2) reads it straight out, page by page.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">HTML is a tree, not flat text. <code>BeautifulSoup</code> (with the <code>lxml</code> parser) navigates the structure and selects the elements worth keeping.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Scans and photos have no text layer at all, only pixels. <code>pytesseract</code> runs Tesseract OCR to recognize the characters in the image.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">A mixed pile of formats can go through <code>unstructured</code>, one library that detects the type and returns typed elements like titles, paragraphs, and tables.</p>
+    </div>` },
+
+  /* 3 : the scanned trap */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ka)">Option 1</div>
-    <h2 class="reveal">Knowledge Assistant</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A question-and-answer chatbot over your documents that answers <strong>with citations</strong>.</p>
+    <div class="eyebrow reveal">The exam's favorite trap</div>
+    <h2 class="reveal">Scanned means OCR, always</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The guide's own sample question puts scanned images behind a document pile and asks which package extracts them. The answer is the OCR tool, <strong>not the format the pixels resemble</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Feed it documents</b>Files in Unity Catalog volumes (pdf, txt, md, ppt, doc), tables, or an existing Vector Search index.</p></div>
-      <div class="pill"><p><b>Get grounded answers</b>Its Instructed Retriever approach goes beyond plain RAG, and every answer cites the source it drew from.</p></div>
-      <div class="pill"><p><b>Improve in plain language</b>SMEs correct it with natural-language guidelines and example questions, not retraining.</p></div>
+      <div class="pill"><p><b>A scanned PDF is not a PDF problem</b>The .pdf wrapper holds page images. <code>pypdf</code> finds no text layer and returns empty strings; <code>pytesseract</code> reads the pixels.</p></div>
+      <div class="pill"><p><b>A screenshot of a webpage is not HTML</b>There is no markup to parse, so an HTML scraper has nothing to grab. Image in, OCR out.</p></div>
+      <div class="pill"><p><b>Signal words</b>"Scanned", "photographed", "image-only", "no text layer": all of them point at OCR regardless of the file extension.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : option B, Multiagent Supervisor */
+  /* 4 : office docs and word */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ms)">Option 2</div>
-    <h2 class="reveal">Multiagent Supervisor</h2>
-    <p class="lead reveal" style="margin-bottom:16px">One front door that <strong>routes work across specialist agents</strong> and stitches their results into a single answer.</p>
+    <div class="eyebrow reveal">The rest of the pile</div>
+    <h2 class="reveal">Office formats and beyond</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same format-first logic covers everything else in a typical corpus.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it orchestrates</b>Genie Spaces for structured data, Knowledge Assistants, model serving endpoints, Unity Catalog functions, and MCP servers.</p></div>
-      <div class="pill"><p><b>Delegation and synthesis</b>It breaks the request up, sends each part to the right subagent, and composes one response.</p></div>
-      <div class="pill"><p><b>Permission aware</b>Users only reach subagents they have access to; the supervisor steers around the rest.</p></div>
+      <div class="pill"><p><b>Word documents</b><code>python-docx</code> reads paragraphs, headings, and tables from .docx files directly.</p></div>
+      <div class="pill"><p><b>Tables and spreadsheets</b>Tabular sources keep their meaning in rows and columns; load them with <code>pandas</code> rather than flattening them into prose.</p></div>
+      <div class="pill"><p><b>Managed OCR at scale</b>Cloud services (AWS Textract, Azure AI Vision) are the hosted alternative to Tesseract when volume or layout complexity outgrows a library.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : option C, Information Extraction */
-  { html: `
-    <div class="eyebrow reveal" style="color:var(--ie)">Option 3</div>
-    <h2 class="reveal">Information Extraction</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Turns a pile of unstructured documents into a <strong>structured table</strong>, at scale.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Schema from a sentence</b>Describe what you want in natural language and it generates the JSON schema of fields to extract.</p></div>
-      <div class="pill"><p><b>Preview, then bulk</b>Refine the schema against sample documents, then run the whole corpus into Delta tables.</p></div>
-      <div class="pill"><p><b>Built on ai_extract</b>It is Chapter 3's extraction task, productized: contracts to terms, invoices to line items, notes to fields.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : comparison table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three bricks in one view</h2>
-    <div class="reveal" style="margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--ka); font-weight:700;">Knowledge</td>
-          <td style="padding:8px 5px; color:var(--ms); font-weight:700;">Supervisor</td>
-          <td style="padding:8px 5px; color:var(--ie); font-weight:700;">Extraction</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">You have</td>
-          <td style="padding:8px 5px; color:var(--ink);">documents</td>
-          <td style="padding:8px 5px; color:var(--ink);">many agents, domains</td>
-          <td style="padding:8px 5px; color:var(--ink);">documents</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Users want</td>
-          <td style="padding:8px 5px; color:var(--ink);">answers, cited</td>
-          <td style="padding:8px 5px; color:var(--ink);">one assistant for all</td>
-          <td style="padding:8px 5px; color:var(--ink);">a filled table</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Output</td>
-          <td style="padding:8px 5px; color:var(--ink);">chat + citations</td>
-          <td style="padding:8px 5px; color:var(--ink);">synthesized answer</td>
-          <td style="padding:8px 5px; color:var(--ink);">rows in Delta</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Runs as</td>
-          <td style="padding:8px 5px; color:var(--ink);">chat endpoint</td>
-          <td style="padding:8px 5px; color:var(--ink);">routing endpoint</td>
-          <td style="padding:8px 5px; color:var(--ink);">batch pipeline</td>
-        </tr>
-      </table>
-    </div>
-    <p class="lead reveal" style="font-size:14px; margin-top:14px">Same platform underneath; what differs is the problem shape each one expects.</p>
-    <div class="spacer"></div>` },
-
-  /* 6 : decision signals */
-  { html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal">Hear the phrase, pick the brick</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Exam scenarios hide the answer in how the requirement is worded.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ka)">"Answer questions about our docs"</b>Interactive Q&amp;A, one corpus, citations required: Knowledge Assistant.</p></div>
-      <div class="pill"><p><b style="color:var(--ms)">"One assistant across HR, finance, and support"</b>Multiple domains or existing agents behind a single entry point: Multiagent Supervisor.</p></div>
-      <div class="pill"><p><b style="color:var(--ie)">"Get these fields out of every contract"</b>Documents in, columns out, nobody chatting: Information Extraction.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : quiz 1, supervisor direction */
+  /* 5 : quiz */
   { quiz: true,
     html: `
-    <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">Employees want a single assistant that answers handbook questions AND pulls spend figures from a Genie Space over finance tables. Which approach fits?</h2>
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">A compliance corpus arrives as PDFs. Opening them shows each page is a scanned image of a typed contract; selecting text is impossible. Which package extracts the content?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A Knowledge Assistant over the handbook, with finance tables added as another source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An Information Extraction agent run across both domains</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Two separate assistants, and let employees pick the right one</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A Multiagent Supervisor routing between a Knowledge Assistant and the Genie Space</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>pypdf, since the files have a .pdf extension</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>BeautifulSoup, to parse the document structure</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>pytesseract, to OCR the page images into text</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>python-docx, after renaming the files to .docx</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Two specialist surfaces behind one front door is exactly the Supervisor's job: it delegates each question and synthesizes the reply. The lone Knowledge Assistant is the trap: it answers over documents, but structured spend queries belong to Genie, and stuffing finance tables into a document corpus serves neither.</div>` },
+    <div class="feedback"><b>Correct.</b> "Scanned image" and "selecting text is impossible" mean there is no embedded text layer, so this is an OCR job for pytesseract. The .pdf extension is the trap: pypdf reads a text layer these files do not have and would return empty output, while BeautifulSoup needs markup and python-docx needs a real Word file.</div>` },
 
-  /* 8 : quiz 2, extraction direction */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Legal has 40,000 vendor contracts in a Unity Catalog volume and wants renewal date, parties, and liability cap as columns in a Delta table. Which brick?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Information Extraction, with a schema for the three fields</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Knowledge Assistant, so legal can ask about any contract</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Multiagent Supervisor coordinating a contract agent per vendor</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A custom Agent Framework agent with a retriever over the volume</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> The requirement is documents in, named columns out, in bulk: Information Extraction's exact shape, schema first, then the whole corpus. The Knowledge Assistant tempts because the input is the same contracts, but it produces conversational answers on demand, not the populated table legal asked for.</div>` },
-
-  /* 9 : the boundary */
+  /* 6 : structure preservation */
   { html: `
-    <div class="eyebrow reveal">When no brick fits</div>
-    <h2 class="reveal">Bricks first, framework when you must</h2>
-    <p class="lead reveal" style="margin-bottom:16px">"How and when to use Agent Bricks" includes knowing <strong>when not to</strong>.</p>
+    <div class="eyebrow reveal">Keep the shape</div>
+    <h2 class="reveal">Extract structure, not just characters</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Flattening a document into one string works, but keeping its shape pays off two chapters from now.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Reach for a brick</b>When the problem matches one of the three shapes. You trade code-level control for speed, built-in evaluation, and auto-optimization.</p></div>
-      <div class="pill"><p><b>Drop to Agent Framework</b>Custom orchestration logic, unusual output contracts, or a framework your team already owns: that is Chapter 6 territory, written by hand.</p></div>
-      <div class="pill"><p><b>Or mix</b>A Supervisor can route to custom agent endpoints too, so hand-built and brick-built agents can serve side by side.</p></div>
+      <div class="pill"><p><b>Headings and sections</b>Preserved titles become chunk boundaries and metadata (Chapter 12 splits on exactly these).</p></div>
+      <div class="pill"><p><b>Tables</b>A table read cell-by-cell keeps its row-column meaning; a table flattened to prose usually loses it.</p></div>
+      <div class="pill"><p><b>Typed elements</b>This is the case for <code>unstructured</code>: it labels what each piece is, so later stages can treat a footer differently from a paragraph.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 10 : done */
+  /* 7 : exam signal */
+  { html: `
+    <div class="eyebrow reveal">Exam signal</div>
+    <h2 class="reveal">Read the format words, not the tool list</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Package-choice questions hide the answer in how the source is described.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>"Text-based PDF" or "exported report"</b>A text layer exists: <code>pypdf</code>.</p></div>
+      <div class="pill"><p><b>"Web pages" or "HTML exports"</b>Markup exists: <code>BeautifulSoup</code>.</p></div>
+      <div class="pill"><p><b>"Scanned", "photographed", "images of"</b>Pixels only: <code>pytesseract</code>.</p></div>
+      <div class="pill"><p><b>"Various formats in one pipeline"</b>Type detection wanted: <code>unstructured</code>.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 1 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match the problem shape, and the brick picks itself.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Text acquired</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">One question (encoded text or pixels?), then the format picks the package.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ka)">Knowledge Assistant</b>Cited answers over your documents, improved by SME guidelines.</p></div>
-      <div class="pill"><p><b style="color:var(--ms)">Multiagent Supervisor</b>One entry point delegating across Genie Spaces, agents, and tools.</p></div>
-      <div class="pill"><p><b style="color:var(--ie)">Information Extraction</b>Corpus to columns via a schema, built on ai_extract.</p></div>
-      <div class="pill"><p><b>No brick fits?</b>Agent Framework code, and the two can mix behind a Supervisor.</p></div>
+      <div class="pill"><p><b>The map</b>pypdf for digital PDFs, BeautifulSoup for HTML, python-docx for Word, pytesseract for scans, unstructured for mixed piles.</p></div>
+      <div class="pill"><p><b>The trap</b>A scanned PDF is an image job, not a PDF job; extension is not format.</p></div>
+      <div class="pill"><p><b>The payoff</b>Preserve headings and tables now; chunking and metadata will use them.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
