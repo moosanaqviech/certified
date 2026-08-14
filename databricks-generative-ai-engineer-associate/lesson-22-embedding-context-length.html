@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Embedding Model Context Length: Matching Chunks, Queries, and Cost · Databricks GenAI Engineer Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-22-embedding-context-length.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #051014;            /* page background */
+    --bg-tint: #0c2b36;       /* ambient glow tint behind the card */
+    --accent: #31c8e8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(49,200,232,0.12);  /* correct-answer fill */
+    --accent-ink: #03151c;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-23-model-cards-and-metrics.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="c22n" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#14586e"/>
+        <stop offset="1" style="stop-color:#0a2e3e"/>
+      </linearGradient>
+      <radialGradient id="c22glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(49,200,232,0.28)"/>
+        <stop offset="1" style="stop-color:rgba(49,200,232,0)"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c22glow)"/>
+    <text x="103" y="46" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">CONTEXT WINDOW</text>
+    <text x="257" y="46" text-anchor="middle" fill="rgba(232,98,92,0.85)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">TRUNCATED</text>
+    <g>
+      <rect x="14" y="56" width="178" height="58" rx="12" fill="url(#c22n)" stroke="var(--accent)" stroke-width="1.5"/>
+      <path d="M30 73 h146 M30 86 h146 M30 99 h112" stroke="rgba(241,241,246,0.55)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <path d="M200 50 v70" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 5"/>
+    <g opacity="0.45">
+      <rect x="208" y="56" width="98" height="58" rx="12" fill="rgba(20,88,110,0.35)" stroke="rgba(49,200,232,0.4)" stroke-dasharray="4 4"/>
+      <path d="M222 73 h70 M222 86 h70 M222 99 h48" stroke="rgba(241,241,246,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <path d="M103 114 v20" stroke="var(--accent)" stroke-width="1.5"/>
+    <path d="M98 129 l5 7 l5 -7" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g>
+      <rect x="46" y="142" width="114" height="36" rx="10" fill="url(#c22n)" stroke="rgba(49,200,232,0.6)"/>
+      <path d="M60 170 v-16 M72 170 v-9 M84 170 v-20 M96 170 v-13 M108 170 v-18 M120 170 v-7 M132 170 v-15 M144 170 v-11" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <text x="236" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">the tail never reaches the vector</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 : cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 22</div>
+    <h1 class="reveal">Embedding context length</h1>
+    <p class="lead reveal">An embedding model reads only as many tokens as its context length allows, and everything past that cap is <strong>cut off silently</strong>. Choosing the window is really choosing what your retriever can ever find, and what it costs.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 : the cap and silent truncation */
+  { html: `
+    <div class="eyebrow reveal">The cap</div>
+    <h2 class="reveal">One vector, a fixed budget of tokens</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A model's context length is the maximum number of tokens <strong>one embedding can represent</strong>. It is a hard ceiling, not a soft target.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Truncation is silent</b>Text past the window is dropped before embedding. No error, no warning: the vector simply describes only the head of the chunk.</p></div>
+      <div class="pill"><p><b>What that breaks</b>A fact in a chunk's tail never enters the vector, so no query can retrieve it. The document looks indexed, but part of it is invisible.</p></div>
+      <div class="pill"><p><b>The symptom</b>Questions about the end of long chunks come back empty-handed while the same question about early content works fine.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : input 1, source documents */
+  { html: `
+    <div class="eyebrow reveal">Input 1 · Source documents</div>
+    <h2 class="reveal">Your chunks must fit the window</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The chunk size you tuned in Unit 2 is now a hard constraint: <strong>every chunk must fit</strong> inside the embedding model's context length, with margin.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Fit with margin</b>A 512-token window with 600-token chunks means every chunk loses its tail. Either shrink the chunks or pick a longer-context model.</p></div>
+      <div class="pill"><p><b>Long context allows big chunks</b>An 8192-token window can embed a multi-page section whole, so long, dense documents keep their context together.</p></div>
+      <div class="pill"><p><b>The dilution catch</b>One vector averages everything in the chunk. The bigger the chunk, the more meanings blend into a single point, and the fuzzier each match gets.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : input 2, expected queries */
+  { html: `
+    <div class="eyebrow reveal">Input 2 · Expected queries</div>
+    <h2 class="reveal">Queries are short: plan for both sides</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same model embeds your documents <strong>and your queries</strong>. Queries are usually a sentence or two, so the window is rarely their problem.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The window serves documents</b>A 20-token question fits any model. Context length is sized for the chunk side, not the query side.</p></div>
+      <div class="pill"><p><b>Granularity is what queries feel</b>Short, specific questions match best against focused chunks. A huge window filled with huge chunks returns pages when the query wanted a paragraph.</p></div>
+      <div class="pill"><p><b>So a big window is not free quality</b>If queries are short and chunks are already small, paying for maximum context length buys nothing at retrieval time.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : input 3, optimization strategy */
+  { html: `
+    <div class="eyebrow reveal">Input 3 · Optimization strategy</div>
+    <h2 class="reveal">Quality-first or cost-and-latency-first</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Candidate embedding models come with three numbers: <strong>context length, model size, and embedding dimensions</strong>. Your optimization strategy says which direction wins.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Quality first</b>Larger context length and more dimensions: richer vectors and bigger chunks, at the price of a bigger model, slower embedding, and a larger, slower index.</p></div>
+      <div class="pill"><p><b>Cost and latency first</b>Smaller context length and fewer dimensions: a small model that serves fast and cheap, and a compact index that answers queries quickly.</p></div>
+      <div class="pill"><p><b>The exam signal</b>When a scenario ranks cost and latency above quality, pick the candidate with the smallest context length, model size, and dimension count that still fits your chunks.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : quiz */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:22px">A support-ticket RAG bot uses 400-token chunks and one-sentence queries. The stated strategy puts cost and latency ahead of answer quality. Which candidate embedding model fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>32k-token context, 4096 dims, 7 GB model</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>8192-token context, 1024 dims, 1.3 GB model</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>512-token context, 384 dims, 0.27 GB model</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>2048-token context, 1536 dims, 2.4 GB model</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The 400-token chunks fit inside the 512-token window, and the smallest model with the fewest dimensions is the cheapest to serve and the fastest to search: exactly what the strategy asks for. B is the tempting pick because it is the strongest general-purpose spec, but its extra window, dimensions, and gigabytes buy quality the strategy explicitly deprioritized.</div>` },
+
+  /* 6 : consistency rule */
+  { html: `
+    <div class="eyebrow reveal">The consistency rule</div>
+    <h2 class="reveal">Same model on both sides, always</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Query vectors are only comparable to index vectors when the <strong>same embedding model</strong> produced both.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Different model, different space</b>Two models can share a dimension count and still place meanings in unrelated positions. Distances between their vectors are noise.</p></div>
+      <div class="pill"><p><b>The failure looks like bad retrieval</b>The index queries fine and returns results, they are just irrelevant. Nothing errors; relevance quietly collapses.</p></div>
+      <div class="pill"><p><b>Upgrades mean re-embedding</b>Switching embedding models means rebuilding the whole index with the new model, never just pointing queries at it.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : on databricks */
+  { html: `
+    <div class="eyebrow reveal">On Databricks</div>
+    <h2 class="reveal">The window is a spec you can read</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The embedding model is typically served through <strong>Foundation Model APIs</strong> and configured on the Mosaic AI Vector Search index, which then embeds documents and queries with it.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The long-context option</b><code>databricks-gte-large-en</code> takes 8192 tokens and produces 1024-dimension vectors: the pick when big chunks must stay whole.</p></div>
+      <div class="pill"><p><b>The short-window contrast</b>The bge family caps at 512 tokens, so it pairs with the small, focused chunk designs from Unit 2.</p></div>
+      <div class="pill"><p><b>Managed consistency</b>Because the model is configured on the index, Vector Search uses it at ingest and at query time, enforcing the consistency rule for you. Unit 4 covers the index mechanics.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 : done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Window matched</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Context length is chosen from three inputs: your chunks, your queries, your strategy.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The cap is silent</b>Text past the window is truncated before embedding, so chunk tails vanish from retrieval. Fit chunks inside the window, with margin.</p></div>
+      <div class="pill"><p><b>Strategy picks the size</b>Cost and latency first means the smallest context length, model size, and dimensions that still fit; quality first goes bigger.</p></div>
+      <div class="pill"><p><b>Same model both sides</b>Queries must be embedded by the model that built the index; configuring it on the Vector Search index enforces that.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

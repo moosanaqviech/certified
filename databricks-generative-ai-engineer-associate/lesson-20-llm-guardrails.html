@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>LLM Guardrails Inside the Application · Databricks GenAI Engineer Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-20-llm-guardrails.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #051014;            /* page background */
+    --bg-tint: #0c2b36;       /* ambient glow tint behind the card */
+    --accent: #31c8e8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(49,200,232,0.12);  /* correct-answer fill */
+    --accent-ink: #03151c;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-21-choosing-the-llm.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="c20n" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#14586e"/>
+        <stop offset="1" style="stop-color:#0a2e3e"/>
+      </linearGradient>
+      <radialGradient id="c20glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(49,200,232,0.28)"/>
+        <stop offset="1" style="stop-color:rgba(49,200,232,0)"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c20glow)"/>
+    <path d="M6 100 H84" stroke="rgba(49,200,232,0.4)" stroke-width="1.5"/>
+    <path d="M236 100 H314" stroke="rgba(49,200,232,0.4)" stroke-width="1.5"/>
+    <rect x="40" y="36" width="240" height="128" rx="20" fill="none" stroke="rgba(122,216,238,0.30)" stroke-dasharray="5 5"/>
+    <rect x="62" y="54" width="196" height="92" rx="16" fill="none" stroke="rgba(122,216,238,0.5)"/>
+    <rect x="86" y="70" width="148" height="60" rx="12" fill="url(#c20n)" stroke="rgba(160,230,245,0.65)"/>
+    <circle cx="160" cy="100" r="15" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="160" cy="100" r="5.5" fill="var(--accent)"/>
+    <path d="M40 92 v16 M62 92 v16 M258 92 v16 M280 92 v16" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+    <g>
+      <path d="M160 24 l11 4.5 v8.5 c0 6.5 -4.5 10 -11 13 c-6.5 -3 -11 -6.5 -11 -13 v-8.5 z" fill="#0a2e3e" stroke="var(--accent)" stroke-width="1.5"/>
+      <path d="M154.5 35 l4 4 l8 -8" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="14" y="90" fill="#bfeaf5" font-family="Hanken Grotesk" font-size="9" font-weight="700">IN</text>
+    <text x="306" y="90" text-anchor="end" fill="#bfeaf5" font-family="Hanken Grotesk" font-size="9" font-weight="700">OUT</text>
+  </svg>`,
+
+  layers: `<svg viewBox="0 0 320 236">
+    <defs>
+      <linearGradient id="c20m" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#14586e"/>
+        <stop offset="1" style="stop-color:#0a2e3e"/>
+      </linearGradient>
+    </defs>
+    <path d="M160 26 V206" stroke="rgba(49,200,232,0.25)" stroke-width="1.5"/>
+    <rect x="86" y="2" width="148" height="24" rx="12" fill="rgba(49,200,232,0.14)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="160" y="18" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">User request</text>
+    <rect x="70" y="100" width="180" height="36" rx="10" fill="url(#c20m)" stroke="rgba(160,230,245,0.6)"/>
+    <text x="160" y="116" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">LLM</text>
+    <rect x="76" y="206" width="168" height="24" rx="12" fill="rgba(49,200,232,0.14)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="160" y="222" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Response to user</text>
+    <g data-step="1">
+      <rect x="62" y="94" width="196" height="48" rx="12" fill="none" stroke="var(--accent)" stroke-dasharray="4 4"/>
+      <text x="160" y="130" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">system prompt: scope + refusal rules</text>
+    </g>
+    <g data-step="2">
+      <rect x="40" y="52" width="240" height="28" rx="9" fill="rgba(49,200,232,0.13)" stroke="var(--accent)"/>
+      <text x="52" y="70" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Input checks</text>
+      <text x="268" y="70" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">before any tokens are spent</text>
+    </g>
+    <g data-step="3">
+      <rect x="40" y="156" width="240" height="28" rx="9" fill="rgba(49,200,232,0.13)" stroke="var(--accent)"/>
+      <text x="52" y="174" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Output checks</text>
+      <text x="268" y="174" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">the draft, before the user</text>
+    </g>
+    <g data-step="4">
+      <rect x="8" y="44" width="304" height="154" rx="14" fill="none" stroke="rgba(49,200,232,0.55)" stroke-width="1.5" stroke-dasharray="2 5"/>
+      <text x="160" y="192" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">AI Gateway: enforcement on the endpoint itself</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 : cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 20</div>
+    <h1 class="reveal">LLM guardrails</h1>
+    <p class="lead reveal">Left alone, the model will eventually produce something it should not. Guardrails are the <strong>enforcement layers the application wraps around it</strong> so a bad generation never reaches the user.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 : why guardrails */
+  { html: `
+    <div class="eyebrow reveal">The problem</div>
+    <h2 class="reveal">Prompts ask. Guardrails enforce.</h2>
+    <p class="lead reveal" style="margin-bottom:16px">An LLM is probabilistic: given enough traffic it will go off scope, repeat something sensitive, or state something unsafe. Hoping it will not is not a control.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Negative outcomes have names</b>Toxic content, leaked PII, off-topic replies, confident claims with no support in the context. Each is preventable at some layer.</p></div>
+      <div class="pill"><p><b>Deterministic, not clever</b>A guardrail is a check with a defined action: block, mask, or replace with a safe fallback. It does not make the model better, it makes bad generations unreachable.</p></div>
+      <div class="pill"><p><b>Layered by design</b>No single check sees everything, so guardrails sit at four points: inside the prompt, before the model, after it, and on the platform.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : layer placement step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Placement</div>
+    <h2 class="reveal" style="font-size:24px">Four layers around one model</h2>
+    <div class="art reveal">${A.layers}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">One request, one response, four places to stand guard. Tap to place each layer.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">The system prompt states scope and refusal rules. Cheapest layer, weakest too: it asks the model, and nothing checks the result.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Input checks run before the model does: validate, screen topics and keywords, catch PII on the way in. A blocked request costs no generation.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Output checks run on the draft response: the only layer that can inspect what the model actually said.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">Below it all sits the platform: Mosaic AI Gateway rules attached to the serving endpoint, enforced for every caller.</p>
+    </div>` },
+
+  /* 3 : layer 1, system prompt */
+  { html: `
+    <div class="eyebrow reveal">Layer 1 · The system prompt</div>
+    <h2 class="reveal">The cheapest layer, and the weakest</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Behavior rules written into the system prompt cost one paragraph of text. <strong>Nothing enforces them.</strong></p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Scope and refusal rules</b>State what the assistant is for, what it must decline, and how to refuse. This alone deflects most casual off-topic use.</p></div>
+      <div class="pill"><p><b>Answer only from context</b>In a RAG app, instruct the model to answer strictly from the retrieved context and to say it does not know otherwise. That is a groundedness request, not a groundedness guarantee.</p></div>
+      <div class="pill"><p><b>Why it cannot stand alone</b>The rules are just tokens the model weighs against everything else in the window. Always present, never sufficient.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : layer 2, input side */
+  { html: `
+    <div class="eyebrow reveal">Layer 2 · Before the model</div>
+    <h2 class="reveal">Turn bad requests away at the door</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Input-side checks run before any generation happens, so a rejected request costs <strong>zero model tokens</strong> and never touches the chain.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Validation</b>Length limits, expected fields, allowed languages. Malformed input never enters the pipeline.</p></div>
+      <div class="pill"><p><b>Topic and keyword screens</b>A classifier or keyword list catches off-scope and banned subjects and returns a canned refusal instead of calling the model.</p></div>
+      <div class="pill"><p><b>PII on the way in</b>Detect identifiers in the user's message and mask or block them, so they never reach the prompt, the logs, or an external model.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : layer 3, output side */
+  { html: `
+    <div class="eyebrow reveal">Layer 3 · After the model</div>
+    <h2 class="reveal">The only layer that sees the draft</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Input checks cannot catch what the model itself writes. Output-side checks run on the <strong>draft response</strong>, between generation and the user.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Moderation of the draft</b>Run a safety classifier on the response itself; block it or swap in a fallback message when it fails.</p></div>
+      <div class="pill"><p><b>PII redaction on the way out</b>Catches identifiers the model copied from retrieved context or invented. The input screen never saw them.</p></div>
+      <div class="pill"><p><b>Format and schema validation</b>Parse the JSON, check the required fields, and fail closed or retry rather than ship a malformed payload.</p></div>
+      <div class="pill"><p><b>Groundedness check</b>Compare the answer's claims against the retrieved chunks; an unsupported answer is blocked or flagged, not sent.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 : quiz */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:21px">A RAG assistant answers HR questions from wiki pages that sometimes contain employee ID numbers. Requirement: an ID number must never appear in a response. Where must the guardrail sit?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>In the system prompt: instruct the model never to reveal employee ID numbers</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>On the input: scan the user's question for ID numbers before the model runs</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>On the output: run PII detection and redaction on the draft response before it returns</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>In generation settings: lower the temperature so the model sticks closer to the context</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The IDs enter through retrieved context, not the user's question, so an input scan never sees them, and a system prompt rule is a request the model is free to fail. A must-never requirement needs a check on the draft itself: only output-side redaction guarantees what leaves the app. Temperature shifts probabilities; it enforces nothing.</div>` },
+
+  /* 7 : layer 4, platform */
+  { html: `
+    <div class="eyebrow reveal">Layer 4 · The platform</div>
+    <h2 class="reveal">Enforcement attached to the endpoint</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Databricks can also enforce guardrails on the <strong>serving endpoint itself</strong>, below your application code.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Safety filter on Foundation Model APIs</b>Set <code>enable_safety_filter=True</code> on a request and a Llama Guard based filter screens the exchange for unsafe content and refuses instead of engaging.</p></div>
+      <div class="pill"><p><b>AI Gateway guardrails</b>Safety filtering, PII detection set to block or mask, invalid keyword lists, and topic moderation, configurable on both the input and the output of a served endpoint.</p></div>
+      <div class="pill"><p><b>Why it is its own layer</b>It applies to every caller of the endpoint, including code that skipped the app's checks. Chapter 54 configures it; here, know where endpoint-level enforcement lives.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 : boundary with unit 5 */
+  { html: `
+    <div class="eyebrow reveal">The boundary</div>
+    <h2 class="reveal">Bad output now, hostile input later</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Guardrails split into two exam topics by intent, and this chapter owns only one of them.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>This chapter: outcomes</b>Stopping a negative outcome from leaving the app: toxicity, leaked PII, off-topic or ungrounded answers.</p></div>
+      <div class="pill"><p><b>Chapter 44: attacks</b>Surviving deliberately hostile input, prompt injection and jailbreaks, is a security problem with its own defenses, covered in Unit 5.</p></div>
+      <div class="pill"><p><b>Exam signal</b>Find the negative outcome in the question, then pick the shallowest layer that can actually see it. If the outcome lives in the response, the answer is output-side, not the system prompt.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 9 : done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Guardrails placed</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Prompts ask, guardrails enforce, and placement decides what each can catch.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Four layers, always stacked</b>System prompt, input checks, output checks, platform. Each catches what the one before it cannot see.</p></div>
+      <div class="pill"><p><b>Output side sees the draft</b>Moderation, PII redaction, schema validation, groundedness: the only guards that inspect what the model said.</p></div>
+      <div class="pill"><p><b>Platform floor</b>The Foundation Model APIs safety filter and AI Gateway guardrails enforce at the endpoint for every caller. Chapter 54 configures them.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
