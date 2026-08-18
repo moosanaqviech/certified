@@ -160,9 +160,9 @@ Chapter 22 of our DE Professional course builds the full picture. certify.course
       { layout: 'cta', lines: ['Learn. Recall.', 'Reason.'], url: 'certify.courses' },
     ],
     captionIg:
-`The most common way to fail a certification is to study in a way that feels productive: read the docs, highlight, nod along, move on. Recognition builds fast and decays fast. On exam day you recognize every term in the question and still cannot produce the answer.
+`The most common way to fail a certification is to study for the feeling of productivity: read the docs, highlight, nod along, move on. Recognition builds fast and decays fast. On exam day you recognize every term in the question and still cannot produce the answer.
 
-That is why every chapter on Certify runs the same loop. Learn: a short visual lesson, one concept at a time, sourced from the official exam guide and vendor docs. Recall: a quiz immediately after, before the forgetting starts. Reason: scenario questions that make you apply the trade-off the way the exam will.
+That is why every chapter on Certify runs the same loop. Learn: a short visual lesson, one concept at a time, sourced from the official exam guide and vendor docs. Recall: a quiz immediately after, before the forgetting starts. Reason: scenario questions that make you apply the trade-off exactly as the exam will.
 
 No streaks, no XP, no mascot. You booked an exam. That is motivation enough. The loop just makes the hours count.
 
