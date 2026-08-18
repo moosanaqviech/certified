@@ -172,4 +172,61 @@ Unit 1 of every course is free. certify.courses`,
     captionFb:
 `Reading feels like studying, but recognition is not recall, and the exam only pays for recall. Every Certify chapter runs the same loop: a two-minute visual lesson, a quiz before the forgetting starts, then scenario questions that make you reason. Unit 1 of every course is free: https://certify.courses`,
   },
+
+  // ---- POST 20 ----
+  {
+    slug: 'stride-sets-the-bill',
+    format: 'carousel',
+    source: 'Databricks GenAI Engineer Associate, Unit 2, Ch 11, guide sample question 1',
+    slides: [
+      { layout: 'hook', lines: ['100,000 tokens.', 'How many', 'chunks?'] },
+      {
+        layout: 'tension',
+        lines: ['Chunk size alone', 'cannot tell you.'],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'THE FORMULA',
+        headlineLines: ['Stride sets the count'],
+        bodyLines: [
+          'A new chunk starts every',
+          ['(size minus overlap) tokens: the ', { t: 'stride', gold: true }, '.'],
+          'The chunk count is your embedding bill.',
+        ],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'RUN THE NUMBERS',
+        headlineLines: ['One corpus, three ways'],
+        bodyLines: [
+          'Size 250, overlap 50: 500 chunks.',
+          'Size 500, overlap 50: 222 chunks.',
+          'Size 500, overlap 0: 200 chunks.',
+        ],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'WHY IT MATTERS',
+        headlineLines: ['Official sample question 1'],
+        goldHeadline: true,
+        bodyLines: [
+          'To cut embedding cost, raise chunk size',
+          'AND reduce overlap. Both stretch the stride.',
+        ],
+      },
+      { layout: 'cta', lines: ['Count strides,', 'not chunks.'], url: 'certify.courses' },
+    ],
+    captionIg:
+`The first sample question in the official GenAI Engineer Associate guide is a cost question in disguise: your embedding bill is too high, what do you change about chunking?
+
+Most people reason about chunk size alone, and chunk size alone cannot answer it. With overlap, a new chunk starts every (size minus overlap) tokens. That gap is the stride, and the stride, not the size, sets how many chunks a corpus produces, which sets how many embeddings you compute, store, and pay for.
+
+Work a 100,000-token corpus. Size 250 with overlap 50: a chunk every 200 tokens, so 500 chunks. Double the size, same overlap: stride 450, about 222 chunks. Drop the overlap too: stride 500, 200 chunks. Raising size and cutting overlap BOTH stretch the stride, which is exactly the pairing the official answer wants. Cutting overlap alone is the tempting near miss: it helps, but nowhere near as much.
+
+Chapter 11 of our GenAI Engineer Associate course lets you work that corpus interactively, then quizzes you on it. Units 1 and 2 are live now. certify.courses`,
+    hashtags:
+'#databricks #genai #generativeai #rag #llm #embeddings #vectorsearch #databrickscertification #certificationprep #aiengineer #dataengineering #machinelearning #promptengineering #techcertification',
+    captionFb:
+`The official GenAI Engineer Associate guide opens its sample questions with a chunking cost problem. The key: a new chunk starts every (size minus overlap) tokens, so the stride sets the embedding bill. Raising chunk size AND reducing overlap both stretch it. Chapter 11 of our GenAI course works the numbers interactively: https://certify.courses`,
+  },
 ];
