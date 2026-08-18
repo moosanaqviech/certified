@@ -15,7 +15,7 @@ and a `captions.txt` (IG caption + hashtags, FB variant).
     lib/tokens.mjs      brand tokens, extracted verbatim from shipped SVGs
     lib/layouts.mjs     layouts: hook, tension, value, value-shot, stat, single, cta
     lib/validate.mjs    brand gate: dashes, word limits, gold budget, hashtags
-    content/posts.mjs   the content (posts 16-19)
+    content/posts.mjs   the content (posts 16-20)
     bin/capture.mjs     screenshots the live site into assets/ (see below)
     assets/             captured screens used by value-shot frames
     render.mjs          validate -> build SVG -> rasterize -> JPG -> captions
