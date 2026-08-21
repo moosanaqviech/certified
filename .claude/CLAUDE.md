@@ -101,14 +101,48 @@ generated file. Never edit the `<style>` block of the test template.
 Read lesson-authoring-guide.md and test-authoring-guide.md before authoring
 anything. They define card shapes, helper classes, and question rules.
 
+## Lesson animation (required)
+
+Every lesson MUST use both kinds of motion the frozen v2 engine supports. A
+lesson that ships with only the base `.reveal` entrance stagger is incomplete
+and should be revised, not accepted. Both live in the payload only (the `cards`
+array and the `A` SVG strings); never touch the engine to add them.
+
+1. **Step-sequenced card builds.** On cards where a concept assembles in stages
+   (a diagram that builds up, points that land one at a time, a before/after,
+   an ordered pipeline), give the card a `steps: N` field and tag the staged
+   elements `data-step="1"` .. `data-step="N"`. The engine reveals one step per
+   tap, so the idea is paced instead of dumped at once. Use step builds on the
+   cards that teach a process or a build (target at least 2 to 3 step cards per
+   lesson); a pure recall or single-point card can stay static.
+   `scripts/validate.py` enforces the contract: data-step values must cover
+   1..N with no gaps and none over N, and caption containers use `.stepcaps`
+   (append) or `.stepcap-swap` (swap). `data-step="0"` is caption-only.
+
+2. **Animated cover art.** The cover SVG must actually move, not sit static.
+   Define CSS `@keyframes` inside the SVG's own `<style>` block (referencing
+   palette vars) and drive a looping or reveal motion that illustrates the
+   chapter's concept. Illustration-grade effort still goes on the cover only;
+   inner-card SVGs may animate via step builds but do not need their own loops.
+
+Reduced motion and no SMIL: wrap every payload animation (cover keyframes and
+any inner looping motion) in `@media (prefers-reduced-motion: reduce)` so it
+stops for that setting, matching how the engine guards its own motion. Never
+use SMIL (`<animate>`, `<animateTransform>`, `<animateMotion>`): the v2 engine
+and the validator forbid it, and only CSS keyframes are covered by the
+reduced-motion guard.
+
 ## Hard rules for all generated content
 
 - NO em dashes anywhere (content, options, explanations, commit messages).
   Use colons, commas, parentheses, or periods.
-- SVG art: static string literals only, no nested template interpolation
-  (backtick parity failures). viewBox around 0 0 320 200. Use palette vars
-  for stroke/fill so art recolors with the theme. Gradient stops MUST use
-  style form: <stop style="stop-color:var(--x)"/>, never the attribute form
+- SVG art: static string literals only, meaning no nested template
+  interpolation (backtick parity failures), NOT "no motion": the string is
+  static while the animation is CSS keyframes inside the SVG's own `<style>`
+  (see "Lesson animation" above, which requires an animated cover). viewBox
+  around 0 0 320 200. Use palette vars for stroke/fill so art recolors with
+  the theme. Gradient stops MUST use style form:
+  <stop style="stop-color:var(--x)"/>, never the attribute form
   stop-color="var(--x)" (WebKit and the iOS shell do not resolve var() in
   presentation attributes). Illustration-grade effort goes on the cover
   only; see the cover-art triage in the authoring skill.
