@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
-<title>Evaluation versus Monitoring in the GenAI Lifecycle · Databricks GenAI Engineer Associate</title>
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-27-evaluation-vs-monitoring.html">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Masking as a Guardrail · Databricks GenAI Engineer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-43-masking-as-a-guardrail.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,13 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #051014;            /* page background */
-    --bg-tint: #0c2b36;       /* ambient glow tint behind the card */
-    --accent: #31c8e8;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(49,200,232,0.12);  /* correct-answer fill */
-    --accent-ink: #03151c;    /* text on top of the accent key chip */
-    --ev: #31c8e8;            /* option 1: Evaluation (offline) */
-    --mo: #7ce89e;            /* option 2: Monitoring (live) */
+    /* Unit 5 · Governance · rose (boundaries, masking, legal limits) */
+    --bg: #120711;            /* page background */
+    --bg-tint: #35122a;       /* ambient glow tint behind the card */
+    --accent: #e8618c;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(232,97,140,0.12);  /* correct-answer fill */
+    --accent-ink: #1f0713;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -190,50 +194,37 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "genai-practice-exam-02.html",
-  nextLabel: "Practice test"
+  next:      "lesson-44-defending-malicious-input.html",
+  nextLabel: "Next chapter"
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <style>
-      .c27p { animation: c27pulse 2.4s ease-in-out infinite; }
-      @keyframes c27pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .c27p { animation: none; } }
-    </style>
     <defs>
-      <linearGradient id="c27g" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:#14586e"/>
-        <stop offset="1" style="stop-color:#0a2e3e"/>
-      </linearGradient>
-      <radialGradient id="c27glow" cx="0.5" cy="0.45" r="0.62">
-        <stop offset="0" style="stop-color:rgba(49,200,232,0.28)"/>
-        <stop offset="1" style="stop-color:rgba(49,200,232,0)"/>
+      <radialGradient id="c43glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(232,97,140,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(232,97,140,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="98" rx="148" ry="76" fill="url(#c27glow)"/>
-    <text x="160" y="26" text-anchor="middle" fill="#9adceb" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">one lifecycle, two phases</text>
-    <path d="M160 44 v104" stroke="rgba(154,220,235,0.35)" stroke-width="1.5" stroke-dasharray="3 5"/>
-    <g>
-      <rect x="20" y="56" width="112" height="84" rx="14" fill="url(#c27g)" stroke="var(--ev)" stroke-width="1.5"/>
-      <path d="M36 76 h44 M36 94 h44 M36 112 h30" stroke="rgba(241,241,246,0.5)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M92 72 l4 4 l7 -8" stroke="var(--ev)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M92 90 l4 4 l7 -8" stroke="var(--ev)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="98" cy="112" r="5" fill="none" stroke="var(--ev)" stroke-width="1.5"/>
-      <text x="76" y="157" text-anchor="middle" fill="var(--ev)" font-family="Hanken Grotesk" font-size="9" font-weight="700">EVALUATE · BEFORE</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c43glow)"/>
+    <text x="160" y="22" text-anchor="middle" fill="#f4a6c1" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">two ways to guard a request that carries PII</text>
+    <g font-family="Hanken Grotesk" font-weight="700" font-size="9">
+      <rect x="112" y="86" width="96" height="30" rx="9" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="160" y="101" text-anchor="middle" fill="#f1e0e8">email: sam@acme.com</text>
+      <text x="160" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">card 4111 1111 1111 1111</text>
     </g>
-    <g>
-      <rect x="188" y="56" width="112" height="84" rx="14" fill="url(#c27g)" stroke="var(--mo)" stroke-width="1.5"/>
-      <path d="M200 100 h18 l8 -22 l12 40 l10 -28 l8 10 h32" stroke="var(--mo)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle class="c27p" cx="288" cy="100" r="4" fill="var(--mo)"/>
-      <text x="244" y="157" text-anchor="middle" fill="var(--mo)" font-family="Hanken Grotesk" font-size="9" font-weight="700">MONITOR · AFTER</text>
+    <path d="M112 101 h-18 M208 101 h18" stroke="var(--ink-soft)" stroke-width="1.6" fill="none"/>
+    <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
+      <rect x="14" y="128" width="132" height="46" rx="11" fill="rgba(255,255,255,0.04)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="80" y="145" text-anchor="middle" fill="#d7b3c2">BLOCK</text>
+      <text x="80" y="159" text-anchor="middle" fill="rgba(215,179,194,0.75)" font-size="7.5">request rejected</text>
+      <text x="80" y="169" text-anchor="middle" fill="rgba(215,179,194,0.75)" font-size="7.5">user gets no answer</text>
+      <rect x="174" y="128" width="132" height="46" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="240" y="145" text-anchor="middle" fill="#ffd0e0">MASK</text>
+      <text x="240" y="159" text-anchor="middle" fill="rgba(255,208,224,0.85)" font-size="7.5">PII redacted, request flows</text>
+      <text x="240" y="169" text-anchor="middle" fill="rgba(255,208,224,0.85)" font-size="7.5">app keeps serving</text>
     </g>
-    <rect x="138" y="86" width="44" height="20" rx="10" fill="#0a2e3e" stroke="rgba(154,220,235,0.55)"/>
-    <text x="160" y="99.5" text-anchor="middle" fill="#c9eef7" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SHIP</text>
-    <path d="M244 166 C 216 184, 104 184, 76 166" stroke="var(--accent)" stroke-width="1.5" fill="none" stroke-dasharray="4 4" opacity="0.7"/>
-    <path d="M84 170 L76 166 L84 163" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity="0.7"/>
-    <text x="160" y="194" text-anchor="middle" fill="rgba(154,220,235,0.75)" font-family="Hanken Grotesk" font-size="8.5">monitoring findings flow back as new eval cases</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -249,166 +240,107 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 27 · Trade-off</div>
-    <h1 class="reveal">Evaluation versus monitoring</h1>
-    <p class="lead reveal">Every serious GenAI app does both: judge quality before shipping, and watch it after. The skill the exam tests is knowing <strong>which phase answers the question in front of you</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 43</div>
+    <h1 class="reveal">Masking as a guardrail</h1>
+    <p class="lead reveal">Sensitive data will reach your app in prompts and in the corpus. The governance question is not just <strong>should you catch it</strong>, but whether you <strong>block the request or mask the data and keep serving</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : the setup */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Same qualities, two vantage points</h2>
-    <p class="lead reveal" style="margin-bottom:16px">This trade-off is unusual: you never pick one. <strong>Both phases ship</strong>. What differs is when each one looks, and at what data.</p>
+    <div class="eyebrow reveal">The setup</div>
+    <h2 class="reveal">PII shows up in two places</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A GenAI app leaks personal data from either end, so a guardrail has two jobs.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Same yardsticks</b>Correctness, groundedness, safety, latency, cost: both phases judge exactly these qualities.</p></div>
-      <div class="pill"><p><b>Same instruments</b>MLflow scorers and LLM judges can run in both phases, so a number measured offline is comparable to one measured live. Unit 6 drills the tooling; this chapter is about the roles.</p></div>
-      <div class="pill"><p><b>Different vantage</b>Evaluation inspects a version before users meet it. Monitoring watches the deployed app while users are using it.</p></div>
+      <div class="pill"><p><b>In the request</b>A user pastes an email, a card number, or an account number into the prompt, and it flows to the model and into logs.</p></div>
+      <div class="pill"><p><b>In the corpus</b>Source documents feeding retrieval carry PII that the model can surface in an answer to someone who should never see it.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : option 1, evaluation */
+  /* 2 : block vs mask */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ev)">Option 1</div>
-    <h2 class="reveal">Evaluation: offline, before users</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Evaluation runs <strong>pre-deployment, and before releasing every change</strong>. It exists to answer one question: is this version good enough to ship?</p>
+    <div class="eyebrow reveal">Two actions</div>
+    <h2 class="reveal">Block rejects, mask redacts</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Mosaic AI Gateway offers the PII guardrail in two fixed actions, and they behave very differently for the user.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Curated dataset</b>Known inputs, often paired with ground-truth expectations, versioned so every run tests the same cases.</p></div>
-      <div class="pill"><p><b>On demand, per change</b>Every prompt tweak, model swap, or retriever change gets a run of <code>mlflow.genai.evaluate()</code> with judges and scorers.</p></div>
-      <div class="pill"><p><b>Verdict before exposure</b>Results land before any user sees the change. The gate: good enough, and better than the last version?</p></div>
+      <div class="pill"><p><b>Block</b>The whole request or response is refused the moment PII is detected. Nothing reaches the model, and the caller gets an error, not an answer.</p></div>
+      <div class="pill"><p><b>Mask</b>The detected PII is replaced with placeholders (an email becomes [EMAIL], a card becomes XXXX-XXXX-XXXX-1111) and the sanitized request continues to the model.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : the ship gate, code */
+  /* 3 : the performance objective */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ev)">The ship gate</div>
-    <h2 class="reveal">One call, verdict before release</h2>
-    <p class="lead reveal" style="margin-bottom:14px">The harness runs your app over the eval dataset and scores every trace.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px">results = mlflow.genai.<span class="al">evaluate</span>(<br>&nbsp;&nbsp;data=eval_dataset,&nbsp;&nbsp;<span class="cm"># known inputs + expectations</span><br>&nbsp;&nbsp;predict_fn=my_app,<br>&nbsp;&nbsp;scorers=[Correctness(), Safety()]<br>)&nbsp;<span class="cm"># compare with the last version, then ship or hold</span></div>
-    <p class="lead reveal" style="font-size:14.5px">Two runs on the same dataset make versions comparable: that comparison, not a vibe check, is what clears a change to ship.</p>` },
-
-  /* 4 : option 2, monitoring */
-  { html: `
-    <div class="eyebrow reveal" style="color:var(--mo)">Option 2</div>
-    <h2 class="reveal">Monitoring: online, after deployment</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Monitoring runs <strong>continuously on live production traffic</strong>. It answers: is the app still behaving now, for real users?</p>
+    <div class="eyebrow reveal">Why it matters</div>
+    <h2 class="reveal">Masking meets the performance objective</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The exam frames masking as a guardrail chosen <strong>to meet a performance objective</strong>. The performance in question is the app still answering.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Real traffic, no answer key</b>Inference tables and Agent Monitoring capture actual requests and responses. Nobody pre-wrote expected outputs for them.</p></div>
-      <div class="pill"><p><b>Continuous, not on demand</b>Scheduled scorers run automatically over a sample of production traces, in the background, all the time.</p></div>
-      <div class="pill"><p><b>Watches the drift</b>Quality trends, latency, cost, and shifting traffic patterns: what users actually ask changes over time, and only live data shows it.</p></div>
+      <div class="pill"><p><b>Blocking costs availability</b>If your objective is that every legitimate question still gets a useful answer, blocking on any PII fails it: a support user who mentions their own email is turned away.</p></div>
+      <div class="pill"><p><b>Masking preserves it</b>Redaction protects the sensitive value while letting the request proceed, so the model still responds and the SLA on answered requests holds.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : comparison table */
+  /* 4 : gateway mechanics */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two phases in one view</h2>
-    <div class="reveal" style="margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--ev); font-weight:700;">Evaluation</td>
-          <td style="padding:8px 5px; color:var(--mo); font-weight:700;">Monitoring</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">When</td>
-          <td style="padding:8px 5px; color:var(--ink);">before release</td>
-          <td style="padding:8px 5px; color:var(--ink);">after deployment</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data</td>
-          <td style="padding:8px 5px; color:var(--ink);">curated eval dataset</td>
-          <td style="padding:8px 5px; color:var(--ink);">live production traffic</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Ground truth</td>
-          <td style="padding:8px 5px; color:var(--ink);">often, as expectations</td>
-          <td style="padding:8px 5px; color:var(--ink);">none</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Trigger</td>
-          <td style="padding:8px 5px; color:var(--ink);">on demand, per change</td>
-          <td style="padding:8px 5px; color:var(--ink);">continuous, sampled</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Tooling</td>
-          <td style="padding:8px 5px; color:var(--ink);">mlflow.genai.evaluate()</td>
-          <td style="padding:8px 5px; color:var(--ink);">inference tables, Agent Monitoring</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Answers</td>
-          <td style="padding:8px 5px; color:var(--ink);">"good enough to ship?"</td>
-          <td style="padding:8px 5px; color:var(--ink);">"still healthy right now?"</td>
-        </tr>
-      </table>
-    </div>
-    <p class="lead reveal" style="font-size:14px; margin-top:14px">Same qualities and often the same scorers; what changes is the moment, the data, and the question.</p>
-    <div class="spacer"></div>` },
-
-  /* 6 : the loop */
-  { html: `
-    <div class="eyebrow reveal">The loop</div>
-    <h2 class="reveal">Monitoring feeds evaluation</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The two phases form a <strong>cycle, not a fork</strong>. What production reveals, the next release must pass offline.</p>
+    <div class="eyebrow reveal">How the gateway does it</div>
+    <h2 class="reveal">Detect, then place the guardrail</h2>
+    <p class="lead reveal" style="margin-bottom:16px">AI Gateway detects PII with Presidio and lets you set where the guardrail runs.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Traffic becomes test cases</b>Questions monitoring surfaces, especially ones the app fumbled, get added to the evaluation dataset, so offline tests grow more realistic.</p></div>
-      <div class="pill"><p><b>Regressions replay offline</b>A failure caught in production is reproduced as an eval case. The fix must clear evaluation before it ships back out.</p></div>
-      <div class="pill"><p><b>Same scorers close it</b>Because both phases can score with the same judges, a fix that clears the offline bar predicts the number production will show.</p></div>
+      <div class="pill"><p><b>What it catches</b>The built-in detector is US focused: emails, phone numbers, credit card numbers, and bank account numbers in the payload.</p></div>
+      <div class="pill"><p><b>Input, output, or both</b>Set the phase so masking applies to incoming requests, outgoing responses, or both. Mask the input to protect what users type, the output to protect what retrieval surfaces.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : decision signals */
+  /* 5 : mask at the data layer */
   { html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal">Hear the phrase, pick the phase</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Exam scenarios hide the answer in how the question is worded.</p>
+    <div class="eyebrow reveal">The other layer</div>
+    <h2 class="reveal">Mask the source before it is indexed</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The gateway guards traffic. Unity Catalog guards the data itself, so PII never enters the vector index in the first place.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ev)">"Before we ship" or "prove the change is safe"</b>A verdict is needed pre-exposure, against known inputs: evaluation.</p></div>
-      <div class="pill"><p><b style="color:var(--ev)">"Did the new prompt beat the old one?"</b>Same dataset, two runs, compared scores: evaluation.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">"Did quality drop since last week?"</b>A trend over live traffic, with no prepared inputs: monitoring.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">"What are real users actually asking?"</b>Only production traces know. No curated dataset contains tomorrow's questions: monitoring.</p></div>
+      <div class="pill"><p><b>Column masks</b>A Unity Catalog column mask is a SQL function applied at query time: the raw value is hidden unless the caller is entitled to it, and your chunking job reads the masked column.</p></div>
+      <div class="pill"><p><b>Defense in depth</b>Masking at the data layer and at the gateway are complementary. The cleanest corpus still benefits from a runtime guardrail on user prompts.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 8 : quiz 1, evaluation direction */
+  /* 6 : quiz 1 - mask over block for availability */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">Your team rewrote the RAG app's system prompt and swapped its retriever. Product wants proof the change did not hurt quality before customers see it. What answers that?</h2>
+    <h2 class="reveal" style="font-size:21px">A customer-support agent must keep answering even when users type their own email or order number, while never letting that PII reach the model or the logs. Which guardrail fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Ship it and watch the Agent Monitoring dashboard closely for the first week</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Run mlflow.genai.evaluate() on the curated eval dataset and compare scores with the current release</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Enable inference tables on the new endpoint so every request gets captured</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Collect a week of thumbs-up ratings from users after the release</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Block any request that contains PII</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Mask the PII on the input so the redacted request still reaches the model</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Turn off the PII guardrail to protect throughput</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Log the raw request and redact it later in a batch job</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The requirement is a verdict before exposure, and only offline evaluation delivers one: known inputs, often with ground truth, scored for both versions so better-or-worse is measurable. A is the trap: "we will watch it in prod" means real users absorb any regression first, which is exactly what product asked to avoid.</div>` },
+    <div class="feedback"><b>Correct.</b> Masking on the input redacts the sensitive value but lets the request continue, so the agent keeps serving while the PII never reaches the model or logs. Blocking (A) turns away legitimate users and fails the availability objective, disabling the guardrail (C) removes the protection entirely, and after-the-fact redaction (D) still exposes the raw PII in the logs first.</div>` },
 
-  /* 9 : quiz 2, monitoring direction */
+  /* 7 : quiz 2 - data-layer masking keeps PII out of the index */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Three weeks after launch, support says the assistant "feels worse". Leadership asks whether groundedness has dropped in production since launch, and what users are now asking. Where is the answer?</h2>
+    <h2 class="reveal" style="font-size:21px">Source tables hold customer PII, and you are about to chunk and embed them into a Vector Search index that many users can query. Where should masking happen?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Re-run the release evaluation suite; if scores match launch day, quality is unchanged</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Have SMEs write new expectations and run another offline comparison of the same version</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Check Agent Monitoring: scheduled scorers over live traces show the quality trend and the real questions asked</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Roll back to the launch build and evaluate the two versions against each other offline</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Only on the serving endpoint's output, after retrieval</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>At the data layer, with Unity Catalog column masks, so PII is never embedded</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>In the browser, by hiding PII fields in the UI</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Nowhere: Vector Search encrypts data at rest, so masking is redundant</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Live drift and real user questions exist only in production traffic: inference tables capture it, and scheduled scorers track quality over time with no ground truth needed. A is the trap: the offline suite replays the same fixed inputs as launch day, so it can pass unchanged while real traffic has shifted to questions the dataset never contained.</div>` },
+    <div class="feedback"><b>Correct.</b> Masking the columns before the chunking job runs keeps PII out of the embeddings entirely, so it cannot be retrieved and surfaced. Output-only masking (A) means the sensitive text was already indexed and matched, UI hiding (C) leaves the data in the index and the response, and encryption at rest (D) protects storage but not what retrieval returns to an entitled query.</div>` },
 
-  /* 10 : done */
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 3 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Evaluation gates the release; monitoring watches the released.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Redact, do not just reject</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Masking is the guardrail that protects data and still lets the app perform.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ev)">Evaluation</b>Offline, curated inputs, often ground truth, on demand: the ship gate, verdict before users see the change.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">Monitoring</b>Online, live traffic, no ground truth, continuous: the drift watch over quality, latency, cost, and usage.</p></div>
-      <div class="pill"><p><b>The loop</b>Production findings become eval cases, and fixes must pass evaluation before they ship again.</p></div>
+      <div class="pill"><p><b>Block vs mask</b>Blocking refuses the request; masking redacts the PII and keeps serving, which is what a performance objective needs.</p></div>
+      <div class="pill"><p><b>Gateway guardrail</b>AI Gateway detects PII with Presidio and applies the mask on the input, output, or both.</p></div>
+      <div class="pill"><p><b>Two layers</b>Unity Catalog column masks keep PII out of the index; the gateway guards live traffic.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
+
 
 /* ============================================================
    ▲▲▲  LESSON PAYLOAD — END  ▲▲▲

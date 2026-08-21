@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
-<title>Evaluation versus Monitoring in the GenAI Lifecycle · Databricks GenAI Engineer Associate</title>
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-27-evaluation-vs-monitoring.html">
+<!-- ==== EDIT: lesson title ==== -->
+<title>Evaluation Judges: Which Ones Need Ground Truth · Databricks GenAI Engineer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-48-judges-ground-truth.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,13 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #051014;            /* page background */
-    --bg-tint: #0c2b36;       /* ambient glow tint behind the card */
-    --accent: #31c8e8;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(49,200,232,0.12);  /* correct-answer fill */
-    --accent-ink: #03151c;    /* text on top of the accent key chip */
-    --ev: #31c8e8;            /* option 1: Evaluation (offline) */
-    --mo: #7ce89e;            /* option 2: Monitoring (live) */
+    /* Unit 6 · Evaluation and Monitoring · periwinkle (telemetry / signal-reading) */
+    --bg: #08090f;            /* page background */
+    --bg-tint: #1a2040;       /* ambient glow tint behind the card */
+    --accent: #8fa9ff;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(143,169,255,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0d1f;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -190,50 +194,34 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "genai-practice-exam-02.html",
-  nextLabel: "Practice test"
+  next:      "lesson-49-custom-scorers.html",
+  nextLabel: "Next chapter"
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
-    <style>
-      .c27p { animation: c27pulse 2.4s ease-in-out infinite; }
-      @keyframes c27pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .c27p { animation: none; } }
-    </style>
     <defs>
-      <linearGradient id="c27g" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:#14586e"/>
-        <stop offset="1" style="stop-color:#0a2e3e"/>
-      </linearGradient>
-      <radialGradient id="c27glow" cx="0.5" cy="0.45" r="0.62">
-        <stop offset="0" style="stop-color:rgba(49,200,232,0.28)"/>
-        <stop offset="1" style="stop-color:rgba(49,200,232,0)"/>
+      <radialGradient id="c48glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(143,169,255,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(143,169,255,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="98" rx="148" ry="76" fill="url(#c27glow)"/>
-    <text x="160" y="26" text-anchor="middle" fill="#9adceb" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">one lifecycle, two phases</text>
-    <path d="M160 44 v104" stroke="rgba(154,220,235,0.35)" stroke-width="1.5" stroke-dasharray="3 5"/>
-    <g>
-      <rect x="20" y="56" width="112" height="84" rx="14" fill="url(#c27g)" stroke="var(--ev)" stroke-width="1.5"/>
-      <path d="M36 76 h44 M36 94 h44 M36 112 h30" stroke="rgba(241,241,246,0.5)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M92 72 l4 4 l7 -8" stroke="var(--ev)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M92 90 l4 4 l7 -8" stroke="var(--ev)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="98" cy="112" r="5" fill="none" stroke="var(--ev)" stroke-width="1.5"/>
-      <text x="76" y="157" text-anchor="middle" fill="var(--ev)" font-family="Hanken Grotesk" font-size="9" font-weight="700">EVALUATE · BEFORE</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c48glow)"/>
+    <text x="160" y="22" text-anchor="middle" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">does the judge need a known-correct answer?</text>
+    <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
+      <rect x="16" y="70" width="132" height="64" rx="12" fill="rgba(143,169,255,0.16)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="82" y="90" text-anchor="middle" fill="#c9d3ff">needs ground truth</text>
+      <text x="82" y="107" text-anchor="middle" fill="rgba(201,211,255,0.85)" font-size="8">Correctness</text>
+      <text x="82" y="122" text-anchor="middle" fill="rgba(201,211,255,0.7)" font-size="7">compares to expected answer</text>
+      <rect x="172" y="70" width="132" height="64" rx="12" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="238" y="90" text-anchor="middle" fill="#f1f1f6">reference-free</text>
+      <text x="238" y="105" text-anchor="middle" fill="rgba(241,241,246,0.8)" font-size="7.5">Relevance, Safety,</text>
+      <text x="238" y="117" text-anchor="middle" fill="rgba(241,241,246,0.8)" font-size="7.5">Groundedness</text>
+      <text x="238" y="129" text-anchor="middle" fill="rgba(241,241,246,0.6)" font-size="7">no labels needed</text>
     </g>
-    <g>
-      <rect x="188" y="56" width="112" height="84" rx="14" fill="url(#c27g)" stroke="var(--mo)" stroke-width="1.5"/>
-      <path d="M200 100 h18 l8 -22 l12 40 l10 -28 l8 10 h32" stroke="var(--mo)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle class="c27p" cx="288" cy="100" r="4" fill="var(--mo)"/>
-      <text x="244" y="157" text-anchor="middle" fill="var(--mo)" font-family="Hanken Grotesk" font-size="9" font-weight="700">MONITOR · AFTER</text>
-    </g>
-    <rect x="138" y="86" width="44" height="20" rx="10" fill="#0a2e3e" stroke="rgba(154,220,235,0.55)"/>
-    <text x="160" y="99.5" text-anchor="middle" fill="#c9eef7" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SHIP</text>
-    <path d="M244 166 C 216 184, 104 184, 76 166" stroke="var(--accent)" stroke-width="1.5" fill="none" stroke-dasharray="4 4" opacity="0.7"/>
-    <path d="M84 170 L76 166 L84 163" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity="0.7"/>
-    <text x="160" y="194" text-anchor="middle" fill="rgba(154,220,235,0.75)" font-family="Hanken Grotesk" font-size="8.5">monitoring findings flow back as new eval cases</text>
+    <text x="160" y="158" text-anchor="middle" fill="#f1f1f6" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">only correctness needs a labeled answer</text>
+    <text x="160" y="178" text-anchor="middle" fill="rgba(185,198,255,0.85)" font-family="Hanken Grotesk" font-size="8.5">the rest judge the response and its context on their own</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -249,166 +237,107 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 27 · Trade-off</div>
-    <h1 class="reveal">Evaluation versus monitoring</h1>
-    <p class="lead reveal">Every serious GenAI app does both: judge quality before shipping, and watch it after. The skill the exam tests is knowing <strong>which phase answers the question in front of you</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 6 · Chapter 48</div>
+    <h1 class="reveal">Which judges need ground truth</h1>
+    <p class="lead reveal">MLflow's built-in judges score your app's answers with an LLM. The exam-critical split is simple: <strong>which judges need a known-correct answer, and which do not</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : what a judge is */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Same qualities, two vantage points</h2>
-    <p class="lead reveal" style="margin-bottom:16px">This trade-off is unusual: you never pick one. <strong>Both phases ship</strong>. What differs is when each one looks, and at what data.</p>
+    <div class="eyebrow reveal">The tool</div>
+    <h2 class="reveal">A judge is an LLM-as-a-judge scorer</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Built-in judges are predefined scorers, imported from mlflow.genai.scorers and passed to mlflow.genai.evaluate().</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Same yardsticks</b>Correctness, groundedness, safety, latency, cost: both phases judge exactly these qualities.</p></div>
-      <div class="pill"><p><b>Same instruments</b>MLflow scorers and LLM judges can run in both phases, so a number measured offline is comparable to one measured live. Unit 6 drills the tooling; this chapter is about the roles.</p></div>
-      <div class="pill"><p><b>Different vantage</b>Evaluation inspects a version before users meet it. Monitoring watches the deployed app while users are using it.</p></div>
+      <div class="pill"><p><b>An LLM does the grading</b>A Databricks-hosted model reads the response and rates a quality dimension: relevance, safety, groundedness, or correctness.</p></div>
+      <div class="pill"><p><b>The evidence differs</b>Some dimensions can be judged from the response alone; one of them needs a reference answer to compare against.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : option 1, evaluation */
+  /* 2 : the split */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ev)">Option 1</div>
-    <h2 class="reveal">Evaluation: offline, before users</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Evaluation runs <strong>pre-deployment, and before releasing every change</strong>. It exists to answer one question: is this version good enough to ship?</p>
+    <div class="eyebrow reveal">The core split</div>
+    <h2 class="reveal">Ground truth or reference-free</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Ground truth is a labeled, known-correct answer for each eval example. Whether a judge needs one decides whether you can run it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Curated dataset</b>Known inputs, often paired with ground-truth expectations, versioned so every run tests the same cases.</p></div>
-      <div class="pill"><p><b>On demand, per change</b>Every prompt tweak, model swap, or retriever change gets a run of <code>mlflow.genai.evaluate()</code> with judges and scorers.</p></div>
-      <div class="pill"><p><b>Verdict before exposure</b>Results land before any user sees the change. The gate: good enough, and better than the last version?</p></div>
+      <div class="pill"><p><b>Ground-truth judges</b>Compare the response to an expected answer you supply. No labels, no judgment.</p></div>
+      <div class="pill"><p><b>Reference-free judges</b>Assess the response, the query, and the retrieved context on their own terms, so they run without any labeled answer.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : the ship gate, code */
+  /* 3 : needs ground truth */
   { html: `
-    <div class="eyebrow reveal" style="color:var(--ev)">The ship gate</div>
-    <h2 class="reveal">One call, verdict before release</h2>
-    <p class="lead reveal" style="margin-bottom:14px">The harness runs your app over the eval dataset and scores every trace.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px">results = mlflow.genai.<span class="al">evaluate</span>(<br>&nbsp;&nbsp;data=eval_dataset,&nbsp;&nbsp;<span class="cm"># known inputs + expectations</span><br>&nbsp;&nbsp;predict_fn=my_app,<br>&nbsp;&nbsp;scorers=[Correctness(), Safety()]<br>)&nbsp;<span class="cm"># compare with the last version, then ship or hold</span></div>
-    <p class="lead reveal" style="font-size:14.5px">Two runs on the same dataset make versions comparable: that comparison, not a vibe check, is what clears a change to ship.</p>` },
-
-  /* 4 : option 2, monitoring */
-  { html: `
-    <div class="eyebrow reveal" style="color:var(--mo)">Option 2</div>
-    <h2 class="reveal">Monitoring: online, after deployment</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Monitoring runs <strong>continuously on live production traffic</strong>. It answers: is the app still behaving now, for real users?</p>
+    <div class="eyebrow reveal">Needs a label</div>
+    <h2 class="reveal">Correctness is the ground-truth judge</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Correctness asks whether the answer matches the truth, and truth has to be provided.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Real traffic, no answer key</b>Inference tables and Agent Monitoring capture actual requests and responses. Nobody pre-wrote expected outputs for them.</p></div>
-      <div class="pill"><p><b>Continuous, not on demand</b>Scheduled scorers run automatically over a sample of production traces, in the background, all the time.</p></div>
-      <div class="pill"><p><b>Watches the drift</b>Quality trends, latency, cost, and shifting traffic patterns: what users actually ask changes over time, and only live data shows it.</p></div>
+      <div class="pill"><p><b>Correctness</b>Compares the response against an expected answer (the ground truth) for that input. Without the labeled answer, there is nothing to compare to.</p></div>
+      <div class="pill"><p><b>Where labels come from</b>A curated evaluation dataset, or expert-labeled traces (the SME workflow in Chapter 51).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : comparison table */
+  /* 4 : reference-free */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two phases in one view</h2>
-    <div class="reveal" style="margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--ev); font-weight:700;">Evaluation</td>
-          <td style="padding:8px 5px; color:var(--mo); font-weight:700;">Monitoring</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">When</td>
-          <td style="padding:8px 5px; color:var(--ink);">before release</td>
-          <td style="padding:8px 5px; color:var(--ink);">after deployment</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data</td>
-          <td style="padding:8px 5px; color:var(--ink);">curated eval dataset</td>
-          <td style="padding:8px 5px; color:var(--ink);">live production traffic</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Ground truth</td>
-          <td style="padding:8px 5px; color:var(--ink);">often, as expectations</td>
-          <td style="padding:8px 5px; color:var(--ink);">none</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Trigger</td>
-          <td style="padding:8px 5px; color:var(--ink);">on demand, per change</td>
-          <td style="padding:8px 5px; color:var(--ink);">continuous, sampled</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Tooling</td>
-          <td style="padding:8px 5px; color:var(--ink);">mlflow.genai.evaluate()</td>
-          <td style="padding:8px 5px; color:var(--ink);">inference tables, Agent Monitoring</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Answers</td>
-          <td style="padding:8px 5px; color:var(--ink);">"good enough to ship?"</td>
-          <td style="padding:8px 5px; color:var(--ink);">"still healthy right now?"</td>
-        </tr>
-      </table>
-    </div>
-    <p class="lead reveal" style="font-size:14px; margin-top:14px">Same qualities and often the same scorers; what changes is the moment, the data, and the question.</p>
-    <div class="spacer"></div>` },
-
-  /* 6 : the loop */
-  { html: `
-    <div class="eyebrow reveal">The loop</div>
-    <h2 class="reveal">Monitoring feeds evaluation</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The two phases form a <strong>cycle, not a fork</strong>. What production reveals, the next release must pass offline.</p>
+    <div class="eyebrow reveal">No label needed</div>
+    <h2 class="reveal">Relevance, groundedness, and safety run free</h2>
+    <p class="lead reveal" style="margin-bottom:16px">These judges reason about the response and its context, so they never need an expected answer.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Traffic becomes test cases</b>Questions monitoring surfaces, especially ones the app fumbled, get added to the evaluation dataset, so offline tests grow more realistic.</p></div>
-      <div class="pill"><p><b>Regressions replay offline</b>A failure caught in production is reproduced as an eval case. The fix must clear evaluation before it ships back out.</p></div>
-      <div class="pill"><p><b>Same scorers close it</b>Because both phases can score with the same judges, a fix that clears the offline bar predicts the number production will show.</p></div>
+      <div class="pill"><p><b>Relevance</b>RelevanceToQuery checks the answer addresses the question; RetrievalRelevance checks the retrieved docs fit the query.</p></div>
+      <div class="pill"><p><b>Groundedness and safety</b>RetrievalGroundedness checks the answer is supported by the context (catching hallucination); Safety checks the content is not harmful. All three are reference-free.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : decision signals */
+  /* 5 : why it matters */
   { html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal">Hear the phrase, pick the phase</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Exam scenarios hide the answer in how the question is worded.</p>
+    <div class="eyebrow reveal">Why it matters</div>
+    <h2 class="reveal">Labels gate what you can measure</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Building an evaluation is often blocked on how much ground truth you have.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ev)">"Before we ship" or "prove the change is safe"</b>A verdict is needed pre-exposure, against known inputs: evaluation.</p></div>
-      <div class="pill"><p><b style="color:var(--ev)">"Did the new prompt beat the old one?"</b>Same dataset, two runs, compared scores: evaluation.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">"Did quality drop since last week?"</b>A trend over live traffic, with no prepared inputs: monitoring.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">"What are real users actually asking?"</b>Only production traces know. No curated dataset contains tomorrow's questions: monitoring.</p></div>
+      <div class="pill"><p><b>No labels yet</b>You can still run relevance, groundedness, and safety on production traces from day one, without labeling anything.</p></div>
+      <div class="pill"><p><b>Correctness later</b>Add the correctness judge once you have curated a labeled set. Start reference-free, add ground truth as it accrues.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 8 : quiz 1, evaluation direction */
+  /* 6 : quiz 1 - hallucination without labels -> groundedness */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">Your team rewrote the RAG app's system prompt and swapped its retriever. Product wants proof the change did not hurt quality before customers see it. What answers that?</h2>
+    <h2 class="reveal" style="font-size:21px">You want to catch when your RAG bot makes up facts not in the retrieved documents, but you have no labeled correct answers yet. Which built-in judge fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Ship it and watch the Agent Monitoring dashboard closely for the first week</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Run mlflow.genai.evaluate() on the curated eval dataset and compare scores with the current release</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Enable inference tables on the new endpoint so every request gets captured</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Collect a week of thumbs-up ratings from users after the release</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Correctness, since hallucination is a correctness problem</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>RetrievalGroundedness, which checks the answer is supported by the context and needs no ground truth</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>You cannot measure anything without labeled answers</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A custom regex scorer for the word "approximately"</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The requirement is a verdict before exposure, and only offline evaluation delivers one: known inputs, often with ground truth, scored for both versions so better-or-worse is measurable. A is the trap: "we will watch it in prod" means real users absorb any regression first, which is exactly what product asked to avoid.</div>` },
+    <div class="feedback"><b>Correct.</b> Groundedness compares the answer to the retrieved context, not to a labeled truth, so it flags unsupported claims (hallucinations) with no ground truth required. Correctness (A) needs an expected answer you do not have, reference-free judges mean you are not blocked (C), and a keyword regex (D) does not detect fabrication.</div>` },
 
-  /* 9 : quiz 2, monitoring direction */
+  /* 7 : quiz 2 - correctness needs labels */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Three weeks after launch, support says the assistant "feels worse". Leadership asks whether groundedness has dropped in production since launch, and what users are now asking. Where is the answer?</h2>
+    <h2 class="reveal" style="font-size:21px">A teammate wants to run the Correctness judge on live traffic, but your traces carry no expected answers. What is true?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Re-run the release evaluation suite; if scores match launch day, quality is unchanged</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Have SMEs write new expectations and run another offline comparison of the same version</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Check Agent Monitoring: scheduled scorers over live traces show the quality trend and the real questions asked</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Roll back to the launch build and evaluate the two versions against each other offline</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Correctness works fine; it infers the right answer itself</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Correctness needs a ground-truth answer per example, so those traces must be labeled first</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>No judge can run on unlabeled traces</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Safety must be enabled before Correctness will run</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Live drift and real user questions exist only in production traffic: inference tables capture it, and scheduled scorers track quality over time with no ground truth needed. A is the trap: the offline suite replays the same fixed inputs as launch day, so it can pass unchanged while real traffic has shifted to questions the dataset never contained.</div>` },
+    <div class="feedback"><b>Correct.</b> Correctness is a ground-truth judge: it compares each response to a labeled expected answer, so unlabeled traces have to be labeled before it can score them. It does not invent truth (A), reference-free judges still run on those traces (C), and Safety is unrelated to enabling Correctness (D).</div>` },
 
-  /* 10 : done */
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 3 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Evaluation gates the release; monitoring watches the released.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">One judge needs the answer key</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Ground truth is the line between what you can run today and later.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b style="color:var(--ev)">Evaluation</b>Offline, curated inputs, often ground truth, on demand: the ship gate, verdict before users see the change.</p></div>
-      <div class="pill"><p><b style="color:var(--mo)">Monitoring</b>Online, live traffic, no ground truth, continuous: the drift watch over quality, latency, cost, and usage.</p></div>
-      <div class="pill"><p><b>The loop</b>Production findings become eval cases, and fixes must pass evaluation before they ship again.</p></div>
+      <div class="pill"><p><b>Correctness</b>The ground-truth judge: it compares the response to a labeled expected answer.</p></div>
+      <div class="pill"><p><b>Reference-free</b>Relevance, retrieval relevance, groundedness, and safety judge the response and context alone.</p></div>
+      <div class="pill"><p><b>Start free</b>Run reference-free judges from day one; add correctness once you have labels.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
+
 
 /* ============================================================
    ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
