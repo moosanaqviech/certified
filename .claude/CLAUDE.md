@@ -19,11 +19,12 @@ In progress, index LOCKED: Databricks Generative AI Engineer Associate (see
 curriculum-index-databricks-genai-associate.md and
 cert-config-databricks-genai-associate.md; the index is LOCKED, re-verified
 against the official 18 Mar 2026 exam guide PDF on 12 Aug 2026. 55 chapters
-cover all 56 objectives across 6 units. Units 1-2 (chapters 01-15) and
-genai-practice-exam-01 (Sections 1-2, 14 objective-mapped questions) are
-live; chapters 16-55 and exams 2-6 are the remaining work. Exams map to
-objectives and SAMPLE them: the real exam is 45 scored questions against 56
-objectives, so one full mock cannot cover them all).
+cover all 56 objectives across 6 units. Units 1-4 (chapters 01-42),
+genai-practice-exam-01 (Sections 1-2, 14 questions) and
+genai-practice-exam-03 (Section 4, 15 questions) are live; chapters 43-55
+(Units 5-6) and the remaining exams (2, and 4-6) are the remaining work.
+Exams map to objectives and SAMPLE them: the real exam is 45 scored questions
+against 56 objectives, so one full mock cannot cover them all).
 
 ## Site structure
 
