@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Problematic Text in the Corpus: Mitigation Alternatives · Databricks GenAI Engineer Associate</title>
+<title>Quantitative Metrics Behind an LLM Size and Architecture Choice · Databricks GenAI Engineer Associate</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-46-problematic-text-mitigation.html">
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-47-quantitative-llm-metrics.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,12 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 5 · Governance · rose (boundaries, masking, legal limits) */
-    --bg: #120711;            /* page background */
-    --bg-tint: #35122a;       /* ambient glow tint behind the card */
-    --accent: #e8618c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(232,97,140,0.12);  /* correct-answer fill */
-    --accent-ink: #1f0713;    /* text on top of the accent key chip */
+    /* Unit 6 · Evaluation and Monitoring · periwinkle (telemetry / signal-reading) */
+    --bg: #08090f;            /* page background */
+    --bg-tint: #1a2040;       /* ambient glow tint behind the card */
+    --accent: #8fa9ff;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(143,169,255,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0d1f;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -194,7 +194,7 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-47-quantitative-llm-metrics.html",
+  next:      "lesson-48-judges-ground-truth.html",
   nextLabel: "Next chapter"
 };
 
@@ -202,33 +202,27 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <radialGradient id="c46glow" cx="0.5" cy="0.42" r="0.66">
-        <stop offset="0" style="stop-color:rgba(232,97,140,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(232,97,140,0)"/>
+      <radialGradient id="c47glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(143,169,255,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(143,169,255,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c46glow)"/>
-    <text x="160" y="22" text-anchor="middle" fill="#f4a6c1" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">match the fix to the flaw</text>
-    <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
-      <rect x="14" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="47" y="98" text-anchor="middle" fill="#f1e0e8">remove</text>
-      <text x="47" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">whole</text>
-      <text x="47" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">source bad</text>
-      <rect x="90" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="123" y="98" text-anchor="middle" fill="#ffd0e0">redact</text>
-      <text x="123" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">one bad</text>
-      <text x="123" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">passage</text>
-      <rect x="166" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="199" y="98" text-anchor="middle" fill="#ffd0e0">replace</text>
-      <text x="199" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">stale or</text>
-      <text x="199" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">wrong</text>
-      <rect x="242" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="275" y="98" text-anchor="middle" fill="#f1e0e8">annotate</text>
-      <text x="275" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">flag and</text>
-      <text x="275" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">down-weight</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c47glow)"/>
+    <text x="160" y="22" text-anchor="middle" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">pick the smallest model that clears the bar</text>
+    <line x1="40" y1="150" x2="300" y2="150" stroke="var(--ink-soft)" stroke-width="1.2"/>
+    <line x1="40" y1="60" x2="40" y2="150" stroke="var(--ink-soft)" stroke-width="1.2"/>
+    <line x1="40" y1="86" x2="300" y2="86" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="300" y="82" text-anchor="end" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="8" font-weight="600">quality bar</text>
+    <g font-family="Hanken Grotesk" font-weight="700" font-size="8">
+      <rect x="70" y="112" width="34" height="38" rx="4" fill="rgba(143,169,255,0.18)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="87" y="164" text-anchor="middle" fill="#c9d3ff">small</text>
+      <rect x="140" y="80" width="34" height="70" rx="4" fill="rgba(143,169,255,0.32)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="157" y="164" text-anchor="middle" fill="#c9d3ff">mid</text>
+      <text x="157" y="74" text-anchor="middle" fill="#8fa9ff" font-size="9">pick</text>
+      <rect x="210" y="66" width="34" height="84" rx="4" fill="rgba(143,169,255,0.14)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="227" y="164" text-anchor="middle" fill="rgba(201,211,255,0.7)">large</text>
     </g>
-    <text x="160" y="154" text-anchor="middle" fill="#f1e0e8" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">the least destructive fix that actually solves it</text>
-    <text x="160" y="174" text-anchor="middle" fill="rgba(244,166,193,0.85)" font-family="Hanken Grotesk" font-size="8.5">deleting a whole source is rarely the right first move</text>
+    <text x="160" y="186" text-anchor="middle" fill="rgba(185,198,255,0.85)" font-family="Hanken Grotesk" font-size="8.5">the mid model meets quality at lower latency and cost</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -244,103 +238,92 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 46</div>
-    <h1 class="reveal">Fixing problematic text</h1>
-    <p class="lead reveal">A source can be valuable and flawed at once. The exam asks you to <strong>recommend the right alternative</strong> for problematic text in the corpus, and the answer depends on what is wrong with it.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 6 · Chapter 47</div>
+    <h1 class="reveal">Sizing a model by the numbers</h1>
+    <p class="lead reveal">Choosing a model's size and architecture is not a matter of reputation. It is a <strong>quantitative decision</strong>, read off the evaluation metrics your own app produces.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what is problematic */
+  /* 1 : quantitative decision */
   { html: `
-    <div class="eyebrow reveal">Name the flaw</div>
-    <h2 class="reveal">What "problematic" means</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Problematic text is content that, once retrieved, degrades or endangers the answer. It comes in a few shapes.</p>
+    <div class="eyebrow reveal">The premise</div>
+    <h2 class="reveal">Metrics decide, not the leaderboard</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A public benchmark tells you how a model does on someone else's task. Your decision runs on numbers from your task.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Harmful or biased</b>Toxic, offensive, or discriminatory passages the model can echo into a response.</p></div>
-      <div class="pill"><p><b>Wrong or stale</b>Outdated policy, superseded facts, or plain errors that make the model confidently incorrect.</p></div>
+      <div class="pill"><p><b>Measure on your data</b>Run each candidate through your evaluation set and read its scores on the questions you actually serve.</p></div>
+      <div class="pill"><p><b>Compare like for like</b>The winner is the model whose numbers meet your bar, not the one with the most parameters or the loudest release.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : the menu */
+  /* 2 : four metric families */
   { html: `
-    <div class="eyebrow reveal">The options</div>
-    <h2 class="reveal">Four alternatives, not one</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You rarely have to choose between "keep it" and "delete everything." There is a spectrum.</p>
+    <div class="eyebrow reveal">What to measure</div>
+    <h2 class="reveal">Four families of number</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A size and architecture choice trades off across four axes at once.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove or redact</b>Drop the whole document, or strip just the offending passage while keeping the rest.</p></div>
-      <div class="pill"><p><b>Replace or annotate</b>Swap in a corrected, current version, or tag the content with metadata so retrieval can down-weight or scope it.</p></div>
+      <div class="pill"><p><b>Quality</b>Task accuracy, groundedness, and correctness on your eval set: does the answer meet the standard?</p></div>
+      <div class="pill"><p><b>Latency, throughput, cost</b>Time to first token and total latency, tokens per second, and dollars per token or per hour. Speed and price scale with size.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : remove vs redact */
+  /* 3 : bigger is not free */
   { html: `
-    <div class="eyebrow reveal">Sizing the cut</div>
-    <h2 class="reveal">Remove the source, or redact the passage</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The first decision is how much of the document is actually bad.</p>
+    <div class="eyebrow reveal">The trap</div>
+    <h2 class="reveal">Bigger is not automatically better</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A larger architecture usually scores higher on quality, but it pays for that with latency and cost.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove when the source is unfit</b>If a document is fundamentally unreliable, unlicensed, or hostile, exclude it from the corpus entirely.</p></div>
-      <div class="pill"><p><b>Redact when the rest is valuable</b>If one section is toxic or sensitive but the document is otherwise useful, strip that section (as in Chapter 10 filtering) and keep the knowledge.</p></div>
+      <div class="pill"><p><b>Diminishing returns</b>If a mid-size model already clears your quality bar, the extra points from a larger one may not be worth double the latency and spend.</p></div>
+      <div class="pill"><p><b>Architecture matters too</b>Two models of similar size can differ sharply in speed; the serving stack and design, not just parameter count, drive the numbers.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : replace and annotate */
+  /* 4 : the rule */
   { html: `
-    <div class="eyebrow reveal">When you still need the topic</div>
-    <h2 class="reveal">Replace what is wrong, tag what is tricky</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Sometimes the subject is essential and only the content is bad. Do not just delete it and leave a gap.</p>
+    <div class="eyebrow reveal">The rule</div>
+    <h2 class="reveal">Smallest that clears the bar</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Set the quality threshold the use case demands, then pick the smallest, fastest, cheapest model that reaches it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Replace with the authoritative version</b>Outdated or incorrect text should be re-sourced from the current, canonical document so the corpus answers the question correctly.</p></div>
-      <div class="pill"><p><b>Annotate and scope</b>Metadata tags let retrieval down-weight lower-quality content or route it to a separate, permission-scoped index instead of the general one.</p></div>
+      <div class="pill"><p><b>Latency-critical</b>An interactive assistant weights time to first token heavily, so a smaller model that still passes quality wins.</p></div>
+      <div class="pill"><p><b>Quality-critical</b>A high-stakes analysis can justify a larger, slower model, but only because the metrics show it is needed, not by default.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : runtime backstop */
-  { html: `
-    <div class="eyebrow reveal">The backstop</div>
-    <h2 class="reveal">Runtime filters are a complement, not a cure</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A safety guardrail on the output can catch what slips through, but it does not fix the corpus.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Fix the data first</b>Cleaning the source removes the problem at its root, so retrieval never surfaces it and every downstream answer improves.</p></div>
-      <div class="pill"><p><b>Guardrail as insurance</b>An output safety filter (Chapter 20) is defense in depth for the rare miss, not a substitute for a corpus you left dirty.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : quiz 1 - redact over remove */
+  /* 5 : quiz 1 - latency-critical picks smaller */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:21px">A 40-page product manual is exactly what users need, except for one legacy section with offensive example text. What do you recommend?</h2>
+    <h2 class="reveal" style="font-size:21px">Two models both pass your quality bar on the eval set. The smaller one has half the time-to-first-token and a third of the cost. It is a live chat assistant. Which do you deploy?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Remove the entire manual from the corpus</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Redact the offending section and keep the rest of the manual indexed</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Leave it as is and rely only on an output filter</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Lower the retrieval count so the bad section is less likely to be pulled</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>The smaller model, since it meets the quality bar at far lower latency and cost</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>The larger model, because more parameters are always safer</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Whichever ranks higher on a public leaderboard</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Alternate between them randomly to balance load</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Only one section is bad and the rest is essential, so redacting that passage removes the problem while preserving the knowledge, the least destructive fix that works. Deleting the whole manual (A) throws away needed content, relying solely on an output filter (C) leaves the toxic text retrievable, and reducing top-k (D) only lowers the odds without removing the risk.</div>` },
+    <div class="feedback"><b>Correct.</b> Both clear the quality threshold, so the deciding metrics are latency and cost, and for a live assistant the smaller model's lower time-to-first-token and price win. Defaulting to more parameters (B) or a public ranking (C) ignores your own numbers, and random alternation (D) makes latency unpredictable.</div>` },
 
-  /* 7 : quiz 2 - replace stale content */
+  /* 6 : quiz 2 - metric-driven, not default to biggest */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:21px">A support bot keeps citing a refund policy that changed last quarter, because last year's policy doc is still in the index. What is the right mitigation?</h2>
+    <h2 class="reveal" style="font-size:21px">A stakeholder insists you use the largest available model "to be safe." How do you make the call defensibly?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add a stronger system prompt telling the model to be accurate</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Redact random sentences from the old doc to confuse retrieval</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Replace the stale document with the current policy so the corpus reflects the truth</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the embedding dimension to improve recall</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Agree: the largest model removes all risk</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Pick by parameter count alone</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Run all candidates on the eval set and choose by measured quality, latency, and cost</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Choose the model with the largest context window regardless of scores</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The content is wrong because it is outdated, so re-sourcing the current policy document fixes the root cause and the bot cites the right answer. A firmer prompt (A) cannot override a retrieved fact, partial redaction (B) leaves an incoherent and still-wrong doc, and a larger embedding dimension (D) improves matching but retrieves the stale text just as well.</div>` },
+    <div class="feedback"><b>Correct.</b> The defensible choice is driven by measured quality, latency, and cost on your own evaluation set, which may well show a smaller model suffices. "Largest to be safe" (A) and parameter count (B) are not evidence, and a bigger context window (D) is one attribute, not the whole picture.</div>` },
 
-  /* 8 : done - closes Unit 5 */
+  /* 7 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 5 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Governance is the boundary layer: mask data, screen hostile input, respect the law, and clean the corpus.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Let the eval numbers choose</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Model sizing is a measured trade-off, not a reflex toward bigger.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Match the fix to the flaw</b>Remove an unfit source, redact a bad passage, replace stale content, or annotate to down-weight.</p></div>
-      <div class="pill"><p><b>Fix the data at the root</b>Cleaning the corpus beats leaning on an output guardrail, which is only defense in depth.</p></div>
-      <div class="pill"><p><b>The unit in one line</b>Masking, malicious-input defense, licensing, and content mitigation are the four governance levers.</p></div>
+      <div class="pill"><p><b>Measure on your task</b>Score every candidate on your own evaluation set, not a public leaderboard.</p></div>
+      <div class="pill"><p><b>Four axes</b>Quality, latency, throughput, and cost move together as size grows.</p></div>
+      <div class="pill"><p><b>The rule</b>Choose the smallest architecture that clears the quality bar the use case demands.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

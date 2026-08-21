@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Problematic Text in the Corpus: Mitigation Alternatives · Databricks GenAI Engineer Associate</title>
+<title>Custom Scorers for Evaluating Agents and LLMs · Databricks GenAI Engineer Associate</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-46-problematic-text-mitigation.html">
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-49-custom-scorers.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,12 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 5 · Governance · rose (boundaries, masking, legal limits) */
-    --bg: #120711;            /* page background */
-    --bg-tint: #35122a;       /* ambient glow tint behind the card */
-    --accent: #e8618c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(232,97,140,0.12);  /* correct-answer fill */
-    --accent-ink: #1f0713;    /* text on top of the accent key chip */
+    /* Unit 6 · Evaluation and Monitoring · periwinkle (telemetry / signal-reading) */
+    --bg: #08090f;            /* page background */
+    --bg-tint: #1a2040;       /* ambient glow tint behind the card */
+    --accent: #8fa9ff;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(143,169,255,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0d1f;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -194,7 +194,7 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-47-quantitative-llm-metrics.html",
+  next:      "lesson-50-agent-eval-scoring-tracing.html",
   nextLabel: "Next chapter"
 };
 
@@ -202,33 +202,23 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <radialGradient id="c46glow" cx="0.5" cy="0.42" r="0.66">
-        <stop offset="0" style="stop-color:rgba(232,97,140,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(232,97,140,0)"/>
+      <radialGradient id="c49glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(143,169,255,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(143,169,255,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c46glow)"/>
-    <text x="160" y="22" text-anchor="middle" fill="#f4a6c1" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">match the fix to the flaw</text>
-    <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
-      <rect x="14" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="47" y="98" text-anchor="middle" fill="#f1e0e8">remove</text>
-      <text x="47" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">whole</text>
-      <text x="47" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">source bad</text>
-      <rect x="90" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="123" y="98" text-anchor="middle" fill="#ffd0e0">redact</text>
-      <text x="123" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">one bad</text>
-      <text x="123" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">passage</text>
-      <rect x="166" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="199" y="98" text-anchor="middle" fill="#ffd0e0">replace</text>
-      <text x="199" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">stale or</text>
-      <text x="199" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">wrong</text>
-      <rect x="242" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="275" y="98" text-anchor="middle" fill="#f1e0e8">annotate</text>
-      <text x="275" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">flag and</text>
-      <text x="275" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">down-weight</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c49glow)"/>
+    <text x="160" y="24" text-anchor="middle" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">your own rule, as a function</text>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="9">
+      <rect x="46" y="44" width="228" height="112" rx="12" fill="rgba(10,13,31,0.85)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="64" y="70" fill="#8fa9ff" font-weight="700">@scorer</text>
+      <text x="64" y="88" fill="#c9d3ff">def format_ok(outputs):</text>
+      <text x="80" y="106" fill="rgba(201,211,255,0.8)">return is_json(outputs)</text>
+      <line x1="64" y1="120" x2="256" y2="120" stroke="rgba(143,169,255,0.25)" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="64" y="138" fill="rgba(201,211,255,0.7)" font-size="8">inputs, outputs,</text>
+      <text x="64" y="150" fill="rgba(201,211,255,0.7)" font-size="8">expectations, trace</text>
     </g>
-    <text x="160" y="154" text-anchor="middle" fill="#f1e0e8" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">the least destructive fix that actually solves it</text>
-    <text x="160" y="174" text-anchor="middle" fill="rgba(244,166,193,0.85)" font-family="Hanken Grotesk" font-size="8.5">deleting a whole source is rarely the right first move</text>
+    <text x="160" y="182" text-anchor="middle" fill="rgba(185,198,255,0.85)" font-family="Hanken Grotesk" font-size="8.5">returns a pass/fail, a number, or Feedback with a reason</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -244,103 +234,103 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 46</div>
-    <h1 class="reveal">Fixing problematic text</h1>
-    <p class="lead reveal">A source can be valuable and flawed at once. The exam asks you to <strong>recommend the right alternative</strong> for problematic text in the corpus, and the answer depends on what is wrong with it.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 6 · Chapter 49</div>
+    <h1 class="reveal">Custom scorers</h1>
+    <p class="lead reveal">The built-in judges cover common quality dimensions. When your app has a rule they do not, you write a <strong>custom scorer</strong>: a Python function that grades a response your way.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what is problematic */
+  /* 1 : when built-ins run out */
   { html: `
-    <div class="eyebrow reveal">Name the flaw</div>
-    <h2 class="reveal">What "problematic" means</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Problematic text is content that, once retrieved, degrades or endangers the answer. It comes in a few shapes.</p>
+    <div class="eyebrow reveal">The gap</div>
+    <h2 class="reveal">When a judge cannot express your rule</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Some checks are specific, deterministic, or about your business, and no generic judge captures them.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Harmful or biased</b>Toxic, offensive, or discriminatory passages the model can echo into a response.</p></div>
-      <div class="pill"><p><b>Wrong or stale</b>Outdated policy, superseded facts, or plain errors that make the model confidently incorrect.</p></div>
+      <div class="pill"><p><b>Deterministic checks</b>Is the output valid JSON? Does it match a required schema? Is a mandatory disclaimer present? These want exact logic, not an LLM opinion.</p></div>
+      <div class="pill"><p><b>Business rules</b>Does the answer cite an approved source? Stay under a length limit? Avoid a banned phrase? Only you know the rule.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : the menu */
+  /* 2 : the @scorer decorator */
   { html: `
-    <div class="eyebrow reveal">The options</div>
-    <h2 class="reveal">Four alternatives, not one</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You rarely have to choose between "keep it" and "delete everything." There is a spectrum.</p>
+    <div class="eyebrow reveal">The mechanism</div>
+    <h2 class="reveal">The @scorer decorator</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A custom code-based scorer is a decorated Python function that MLflow calls for each evaluated example.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="al">@scorer</span>
+<span class="kw">def</span> valid_json(outputs):
+    <span class="kw">return</span> is_json(outputs)  <span class="cm"># True or False</span></div>
+    <p class="lead reveal">Pass the function straight to mlflow.genai.evaluate() alongside any built-in judges.</p>
+    <div class="spacer"></div>` },
+
+  /* 3 : the signature */
+  { html: `
+    <div class="eyebrow reveal">What it receives</div>
+    <h2 class="reveal">Four things it can read</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A scorer takes keyword-only arguments; name the ones you need and MLflow supplies them.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove or redact</b>Drop the whole document, or strip just the offending passage while keeping the rest.</p></div>
-      <div class="pill"><p><b>Replace or annotate</b>Swap in a corrected, current version, or tag the content with metadata so retrieval can down-weight or scope it.</p></div>
+      <div class="pill"><p><b>inputs and outputs</b>The app's raw input and its raw output: the query in, the answer out.</p></div>
+      <div class="pill"><p><b>expectations and trace</b>expectations carries the ground truth when you have it; trace is the full execution with every span, for scoring intermediate steps.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : remove vs redact */
+  /* 4 : return types */
   { html: `
-    <div class="eyebrow reveal">Sizing the cut</div>
-    <h2 class="reveal">Remove the source, or redact the passage</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The first decision is how much of the document is actually bad.</p>
+    <div class="eyebrow reveal">What it returns</div>
+    <h2 class="reveal">A verdict, a number, or a reason</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The return type shapes how the score reads back in the evaluation.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove when the source is unfit</b>If a document is fundamentally unreliable, unlicensed, or hostile, exclude it from the corpus entirely.</p></div>
-      <div class="pill"><p><b>Redact when the rest is valuable</b>If one section is toxic or sensitive but the document is otherwise useful, strip that section (as in Chapter 10 filtering) and keep the knowledge.</p></div>
+      <div class="pill"><p><b>Simple values</b>Return a bool for pass/fail, a float or int for a numeric score, or a string for a category.</p></div>
+      <div class="pill"><p><b>Feedback for the why</b>Return a Feedback (or a list of them) to attach a value plus a rationale, so a reviewer sees not just the score but the reason.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : replace and annotate */
+  /* 5 : dev and prod */
   { html: `
-    <div class="eyebrow reveal">When you still need the topic</div>
-    <h2 class="reveal">Replace what is wrong, tag what is tricky</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Sometimes the subject is essential and only the content is bad. Do not just delete it and leave a gap.</p>
+    <div class="eyebrow reveal">Where it runs</div>
+    <h2 class="reveal">One scorer, dev and production</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same custom scorer works in offline evaluation and in live monitoring.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Replace with the authoritative version</b>Outdated or incorrect text should be re-sourced from the current, canonical document so the corpus answers the question correctly.</p></div>
-      <div class="pill"><p><b>Annotate and scope</b>Metadata tags let retrieval down-weight lower-quality content or route it to a separate, permission-scoped index instead of the general one.</p></div>
+      <div class="pill"><p><b>Iterate offline</b>Generate traces once, then refine the scorer against those stored traces without re-running the app each time.</p></div>
+      <div class="pill"><p><b>Promote to monitoring</b>Attach the same @scorer function to production monitoring so every live request is graded by your rule too.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : runtime backstop */
-  { html: `
-    <div class="eyebrow reveal">The backstop</div>
-    <h2 class="reveal">Runtime filters are a complement, not a cure</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A safety guardrail on the output can catch what slips through, but it does not fix the corpus.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Fix the data first</b>Cleaning the source removes the problem at its root, so retrieval never surfaces it and every downstream answer improves.</p></div>
-      <div class="pill"><p><b>Guardrail as insurance</b>An output safety filter (Chapter 20) is defense in depth for the rare miss, not a substitute for a corpus you left dirty.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : quiz 1 - redact over remove */
+  /* 6 : quiz 1 - deterministic check -> custom scorer */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:21px">A 40-page product manual is exactly what users need, except for one legacy section with offensive example text. What do you recommend?</h2>
+    <h2 class="reveal" style="font-size:21px">Your agent must return strict JSON matching a schema, and you want to fail any response that does not parse. What do you build?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Remove the entire manual from the corpus</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Redact the offending section and keep the rest of the manual indexed</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Leave it as is and rely only on an output filter</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Lower the retrieval count so the bad section is less likely to be pulled</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>The Correctness judge, since schema conformance is correctness</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>The Safety judge with a strict threshold</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>A custom @scorer that parses the output and returns pass or fail on the schema</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Nothing: MLflow validates JSON automatically</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Only one section is bad and the rest is essential, so redacting that passage removes the problem while preserving the knowledge, the least destructive fix that works. Deleting the whole manual (A) throws away needed content, relying solely on an output filter (C) leaves the toxic text retrievable, and reducing top-k (D) only lowers the odds without removing the risk.</div>` },
+    <div class="feedback"><b>Correct.</b> Schema conformance is a deterministic, code-checkable rule, which is exactly what a custom @scorer is for: parse the output and return a bool. An LLM judge (A, B) is the wrong tool for an exact check, and MLflow does not auto-validate your app-specific schema (D).</div>` },
 
-  /* 7 : quiz 2 - replace stale content */
+  /* 7 : quiz 2 - expectations arg carries ground truth */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:21px">A support bot keeps citing a refund policy that changed last quarter, because last year's policy doc is still in the index. What is the right mitigation?</h2>
+    <h2 class="reveal" style="font-size:21px">Your custom scorer needs the labeled correct answer to compare against. Which argument in the scorer signature carries it?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add a stronger system prompt telling the model to be accurate</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Redact random sentences from the old doc to confuse retrieval</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Replace the stale document with the current policy so the corpus reflects the truth</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the embedding dimension to improve recall</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>inputs</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>outputs</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>expectations</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>trace</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The content is wrong because it is outdated, so re-sourcing the current policy document fixes the root cause and the bot cites the right answer. A firmer prompt (A) cannot override a retrieved fact, partial redaction (B) leaves an incoherent and still-wrong doc, and a larger embedding dimension (D) improves matching but retrieves the stale text just as well.</div>` },
+    <div class="feedback"><b>Correct.</b> expectations carries the ground truth for the example, so a scorer that compares to a labeled answer reads it there. inputs and outputs are the app's raw query and response (A, B), and trace is the full execution with its spans (D), used to score intermediate steps rather than to supply the expected answer.</div>` },
 
-  /* 8 : done - closes Unit 5 */
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 5 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Governance is the boundary layer: mask data, screen hostile input, respect the law, and clean the corpus.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Grade by your own rule</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">A custom scorer is where app-specific quality gets measured.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Match the fix to the flaw</b>Remove an unfit source, redact a bad passage, replace stale content, or annotate to down-weight.</p></div>
-      <div class="pill"><p><b>Fix the data at the root</b>Cleaning the corpus beats leaning on an output guardrail, which is only defense in depth.</p></div>
-      <div class="pill"><p><b>The unit in one line</b>Masking, malicious-input defense, licensing, and content mitigation are the four governance levers.</p></div>
+      <div class="pill"><p><b>@scorer function</b>A decorated Python function passed to mlflow.genai.evaluate() beside built-in judges.</p></div>
+      <div class="pill"><p><b>Signature</b>Read inputs, outputs, expectations (ground truth), and trace; return a bool, number, or Feedback.</p></div>
+      <div class="pill"><p><b>Dev and prod</b>The same scorer iterates offline and grades live traffic in monitoring.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

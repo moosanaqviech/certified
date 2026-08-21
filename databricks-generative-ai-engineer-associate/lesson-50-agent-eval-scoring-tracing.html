@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Problematic Text in the Corpus: Mitigation Alternatives · Databricks GenAI Engineer Associate</title>
+<title>Agent Evaluation with MLflow Scoring and Tracing · Databricks GenAI Engineer Associate</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-46-problematic-text-mitigation.html">
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-50-agent-eval-scoring-tracing.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,12 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 5 · Governance · rose (boundaries, masking, legal limits) */
-    --bg: #120711;            /* page background */
-    --bg-tint: #35122a;       /* ambient glow tint behind the card */
-    --accent: #e8618c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(232,97,140,0.12);  /* correct-answer fill */
-    --accent-ink: #1f0713;    /* text on top of the accent key chip */
+    /* Unit 6 · Evaluation and Monitoring · periwinkle (telemetry / signal-reading) */
+    --bg: #08090f;            /* page background */
+    --bg-tint: #1a2040;       /* ambient glow tint behind the card */
+    --accent: #8fa9ff;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(143,169,255,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0d1f;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -194,7 +194,7 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-47-quantitative-llm-metrics.html",
+  next:      "lesson-51-sme-feedback.html",
   nextLabel: "Next chapter"
 };
 
@@ -202,33 +202,31 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <radialGradient id="c46glow" cx="0.5" cy="0.42" r="0.66">
-        <stop offset="0" style="stop-color:rgba(232,97,140,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(232,97,140,0)"/>
+      <radialGradient id="c50glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(143,169,255,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(143,169,255,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c46glow)"/>
-    <text x="160" y="22" text-anchor="middle" fill="#f4a6c1" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">match the fix to the flaw</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c50glow)"/>
+    <text x="160" y="22" text-anchor="middle" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">a trace shows every step, so you can score each</text>
     <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
-      <rect x="14" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="47" y="98" text-anchor="middle" fill="#f1e0e8">remove</text>
-      <text x="47" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">whole</text>
-      <text x="47" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">source bad</text>
-      <rect x="90" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="123" y="98" text-anchor="middle" fill="#ffd0e0">redact</text>
-      <text x="123" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">one bad</text>
-      <text x="123" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">passage</text>
-      <rect x="166" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="199" y="98" text-anchor="middle" fill="#ffd0e0">replace</text>
-      <text x="199" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">stale or</text>
-      <text x="199" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">wrong</text>
-      <rect x="242" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="275" y="98" text-anchor="middle" fill="#f1e0e8">annotate</text>
-      <text x="275" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">flag and</text>
-      <text x="275" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">down-weight</text>
+      <rect x="18" y="86" width="58" height="34" rx="9" fill="rgba(143,169,255,0.14)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="47" y="106" text-anchor="middle" fill="#c9d3ff">retrieve</text>
+      <rect x="98" y="86" width="58" height="34" rx="9" fill="rgba(143,169,255,0.14)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="127" y="106" text-anchor="middle" fill="#c9d3ff">tool call</text>
+      <rect x="178" y="86" width="58" height="34" rx="9" fill="rgba(143,169,255,0.14)" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="207" y="106" text-anchor="middle" fill="#c9d3ff">LLM</text>
+      <rect x="258" y="86" width="46" height="34" rx="9" fill="rgba(143,169,255,0.3)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="281" y="106" text-anchor="middle" fill="#e6ebff">answer</text>
     </g>
-    <text x="160" y="154" text-anchor="middle" fill="#f1e0e8" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">the least destructive fix that actually solves it</text>
-    <text x="160" y="174" text-anchor="middle" fill="rgba(244,166,193,0.85)" font-family="Hanken Grotesk" font-size="8.5">deleting a whole source is rarely the right first move</text>
+    <path d="M76 103 h22 M156 103 h22 M236 103 h22" stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+    <g font-size="12" fill="var(--accent)">
+      <text x="47" y="140" text-anchor="middle">✓</text>
+      <text x="127" y="140" text-anchor="middle">✓</text>
+      <text x="207" y="140" text-anchor="middle">✓</text>
+    </g>
+    <text x="160" y="166" text-anchor="middle" fill="#f1f1f6" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">score the retrieval and the tool call, not just the answer</text>
+    <text x="160" y="185" text-anchor="middle" fill="rgba(185,198,255,0.85)" font-family="Hanken Grotesk" font-size="8.5">mlflow.genai.evaluate() runs scorers over the trace</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -244,103 +242,92 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 46</div>
-    <h1 class="reveal">Fixing problematic text</h1>
-    <p class="lead reveal">A source can be valuable and flawed at once. The exam asks you to <strong>recommend the right alternative</strong> for problematic text in the corpus, and the answer depends on what is wrong with it.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 6 · Chapter 50</div>
+    <h1 class="reveal">Evaluating agents with tracing</h1>
+    <p class="lead reveal">An agent takes many steps to reach an answer. To evaluate it, you need to see those steps, and that is what <strong>MLflow Tracing</strong> gives you to score.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what is problematic */
+  /* 1 : the answer is not the whole story */
   { html: `
-    <div class="eyebrow reveal">Name the flaw</div>
-    <h2 class="reveal">What "problematic" means</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Problematic text is content that, once retrieved, degrades or endangers the answer. It comes in a few shapes.</p>
+    <div class="eyebrow reveal">The problem</div>
+    <h2 class="reveal">The final answer hides the work</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A single quality score on the output tells you an agent failed, but not where or why.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Harmful or biased</b>Toxic, offensive, or discriminatory passages the model can echo into a response.</p></div>
-      <div class="pill"><p><b>Wrong or stale</b>Outdated policy, superseded facts, or plain errors that make the model confidently incorrect.</p></div>
+      <div class="pill"><p><b>Many steps, one output</b>The agent retrieved documents, called tools, and prompted the model, any of which could be the weak link.</p></div>
+      <div class="pill"><p><b>You need step visibility</b>Was the retrieval off, or did the model ignore good context? Only the intermediate steps answer that.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : the menu */
+  /* 2 : tracing captures spans */
   { html: `
-    <div class="eyebrow reveal">The options</div>
-    <h2 class="reveal">Four alternatives, not one</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You rarely have to choose between "keep it" and "delete everything." There is a spectrum.</p>
+    <div class="eyebrow reveal">The record</div>
+    <h2 class="reveal">Tracing captures every span</h2>
+    <p class="lead reveal" style="margin-bottom:16px">MLflow Tracing logs a trace per request: a tree of spans for each step the agent ran.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove or redact</b>Drop the whole document, or strip just the offending passage while keeping the rest.</p></div>
-      <div class="pill"><p><b>Replace or annotate</b>Swap in a corrected, current version, or tag the content with metadata so retrieval can down-weight or scope it.</p></div>
+      <div class="pill"><p><b>What a span holds</b>The retriever call and its returned documents, each tool invocation and its result, and every LLM call with its prompt and response.</p></div>
+      <div class="pill"><p><b>Dev and production</b>The same tracing runs in development, testing, and live serving, so the object you evaluate is the object that ran.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : remove vs redact */
+  /* 3 : evaluate over traces */
   { html: `
-    <div class="eyebrow reveal">Sizing the cut</div>
-    <h2 class="reveal">Remove the source, or redact the passage</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The first decision is how much of the document is actually bad.</p>
+    <div class="eyebrow reveal">The scoring</div>
+    <h2 class="reveal">Scorers run over the traces</h2>
+    <p class="lead reveal" style="margin-bottom:16px">mlflow.genai.evaluate() applies your judges and custom scorers to the captured traces.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove when the source is unfit</b>If a document is fundamentally unreliable, unlicensed, or hostile, exclude it from the corpus entirely.</p></div>
-      <div class="pill"><p><b>Redact when the rest is valuable</b>If one section is toxic or sensitive but the document is otherwise useful, strip that section (as in Chapter 10 filtering) and keep the knowledge.</p></div>
+      <div class="pill"><p><b>Score the output</b>Relevance, groundedness, safety, and correctness rate the final answer.</p></div>
+      <div class="pill"><p><b>Score the steps</b>Because a scorer can read the trace, it can grade the retrieval quality or check a tool returned the right thing, not just the end result.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : replace and annotate */
+  /* 4 : the loop */
   { html: `
-    <div class="eyebrow reveal">When you still need the topic</div>
-    <h2 class="reveal">Replace what is wrong, tag what is tricky</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Sometimes the subject is essential and only the content is bad. Do not just delete it and leave a gap.</p>
+    <div class="eyebrow reveal">The workflow</div>
+    <h2 class="reveal">Trace once, evaluate many times</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Traces are reusable, which makes iterating on an agent cheap.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Replace with the authoritative version</b>Outdated or incorrect text should be re-sourced from the current, canonical document so the corpus answers the question correctly.</p></div>
-      <div class="pill"><p><b>Annotate and scope</b>Metadata tags let retrieval down-weight lower-quality content or route it to a separate, permission-scoped index instead of the general one.</p></div>
+      <div class="pill"><p><b>Generate then reuse</b>Run the agent over your eval set to produce traces, then refine scorers against those stored traces without re-running the agent.</p></div>
+      <div class="pill"><p><b>Same traces, live monitoring</b>In production, tracing feeds the same scorers so the dev evaluation and the live monitoring measure the same things.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : runtime backstop */
-  { html: `
-    <div class="eyebrow reveal">The backstop</div>
-    <h2 class="reveal">Runtime filters are a complement, not a cure</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A safety guardrail on the output can catch what slips through, but it does not fix the corpus.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Fix the data first</b>Cleaning the source removes the problem at its root, so retrieval never surfaces it and every downstream answer improves.</p></div>
-      <div class="pill"><p><b>Guardrail as insurance</b>An output safety filter (Chapter 20) is defense in depth for the rare miss, not a substitute for a corpus you left dirty.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : quiz 1 - redact over remove */
+  /* 5 : quiz 1 - diagnose which step failed */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:21px">A 40-page product manual is exactly what users need, except for one legacy section with offensive example text. What do you recommend?</h2>
+    <h2 class="reveal" style="font-size:21px">An agent returns a wrong answer, and you need to know whether retrieval pulled bad documents or the model ignored good ones. What lets you tell?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Remove the entire manual from the corpus</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Redact the offending section and keep the rest of the manual indexed</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Leave it as is and rely only on an output filter</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Lower the retrieval count so the bad section is less likely to be pulled</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A single quality score on the final answer</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>The MLflow trace, whose spans show the retrieved documents and the model's use of them</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The endpoint's CPU utilization graph</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Re-running the agent until it gets it right</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Only one section is bad and the rest is essential, so redacting that passage removes the problem while preserving the knowledge, the least destructive fix that works. Deleting the whole manual (A) throws away needed content, relying solely on an output filter (C) leaves the toxic text retrievable, and reducing top-k (D) only lowers the odds without removing the risk.</div>` },
+    <div class="feedback"><b>Correct.</b> The trace records each span, so you can inspect exactly what retrieval returned and how the model used it, isolating the failing step. A single output score (A) tells you it failed but not where, CPU usage (C) is an operational metric unrelated to answer quality, and re-running (D) hides the bug rather than diagnosing it.</div>` },
 
-  /* 7 : quiz 2 - replace stale content */
+  /* 6 : quiz 2 - how to evaluate an agent */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:21px">A support bot keeps citing a refund policy that changed last quarter, because last year's policy doc is still in the index. What is the right mitigation?</h2>
+    <h2 class="reveal" style="font-size:21px">You want a repeatable evaluation of your agent's quality across a test set. What is the Databricks-native approach?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add a stronger system prompt telling the model to be accurate</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Redact random sentences from the old doc to confuse retrieval</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Replace the stale document with the current policy so the corpus reflects the truth</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the embedding dimension to improve recall</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Eyeball a handful of answers in a notebook</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Only track average response latency</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Run mlflow.genai.evaluate() with judges and custom scorers over the agent's traces</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Export answers to a spreadsheet and score them by hand each release</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The content is wrong because it is outdated, so re-sourcing the current policy document fixes the root cause and the bot cites the right answer. A firmer prompt (A) cannot override a retrieved fact, partial redaction (B) leaves an incoherent and still-wrong doc, and a larger embedding dimension (D) improves matching but retrieves the stale text just as well.</div>` },
+    <div class="feedback"><b>Correct.</b> mlflow.genai.evaluate() runs your judges and custom scorers over the captured traces, giving a repeatable, step-aware evaluation. Manual eyeballing (A) and hand-scoring spreadsheets (D) do not scale or stay consistent, and latency alone (B) measures speed, not quality.</div>` },
 
-  /* 8 : done - closes Unit 5 */
+  /* 7 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 5 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Governance is the boundary layer: mask data, screen hostile input, respect the law, and clean the corpus.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Evaluate the steps, not just the end</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Tracing turns an opaque agent into something you can score span by span.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Match the fix to the flaw</b>Remove an unfit source, redact a bad passage, replace stale content, or annotate to down-weight.</p></div>
-      <div class="pill"><p><b>Fix the data at the root</b>Cleaning the corpus beats leaning on an output guardrail, which is only defense in depth.</p></div>
-      <div class="pill"><p><b>The unit in one line</b>Masking, malicious-input defense, licensing, and content mitigation are the four governance levers.</p></div>
+      <div class="pill"><p><b>Tracing</b>Captures a trace of spans per request: retrieval, tool calls, and LLM calls.</p></div>
+      <div class="pill"><p><b>Evaluate</b>mlflow.genai.evaluate() runs judges and scorers over the traces, scoring output and steps.</p></div>
+      <div class="pill"><p><b>Reuse</b>Generate traces once, iterate on scorers, and run the same ones in live monitoring.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

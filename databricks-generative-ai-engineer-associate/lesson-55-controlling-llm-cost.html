@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Problematic Text in the Corpus: Mitigation Alternatives · Databricks GenAI Engineer Associate</title>
+<title>Controlling LLM Cost on Databricks · Databricks GenAI Engineer Associate</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-46-problematic-text-mitigation.html">
+<link rel="canonical" href="https://certify.courses/databricks-generative-ai-engineer-associate/lesson-55-controlling-llm-cost.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,12 +28,12 @@
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    /* Unit 5 · Governance · rose (boundaries, masking, legal limits) */
-    --bg: #120711;            /* page background */
-    --bg-tint: #35122a;       /* ambient glow tint behind the card */
-    --accent: #e8618c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(232,97,140,0.12);  /* correct-answer fill */
-    --accent-ink: #1f0713;    /* text on top of the accent key chip */
+    /* Unit 6 · Evaluation and Monitoring · periwinkle (telemetry / signal-reading) */
+    --bg: #08090f;            /* page background */
+    --bg-tint: #1a2040;       /* ambient glow tint behind the card */
+    --accent: #8fa9ff;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(143,169,255,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0d1f;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -194,41 +194,32 @@
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-47-quantitative-llm-metrics.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <defs>
-      <radialGradient id="c46glow" cx="0.5" cy="0.42" r="0.66">
-        <stop offset="0" style="stop-color:rgba(232,97,140,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(232,97,140,0)"/>
+      <radialGradient id="c55glow" cx="0.5" cy="0.42" r="0.66">
+        <stop offset="0" style="stop-color:rgba(143,169,255,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(143,169,255,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c46glow)"/>
-    <text x="160" y="22" text-anchor="middle" fill="#f4a6c1" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">match the fix to the flaw</text>
+    <ellipse cx="160" cy="100" rx="152" ry="84" fill="url(#c55glow)"/>
+    <text x="160" y="22" text-anchor="middle" fill="#b9c6ff" font-family="Hanken Grotesk" font-size="10.5" font-weight="600">four levers on the bill</text>
     <g font-family="Hanken Grotesk" font-weight="700" font-size="8.5">
-      <rect x="14" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="47" y="98" text-anchor="middle" fill="#f1e0e8">remove</text>
-      <text x="47" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">whole</text>
-      <text x="47" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">source bad</text>
-      <rect x="90" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="123" y="98" text-anchor="middle" fill="#ffd0e0">redact</text>
-      <text x="123" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">one bad</text>
-      <text x="123" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">passage</text>
-      <rect x="166" y="76" width="66" height="52" rx="11" fill="rgba(232,97,140,0.16)" stroke="var(--accent)" stroke-width="1.5"/>
-      <text x="199" y="98" text-anchor="middle" fill="#ffd0e0">replace</text>
-      <text x="199" y="112" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">stale or</text>
-      <text x="199" y="121" text-anchor="middle" fill="rgba(255,208,224,0.8)" font-size="7">wrong</text>
-      <rect x="242" y="76" width="66" height="52" rx="11" fill="rgba(255,255,255,0.05)" stroke="var(--ink-soft)" stroke-width="1.2"/>
-      <text x="275" y="98" text-anchor="middle" fill="#f1e0e8">annotate</text>
-      <text x="275" y="112" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">flag and</text>
-      <text x="275" y="121" text-anchor="middle" fill="rgba(241,224,232,0.6)" font-size="7">down-weight</text>
+      <rect x="20" y="70" width="130" height="34" rx="10" fill="rgba(143,169,255,0.16)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="85" y="91" text-anchor="middle" fill="#c9d3ff">right-size the model</text>
+      <rect x="170" y="70" width="130" height="34" rx="10" fill="rgba(143,169,255,0.16)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="235" y="91" text-anchor="middle" fill="#c9d3ff">pick the pricing mode</text>
+      <rect x="20" y="112" width="130" height="34" rx="10" fill="rgba(143,169,255,0.16)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="85" y="133" text-anchor="middle" fill="#c9d3ff">batch what is offline</text>
+      <rect x="170" y="112" width="130" height="34" rx="10" fill="rgba(143,169,255,0.16)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="235" y="133" text-anchor="middle" fill="#c9d3ff">cap and attribute</text>
     </g>
-    <text x="160" y="154" text-anchor="middle" fill="#f1e0e8" font-family="Hanken Grotesk" font-size="9.5" font-weight="600">the least destructive fix that actually solves it</text>
-    <text x="160" y="174" text-anchor="middle" fill="rgba(244,166,193,0.85)" font-family="Hanken Grotesk" font-size="8.5">deleting a whole source is rarely the right first move</text>
+    <text x="160" y="170" text-anchor="middle" fill="rgba(185,198,255,0.85)" font-family="Hanken Grotesk" font-size="8.5">cost control is a design choice, made before the bill arrives</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -244,103 +235,92 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 46</div>
-    <h1 class="reveal">Fixing problematic text</h1>
-    <p class="lead reveal">A source can be valuable and flawed at once. The exam asks you to <strong>recommend the right alternative</strong> for problematic text in the corpus, and the answer depends on what is wrong with it.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 6 · Chapter 55</div>
+    <h1 class="reveal">Controlling LLM cost</h1>
+    <p class="lead reveal">GenAI spend grows quietly until it is a problem. Databricks gives you four levers to keep it in hand, and each is a <strong>design choice you make before the bill</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what is problematic */
+  /* 1 : right-size the model */
   { html: `
-    <div class="eyebrow reveal">Name the flaw</div>
-    <h2 class="reveal">What "problematic" means</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Problematic text is content that, once retrieved, degrades or endangers the answer. It comes in a few shapes.</p>
+    <div class="eyebrow reveal">Lever one</div>
+    <h2 class="reveal">Right-size the model</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The biggest cost lever is the model itself, and Chapter 47 already framed the choice.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Harmful or biased</b>Toxic, offensive, or discriminatory passages the model can echo into a response.</p></div>
-      <div class="pill"><p><b>Wrong or stale</b>Outdated policy, superseded facts, or plain errors that make the model confidently incorrect.</p></div>
+      <div class="pill"><p><b>Smallest that clears the bar</b>A smaller model that meets your quality threshold costs less per token and runs faster. Do not pay for capability the task does not need.</p></div>
+      <div class="pill"><p><b>Trim the tokens</b>Shorter prompts and tighter context windows cut cost on every single call, since you pay by the token.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : the menu */
+  /* 2 : pricing mode */
   { html: `
-    <div class="eyebrow reveal">The options</div>
-    <h2 class="reveal">Four alternatives, not one</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You rarely have to choose between "keep it" and "delete everything." There is a spectrum.</p>
+    <div class="eyebrow reveal">Lever two</div>
+    <h2 class="reveal">Match the pricing mode to the load</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Foundation Model APIs bill two ways, and the cheaper one depends on your traffic shape.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove or redact</b>Drop the whole document, or strip just the offending passage while keeping the rest.</p></div>
-      <div class="pill"><p><b>Replace or annotate</b>Swap in a corrected, current version, or tag the content with metadata so retrieval can down-weight or scope it.</p></div>
+      <div class="pill"><p><b>Pay-per-token</b>Billed per token with no commitment. Ideal for experimentation and spiky, low-volume traffic where you only pay for what you use.</p></div>
+      <div class="pill"><p><b>Provisioned throughput</b>A fixed hourly rate for reserved capacity. Cheaper and more predictable for steady, high-volume production, and required for fine-tuned models.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : remove vs redact */
+  /* 3 : batch */
   { html: `
-    <div class="eyebrow reveal">Sizing the cut</div>
-    <h2 class="reveal">Remove the source, or redact the passage</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The first decision is how much of the document is actually bad.</p>
+    <div class="eyebrow reveal">Lever three</div>
+    <h2 class="reveal">Batch the offline work</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Not every workload needs a live endpoint. Offline jobs run far cheaper in batch.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Remove when the source is unfit</b>If a document is fundamentally unreliable, unlicensed, or hostile, exclude it from the corpus entirely.</p></div>
-      <div class="pill"><p><b>Redact when the rest is valuable</b>If one section is toxic or sensitive but the document is otherwise useful, strip that section (as in Chapter 10 filtering) and keep the knowledge.</p></div>
+      <div class="pill"><p><b>ai_query() at scale</b>Apply a model to a whole table with ai_query() for classification, extraction, or summarization, instead of one interactive call per row.</p></div>
+      <div class="pill"><p><b>Pay for throughput, not idle time</b>Batch inference maximizes tokens per dollar, since nothing waits on a user and the endpoint runs flat out.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : replace and annotate */
+  /* 4 : cap and attribute */
   { html: `
-    <div class="eyebrow reveal">When you still need the topic</div>
-    <h2 class="reveal">Replace what is wrong, tag what is tricky</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Sometimes the subject is essential and only the content is bad. Do not just delete it and leave a gap.</p>
+    <div class="eyebrow reveal">Lever four</div>
+    <h2 class="reveal">Cap the spend, attribute the rest</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The AI Gateway from Chapter 54 is also a cost tool: it stops runaway spend and tells you where the money went.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Replace with the authoritative version</b>Outdated or incorrect text should be re-sourced from the current, canonical document so the corpus answers the question correctly.</p></div>
-      <div class="pill"><p><b>Annotate and scope</b>Metadata tags let retrieval down-weight lower-quality content or route it to a separate, permission-scoped index instead of the general one.</p></div>
+      <div class="pill"><p><b>Rate limits as a budget guard</b>A per-user or per-endpoint limit caps how much any caller can consume, so a bug cannot run up an unbounded bill.</p></div>
+      <div class="pill"><p><b>Usage tables to find the driver</b>Attribute consumption to a team or app, so you optimize the workload that actually costs the most.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : runtime backstop */
-  { html: `
-    <div class="eyebrow reveal">The backstop</div>
-    <h2 class="reveal">Runtime filters are a complement, not a cure</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A safety guardrail on the output can catch what slips through, but it does not fix the corpus.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Fix the data first</b>Cleaning the source removes the problem at its root, so retrieval never surfaces it and every downstream answer improves.</p></div>
-      <div class="pill"><p><b>Guardrail as insurance</b>An output safety filter (Chapter 20) is defense in depth for the rare miss, not a substitute for a corpus you left dirty.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : quiz 1 - redact over remove */
+  /* 5 : quiz 1 - provisioned vs pay-per-token */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:21px">A 40-page product manual is exactly what users need, except for one legacy section with offensive example text. What do you recommend?</h2>
+    <h2 class="reveal" style="font-size:21px">A production agent serves steady, high-volume traffic all day and you want predictable, lower cost. Which pricing choice fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Remove the entire manual from the corpus</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Redact the offending section and keep the rest of the manual indexed</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Leave it as is and rely only on an output filter</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Lower the retrieval count so the bad section is less likely to be pulled</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Pay-per-token, because it is always cheapest</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Provisioned throughput, for reserved capacity at a predictable hourly rate</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Whichever model has the largest context window</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Disable monitoring to save on logging cost</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Only one section is bad and the rest is essential, so redacting that passage removes the problem while preserving the knowledge, the least destructive fix that works. Deleting the whole manual (A) throws away needed content, relying solely on an output filter (C) leaves the toxic text retrievable, and reducing top-k (D) only lowers the odds without removing the risk.</div>` },
+    <div class="feedback"><b>Correct.</b> Steady, high-volume production is where provisioned throughput wins: reserved capacity at a fixed hourly rate is more predictable and cheaper at scale than per-token billing. Pay-per-token (A) suits spiky or low-volume traffic, context window (C) is unrelated to the pricing decision, and cutting monitoring (D) trades away quality visibility for a trivial saving.</div>` },
 
-  /* 7 : quiz 2 - replace stale content */
+  /* 6 : quiz 2 - batch for offline */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:21px">A support bot keeps citing a refund policy that changed last quarter, because last year's policy doc is still in the index. What is the right mitigation?</h2>
+    <h2 class="reveal" style="font-size:21px">You need to classify ten million archived tickets overnight, with no user waiting on any single result. What is the cost-efficient approach?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add a stronger system prompt telling the model to be accurate</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Redact random sentences from the old doc to confuse retrieval</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Replace the stale document with the current policy so the corpus reflects the truth</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the embedding dimension to improve recall</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Call a real-time serving endpoint once per ticket</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Have staff paste tickets into a chat UI</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Run batch inference with ai_query() over the table</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Upgrade to the largest model to finish faster</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The content is wrong because it is outdated, so re-sourcing the current policy document fixes the root cause and the bot cites the right answer. A firmer prompt (A) cannot override a retrieved fact, partial redaction (B) leaves an incoherent and still-wrong doc, and a larger embedding dimension (D) improves matching but retrieves the stale text just as well.</div>` },
+    <div class="feedback"><b>Correct.</b> An offline, no-user-waiting workload is exactly what batch inference with ai_query() is for: it processes the whole table at high throughput and maximizes tokens per dollar. Per-ticket real-time calls (A) and manual chat entry (B) are slow and costly, and the largest model (D) raises cost without any interactive benefit.</div>` },
 
-  /* 8 : done - closes Unit 5 */
+  /* 7 : done - closes Unit 6 and the course */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 5 complete</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Governance is the boundary layer: mask data, screen hostile input, respect the law, and clean the corpus.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 6 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now evaluate, monitor, and cost-control a GenAI application end to end.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Match the fix to the flaw</b>Remove an unfit source, redact a bad passage, replace stale content, or annotate to down-weight.</p></div>
-      <div class="pill"><p><b>Fix the data at the root</b>Cleaning the corpus beats leaning on an output guardrail, which is only defense in depth.</p></div>
-      <div class="pill"><p><b>The unit in one line</b>Masking, malicious-input defense, licensing, and content mitigation are the four governance levers.</p></div>
+      <div class="pill"><p><b>Four cost levers</b>Right-size the model, match the pricing mode, batch offline work, and cap plus attribute with the Gateway.</p></div>
+      <div class="pill"><p><b>Evaluation</b>Judges and custom scorers over traces with mlflow.genai.evaluate(), aligned to calibrated SME judgment.</p></div>
+      <div class="pill"><p><b>Monitoring</b>Inference tables and Agent Monitoring for live quality, the AI Gateway for tracking and control.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
