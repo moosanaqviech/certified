@@ -10,6 +10,15 @@
 
 import crypto from "node:crypto";
 import { isCourse, grantCourse } from "./_shared.mjs";
+import { sendCapiEvent, purchaseEventId } from "./_meta.mjs";
+
+// Display price of every course (one-time). The gate anchors $30 -> $9.99; the
+// real charge is the Stripe Price, so we report the amount actually collected
+// when the session exposes it and fall back to 9.99.
+function amountFrom(session) {
+  const cents = session && (session.amount_total ?? session.amount_subtotal);
+  return typeof cents === "number" ? cents / 100 : 9.99;
+}
 
 const TOLERANCE_SECONDS = 300;
 
@@ -57,6 +66,25 @@ export default async (req) => {
       const buyerId = s.customer || s.id;
       if (paid && buyerId && isCourse(courseId)) {
         await grantCourse(buyerId, courseId, "webhook", signSecret);
+
+        // Server-side Purchase: the attribution source of truth. Deduplicated
+        // against the browser pixel on /unlock/ by a shared event_id derived
+        // from the Stripe session id. Fails soft so a CAPI issue never 500s the
+        // webhook (Stripe would otherwise retry a already-granted purchase).
+        const email = s.customer_details && s.customer_details.email;
+        const currency = (s.currency || "usd").toUpperCase();
+        await sendCapiEvent({
+          eventName: "Purchase",
+          eventId: purchaseEventId(s.id),
+          eventSourceUrl: (process.env.SITE_URL || "https://certify.courses") + "/unlock/",
+          user: { email },
+          custom: {
+            value: amountFrom(s),
+            currency,
+            content_ids: [courseId],
+            content_type: "product",
+          },
+        });
       }
     }
 
