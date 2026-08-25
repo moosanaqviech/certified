@@ -431,7 +431,7 @@ const QUESTIONS = [
 
 /* Email-capture endpoint. Stub: leave empty to hide the field entirely.
    TODO: set to the capture endpoint URL when the backend exists. */
-const EMAIL_ENDPOINT = "";
+const EMAIL_ENDPOINT = "/api/subscribe";
 
 const TOTAL = QUESTIONS.length;
 
@@ -665,7 +665,7 @@ function renderResults(){
     </div>
 
     ${EMAIL_ENDPOINT ? `<form class="email" id="emailForm">
-      <label>Email me my results and a study plan</label>
+      <label>Get the ${R.cert} study plan and launch updates</label>
       <div class="email-row">
         <input type="email" id="emailInput" required placeholder="you@example.com" autocomplete="email">
         <button class="btn" type="submit">Send</button>
@@ -726,19 +726,75 @@ function renderReview(){
   document.getElementById("retakeBtn2").onclick=retake;
 }
 
-/* ---------- email capture (stub) ---------- */
+/* ---------- email capture ---------- */
+function readCookie(name){
+  const m = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
+  return m ? decodeURIComponent(m[1]) : "";
+}
+/* Segment key: the /ready/<slug> filename is the reliable cert slug (R.code is
+   not consistent across quizzes). */
+function quizSlug(){
+  const parts = location.pathname.replace(/\/+$/,"").split("/");
+  let last = parts[parts.length-1] || "";
+  if(last.endsWith(".html")) last = last.slice(0,-5);
+  return last || String(R.code||"").toLowerCase();
+}
+function newEventId(){
+  try{ if(window.crypto && crypto.randomUUID) return "lead_"+crypto.randomUUID(); }catch(_e){}
+  return "lead_"+Date.now()+"_"+Math.random().toString(16).slice(2);
+}
+/* isApp(): placeholder so app (Capacitor WebView) sessions can later be
+   suppressed or tagged once the mobile project supplies a signal (custom UA
+   token, query param, or injected flag). No signal exists today, so this is
+   always false and web behaviour is unchanged. */
+function isApp(){ return false; }
+
 function submitEmail(e){
   e.preventDefault();
   if(!EMAIL_ENDPOINT) return;
   const input = document.getElementById("emailInput");
   const note = document.getElementById("emailNote");
-  const payload = { email: input.value, code: R.code, correct: score(), total: TOTAL, answers: state.answers };
+  const btn = e.target.querySelector("button[type=submit]");
+  const email = (input && input.value || "").trim();
+  if(!email){ if(note) note.textContent = "Enter your email to get your plan."; return; }
+  if(btn){ btn.disabled = true; btn.textContent = "Sending..."; }
+
+  const eid = newEventId();
+  const slug = quizSlug();
+  const payload = {
+    email: email, slug: slug, cert: R.cert,
+    correct: score(), total: TOTAL,
+    event_id: eid, fbp: readCookie("_fbp"), fbc: readCookie("_fbc"),
+    event_source_url: location.href
+  };
   fetch(EMAIL_ENDPOINT, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload)
-  }).then(()=>{ if(note) note.textContent = "Sent. Check your inbox for your readout."; })
-    .catch(()=>{ if(note) note.textContent = "Could not send just now. Try again in a moment."; });
+  }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(d){
+      if(d && d.ok){
+        if(note) note.textContent = "Done. Check your inbox to confirm and get your plan.";
+        if(input) input.disabled = true;
+        if(btn) btn.textContent = "Sent";
+        /* Lead conversion: pixel + GA4, sharing event_id with the server-side
+           Lead sent by /api/subscribe so Meta deduplicates the pair. Fired only
+           on a confirmed signup, and suppressed inside the app. */
+        if(!isApp()){
+          try{ if(typeof fbq==="function") fbq("track","Lead",
+            {content_name:R.cert,content_category:slug},{eventID:eid}); }catch(_e){}
+          try{ if(typeof gtag==="function") gtag("event","generate_lead",
+            {event_id:eid,cert:R.cert,quiz_slug:slug}); }catch(_e){}
+        }
+      } else {
+        if(note) note.textContent = (d && d.error) || "Could not send just now. Try again in a moment.";
+        if(btn){ btn.disabled = false; btn.textContent = "Send"; }
+      }
+    })
+    .catch(function(){
+      if(note) note.textContent = "Could not send just now. Try again in a moment.";
+      if(btn){ btn.disabled = false; btn.textContent = "Send"; }
+    });
 }
 
 /* ---------- share card (Canvas, 1080x1080) ---------- */

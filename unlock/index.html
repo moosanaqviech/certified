@@ -94,6 +94,23 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   var params=new URLSearchParams(location.search);
   var sessionId=params.get("session_id");
 
+  // Fire the client-side Purchase once, at the confirmed known-good moment
+  // (payment verified, access granted). The event_id matches the server-side
+  // Purchase sent from the Stripe webhook, so Meta deduplicates the pair. The
+  // pixel automatically attaches fbp/fbc; the server side adds the hashed email.
+  function firePurchase(d){
+    try{
+      if(sessionStorage.getItem("cc_purchase_fired"))return;
+      sessionStorage.setItem("cc_purchase_fired","1");
+    }catch(e){}
+    var eid="pur_"+sessionId;
+    var courses=(d&&d.courses)||[];
+    try{ if(typeof fbq==="function") fbq("track","Purchase",
+      {value:9.99,currency:"USD",content_ids:courses,content_type:"product"},{eventID:eid}); }catch(e){}
+    try{ if(typeof gtag==="function") gtag("event","purchase",
+      {transaction_id:eid,value:9.99,currency:"USD",items:courses.map(function(c){return {item_id:c};})}); }catch(e){}
+  }
+
   async function post(payload){
     var r=await fetch("/api/unlock",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
     var d=await r.json().catch(function(){return {};});
@@ -104,7 +121,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
   if(sessionId){
     show("verifying");
-    post({session_id:sessionId}).then(function(d){showCode(d);}).catch(function(e){
+    post({session_id:sessionId}).then(function(d){firePurchase(d);showCode(d);}).catch(function(e){
       show("entry");$("err").textContent=e.message;
     });
   }else{
