@@ -209,7 +209,7 @@ function paywallHtml(course: Course): string {
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>Unlock the full course · Already Certified</title>
+<title>Unlock the full course · Certify</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0b0d12;--surface:#161a22;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66; --red:#FF0000; --green:#008000; --gold:#e3b84a;--line:rgba(255,255,255,.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
