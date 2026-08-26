@@ -31,34 +31,62 @@ function cleanSlug(v) {
   return String(v || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 64);
 }
 
+async function postSubscriber(key, body) {
+  return fetch("https://api.buttondown.com/v1/subscribers", {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+// An "already subscribed" 400 counts as success for our purposes.
+function isAlreadySubscribed(status, text) {
+  return status === 400 && /already|exists|subscribed/i.test(text);
+}
+
 async function subscribeButtondown(email, slug, cert) {
   const key = process.env.BUTTONDOWN_API_KEY;
   if (!key) return { ok: false, reason: "not_configured" };
 
   // Current Buttondown API (api.buttondown.com/v1): email_address + tags +
   // metadata. Double opt-in vs single is controlled by the Buttondown account
-  // settings, not here, so we do not force a subscriber state.
-  const body = {
+  // settings, not here, so we do not force a subscriber state. Tags (and
+  // metadata) are gated behind a paid Buttondown plan: on the free plan the API
+  // answers 403 { code: "feature_disabled" } and rejects the whole request. So
+  // we send the full body first (segmentation works the moment the account is on
+  // a paid plan) and, if the gated features are refused, retry with just the
+  // email so the signup still lands.
+  const fullBody = {
     email_address: email,
     tags: slug ? [`ready-${slug}`] : [],
     metadata: { cert: cert || "", quiz_slug: slug || "" },
   };
 
   try {
-    const r = await fetch("https://api.buttondown.com/v1/subscribers", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    const r = await postSubscriber(key, fullBody);
     if (r.ok) return { ok: true };
-    // 400 with an "already subscribed" style code is a success for our purposes.
+
     const text = await r.text();
-    if (r.status === 400 && /already|exists|subscribed/i.test(text)) return { ok: true, existing: true };
+    if (isAlreadySubscribed(r.status, text)) return { ok: true, existing: true };
+
+    // Free-plan gate: drop tags/metadata and retry with the bare email so we
+    // still capture the address. Segmentation is lost until the plan is upgraded.
+    if (r.status === 403 && /feature_disabled/i.test(text)) {
+      const r2 = await postSubscriber(key, { email_address: email });
+      if (r2.ok) return { ok: true, degraded: true };
+      const text2 = await r2.text();
+      if (isAlreadySubscribed(r2.status, text2)) return { ok: true, existing: true };
+      console.error(`subscribe: buttondown retry ${r2.status}: ${text2.slice(0, 200)}`);
+      return { ok: false, reason: `buttondown_${r2.status}` };
+    }
+
+    console.error(`subscribe: buttondown ${r.status}: ${text.slice(0, 200)}`);
     return { ok: false, reason: `buttondown_${r.status}` };
   } catch (e) {
+    console.error("subscribe: buttondown_error", e && e.message ? e.message : e);
     return { ok: false, reason: "buttondown_error" };
   }
 }
