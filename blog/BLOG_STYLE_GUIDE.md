@@ -99,7 +99,7 @@ Base URL: `https://certify.courses`.
 4. `<meta name="robots" content="index,follow,max-image-preview:large">`.
 5. OpenGraph: `og:type=article`, `og:title` = title, `og:description`
    (may match the meta description or the OG-specific one), `og:url` =
-   canonical, `og:site_name=Already Certified`. Add `og:image` only if
+   canonical, `og:site_name=Certify`. Add `og:image` only if
    `og_image` is set; current posts omit it.
 6. `<meta name="twitter:card" content="summary_large_image">`.
 
@@ -109,8 +109,8 @@ Base URL: `https://certify.courses`.
 {"@context":"https://schema.org","@type":"Article",
  "headline": <title>,
  "description": <description>,
- "author":{"@type":"Organization","name":"Already Certified"},
- "publisher":{"@type":"Organization","name":"Already Certified","url":"https://certify.courses/"},
+ "author":{"@type":"Organization","name":"Certify"},
+ "publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},
  "datePublished": <date>,
  "dateModified": <updated or date>,
  "inLanguage":"en",
@@ -118,7 +118,7 @@ Base URL: `https://certify.courses`.
 ```
 
 Note: the JSON-LD `author` and `publisher` are the Organization
-"Already Certified," not "Moosa." The `author` frontmatter field is only the
+"Certify," not "Moosa." The `author` frontmatter field is only the
 human-visible byline. This matches every existing post, do not change it.
 
 **FAQ rules (required on every post):** ship 3 to 5 pairs. Each question is
