@@ -58,6 +58,16 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | Yes | blog/how-long-to-prepare-databricks-data-engineer-professional.html |
 | 5 | How to tell if you are ready for the Databricks DE Professional exam (readiness quiz support) | "am I ready for the databricks professional exam" | Yes | blog/am-i-ready-databricks-data-engineer-professional-exam.html |
 
+## Databricks Generative AI Engineer Associate
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Generative AI Engineer Associate certification guide (pillar) | "databricks generative ai engineer associate certification guide" | Yes | blog/databricks-generative-ai-engineer-associate-certification-guide.html |
+| 2 | Databricks Generative AI Engineer Associate exam cost, format and question types | "what's on the databricks generative ai engineer exam" | No | |
+| 3 | Study plan and prep time for the Databricks Generative AI Engineer Associate exam | "databricks genai engineer study plan" / "how long to prepare" | No | |
+| 4 | Mosaic AI Vector Search and RAG for the GenAI Engineer exam explained | "mosaic ai vector search rag exam" | No | |
+| 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | No | |
+
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
 | Priority | Topic | Search Intent | Published | Filename |
