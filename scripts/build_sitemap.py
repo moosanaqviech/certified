@@ -137,6 +137,11 @@ def collect():
         if name.endswith(".html"):
             yield f"{BASE}/legal/{name}", f"legal/{name}", "page"
 
+    if os.path.isdir("press"):
+        for name in sorted(os.listdir("press")):
+            if name.endswith(".html"):
+                yield f"{BASE}/press/{name}", f"press/{name}", "page"
+
 
 def build():
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
