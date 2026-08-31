@@ -64,7 +64,7 @@ Note on the Filename column: published posts are `.html` files in the
 |---|---|---|---|---|
 | 1 | Complete Databricks Generative AI Engineer Associate certification guide (pillar) | "databricks generative ai engineer associate certification guide" | Yes | blog/databricks-generative-ai-engineer-associate-certification-guide.html |
 | 2 | Databricks Generative AI Engineer Associate exam cost, format and question types | "what's on the databricks generative ai engineer exam" | No | |
-| 3 | Study plan and prep time for the Databricks Generative AI Engineer Associate exam | "databricks genai engineer study plan" / "how long to prepare" | No | |
+| 3 | Study plan and prep time for the Databricks Generative AI Engineer Associate exam | "databricks genai engineer study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-generative-ai-engineer-associate.html |
 | 4 | Mosaic AI Vector Search and RAG for the GenAI Engineer exam explained | "mosaic ai vector search rag exam" | No | |
 | 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | No | |
 
