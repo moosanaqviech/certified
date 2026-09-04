@@ -90,7 +90,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the AWS Machine Learning Engineer Associate exam | "MLA-C01 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate.html |
 | 4 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | Yes | blog/mla-c01-exam-cost-format-question-types.html |
 | 5 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | Yes | blog/sagemaker-mla-c01-exam.html |
-| 6 | Study plan and prep time for the updated AWS Machine Learning Engineer Associate exam (MLA-C02: beta, new GenAI and FM scope, 28/24/24/24 weights) | "MLA-C02 study plan" / "how long to prepare for MLA-C02" | No | |
+| 6 | Study plan and prep time for the updated AWS Machine Learning Engineer Associate exam (MLA-C02: beta, new GenAI and FM scope, 28/24/24/24 weights) | "MLA-C02 study plan" / "how long to prepare for MLA-C02" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate-mla-c02.html |
 | 7 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
 | 8 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | No | |
 
