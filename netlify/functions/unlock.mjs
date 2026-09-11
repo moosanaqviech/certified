@@ -41,8 +41,16 @@ export default async (req) => {
       const buyerId = s.customer || s.id;
       const { rec, code } = await grantCourse(buyerId, courseId, "stripe", secret);
       const { headers, token } = unlockedHeaders(rec.courses, secret);
+      // Report the exact amount collected so the browser Purchase pixel matches
+      // the real charge (per-course price), rather than assuming a flat figure.
+      const cents = s.amount_total ?? s.amount_subtotal;
+      const amount = typeof cents === "number" ? cents / 100 : null;
+      const currency = (s.currency || "usd").toUpperCase();
       return new Response(
-        JSON.stringify({ ok: true, code, token, courses: rec.courses, home: homeFor(courseId) }),
+        JSON.stringify({
+          ok: true, code, token, courses: rec.courses, home: homeFor(courseId),
+          course: courseId, amount, currency,
+        }),
         { status: 200, headers },
       );
     }

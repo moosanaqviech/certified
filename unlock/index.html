@@ -105,10 +105,14 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     }catch(e){}
     var eid="pur_"+sessionId;
     var courses=(d&&d.courses)||[];
+    // Value/currency come from the verified Stripe session (the real charge),
+    // so per-course prices report correctly. Fall back only if absent.
+    var value=(d&&typeof d.amount==="number")?d.amount:9.99;
+    var currency=(d&&d.currency)||"USD";
     try{ if(typeof fbq==="function") fbq("track","Purchase",
-      {value:9.99,currency:"USD",content_ids:courses,content_type:"product"},{eventID:eid}); }catch(e){}
+      {value:value,currency:currency,content_ids:courses,content_type:"product"},{eventID:eid}); }catch(e){}
     try{ if(typeof gtag==="function") gtag("event","purchase",
-      {transaction_id:eid,value:9.99,currency:"USD",items:courses.map(function(c){return {item_id:c};})}); }catch(e){}
+      {transaction_id:eid,value:value,currency:currency,items:courses.map(function(c){return {item_id:c};})}); }catch(e){}
   }
 
   async function post(payload){

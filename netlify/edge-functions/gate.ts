@@ -27,6 +27,7 @@ interface Course {
   title: string;
   home: string;
   blurb: string;
+  priceNow: string; // display price for this course (front-end anchor only)
   free: Set<string>; // stems (filename without .html) that stay free
 }
 
@@ -37,6 +38,7 @@ const COURSES: Course[] = [
     title: "Databricks DE Associate",
     home: "/databricks-data-engineer-associate/",
     blurb: "Unit 1 is free. Get lifetime access to Units 2 to 7: every lesson and all timed practice exams, one payment.",
+    priceNow: "$9.99",
     free: new Set<string>([
       "", "index",
       "lesson-01-lakehouse",
@@ -52,6 +54,7 @@ const COURSES: Course[] = [
     title: "Databricks DE Professional",
     home: "/databricks-data-engineer-professional/",
     blurb: "Unit 1 is free. Get lifetime access to Units 2 to 10: every lesson and all timed practice exams, one payment.",
+    priceNow: "$14.99",
     free: new Set<string>([
       "", "index",
       "lesson-01-dabs-project-structure",
@@ -69,9 +72,10 @@ const COURSES: Course[] = [
   },
 ];
 
-// Display price (front-end anchor only; the real charge is the Stripe Price).
+// Display anchor price, shared across courses (the "was" strike-through). The
+// current price is per-course (course.priceNow); the real charge is the Stripe
+// Price.
 const PRICE_REGULAR = "$30";
-const PRICE_NOW = "$9.99";
 
 function stemOf(path: string): string {
   let p = path;
@@ -238,7 +242,7 @@ function paywallHtml(course: Course): string {
     <div class="kicker">Members only</div>
     <h1>Unlock the full ${course.title} course</h1>
     <p>${course.blurb}</p>
-    <div class="price"><span class="now">${PRICE_NOW}</span><span class="was">${PRICE_REGULAR}</span></div>
+    <div class="price"><span class="now">${course.priceNow}</span><span class="was">${PRICE_REGULAR}</span></div>
     <div class="oneoff">One-time payment. Lifetime access.</div>
     <button class="cta" id="buy">Get full access</button>
     <div class="err" id="err"></div>
