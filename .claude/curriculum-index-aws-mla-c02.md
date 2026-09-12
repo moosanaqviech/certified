@@ -1,6 +1,6 @@
 # Curriculum index: AWS Certified Machine Learning Engineer Associate (MLA-C02)
 
-Status: DRAFT (not yet locked). Confirm placement before authoring lessons.
+Status: LOCKED on 12 Sep 2026 (confirmed by the course owner). This index is the authoritative chapter placement for the MLA-C02 course: if a later request conflicts with it, flag the conflict and propose a one-line fix instead of silently complying. Pairs with cert-config-aws-mla-c02.md.
 Source: Mirrors the MLA-C02 exam guide as published at docs.aws.amazon.com (in use from September 29, 2026; beta exam code ME1-C02).
 Exam guide: https://docs.aws.amazon.com/aws-certification/latest/machine-learning-engineer-associate-02/machine-learning-engineer-associate-02.html
 

@@ -50,12 +50,14 @@ each course). Each course lives in its own top-level folder and has its own
   `aws-machine-learning-engineer-associate-mla-c01/` (MLA-C01, offered in
   English until 28 Sep 2026, see curriculum-index-aws-mla-c01.md) and
   `aws-machine-learning-engineer-associate-mla-c02/` (MLA-C02, delivery
-  from 29 Sep 2026, see curriculum-index-aws-mla-c02.md). Both indexes are
-  DRAFT (chapter placement derived from the official exam guides, not yet
-  locked). No lessons or exams exist yet: the course index pages list every
-  chapter as "Coming soon" with `file:null`, and the practice exams will use
-  the `mla-c01-practice-exam-NN.html` and `mla-c02-practice-exam-NN.html`
-  prefixes.
+  from 29 Sep 2026, see curriculum-index-aws-mla-c02.md and
+  cert-config-aws-mla-c02.md). Both indexes are LOCKED (12 Sep 2026, derived
+  from the official exam guides at docs.aws.amazon.com). MLA-C02 is the
+  active course: author lessons and exams there only. The MLA-C01 index is
+  reference only, with no lessons or exams planned. No lessons or exams
+  exist yet in either folder: the course index pages list every chapter as
+  "Coming soon" with `file:null`, and the practice exams will use the
+  `mla-c02-practice-exam-NN.html` prefix (`mla-c01-` reserved, unused).
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the

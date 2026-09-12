@@ -1,6 +1,6 @@
 # Curriculum index: AWS Certified Machine Learning Engineer Associate (MLA-C01)
 
-Status: DRAFT (not yet locked). Confirm placement before authoring lessons.
+Status: LOCKED on 12 Sep 2026 (confirmed by the course owner), REFERENCE ONLY. MLA-C01 is offered in English until 28 Sep 2026 and no lessons or exams are planned for it; the course index page stays up as a syllabus reference and cross-link to MLA-C02. Author new content against curriculum-index-aws-mla-c02.md.
 Source: Mirrors the MLA-C01 exam guide as published at docs.aws.amazon.com (in use until September 28, 2026).
 Exam guide: https://docs.aws.amazon.com/aws-certification/latest/machine-learning-engineer-associate-01/machine-learning-engineer-associate-01.html
 
