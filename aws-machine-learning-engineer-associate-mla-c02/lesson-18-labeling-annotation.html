@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation · MLA-C02 Chapter 15</title>
+<title>Labeling and Annotation with SageMaker Ground Truth · MLA-C02 Chapter 18</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-15-preparing-data-for-fm-customization.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-18-labeling-annotation.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0e0a1a;            /* page background */
-    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
-    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
-    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
+    --bg: #141002;            /* page background */
+    --bg-tint: #2a2206;       /* ambient glow tint behind the card */
+    --accent: #eab308;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(234,179,8,0.12);  /* correct-answer fill */
+    --accent-ink: #141002;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,9 +215,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-16-cleaning-data.html",
+  next:      "lesson-19-bias-metrics-class-imbalance.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,44 +226,49 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m15a { animation: m15in 6s ease-in-out infinite; }
-      .m15b { animation: m15in 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15c { animation: m15in 6s ease-in-out infinite; animation-delay: 4s; }
-      .m15l1 { animation: m15lbl 6s ease-in-out infinite; }
-      .m15l2 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15l3 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 4s; }
-      @keyframes m15in { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 28% { transform: translateX(150px); opacity: 1; } 33%, 100% { transform: translateX(150px); opacity: 0; } }
-      @keyframes m15lbl { 0%, 2% { opacity: 0.3; } 8%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
-      @media (prefers-reduced-motion: reduce) { .m15a, .m15b, .m15c { animation: none; transform: translateX(150px); opacity: 1; } .m15l1, .m15l2, .m15l3 { animation: none; opacity: 1; } }
+      .m18h { animation: m18h 5s ease-in-out infinite; }
+      .m18auto { animation: m18auto 5s ease-in-out infinite; }
+      .m18box { animation: m18box 5s ease-in-out infinite; }
+      @keyframes m18h { 0%, 8% { opacity: 0; } 18%, 100% { opacity: 1; } }
+      @keyframes m18box { 0%, 20% { opacity: 0; transform: scale(0.6); } 32%, 100% { opacity: 1; transform: scale(1); } }
+      @keyframes m18auto { 0%, 50% { opacity: 0; transform: scale(0.6); } 64%, 100% { opacity: 1; transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { .m18h, .m18auto, .m18box { animation: none; opacity: 1; transform: none; } }
     </style>
     <defs>
-      <radialGradient id="m15glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(167,139,250,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
+      <radialGradient id="m18glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(234,179,8,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(234,179,8,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m15glow)"/>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m18glow)"/>
     <g>
-      <rect x="12" y="34" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l1"/>
-      <text x="67" y="49" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l1">FINE-TUNE</text>
-      <text x="67" y="61" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l1">{prompt, completion}</text>
-      <rect x="12" y="83" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l2"/>
-      <text x="67" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l2">PRE-TRAIN</text>
-      <text x="67" y="110" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l2">{input}</text>
-      <rect x="12" y="132" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l3"/>
-      <text x="67" y="147" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l3">DISTILL</text>
-      <text x="67" y="159" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l3">{messages: [user]}</text>
+      <rect x="30" y="60" width="80" height="80" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+      <path d="M42 118 l16 -18 l12 10 l10 -14 l18 22 z" fill="rgba(241,241,246,0.25)"/>
+      <circle cx="52" cy="80" r="7" fill="rgba(241,241,246,0.3)"/>
+      <text x="70" y="152" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">image</text>
     </g>
-    <path d="M122 51 C 160 51, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 100 h84" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 149 C 160 149, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <rect x="126" y="46" width="12" height="10" rx="2" fill="var(--accent)" class="m15a"/>
-    <rect x="126" y="95" width="12" height="10" rx="2" fill="var(--accent)" class="m15b"/>
-    <rect x="126" y="144" width="12" height="10" rx="2" fill="var(--accent)" class="m15c"/>
-    <rect x="212" y="70" width="96" height="60" rx="12" fill="rgba(167,139,250,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
-    <text x="260" y="95" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">custom model</text>
-    <text x="260" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSONL in S3, one job</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">three shapes of record, one training bucket</text>
+    <g class="m18h m18box">
+      <rect x="46" y="72" width="46" height="40" rx="4" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <rect x="46" y="64" width="30" height="12" rx="3" fill="var(--accent)"/>
+      <text x="61" y="73" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">cat</text>
+    </g>
+    <g class="m18h">
+      <circle cx="150" cy="46" r="11" fill="rgba(234,179,8,0.16)" stroke="var(--accent)"/>
+      <circle cx="150" cy="42" r="3.5" fill="var(--accent)"/>
+      <path d="M143 56 c3 -6, 11 -6, 14 0" fill="var(--accent)"/>
+      <text x="150" y="74" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">humans label</text>
+      <text x="150" y="86" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">a sample</text>
+    </g>
+    <path d="M118 100 h20" stroke="rgba(253,224,71,0.4)" stroke-width="1.5"/>
+    <path d="M162 60 C 190 60, 196 96, 214 96" stroke="rgba(253,224,71,0.4)" stroke-width="1.5" fill="none"/>
+    <g class="m18auto">
+      <rect x="216" y="70" width="90" height="52" rx="11" fill="rgba(234,179,8,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="261" y="90" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">MODEL</text>
+      <text x="261" y="105" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">auto-labels the rest</text>
+      <text x="261" y="116" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">above the confidence bar</text>
+    </g>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">low-confidence items go back to humans</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">GROUND TRUTH · ACTIVE LEARNING</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -278,98 +284,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 15</div>
-    <h1 class="reveal">Preparing data for FM customization</h1>
-    <p class="lead reveal">Fine-tuning wants labeled pairs, continued pre-training wants raw domain text, and distillation wants only prompts. <strong>The shape of the record you can produce</strong> is what picks the customization path.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.3 · Chapter 18</div>
+    <h1 class="reveal">Labeling and annotation</h1>
+    <p class="lead reveal">Supervised learning needs a label on every example. Amazon SageMaker Ground Truth runs the labeling: <strong>who does the work, how many agree, and when a model can label the rest</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : task types */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">JSONL in S3, sized to the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Every Amazon Bedrock customization job reads <code>.jsonl</code> files from S3: one JSON object per line, a training set and, where supported, a validation set.</p>
+    <div class="eyebrow reveal">What Ground Truth does</div>
+    <h2 class="reveal">Built-in task types plus custom</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.3.2 is labeling and annotating data. Ground Truth gives a worker UI and an output format for the common ML label shapes, or a custom template for anything else.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model-specific quotas</b>Record counts and token budgets differ per model: Claude 3 Haiku fine-tuning takes 32 to 10,000 records, up to 32,000 tokens each and a 10 GB training file; Llama 3.1 to 3.3 take 100 to 10,000 records at 16,000 tokens; Titan Text models cap the training file at 1 GB. Plan with about 6 characters per token.</p></div>
-      <div class="pill"><p><b>Cost model</b>Training is billed on tokens processed times epochs, plus monthly storage per custom model, so a deduplicated dataset is cheaper as well as better.</p></div>
-      <div class="pill"><p><b>Quality gates</b>Consistent format, PII removed (Chapter 14), duplicates dropped, a held-out validation set, and safety screening of prompt-response pairs (Chapter 20). The job validates format; it does not validate sense.</p></div>
+      <div class="pill"><p><b>Images</b>Single or multi-label classification, bounding boxes (object detection), semantic segmentation (per-pixel), and label verification.</p></div>
+      <div class="pill"><p><b>Text</b>Classification and named entity recognition; video and 3D point-cloud task types exist for those modalities.</p></div>
+      <div class="pill"><p><b>Output</b>Every job writes an augmented manifest (Chapter 6): the S3 URI of each object with its label attributes, ready as a training channel. Note that Ground Truth is closed to new customers, though existing customers still use it and the exam still covers it.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : fine-tuning */
+  /* 2 : workforces */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Supervised fine-tuning</div>
-    <h2 class="reveal">Labeled pairs in the model's own format</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The model learns which output belongs to which input, so every record carries both. Two record shapes exist.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"prompt": "Summarize: ...", "completion": "..."}<br><span class="cm">// or, for conversational models</span><br>{"schemaVersion": "bedrock-conversation-2024",<br>&nbsp;"system": [{"text": "..."}],<br>&nbsp;"messages": [{"role": "user", "content": [{"text": "..."}]},<br>&nbsp;&nbsp;{"role": "assistant", "content": [{"text": "..."}]}]}</div>
+    <div class="eyebrow reveal">Who does the work</div>
+    <h2 class="reveal">Three workforces</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same job can be sent to different labelers, and the choice trades cost, speed, and confidentiality.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Non-conversational models</b>Titan Text, Cohere Command, Llama 3.1: <code>prompt</code> and <code>completion</code> per line, for summarization, extraction, translation, question answering.</p></div>
-      <div class="pill"><p><b>Conversational models</b>Claude 3 Haiku, Llama 3.2 and 3.3 use the Converse message format with system, user, and assistant turns, single or multi-turn. Vision variants add an image block with an S3 URI; Titan Multimodal Embeddings and Titan Image Generator take <code>image-ref</code> plus <code>caption</code>.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You have (or can label) hundreds to thousands of examples of the exact output style, format, or task the base model gets wrong.</p></div>
+      <div class="pill"><p><b>Amazon Mechanical Turk</b>A large public, on-demand workforce. Cheapest and most scalable, but the data leaves your control, so never for confidential or regulated content.</p></div>
+      <div class="pill"><p><b>Private workforce</b>Your own employees or contractors. The choice when data is sensitive (medical images, internal documents) or the task needs domain expertise.</p></div>
+      <div class="pill"><p><b>Vendor workforce</b>A third-party labeling company from AWS Marketplace: more scale than a private team, more vetting than the public crowd. Ground Truth Plus is the fully managed option where AWS runs the whole labeling operation.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : continued pre-training */
+  /* 3 : annotation consolidation */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Continued pre-training</div>
-    <h2 class="reveal">Unlabeled domain text, and lots of it</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Continued pre-training keeps training the base model's language objective on your own corpus, so it absorbs <strong>vocabulary and phrasing</strong> rather than a task. Records carry text only, no answer.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"input": "Section 4.2: the overcurrent relay shall trip within ..."}<br>{"input": "Torque the M12 fasteners to 80 Nm in a star pattern ..."}</div>
+    <div class="eyebrow reveal">Making labels trustworthy</div>
+    <h2 class="reveal">Send each item to several workers</h2>
+    <p class="lead reveal" style="margin-bottom:16px">One labeler makes mistakes, so Ground Truth can route each object to multiple workers and <strong>consolidate</strong> their answers into one label.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What the data looks like</b>Cleaned domain documents (Chapter 12), one passage per line, deduplicated, PII removed, volume measured in tokens rather than examples. No labels to write is the whole appeal.</p></div>
-      <div class="pill"><p><b>Where it runs today</b>Bedrock's current customization menu lists supervised fine-tuning, reinforcement fine-tuning, and distillation; the input-only path was offered on Amazon Titan Text models. For open models, SageMaker AI training jobs and JumpStart cover the same need, and fine-tuning usually follows to teach the task.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The base model misreads the domain's language (jargon, formats, regulatory phrasing) and you have a large unlabeled corpus but few labeled examples.</p></div>
+      <div class="pill"><p><b>Annotation consolidation</b>A built-in algorithm weighs the workers' annotations (majority vote for classification, box averaging for detection) and produces a single label plus a confidence score, so a noisy worker does not corrupt the set.</p></div>
+      <div class="pill"><p><b>The trade-off</b>More workers per item means higher confidence and higher cost. Reserve heavy redundancy for hard or high-stakes items.</p></div>
+      <div class="pill"><p><b>Quality review</b>Amazon Augmented AI (A2I) adds human review loops elsewhere in a pipeline, for example to check a model's low-confidence predictions in production.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : distillation */
+  /* 4 : automated labeling */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Model distillation</div>
-    <h2 class="reveal">Prompts in, teacher answers, student learns</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Model Distillation sends your prompts to a larger <strong>teacher</strong> model, synthesizes responses, and fine-tunes a smaller, cheaper <strong>student</strong> on them. You supply prompts, not answers.</p>
+    <div class="eyebrow reveal">Labeling at scale</div>
+    <h2 class="reveal">Automated data labeling with active learning</h2>
+    <p class="lead reveal" style="margin-bottom:16px">On large datasets, Ground Truth can label most objects with a model and send only the hard ones to humans, cutting cost and time.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Record shape</b>The same <code>bedrock-conversation-2024</code> JSONL, but the messages usually end at the user turn. Format prompts for the target use case (a RAG prompt with context tags, an agent prompt with a tool list) because the synthetic data mirrors them. A handful of labeled prompt-response pairs can be included as golden examples.</p></div>
-      <div class="pill"><p><b>Invocation logs instead</b>With model invocation logging on, production prompts (and optionally the teacher's real responses) become the dataset, filtered by requestMetadata. Prompt-response pairs are only used when the logged model matches the chosen teacher.</p></div>
-      <div class="pill"><p><b>Costs and limits</b>Data synthesis can grow the set to a maximum of 15,000 prompt-response pairs and bills teacher inference at on-demand rates. Text-to-text only.</p></div>
+      <div class="pill"><p><b>How it works</b>Humans label a sample; Ground Truth trains a model on it, sets a confidence threshold from a validation set, and auto-labels every object the model is confident enough about. Low-confidence objects go back to humans, and the model is retrained. This repeats until the set is labeled or the budget runs out.</p></div>
+      <div class="pill"><p><b>When it applies</b>Only for image classification, object detection, semantic segmentation, and text classification, and only on large sets: the minimum is 1,250 objects, with 5,000-plus recommended, because the model needs enough data to hit the built-in accuracy bar (about 95% for classification).</p></div>
+      <div class="pill"><p><b>The catch</b>You pay SageMaker training and inference on top of labeling, and the auto-label model should be tested before you trust it in production.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three paths, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Continued pre-training</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Distillation</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Record</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt + completion, or messages</td>
-          <td style="padding:8px 5px; color:var(--ink);">input text only</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt only (labels optional)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Who labels</td>
-          <td style="padding:8px 5px; color:var(--ink);">you</td>
-          <td style="padding:8px 5px; color:var(--ink);">nobody</td>
-          <td style="padding:8px 5px; color:var(--ink);">the teacher model</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Teaches</td>
-          <td style="padding:8px 5px; color:var(--ink);">a task or style</td>
-          <td style="padding:8px 5px; color:var(--ink);">domain language</td>
-          <td style="padding:8px 5px; color:var(--ink);">a big model's behavior</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Volume</td>
-          <td style="padding:8px 5px; color:var(--ink);">hundreds to 10k</td>
-          <td style="padding:8px 5px; color:var(--ink);">tokens, large</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompts, up to 15k pairs</td>
-        </tr>
-      </table>
+  /* 5 : pipeline step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">Labeling 200,000 product images</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through a bounding-box job for a catalog dataset.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Pick the task and workforce</b>Bounding box task type; a private workforce because the catalog is unreleased, so Mechanical Turk is off the table.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Enable automated labeling</b>200,000 objects is well above the 5,000 recommendation, so active learning will carry most of the volume.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Consolidate</b>Route each image to three workers; annotation consolidation averages the boxes and attaches a confidence score.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Collect the manifest</b>The job writes an augmented manifest of image-ref URIs and boxes, which feeds the training channel in Pipe mode (Chapter 6).</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,77 +358,50 @@ const cards = [
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"We have labeled examples", "wrong format or tone", "specific task"</b>Supervised fine-tuning: prompt and completion, or Converse messages for conversational models.</p></div>
-      <div class="pill" data-step="2"><p><b>"Doesn't understand our jargon", "large unlabeled corpus", "few labels"</b>Continued pre-training on input-only text, then fine-tune the task on top.</p></div>
-      <div class="pill" data-step="3"><p><b>"Cheaper and faster model", "match the big model's quality", "we have production prompts or logs"</b>Distillation from prompts or invocation logs.</p></div>
+      <div class="pill" data-step="1"><p><b>"Confidential or regulated data", "domain expertise needed"</b>Private workforce (or a vetted vendor workforce); never Mechanical Turk.</p></div>
+      <div class="pill" data-step="2"><p><b>"Hundreds of thousands of images", "reduce labeling cost", "one of the four supported task types"</b>Enable automated data labeling with active learning.</p></div>
+      <div class="pill" data-step="3"><p><b>"Noisy labels", "workers disagree", "need a confidence per label"</b>Multiple workers per object plus annotation consolidation.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : validation and quality, step build */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal" style="font-size:24px">From raw pairs to a training bucket</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the preparation of 4,000 support conversations for a Claude 3 Haiku fine-tune.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>1. Clean and protect</b>Redact PII with Comprehend, drop duplicates and near-duplicates, remove conversations with unsafe content (Chapter 20).</p></div>
-      <div class="pill" data-step="2"><p><b>2. Reshape</b>Convert each conversation into the messages format with one consistent system prompt and alternating user and assistant turns; count tokens to stay under the per-record limit.</p></div>
-      <div class="pill" data-step="3"><p><b>3. Split</b>Hold out a validation file (Claude 3 Haiku allows up to 1,000 validation records) that shares no conversation with training.</p></div>
-      <div class="pill" data-step="4"><p><b>4. Land in S3</b>Training and validation JSONL in a bucket the customization service role can read, then submit the job and watch the validation loss.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 8 : quiz 1 */
+  /* 7 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team wants a smaller, cheaper Bedrock model that answers like the large model they run in production today. They have invocation logging enabled and thousands of real prompts, but no labeled answers. Which customization path fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A hospital needs 300,000 unreleased medical images labeled with bounding boxes, on a limited budget, and the images cannot leave its control. How should the ML engineer configure the Ground Truth job?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Model distillation using the invocation logs as the prompt source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Supervised fine-tuning with the prompts as completions</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the concatenated prompts</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Fine-tuning the large model on its own outputs</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Mechanical Turk workforce with automated data labeling</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Private workforce with automated data labeling enabled</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Private workforce, every image labeled by a human</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Vendor workforce with a single worker per image</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Distillation is the path that needs prompts only: the teacher generates or already logged the responses, and the student is fine-tuned on them, giving a smaller model that imitates the large one. Continued pre-training (C) is the tempting distractor since it also needs no labels, but it teaches domain language, not the teacher's behavior, and prompts are not a domain corpus.</div>` },
+    <div class="feedback"><b>Correct.</b> Confidential medical data rules out the public crowd, so a private workforce is required, and 300,000 images with a bounding-box task (one of the four supported types) is exactly where active learning cuts cost. Mechanical Turk (A) is the tempting distractor: it is cheapest, but it exposes protected images to an anonymous public workforce, which is disqualifying.</div>` },
 
-  /* 9 : quiz 2 */
+  /* 8 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team has 5,000 labeled question-and-answer pairs as prompt and completion JSONL and wants to fine-tune Claude 3 Haiku for a multi-turn support assistant. What must they do to the data?</h2>
+    <h2 class="reveal" style="font-size:22px">A sentiment-labeling job on 900 short texts produces inconsistent labels, and the team wants a confidence score per label to find the disputed ones. What should they change?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Nothing; prompt and completion is the universal fine-tuning format on Bedrock</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Merge all pairs into one input field for continued pre-training</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Convert each record to the messages format with a system prompt and user and assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Convert the pairs to CSV with a header row</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Enable automated data labeling to remove human error</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Send each text to multiple workers and use annotation consolidation</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Switch from a private workforce to Mechanical Turk</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Increase the dataset to 5,000 texts</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Conversational models such as Claude 3 Haiku are fine-tuned in the Converse message format (system, user, assistant), which also carries multi-turn context. Leaving the data as is (A) is the tempting distractor: prompt and completion is valid for non-conversational models such as Titan Text or Llama 3.1, not for this one.</div>` },
+    <div class="feedback"><b>Correct.</b> Multiple workers per item plus annotation consolidation produces one agreed label and a confidence score, which surfaces the disputed texts. Automated labeling (A) is the tempting distractor: besides needing far more than 900 objects, it addresses volume and cost, not the trustworthiness of each individual label.</div>` },
 
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A distillation prompt set generated from manual headings</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A messages-format fine-tuning set with the manuals as assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A metadata sidecar per manual for a knowledge base</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A cleaned, deduplicated input-only JSONL corpus for continued pre-training</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. The knowledge base (C) is the tempting distractor because RAG also exposes the manuals, but retrieval hands the model passages at runtime and does not fix how the model itself uses the terminology.</div>` },
-
-  /* 11 : done */
+  /* 9 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Data shaped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Labeled pairs, raw text, or prompts alone: the record you can produce picks the path.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Data labeled</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match the workforce to the data's sensitivity, consolidate for trust, automate for scale.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Fine-tuning</b>prompt and completion, or Converse messages; hundreds to 10,000 records within token limits.</p></div>
-      <div class="pill"><p><b>Continued pre-training</b>input-only passages, deduplicated and cleaned, measured in tokens.</p></div>
-      <div class="pill"><p><b>Distillation</b>prompts or invocation logs; the teacher writes the answers, up to 15,000 pairs.</p></div>
-      <div class="pill"><p><b>Always</b>JSONL in S3, PII out, duplicates out, a validation split, model-specific quotas.</p></div>
+      <div class="pill"><p><b>Task types</b>Image, text, video, point cloud; output is an augmented manifest.</p></div>
+      <div class="pill"><p><b>Workforces</b>Mechanical Turk (public, cheap), private (sensitive), vendor or Ground Truth Plus (managed).</p></div>
+      <div class="pill"><p><b>Consolidation</b>Multiple workers per item, one label plus confidence.</p></div>
+      <div class="pill"><p><b>Automated labeling</b>Active learning above 1,250 (ideally 5,000+) objects, four task types.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

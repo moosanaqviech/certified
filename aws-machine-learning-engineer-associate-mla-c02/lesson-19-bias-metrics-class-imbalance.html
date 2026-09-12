@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation · MLA-C02 Chapter 15</title>
+<title>Bias Metrics and Class Imbalance Across Numeric, Text, and Image Data · MLA-C02 Chapter 19</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-15-preparing-data-for-fm-customization.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-19-bias-metrics-class-imbalance.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0e0a1a;            /* page background */
-    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
-    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
-    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
+    --bg: #12061a;            /* page background */
+    --bg-tint: #280d33;       /* ambient glow tint behind the card */
+    --accent: #d946ef;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(217,70,239,0.12);  /* correct-answer fill */
+    --accent-ink: #12061a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,9 +215,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-16-cleaning-data.html",
+  next:      "lesson-20-validating-ai-training-data.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,44 +226,41 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m15a { animation: m15in 6s ease-in-out infinite; }
-      .m15b { animation: m15in 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15c { animation: m15in 6s ease-in-out infinite; animation-delay: 4s; }
-      .m15l1 { animation: m15lbl 6s ease-in-out infinite; }
-      .m15l2 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15l3 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 4s; }
-      @keyframes m15in { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 28% { transform: translateX(150px); opacity: 1; } 33%, 100% { transform: translateX(150px); opacity: 0; } }
-      @keyframes m15lbl { 0%, 2% { opacity: 0.3; } 8%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
-      @media (prefers-reduced-motion: reduce) { .m15a, .m15b, .m15c { animation: none; transform: translateX(150px); opacity: 1; } .m15l1, .m15l2, .m15l3 { animation: none; opacity: 1; } }
+      .m19maj { animation: m19maj 5s ease-in-out infinite; }
+      .m19min { animation: m19min 5s ease-in-out infinite; }
+      .m19new { animation: m19new 5s ease-in-out infinite; }
+      .m19bal { animation: m19bal 5s ease-in-out infinite; }
+      @keyframes m19maj { 0%, 40% { opacity: 1; } 55%, 100% { opacity: 0.4; } }
+      @keyframes m19min { 0%, 45% { opacity: 1; } 60%, 100% { opacity: 1; } }
+      @keyframes m19new { 0%, 45% { opacity: 0; transform: scale(0.4); } 62%, 100% { opacity: 1; transform: scale(1); } }
+      @keyframes m19bal { 0%, 40% { opacity: 0; } 58%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m19maj { animation: none; opacity: 0.4; } .m19new, .m19bal { animation: none; opacity: 1; transform: none; } }
     </style>
     <defs>
-      <radialGradient id="m15glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(167,139,250,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
+      <radialGradient id="m19glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(217,70,239,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(217,70,239,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m15glow)"/>
-    <g>
-      <rect x="12" y="34" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l1"/>
-      <text x="67" y="49" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l1">FINE-TUNE</text>
-      <text x="67" y="61" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l1">{prompt, completion}</text>
-      <rect x="12" y="83" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l2"/>
-      <text x="67" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l2">PRE-TRAIN</text>
-      <text x="67" y="110" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l2">{input}</text>
-      <rect x="12" y="132" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l3"/>
-      <text x="67" y="147" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l3">DISTILL</text>
-      <text x="67" y="159" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l3">{messages: [user]}</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m19glow)"/>
+    <line x1="30" y1="150" x2="290" y2="150" stroke="rgba(240,171,252,0.3)" stroke-width="1.2"/>
+    <text x="90" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">majority</text>
+    <text x="228" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">minority</text>
+    <g class="m19maj">
+      <rect x="46" y="46" width="24" height="104" rx="4" fill="var(--accent)"/>
+      <rect x="76" y="60" width="24" height="90" rx="4" fill="var(--accent)"/>
+      <rect x="106" y="52" width="24" height="98" rx="4" fill="var(--accent)"/>
     </g>
-    <path d="M122 51 C 160 51, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 100 h84" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 149 C 160 149, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <rect x="126" y="46" width="12" height="10" rx="2" fill="var(--accent)" class="m15a"/>
-    <rect x="126" y="95" width="12" height="10" rx="2" fill="var(--accent)" class="m15b"/>
-    <rect x="126" y="144" width="12" height="10" rx="2" fill="var(--accent)" class="m15c"/>
-    <rect x="212" y="70" width="96" height="60" rx="12" fill="rgba(167,139,250,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
-    <text x="260" y="95" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">custom model</text>
-    <text x="260" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSONL in S3, one job</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">three shapes of record, one training bucket</text>
+    <g class="m19min">
+      <rect x="200" y="126" width="24" height="24" rx="4" fill="var(--accent)"/>
+      <rect x="230" y="132" width="24" height="18" rx="4" fill="var(--accent)"/>
+    </g>
+    <g class="m19new">
+      <rect x="200" y="86" width="24" height="40" rx="4" fill="#f0abfc" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <rect x="230" y="78" width="24" height="54" rx="4" fill="#f0abfc" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <rect x="260" y="98" width="24" height="52" rx="4" fill="#f0abfc" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>
+    </g>
+    <text x="160" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.2" class="m19bal">measure the gap, then close it</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -278,125 +276,97 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 15</div>
-    <h1 class="reveal">Preparing data for FM customization</h1>
-    <p class="lead reveal">Fine-tuning wants labeled pairs, continued pre-training wants raw domain text, and distillation wants only prompts. <strong>The shape of the record you can produce</strong> is what picks the customization path.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.3 · Chapter 19</div>
+    <h1 class="reveal">Bias metrics and class imbalance</h1>
+    <p class="lead reveal">Two different imbalances break models. <strong>Class imbalance</strong> starves the minority label; <strong>facet bias</strong> skews outcomes across a group. Measure each before training, then close the gap.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : two imbalances */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">JSONL in S3, sized to the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Every Amazon Bedrock customization job reads <code>.jsonl</code> files from S3: one JSON object per line, a training set and, where supported, a validation set.</p>
+    <div class="eyebrow reveal">Two problems, often confused</div>
+    <h2 class="reveal">Imbalance in the label vs bias across a group</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skills 1.3.3 to 1.3.5 cover identifying and mitigating bias, multimodal bias metrics, and resolving class imbalance. Keep the two ideas separate.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model-specific quotas</b>Record counts and token budgets differ per model: Claude 3 Haiku fine-tuning takes 32 to 10,000 records, up to 32,000 tokens each and a 10 GB training file; Llama 3.1 to 3.3 take 100 to 10,000 records at 16,000 tokens; Titan Text models cap the training file at 1 GB. Plan with about 6 characters per token.</p></div>
-      <div class="pill"><p><b>Cost model</b>Training is billed on tokens processed times epochs, plus monthly storage per custom model, so a deduplicated dataset is cheaper as well as better.</p></div>
-      <div class="pill"><p><b>Quality gates</b>Consistent format, PII removed (Chapter 14), duplicates dropped, a held-out validation set, and safety screening of prompt-response pairs (Chapter 20). The job validates format; it does not validate sense.</p></div>
+      <div class="pill"><p><b>Class imbalance</b>One target label is rare: 2% fraud, 98% legitimate. The model can score 98% accuracy by always predicting "legitimate" and never catch fraud. A modeling problem.</p></div>
+      <div class="pill"><p><b>Facet bias</b>Outcomes differ across a sensitive group (a facet) such as age or gender: one group gets far more positive labels than another. A fairness problem, measured before any model exists.</p></div>
+      <div class="pill"><p><b>The vocabulary</b>SageMaker Clarify names the sensitive attribute the facet, the target the label, and the favored and disfavored facet values a and d. Its pre-training metrics are model-agnostic: they read the raw data, not model output.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : fine-tuning */
+  /* 2 : the metrics */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Supervised fine-tuning</div>
-    <h2 class="reveal">Labeled pairs in the model's own format</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The model learns which output belongs to which input, so every record carries both. Two record shapes exist.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"prompt": "Summarize: ...", "completion": "..."}<br><span class="cm">// or, for conversational models</span><br>{"schemaVersion": "bedrock-conversation-2024",<br>&nbsp;"system": [{"text": "..."}],<br>&nbsp;"messages": [{"role": "user", "content": [{"text": "..."}]},<br>&nbsp;&nbsp;{"role": "assistant", "content": [{"text": "..."}]}]}</div>
+    <div class="eyebrow reveal">Measuring facet bias · Clarify</div>
+    <h2 class="reveal">Pre-training bias metrics</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Clarify computes several, each answering a different fairness question. You do not memorize formulas; you match the metric to the question.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Non-conversational models</b>Titan Text, Cohere Command, Llama 3.1: <code>prompt</code> and <code>completion</code> per line, for summarization, extraction, translation, question answering.</p></div>
-      <div class="pill"><p><b>Conversational models</b>Claude 3 Haiku, Llama 3.2 and 3.3 use the Converse message format with system, user, and assistant turns, single or multi-turn. Vision variants add an image block with an S3 URI; Titan Multimodal Embeddings and Titan Image Generator take <code>image-ref</code> plus <code>caption</code>.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You have (or can label) hundreds to thousands of examples of the exact output style, format, or task the base model gets wrong.</p></div>
+      <div class="pill"><p><b>Class Imbalance (CI)</b>Is one facet simply under-represented in the data? Range minus 1 to plus 1, zero is balanced. This is representation, not outcomes.</p></div>
+      <div class="pill"><p><b>Difference in Proportions of Labels (DPL)</b>Does one facet get positive outcomes more often? The core "biased labeling" check, minus 1 to plus 1.</p></div>
+      <div class="pill"><p><b>KL and JS divergence, Lp-norm, TVD</b>How much do the two facets' whole outcome distributions differ? Larger means more divergence; useful for multi-category or continuous labels.</p></div>
+      <div class="pill"><p><b>KS and CDD</b>KS finds the largest single-category disparity; Conditional Demographic Disparity checks whether a disparity holds once you condition on subgroups (guarding against Simpson's paradox).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : continued pre-training */
+  /* 3 : running clarify + multimodal */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Continued pre-training</div>
-    <h2 class="reveal">Unlabeled domain text, and lots of it</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Continued pre-training keeps training the base model's language objective on your own corpus, so it absorbs <strong>vocabulary and phrasing</strong> rather than a task. Records carry text only, no answer.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"input": "Section 4.2: the overcurrent relay shall trip within ..."}<br>{"input": "Torque the M12 fasteners to 80 Nm in a star pattern ..."}</div>
+    <div class="eyebrow reveal">Running it, across modalities</div>
+    <h2 class="reveal">A processing job over any data</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Clarify runs as a SageMaker processing job (also surfaced in Data Wrangler) and writes a bias report. Skill 1.3.4 stresses that the same thinking applies beyond tabular data.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What the data looks like</b>Cleaned domain documents (Chapter 12), one passage per line, deduplicated, PII removed, volume measured in tokens rather than examples. No labels to write is the whole appeal.</p></div>
-      <div class="pill"><p><b>Where it runs today</b>Bedrock's current customization menu lists supervised fine-tuning, reinforcement fine-tuning, and distillation; the input-only path was offered on Amazon Titan Text models. For open models, SageMaker AI training jobs and JumpStart cover the same need, and fine-tuning usually follows to teach the task.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The base model misreads the domain's language (jargon, formats, regulatory phrasing) and you have a large unlabeled corpus but few labeled examples.</p></div>
+      <div class="pill"><p><b>Numeric and tabular</b>The direct case: facet and label are columns, and the metrics above apply as written.</p></div>
+      <div class="pill"><p><b>Text and images</b>Bias hides in the distribution of examples: a face dataset skewed toward one skin tone, a sentiment corpus where one dialect is mostly labeled negative. Derive a facet (source, language, demographic tag) and measure representation and outcome balance the same way.</p></div>
+      <div class="pill"><p><b>Read the number in context</b>A nonzero metric flags a disparity; whether it is unfair and how to fix it is a judgment about the domain, not a threshold the tool sets. Note that Clarify is closed to new customers but remains in scope for the exam.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : distillation */
+  /* 4 : fixing class imbalance */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Model distillation</div>
-    <h2 class="reveal">Prompts in, teacher answers, student learns</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Model Distillation sends your prompts to a larger <strong>teacher</strong> model, synthesizes responses, and fine-tunes a smaller, cheaper <strong>student</strong> on them. You supply prompts, not answers.</p>
+    <div class="eyebrow reveal">Resolving class imbalance · Skill 1.3.5</div>
+    <h2 class="reveal">Resample the training split</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler's Balance data transform offers the three standard fixes; all reshape the <strong>training split only</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Record shape</b>The same <code>bedrock-conversation-2024</code> JSONL, but the messages usually end at the user turn. Format prompts for the target use case (a RAG prompt with context tags, an agent prompt with a tool list) because the synthetic data mirrors them. A handful of labeled prompt-response pairs can be included as golden examples.</p></div>
-      <div class="pill"><p><b>Invocation logs instead</b>With model invocation logging on, production prompts (and optionally the teacher's real responses) become the dataset, filtered by requestMetadata. Prompt-response pairs are only used when the logged model matches the chosen teacher.</p></div>
-      <div class="pill"><p><b>Costs and limits</b>Data synthesis can grow the set to a maximum of 15,000 prompt-response pairs and bills teacher inference at on-demand rates. Text-to-text only.</p></div>
+      <div class="pill"><p><b>Random oversampling</b>Duplicate minority rows until the classes are even. Simple, but exact copies risk overfitting the minority.</p></div>
+      <div class="pill"><p><b>Random undersampling</b>Drop majority rows to match. Cheap, but it throws away real data, bad when the dataset is small.</p></div>
+      <div class="pill"><p><b>SMOTE</b>Synthesize new minority rows by interpolating between real neighbors instead of copying, so the model sees variety, not repeats. The usual first choice for moderate imbalance.</p></div>
+      <div class="pill"><p><b>Beyond resampling</b>Class weights in the algorithm, and evaluation metrics that survive imbalance (precision, recall, F1, ROC AUC, not raw accuracy, Chapter 35). Never balance the test set: it must reflect reality.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : which lever */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three paths, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Continued pre-training</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Distillation</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Record</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt + completion, or messages</td>
-          <td style="padding:8px 5px; color:var(--ink);">input text only</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt only (labels optional)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Who labels</td>
-          <td style="padding:8px 5px; color:var(--ink);">you</td>
-          <td style="padding:8px 5px; color:var(--ink);">nobody</td>
-          <td style="padding:8px 5px; color:var(--ink);">the teacher model</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Teaches</td>
-          <td style="padding:8px 5px; color:var(--ink);">a task or style</td>
-          <td style="padding:8px 5px; color:var(--ink);">domain language</td>
-          <td style="padding:8px 5px; color:var(--ink);">a big model's behavior</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Volume</td>
-          <td style="padding:8px 5px; color:var(--ink);">hundreds to 10k</td>
-          <td style="padding:8px 5px; color:var(--ink);">tokens, large</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompts, up to 15k pairs</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Matching the fix to the problem</div>
+    <h2 class="reveal">Bias and imbalance need different levers</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The two problems from card 1 do not share a fix, and using the wrong one wastes effort.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Class imbalance</b>Resample (SMOTE, over, under), reweight the classes, and evaluate with imbalance-robust metrics. The goal is a model that learns the rare class.</p></div>
+      <div class="pill"><p><b>Facet bias</b>Fix the data source or labeling that created the disparity, rebalance representation across the facet, or drop a leaking proxy feature. The goal is fair outcomes across groups. Clarify also has post-training metrics to confirm the trained model did not reintroduce it.</p></div>
+      <div class="pill"><p><b>They can coexist</b>A fraud dataset can be class-imbalanced (few fraud cases) and facet-biased (fraud labels skew by region). Measure both; treat both.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : decision signals */
+  /* 6 : workflow step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">A loan-approval dataset</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through checking and fixing a dataset before training.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Measure representation</b>Clarify's CI shows the older-applicant facet is under-represented. Note it, but it is not yet about outcomes.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Measure outcomes</b>DPL shows the older facet also gets far fewer positive (approved) labels. That is the fairness flag to act on.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Treat the bias</b>Investigate the labeling, rebalance representation across the age facet, and drop a ZIP-code feature that proxies for it.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Treat the imbalance</b>The approve label is also rare overall, so SMOTE the training split and evaluate with F1, never raw accuracy. Leave validation and test untouched.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : decision signals */
   { steps: 3,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"We have labeled examples", "wrong format or tone", "specific task"</b>Supervised fine-tuning: prompt and completion, or Converse messages for conversational models.</p></div>
-      <div class="pill" data-step="2"><p><b>"Doesn't understand our jargon", "large unlabeled corpus", "few labels"</b>Continued pre-training on input-only text, then fine-tune the task on top.</p></div>
-      <div class="pill" data-step="3"><p><b>"Cheaper and faster model", "match the big model's quality", "we have production prompts or logs"</b>Distillation from prompts or invocation logs.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : validation and quality, step build */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal" style="font-size:24px">From raw pairs to a training bucket</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the preparation of 4,000 support conversations for a Claude 3 Haiku fine-tune.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>1. Clean and protect</b>Redact PII with Comprehend, drop duplicates and near-duplicates, remove conversations with unsafe content (Chapter 20).</p></div>
-      <div class="pill" data-step="2"><p><b>2. Reshape</b>Convert each conversation into the messages format with one consistent system prompt and alternating user and assistant turns; count tokens to stay under the per-record limit.</p></div>
-      <div class="pill" data-step="3"><p><b>3. Split</b>Hold out a validation file (Claude 3 Haiku allows up to 1,000 validation records) that shares no conversation with training.</p></div>
-      <div class="pill" data-step="4"><p><b>4. Land in S3</b>Training and validation JSONL in a bucket the customization service role can read, then submit the job and watch the validation loss.</p></div>
+      <div class="pill" data-step="1"><p><b>"One label is rare", "99% one class", "accuracy looks great but misses the rare case"</b>Class imbalance: SMOTE or resample the training split, evaluate with F1 or recall.</p></div>
+      <div class="pill" data-step="2"><p><b>"Outcomes differ by age or gender", "is the data fair", "before training"</b>Clarify pre-training bias metrics: CI for representation, DPL for outcome disparity.</p></div>
+      <div class="pill" data-step="3"><p><b>"Disparity disappears within subgroups", "Simpson's paradox"</b>Conditional Demographic Disparity (CDD), which conditions on subgroups.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -404,53 +374,53 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team wants a smaller, cheaper Bedrock model that answers like the large model they run in production today. They have invocation logging enabled and thousands of real prompts, but no labeled answers. Which customization path fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A fraud model with 1.5% positive cases reaches 98.5% accuracy but catches almost no fraud. What is the most appropriate fix to the training data?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Model distillation using the invocation logs as the prompt source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Supervised fine-tuning with the prompts as completions</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the concatenated prompts</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Fine-tuning the large model on its own outputs</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Apply SMOTE to the training split to synthesize minority fraud examples, and evaluate with F1</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Oversample both classes equally to double the dataset</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Balance the test set so accuracy reflects both classes</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Run Clarify DPL to measure the disparity across the fraud facet</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Distillation is the path that needs prompts only: the teacher generates or already logged the responses, and the student is fine-tuned on them, giving a smaller model that imitates the large one. Continued pre-training (C) is the tempting distractor since it also needs no labels, but it teaches domain language, not the teacher's behavior, and prompts are not a domain corpus.</div>` },
+    <div class="feedback"><b>Correct.</b> This is class imbalance: the rare label is starved, so SMOTE gives the model varied minority examples and F1 replaces the misleading accuracy. Balancing the test set (C) is the tempting distractor: it makes accuracy look better, but the test set must mirror the real 1.5% rate or the metric lies about production. DPL (D) measures facet fairness, a different problem.</div>` },
 
   /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team has 5,000 labeled question-and-answer pairs as prompt and completion JSONL and wants to fine-tune Claude 3 Haiku for a multi-turn support assistant. What must they do to the data?</h2>
+    <h2 class="reveal" style="font-size:22px">Before training a hiring model, a team must check whether one gender receives a higher proportion of positive (hired) labels in the historical data. Which measure answers this directly?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Nothing; prompt and completion is the universal fine-tuning format on Bedrock</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Merge all pairs into one input field for continued pre-training</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Convert each record to the messages format with a system prompt and user and assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Convert the pairs to CSV with a header row</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Class Imbalance (CI) on the gender facet</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Difference in Proportions of Labels (DPL) on the gender facet</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>SMOTE on the minority gender</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Kolmogorov-Smirnov on the applicant age column</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Conversational models such as Claude 3 Haiku are fine-tuned in the Converse message format (system, user, assistant), which also carries multi-turn context. Leaving the data as is (A) is the tempting distractor: prompt and completion is valid for non-conversational models such as Titan Text or Llama 3.1, not for this one.</div>` },
+    <div class="feedback"><b>Correct.</b> DPL measures the imbalance of positive outcomes between facet values, which is exactly "does one gender get hired more often". CI (A) is the tempting distractor: it only checks how many samples each gender has, not how their outcomes differ, so a dataset can be perfectly balanced in count yet skewed in outcomes.</div>` },
 
   /* 10 : quiz 3 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?</h2>
+    <h2 class="reveal" style="font-size:22px">An image dataset for a dermatology model is 85% one skin tone. The team wants to quantify this representation gap before training. What should they do?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A distillation prompt set generated from manual headings</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A messages-format fine-tuning set with the manuals as assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A metadata sidecar per manual for a knowledge base</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A cleaned, deduplicated input-only JSONL corpus for continued pre-training</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Undersample the majority skin tone until classes match, then train</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Tag each image with a skin-tone facet and compute Clarify's Class Imbalance metric</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Apply SMOTE to generate synthetic images of the minority tone</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Skip the check, since bias metrics apply only to tabular data</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. The knowledge base (C) is the tempting distractor because RAG also exposes the manuals, but retrieval hands the model passages at runtime and does not fix how the model itself uses the terminology.</div>` },
+    <div class="feedback"><b>Correct.</b> Bias metrics extend to images by deriving a facet (here skin tone) and measuring representation; Class Imbalance quantifies exactly the 85/15 gap. Jumping straight to undersampling (A) is the tempting distractor: it acts before measuring, discards scarce medical images, and skips the diagnosis that tells you how large the gap actually is.</div>` },
 
   /* 11 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Data shaped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Labeled pairs, raw text, or prompts alone: the record you can produce picks the path.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Imbalance measured and mitigated</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Separate the rare label from the skewed group; each has its own metric and its own fix.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Fine-tuning</b>prompt and completion, or Converse messages; hundreds to 10,000 records within token limits.</p></div>
-      <div class="pill"><p><b>Continued pre-training</b>input-only passages, deduplicated and cleaned, measured in tokens.</p></div>
-      <div class="pill"><p><b>Distillation</b>prompts or invocation logs; the teacher writes the answers, up to 15,000 pairs.</p></div>
-      <div class="pill"><p><b>Always</b>JSONL in S3, PII out, duplicates out, a validation split, model-specific quotas.</p></div>
+      <div class="pill"><p><b>Class imbalance</b>SMOTE, over or undersample the training split; evaluate with F1, not accuracy.</p></div>
+      <div class="pill"><p><b>Facet bias</b>Clarify CI for representation, DPL for outcomes, KL/JS/KS for distributions, CDD for subgroups.</p></div>
+      <div class="pill"><p><b>Multimodal</b>Derive a facet for text and images and measure the same way.</p></div>
+      <div class="pill"><p><b>Never</b>Rebalance the test set; it must reflect reality.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
