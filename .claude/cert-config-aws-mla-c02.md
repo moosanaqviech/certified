@@ -27,6 +27,19 @@ official MLA-C02 exam guide at docs.aws.amazon.com).
     Code language: Python (SageMaker Python SDK, boto3). SQL only for Athena,
       Redshift, and pgvector examples.
 
+## Course structure and eyebrows
+
+    Three levels: Unit (exam domain) > Module (the guide's task statement,
+      numbered N.M to match it) > Chapter (one or two skills). The course
+      index.html nests modules:[...] inside each unit and renders a
+      "Module N.M · title" sub-header; scripts/validate.py only reads the
+      file:"..." entries in order, so the nesting does not affect the NAV
+      check.
+    Cover eyebrow: "Unit N · Module N.M · Chapter NN" (the dot separator is
+      the middle dot character used across the product).
+    Practice exams: one per unit plus a full mock; the unit is the
+      checkpoint. Question comment headers cite chapter and skill numbers.
+
 ## File naming
 
     Lessons: lesson-NN-name.html, numbered 01-76 per the curriculum index.
