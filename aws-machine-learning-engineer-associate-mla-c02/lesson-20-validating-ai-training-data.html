@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation · MLA-C02 Chapter 15</title>
+<title>Validating AI Training Data: Prompt-Response Pairs and Content Safety Screening · MLA-C02 Chapter 20</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-15-preparing-data-for-fm-customization.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-20-validating-ai-training-data.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0e0a1a;            /* page background */
-    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
-    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
-    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
+    --bg: #04121a;            /* page background */
+    --bg-tint: #082633;       /* ambient glow tint behind the card */
+    --accent: #06b6d4;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(6,182,212,0.12);  /* correct-answer fill */
+    --accent-ink: #04121a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,54 +215,59 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* Chapter 21 is not authored yet and Unit 1 has no practice exam yet, so this
+   is the course frontier for now: set next to the Unit 1 practice exam (or
+   lesson-21) when it ships. */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-16-cleaning-data.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m15a { animation: m15in 6s ease-in-out infinite; }
-      .m15b { animation: m15in 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15c { animation: m15in 6s ease-in-out infinite; animation-delay: 4s; }
-      .m15l1 { animation: m15lbl 6s ease-in-out infinite; }
-      .m15l2 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15l3 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 4s; }
-      @keyframes m15in { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 28% { transform: translateX(150px); opacity: 1; } 33%, 100% { transform: translateX(150px); opacity: 0; } }
-      @keyframes m15lbl { 0%, 2% { opacity: 0.3; } 8%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
-      @media (prefers-reduced-motion: reduce) { .m15a, .m15b, .m15c { animation: none; transform: translateX(150px); opacity: 1; } .m15l1, .m15l2, .m15l3 { animation: none; opacity: 1; } }
+      .m20scan { animation: m20scan 5s ease-in-out infinite; }
+      .m20pass { animation: m20pass 5s ease-in-out infinite; }
+      .m20flag { animation: m20flag 5s ease-in-out infinite; }
+      @keyframes m20scan { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 40% { transform: translateY(96px); opacity: 1; } 50%, 100% { opacity: 0; transform: translateY(96px); } }
+      @keyframes m20pass { 0%, 45% { opacity: 0; } 58%, 100% { opacity: 1; } }
+      @keyframes m20flag { 0%, 45% { opacity: 0; } 58%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m20scan { animation: none; opacity: 0; } .m20pass, .m20flag { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m15glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(167,139,250,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
+      <radialGradient id="m20glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(6,182,212,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(6,182,212,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m15glow)"/>
-    <g>
-      <rect x="12" y="34" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l1"/>
-      <text x="67" y="49" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l1">FINE-TUNE</text>
-      <text x="67" y="61" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l1">{prompt, completion}</text>
-      <rect x="12" y="83" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l2"/>
-      <text x="67" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l2">PRE-TRAIN</text>
-      <text x="67" y="110" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l2">{input}</text>
-      <rect x="12" y="132" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l3"/>
-      <text x="67" y="147" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l3">DISTILL</text>
-      <text x="67" y="159" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l3">{messages: [user]}</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m20glow)"/>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="8">
+      <rect x="24" y="34" width="180" height="30" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="34" y="46" fill="var(--ink-soft)">{"prompt": "Reset my ...",</text>
+      <text x="34" y="58" fill="var(--ink-soft)">&nbsp;"completion": "Sure, ..."}</text>
+      <rect x="24" y="70" width="180" height="30" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="34" y="82" fill="var(--ink-soft)">{"prompt": "How do I ...",</text>
+      <text x="34" y="94" fill="var(--ink-soft)">&nbsp;"completion": "..."}</text>
+      <rect x="24" y="106" width="180" height="30" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="34" y="118" fill="#ef4444">{"prompt": "[slur] ...",</text>
+      <text x="34" y="130" fill="var(--ink-soft)">&nbsp;"completion": "..."}</text>
     </g>
-    <path d="M122 51 C 160 51, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 100 h84" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 149 C 160 149, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <rect x="126" y="46" width="12" height="10" rx="2" fill="var(--accent)" class="m15a"/>
-    <rect x="126" y="95" width="12" height="10" rx="2" fill="var(--accent)" class="m15b"/>
-    <rect x="126" y="144" width="12" height="10" rx="2" fill="var(--accent)" class="m15c"/>
-    <rect x="212" y="70" width="96" height="60" rx="12" fill="rgba(167,139,250,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
-    <text x="260" y="95" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">custom model</text>
-    <text x="260" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSONL in S3, one job</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">three shapes of record, one training bucket</text>
+    <rect x="20" y="34" width="188" height="4" rx="2" fill="var(--accent)" class="m20scan"/>
+    <g class="m20pass">
+      <circle cx="224" cy="49" r="8" fill="rgba(6,182,212,0.2)" stroke="var(--accent)"/>
+      <path d="M220 49 l3 3 l5 -6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="224" cy="85" r="8" fill="rgba(6,182,212,0.2)" stroke="var(--accent)"/>
+      <path d="M220 85 l3 3 l5 -6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g class="m20flag">
+      <circle cx="224" cy="121" r="8" fill="rgba(239,68,68,0.2)" stroke="#ef4444"/>
+      <path d="M221 118 l6 6 M227 118 l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+      <text x="248" y="124" fill="#ef4444" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">toxic</text>
+    </g>
+    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">check the shape, then screen the content</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">INTEGRITY OF FM TRAINING DATA</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -278,125 +283,95 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 15</div>
-    <h1 class="reveal">Preparing data for FM customization</h1>
-    <p class="lead reveal">Fine-tuning wants labeled pairs, continued pre-training wants raw domain text, and distillation wants only prompts. <strong>The shape of the record you can produce</strong> is what picks the customization path.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.3 · Chapter 20</div>
+    <h1 class="reveal">Validating AI training data</h1>
+    <p class="lead reveal">Data destined for a foundation model needs two extra checks tabular data never did: the <strong>prompt-response pairs must be well-formed</strong>, and the <strong>content must be safe</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why AI data is different */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">JSONL in S3, sized to the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Every Amazon Bedrock customization job reads <code>.jsonl</code> files from S3: one JSON object per line, a training set and, where supported, a validation set.</p>
+    <div class="eyebrow reveal">The last gate before customization</div>
+    <h2 class="reveal">Integrity checks for FM training data</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.3.6 is validating AI training data integrity, and it closes the data-preparation unit: the checks that a fine-tuning or distillation set must pass before it reaches a customization job (Chapter 15).</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model-specific quotas</b>Record counts and token budgets differ per model: Claude 3 Haiku fine-tuning takes 32 to 10,000 records, up to 32,000 tokens each and a 10 GB training file; Llama 3.1 to 3.3 take 100 to 10,000 records at 16,000 tokens; Titan Text models cap the training file at 1 GB. Plan with about 6 characters per token.</p></div>
-      <div class="pill"><p><b>Cost model</b>Training is billed on tokens processed times epochs, plus monthly storage per custom model, so a deduplicated dataset is cheaper as well as better.</p></div>
-      <div class="pill"><p><b>Quality gates</b>Consistent format, PII removed (Chapter 14), duplicates dropped, a held-out validation set, and safety screening of prompt-response pairs (Chapter 20). The job validates format; it does not validate sense.</p></div>
+      <div class="pill"><p><b>Structural integrity</b>Is every record valid JSONL in the model's format, within token limits, with both sides of each pair present? A malformed line fails the job or, worse, trains on garbage.</p></div>
+      <div class="pill"><p><b>Content safety</b>Does any example contain toxic, hateful, or unsafe text? A model learns what it is shown, so an unscreened corpus teaches the very behavior you want to avoid.</p></div>
+      <div class="pill"><p><b>Everything from Module 1.3 still applies</b>Deduplicate (Chapter 16), remove PII (Chapter 14), and check for bias (Chapter 19) before these two AI-specific checks.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : fine-tuning */
+  /* 2 : structural validation */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Supervised fine-tuning</div>
-    <h2 class="reveal">Labeled pairs in the model's own format</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The model learns which output belongs to which input, so every record carries both. Two record shapes exist.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"prompt": "Summarize: ...", "completion": "..."}<br><span class="cm">// or, for conversational models</span><br>{"schemaVersion": "bedrock-conversation-2024",<br>&nbsp;"system": [{"text": "..."}],<br>&nbsp;"messages": [{"role": "user", "content": [{"text": "..."}]},<br>&nbsp;&nbsp;{"role": "assistant", "content": [{"text": "..."}]}]}</div>
+    <div class="eyebrow reveal">Check 1 · Structure</div>
+    <h2 class="reveal">Validate the pairs before you submit</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The customization job validates format and rejects the whole file on an error, so catch problems first.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Non-conversational models</b>Titan Text, Cohere Command, Llama 3.1: <code>prompt</code> and <code>completion</code> per line, for summarization, extraction, translation, question answering.</p></div>
-      <div class="pill"><p><b>Conversational models</b>Claude 3 Haiku, Llama 3.2 and 3.3 use the Converse message format with system, user, and assistant turns, single or multi-turn. Vision variants add an image block with an S3 URI; Titan Multimodal Embeddings and Titan Image Generator take <code>image-ref</code> plus <code>caption</code>.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You have (or can label) hundreds to thousands of examples of the exact output style, format, or task the base model gets wrong.</p></div>
+      <div class="pill"><p><b>Format</b>One JSON object per line; the right shape for the model (prompt and completion, or the Converse messages schema, Chapter 15); required fields present; no empty completions. A quick script or a Glue job over the JSONL catches broken lines.</p></div>
+      <div class="pill"><p><b>Token budget</b>Each record must fit the model's per-record token limit (for example 32,000 for Claude 3 Haiku). Use the Bedrock CountTokens API (Chapter 12) to measure exactly and trim or drop offenders.</p></div>
+      <div class="pill"><p><b>Splits and counts</b>A validation file that shares no example with training, and a record count inside the model's min and max. These are the same integrity rules a data-quality ruleset enforces, applied to JSONL.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : continued pre-training */
+  /* 3 : content safety screening */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Continued pre-training</div>
-    <h2 class="reveal">Unlabeled domain text, and lots of it</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Continued pre-training keeps training the base model's language objective on your own corpus, so it absorbs <strong>vocabulary and phrasing</strong> rather than a task. Records carry text only, no answer.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"input": "Section 4.2: the overcurrent relay shall trip within ..."}<br>{"input": "Torque the M12 fasteners to 80 Nm in a star pattern ..."}</div>
+    <div class="eyebrow reveal">Check 2 · Content safety</div>
+    <h2 class="reveal">Screen every example for toxicity</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Content safety screening runs each prompt and each response through a classifier and quarantines the unsafe ones before training.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What the data looks like</b>Cleaned domain documents (Chapter 12), one passage per line, deduplicated, PII removed, volume measured in tokens rather than examples. No labels to write is the whole appeal.</p></div>
-      <div class="pill"><p><b>Where it runs today</b>Bedrock's current customization menu lists supervised fine-tuning, reinforcement fine-tuning, and distillation; the input-only path was offered on Amazon Titan Text models. For open models, SageMaker AI training jobs and JumpStart cover the same need, and fine-tuning usually follows to teach the task.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The base model misreads the domain's language (jargon, formats, regulatory phrasing) and you have a large unlabeled corpus but few labeled examples.</p></div>
+      <div class="pill"><p><b>Amazon Comprehend toxicity detection</b>The <code>DetectToxicContent</code> API scores text across categories such as HATE_SPEECH, HARASSMENT_OR_ABUSE, SEXUAL, VIOLENCE_OR_THREAT, INSULT, PROFANITY, and GRAPHIC, with a confidence per category. Batch segments per call and drop or review anything over your threshold.</p></div>
+      <div class="pill"><p><b>Bedrock model evaluation as a judge</b>Amazon Bedrock evaluation jobs (automatic, human, or LLM-as-a-judge) score a set for toxicity and quality, useful for auditing generated or synthetic training data at scale.</p></div>
+      <div class="pill"><p><b>Screen both sides</b>A toxic prompt with a clean answer, or a clean prompt with a toxic answer, both teach the wrong thing. Run the classifier over prompt and completion alike.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : distillation */
+  /* 4 : validating generated data */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Model distillation</div>
-    <h2 class="reveal">Prompts in, teacher answers, student learns</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Model Distillation sends your prompts to a larger <strong>teacher</strong> model, synthesizes responses, and fine-tunes a smaller, cheaper <strong>student</strong> on them. You supply prompts, not answers.</p>
+    <div class="eyebrow reveal">When the data is synthetic</div>
+    <h2 class="reveal">Generated pairs need harder checks</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Augmented (Chapter 12) and distillation-synthesized (Chapter 15) data was written by a model, so it can be fluent and wrong. Validate it more, not less.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Record shape</b>The same <code>bedrock-conversation-2024</code> JSONL, but the messages usually end at the user turn. Format prompts for the target use case (a RAG prompt with context tags, an agent prompt with a tool list) because the synthetic data mirrors them. A handful of labeled prompt-response pairs can be included as golden examples.</p></div>
-      <div class="pill"><p><b>Invocation logs instead</b>With model invocation logging on, production prompts (and optionally the teacher's real responses) become the dataset, filtered by requestMetadata. Prompt-response pairs are only used when the logged model matches the chosen teacher.</p></div>
-      <div class="pill"><p><b>Costs and limits</b>Data synthesis can grow the set to a maximum of 15,000 prompt-response pairs and bills teacher inference at on-demand rates. Text-to-text only.</p></div>
+      <div class="pill"><p><b>Quality, not just safety</b>Check that responses are correct and on-task, not merely non-toxic. Bedrock evaluation's correctness, completeness, and faithfulness metrics, or an LLM-as-a-judge with a rubric, score this at scale; a human spot-check confirms the sample.</p></div>
+      <div class="pill"><p><b>Faithfulness for RAG data</b>If pairs are grounded in retrieved context, verify the answer is supported by that context and not hallucinated, before it becomes a training target.</p></div>
+      <div class="pill"><p><b>Golden examples</b>A small human-labeled set to benchmark the synthetic set against, so drift in the generator is caught.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : boundary vs corpus */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three paths, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Continued pre-training</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Distillation</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Record</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt + completion, or messages</td>
-          <td style="padding:8px 5px; color:var(--ink);">input text only</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt only (labels optional)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Who labels</td>
-          <td style="padding:8px 5px; color:var(--ink);">you</td>
-          <td style="padding:8px 5px; color:var(--ink);">nobody</td>
-          <td style="padding:8px 5px; color:var(--ink);">the teacher model</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Teaches</td>
-          <td style="padding:8px 5px; color:var(--ink);">a task or style</td>
-          <td style="padding:8px 5px; color:var(--ink);">domain language</td>
-          <td style="padding:8px 5px; color:var(--ink);">a big model's behavior</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Volume</td>
-          <td style="padding:8px 5px; color:var(--ink);">hundreds to 10k</td>
-          <td style="padding:8px 5px; color:var(--ink);">tokens, large</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompts, up to 15k pairs</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Screening data vs guarding the app</div>
+    <h2 class="reveal">Two places, two tools, do not confuse them</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same word "safety" names a training-time job and a runtime one; the exam tests whether you place them correctly.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Training time (this chapter)</b>Comprehend toxicity and Bedrock evaluation clean the corpus before customization. They act on files in S3, offline, once per dataset.</p></div>
+      <div class="pill"><p><b>Runtime (Chapter 76)</b>Amazon Bedrock Guardrails filter prompts and responses on every live request. They protect the deployed application; they do not clean a training set.</p></div>
+      <div class="pill"><p><b>The rule</b>Screen the corpus before it trains; guard the boundary for whatever users send later. Doing only one leaves a hole.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : decision signals */
+  /* 6 : pipeline step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">Validating a fine-tuning set</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the final gate before a Claude 3 Haiku fine-tune.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Structure</b>A script checks every line is valid JSONL in the messages format, both roles present, and CountTokens keeps each record under 32,000 tokens.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Safety</b>Comprehend DetectToxicContent scores each prompt and completion; anything over threshold is quarantined for review.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Quality</b>For the synthetic portion, a Bedrock evaluation job scores correctness and a human reviews a random sample.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Split and ship</b>A validation file with no shared examples, counts inside the model's limits, then land both in S3 for the customization job.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : decision signals */
   { steps: 3,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"We have labeled examples", "wrong format or tone", "specific task"</b>Supervised fine-tuning: prompt and completion, or Converse messages for conversational models.</p></div>
-      <div class="pill" data-step="2"><p><b>"Doesn't understand our jargon", "large unlabeled corpus", "few labels"</b>Continued pre-training on input-only text, then fine-tune the task on top.</p></div>
-      <div class="pill" data-step="3"><p><b>"Cheaper and faster model", "match the big model's quality", "we have production prompts or logs"</b>Distillation from prompts or invocation logs.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : validation and quality, step build */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal" style="font-size:24px">From raw pairs to a training bucket</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the preparation of 4,000 support conversations for a Claude 3 Haiku fine-tune.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>1. Clean and protect</b>Redact PII with Comprehend, drop duplicates and near-duplicates, remove conversations with unsafe content (Chapter 20).</p></div>
-      <div class="pill" data-step="2"><p><b>2. Reshape</b>Convert each conversation into the messages format with one consistent system prompt and alternating user and assistant turns; count tokens to stay under the per-record limit.</p></div>
-      <div class="pill" data-step="3"><p><b>3. Split</b>Hold out a validation file (Claude 3 Haiku allows up to 1,000 validation records) that shares no conversation with training.</p></div>
-      <div class="pill" data-step="4"><p><b>4. Land in S3</b>Training and validation JSONL in a bucket the customization service role can read, then submit the job and watch the validation loss.</p></div>
+      <div class="pill" data-step="1"><p><b>"Screen training text for hate or harassment", "before fine-tuning"</b>Amazon Comprehend toxicity detection over prompt and completion.</p></div>
+      <div class="pill" data-step="2"><p><b>"Records rejected by the job", "records too long", "malformed JSONL"</b>Structural validation: format check plus CountTokens, before submitting.</p></div>
+      <div class="pill" data-step="3"><p><b>"Block toxic prompts from users at runtime"</b>Amazon Bedrock Guardrails, not a training-time screen.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -404,53 +379,40 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team wants a smaller, cheaper Bedrock model that answers like the large model they run in production today. They have invocation logging enabled and thousands of real prompts, but no labeled answers. Which customization path fits?</h2>
+    <h2 class="reveal" style="font-size:22px">Before fine-tuning a customer-service model, a team must remove training examples that contain hate speech or harassment from a large JSONL corpus of prompt-response pairs. Which service fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Model distillation using the invocation logs as the prompt source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Supervised fine-tuning with the prompts as completions</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the concatenated prompts</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Fine-tuning the large model on its own outputs</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Amazon Comprehend toxicity detection over each prompt and completion, dropping high-scoring records</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Amazon Bedrock Guardrails attached to the training bucket</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Amazon Macie sensitive data discovery on the corpus</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>SageMaker Clarify pre-training bias metrics</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Distillation is the path that needs prompts only: the teacher generates or already logged the responses, and the student is fine-tuned on them, giving a smaller model that imitates the large one. Continued pre-training (C) is the tempting distractor since it also needs no labels, but it teaches domain language, not the teacher's behavior, and prompts are not a domain corpus.</div>` },
+    <div class="feedback"><b>Correct.</b> Comprehend's DetectToxicContent scores text across hate, harassment, and other categories, which is exactly the content-safety screen for a training corpus. Bedrock Guardrails (B) is the tempting distractor: it filters prompts and responses at inference for a deployed app, not files in a training bucket. Macie finds PII, and Clarify measures fairness, neither is toxicity.</div>` },
 
   /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team has 5,000 labeled question-and-answer pairs as prompt and completion JSONL and wants to fine-tune Claude 3 Haiku for a multi-turn support assistant. What must they do to the data?</h2>
+    <h2 class="reveal" style="font-size:22px">A distillation run produced 12,000 synthetic prompt-response pairs. They read fluently, but the team worries some answers are confidently wrong. What validation should they add before training the student?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Nothing; prompt and completion is the universal fine-tuning format on Bedrock</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Merge all pairs into one input field for continued pre-training</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Convert each record to the messages format with a system prompt and user and assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Convert the pairs to CSV with a header row</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Only a JSONL format and token-count check, since the teacher model wrote them</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A Bedrock evaluation job scoring correctness plus a human spot-check against golden examples</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Amazon Comprehend toxicity detection only</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Deduplicate the pairs and submit</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Conversational models such as Claude 3 Haiku are fine-tuned in the Converse message format (system, user, assistant), which also carries multi-turn context. Leaving the data as is (A) is the tempting distractor: prompt and completion is valid for non-conversational models such as Titan Text or Llama 3.1, not for this one.</div>` },
+    <div class="feedback"><b>Correct.</b> Synthetic data can be fluent yet inaccurate, so quality validation (correctness scoring plus a human check against golden examples) is what catches confidently wrong answers. Toxicity detection alone (C) is the tempting distractor: it screens for unsafe content but says nothing about whether an answer is factually right, which is the stated worry.</div>` },
 
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A distillation prompt set generated from manual headings</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A messages-format fine-tuning set with the manuals as assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A metadata sidecar per manual for a knowledge base</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A cleaned, deduplicated input-only JSONL corpus for continued pre-training</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. The knowledge base (C) is the tempting distractor because RAG also exposes the manuals, but retrieval hands the model passages at runtime and does not fix how the model itself uses the terminology.</div>` },
-
-  /* 11 : done */
+  /* 10 : done, closes unit */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Data shaped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Labeled pairs, raw text, or prompts alone: the record you can produce picks the path.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Unit 1 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Data Preparation, end to end: collected, transformed, and validated for both traditional ML and AI.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Fine-tuning</b>prompt and completion, or Converse messages; hundreds to 10,000 records within token limits.</p></div>
-      <div class="pill"><p><b>Continued pre-training</b>input-only passages, deduplicated and cleaned, measured in tokens.</p></div>
-      <div class="pill"><p><b>Distillation</b>prompts or invocation logs; the teacher writes the answers, up to 15,000 pairs.</p></div>
-      <div class="pill"><p><b>Always</b>JSONL in S3, PII out, duplicates out, a validation split, model-specific quotas.</p></div>
+      <div class="pill"><p><b>Structure</b>Valid JSONL in the model's format, within token limits, split cleanly.</p></div>
+      <div class="pill"><p><b>Safety</b>Comprehend toxicity and Bedrock evaluation screen the corpus before training.</p></div>
+      <div class="pill"><p><b>Quality</b>Correctness and faithfulness checks on synthetic and RAG data, with golden examples.</p></div>
+      <div class="pill"><p><b>Placement</b>Screen the corpus at training time; guard the app with Guardrails at runtime.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

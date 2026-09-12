@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation · MLA-C02 Chapter 15</title>
+<title>Cleaning Data: Outliers, Missing Values, and Deduplication · MLA-C02 Chapter 16</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-15-preparing-data-for-fm-customization.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-16-cleaning-data.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0e0a1a;            /* page background */
-    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
-    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
-    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
+    --bg: #160707;            /* page background */
+    --bg-tint: #2e0d0d;       /* ambient glow tint behind the card */
+    --accent: #ef4444;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(239,68,68,0.12);  /* correct-answer fill */
+    --accent-ink: #160707;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,9 +215,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-16-cleaning-data.html",
+  next:      "lesson-17-data-quality-validation.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,44 +226,51 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m15a { animation: m15in 6s ease-in-out infinite; }
-      .m15b { animation: m15in 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15c { animation: m15in 6s ease-in-out infinite; animation-delay: 4s; }
-      .m15l1 { animation: m15lbl 6s ease-in-out infinite; }
-      .m15l2 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 2s; }
-      .m15l3 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 4s; }
-      @keyframes m15in { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 28% { transform: translateX(150px); opacity: 1; } 33%, 100% { transform: translateX(150px); opacity: 0; } }
-      @keyframes m15lbl { 0%, 2% { opacity: 0.3; } 8%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
-      @media (prefers-reduced-motion: reduce) { .m15a, .m15b, .m15c { animation: none; transform: translateX(150px); opacity: 1; } .m15l1, .m15l2, .m15l3 { animation: none; opacity: 1; } }
+      .m16bad { animation: m16bad 5s ease-in-out infinite; }
+      .m16gap { animation: m16gap 5s ease-in-out infinite; }
+      .m16dup { animation: m16dup 5s ease-in-out infinite; }
+      .m16ok { animation: m16ok 5s ease-in-out infinite; }
+      @keyframes m16bad { 0%, 35% { opacity: 1; transform: translateY(0); } 50%, 100% { opacity: 0; transform: translateY(-14px); } }
+      @keyframes m16gap { 0%, 40% { opacity: 0; } 55%, 100% { opacity: 1; } }
+      @keyframes m16dup { 0%, 35% { opacity: 1; } 50%, 100% { opacity: 0; } }
+      @keyframes m16ok { 0%, 45% { opacity: 0; } 60%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m16bad, .m16dup { animation: none; opacity: 0; } .m16gap, .m16ok { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m15glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(167,139,250,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
+      <radialGradient id="m16glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(239,68,68,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(239,68,68,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m15glow)"/>
-    <g>
-      <rect x="12" y="34" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l1"/>
-      <text x="67" y="49" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l1">FINE-TUNE</text>
-      <text x="67" y="61" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l1">{prompt, completion}</text>
-      <rect x="12" y="83" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l2"/>
-      <text x="67" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l2">PRE-TRAIN</text>
-      <text x="67" y="110" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l2">{input}</text>
-      <rect x="12" y="132" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l3"/>
-      <text x="67" y="147" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l3">DISTILL</text>
-      <text x="67" y="159" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l3">{messages: [user]}</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m16glow)"/>
+    <rect x="34" y="30" width="252" height="140" rx="12" fill="var(--surface-2)" stroke="var(--line)"/>
+    <line x1="34" y1="58" x2="286" y2="58" stroke="var(--line)"/>
+    <line x1="120" y1="30" x2="120" y2="170" stroke="var(--line)"/>
+    <line x1="204" y1="30" x2="204" y2="170" stroke="var(--line)"/>
+    <line x1="34" y1="86" x2="286" y2="86" stroke="var(--line)"/>
+    <line x1="34" y1="114" x2="286" y2="114" stroke="var(--line)"/>
+    <line x1="34" y1="142" x2="286" y2="142" stroke="var(--line)"/>
+    <text x="77" y="49" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" font-weight="700">age</text>
+    <text x="162" y="49" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" font-weight="700">income</text>
+    <text x="245" y="49" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" font-weight="700">city</text>
+    <text x="77" y="77" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9">34</text>
+    <text x="162" y="77" text-anchor="middle" fill="#ef4444" font-family="ui-monospace, Menlo, monospace" font-size="9" font-weight="700" class="m16bad">9999999</text>
+    <text x="162" y="77" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9" class="m16ok">61,000</text>
+    <text x="245" y="77" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">Austin</text>
+    <text x="77" y="105" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9">29</text>
+    <text x="162" y="105" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9">54,000</text>
+    <rect x="222" y="97" width="46" height="12" rx="3" fill="rgba(239,68,68,0.35)" class="m16bad"/>
+    <text x="245" y="105" text-anchor="middle" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="700" class="m16ok">Reno</text>
+    <text x="77" y="133" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9">41</text>
+    <text x="162" y="133" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9">72,000</text>
+    <text x="245" y="133" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">Miami</text>
+    <g class="m16dup">
+      <text x="77" y="161" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="9">41</text>
+      <text x="162" y="161" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="9">72,000</text>
+      <text x="245" y="161" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">Miami</text>
+      <text x="300" y="161" text-anchor="end" fill="#ef4444" font-family="Hanken Grotesk" font-size="8" font-weight="700">dup</text>
     </g>
-    <path d="M122 51 C 160 51, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 100 h84" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <path d="M122 149 C 160 149, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
-    <rect x="126" y="46" width="12" height="10" rx="2" fill="var(--accent)" class="m15a"/>
-    <rect x="126" y="95" width="12" height="10" rx="2" fill="var(--accent)" class="m15b"/>
-    <rect x="126" y="144" width="12" height="10" rx="2" fill="var(--accent)" class="m15c"/>
-    <rect x="212" y="70" width="96" height="60" rx="12" fill="rgba(167,139,250,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
-    <text x="260" y="95" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">custom model</text>
-    <text x="260" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSONL in S3, one job</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">three shapes of record, one training bucket</text>
+    <text x="160" y="188" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">clip the outlier, impute the gap, drop the duplicate</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -278,125 +286,95 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 15</div>
-    <h1 class="reveal">Preparing data for FM customization</h1>
-    <p class="lead reveal">Fine-tuning wants labeled pairs, continued pre-training wants raw domain text, and distillation wants only prompts. <strong>The shape of the record you can produce</strong> is what picks the customization path.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.3 · Chapter 16</div>
+    <h1 class="reveal">Cleaning data</h1>
+    <p class="lead reveal">Outliers, missing values, and duplicates each corrupt a model differently. The fix is to <strong>detect, then decide</strong>: clip or drop the extreme, impute or drop the gap, and remove the repeat.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why clean */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">JSONL in S3, sized to the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Every Amazon Bedrock customization job reads <code>.jsonl</code> files from S3: one JSON object per line, a training set and, where supported, a validation set.</p>
+    <div class="eyebrow reveal">Module 1.3 opens here</div>
+    <h2 class="reveal">Three defects, three failure modes</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.3.7 groups cleaning into outliers, missing data, and deduplication because each breaks training in its own way.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model-specific quotas</b>Record counts and token budgets differ per model: Claude 3 Haiku fine-tuning takes 32 to 10,000 records, up to 32,000 tokens each and a 10 GB training file; Llama 3.1 to 3.3 take 100 to 10,000 records at 16,000 tokens; Titan Text models cap the training file at 1 GB. Plan with about 6 characters per token.</p></div>
-      <div class="pill"><p><b>Cost model</b>Training is billed on tokens processed times epochs, plus monthly storage per custom model, so a deduplicated dataset is cheaper as well as better.</p></div>
-      <div class="pill"><p><b>Quality gates</b>Consistent format, PII removed (Chapter 14), duplicates dropped, a held-out validation set, and safety screening of prompt-response pairs (Chapter 20). The job validates format; it does not validate sense.</p></div>
+      <div class="pill"><p><b>Outliers</b>A single 9,999,999 in an income column drags every scaler's mean and every linear model's fit toward it (Chapter 8). Some are errors, some are real rare events, and telling them apart is the whole job.</p></div>
+      <div class="pill"><p><b>Missing values</b>Most algorithms cannot train on a null. Drop them and you may lose rows or bias the sample; impute them and you invent data. Either way the choice must be recorded and repeated at inference.</p></div>
+      <div class="pill"><p><b>Duplicates</b>Repeated rows secretly reweight the training set and, worse, put the same record in both train and test, inflating the score. In a corpus for fine-tuning they teach the model to parrot (Chapter 12).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : fine-tuning */
+  /* 2 : outliers */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Supervised fine-tuning</div>
-    <h2 class="reveal">Labeled pairs in the model's own format</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The model learns which output belongs to which input, so every record carries both. Two record shapes exist.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"prompt": "Summarize: ...", "completion": "..."}<br><span class="cm">// or, for conversational models</span><br>{"schemaVersion": "bedrock-conversation-2024",<br>&nbsp;"system": [{"text": "..."}],<br>&nbsp;"messages": [{"role": "user", "content": [{"text": "..."}]},<br>&nbsp;&nbsp;{"role": "assistant", "content": [{"text": "..."}]}]}</div>
+    <div class="eyebrow reveal">Defect 1 · Outliers</div>
+    <h2 class="reveal">Detect with statistics, fix by intent</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler's Handle outliers group (Chapter 8) detects by standard deviation, robust standard deviation, quantile bounds, or explicit min-max thresholds.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Non-conversational models</b>Titan Text, Cohere Command, Llama 3.1: <code>prompt</code> and <code>completion</code> per line, for summarization, extraction, translation, question answering.</p></div>
-      <div class="pill"><p><b>Conversational models</b>Claude 3 Haiku, Llama 3.2 and 3.3 use the Converse message format with system, user, and assistant turns, single or multi-turn. Vision variants add an image block with an S3 URI; Titan Multimodal Embeddings and Titan Image Generator take <code>image-ref</code> plus <code>caption</code>.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You have (or can label) hundreds to thousands of examples of the exact output style, format, or task the base model gets wrong.</p></div>
+      <div class="pill"><p><b>Fix methods</b>Clip to the bound (keep the row, cap the value), remove the row, or invalidate the value so an imputation step handles it. Clip when the row is otherwise good; remove only when the whole record is suspect.</p></div>
+      <div class="pill"><p><b>Error or signal</b>A negative age is an error to clip or drop; a genuine high-value transaction in fraud data is the signal you must keep, so use a robust scaler instead of removing it. The domain, not the statistic, decides.</p></div>
+      <div class="pill"><p><b>Compute on train only</b>Bounds and quantiles come from the training split and are reused on validation, test, and inference, or you leak information about the holdout.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : continued pre-training */
+  /* 3 : missing */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Continued pre-training</div>
-    <h2 class="reveal">Unlabeled domain text, and lots of it</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Continued pre-training keeps training the base model's language objective on your own corpus, so it absorbs <strong>vocabulary and phrasing</strong> rather than a task. Records carry text only, no answer.</p>
-    <div class="codeblock reveal" style="margin-bottom:12px">{"input": "Section 4.2: the overcurrent relay shall trip within ..."}<br>{"input": "Torque the M12 fasteners to 80 Nm in a star pattern ..."}</div>
+    <div class="eyebrow reveal">Defect 2 · Missing values</div>
+    <h2 class="reveal">Impute, flag, or drop</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler's Handle missing group offers four moves, and the right one depends on how much is missing and why.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What the data looks like</b>Cleaned domain documents (Chapter 12), one passage per line, deduplicated, PII removed, volume measured in tokens rather than examples. No labels to write is the whole appeal.</p></div>
-      <div class="pill"><p><b>Where it runs today</b>Bedrock's current customization menu lists supervised fine-tuning, reinforcement fine-tuning, and distillation; the input-only path was offered on Amazon Titan Text models. For open models, SageMaker AI training jobs and JumpStart cover the same need, and fine-tuning usually follows to teach the task.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The base model misreads the domain's language (jargon, formats, regulatory phrasing) and you have a large unlabeled corpus but few labeled examples.</p></div>
+      <div class="pill"><p><b>Impute missing</b>Numeric: fill with the mean or the median (median resists outliers). Categorical: fill with the most frequent value. Fill missing sets a constant you choose. Statistics again come from the training split.</p></div>
+      <div class="pill"><p><b>Add indicator for missing</b>A Boolean column marking which rows were filled, so the model can learn that "value was absent" is itself a signal (a blank income may mean unemployed, not unknown).</p></div>
+      <div class="pill"><p><b>Drop missing</b>Remove rows with nulls. Fine when few rows are affected; dangerous when missingness correlates with the target, because dropping then biases the sample.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : distillation */
+  /* 4 : deduplication */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Model distillation</div>
-    <h2 class="reveal">Prompts in, teacher answers, student learns</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Model Distillation sends your prompts to a larger <strong>teacher</strong> model, synthesizes responses, and fine-tunes a smaller, cheaper <strong>student</strong> on them. You supply prompts, not answers.</p>
+    <div class="eyebrow reveal">Defect 3 · Deduplication</div>
+    <h2 class="reveal">Exact and near duplicates</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A duplicate is any record that repeats information the model should see once. Two kinds, two techniques.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Record shape</b>The same <code>bedrock-conversation-2024</code> JSONL, but the messages usually end at the user turn. Format prompts for the target use case (a RAG prompt with context tags, an agent prompt with a tool list) because the synthetic data mirrors them. A handful of labeled prompt-response pairs can be included as golden examples.</p></div>
-      <div class="pill"><p><b>Invocation logs instead</b>With model invocation logging on, production prompts (and optionally the teacher's real responses) become the dataset, filtered by requestMetadata. Prompt-response pairs are only used when the logged model matches the chosen teacher.</p></div>
-      <div class="pill"><p><b>Costs and limits</b>Data synthesis can grow the set to a maximum of 15,000 prompt-response pairs and bills teacher inference at on-demand rates. Text-to-text only.</p></div>
+      <div class="pill"><p><b>Exact duplicates</b>Identical rows: Data Wrangler's Drop duplicate rows (a <code>dropDuplicates</code> step, optionally on a subset of key columns), or a Glue or Spark job at scale. A hash per row finds them cheaply.</p></div>
+      <div class="pill"><p><b>Near duplicates</b>The same record with a typo or a reformatting: the same customer, two spellings; the same article, two scrapes. Embed and cluster by similarity (Chapter 11), or fuzzy-match on keys, then keep one per cluster.</p></div>
+      <div class="pill"><p><b>Order matters</b>Deduplicate before you split train and test, so no record can straddle both, and before augmentation, so you do not multiply a duplicate (Chapter 12).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : where cleaning runs */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three paths, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Continued pre-training</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Distillation</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Record</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt + completion, or messages</td>
-          <td style="padding:8px 5px; color:var(--ink);">input text only</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompt only (labels optional)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Who labels</td>
-          <td style="padding:8px 5px; color:var(--ink);">you</td>
-          <td style="padding:8px 5px; color:var(--ink);">nobody</td>
-          <td style="padding:8px 5px; color:var(--ink);">the teacher model</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Teaches</td>
-          <td style="padding:8px 5px; color:var(--ink);">a task or style</td>
-          <td style="padding:8px 5px; color:var(--ink);">domain language</td>
-          <td style="padding:8px 5px; color:var(--ink);">a big model's behavior</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Volume</td>
-          <td style="padding:8px 5px; color:var(--ink);">hundreds to 10k</td>
-          <td style="padding:8px 5px; color:var(--ink);">tokens, large</td>
-          <td style="padding:8px 5px; color:var(--ink);">prompts, up to 15k pairs</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Where it runs</div>
+    <h2 class="reveal">The same tools from Module 1.2</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Cleaning is not a separate service; it is steps in the transformation tool you already chose (Chapter 10).</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Data Wrangler</b>Handle outliers, Handle missing, Drop duplicate rows as flow steps, plus a Data Insights and Quality Report that flags duplicate rows, missing values, anomalies, and target leakage before you write a single transform.</p></div>
+      <div class="pill"><p><b>DataBrew</b>No-code recipe actions for the same fixes, with a profile job that reports missing counts and outliers per column, rerun on a schedule.</p></div>
+      <div class="pill"><p><b>Spark on EMR or Glue</b>Custom code when the dataset is too large or the dedup logic too specific for the visual tools.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : decision signals */
+  /* 6 : order of operations, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">The cleaning order</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through a customer table before it feeds a churn model.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Deduplicate</b>Drop exact duplicate rows and merge near-duplicate customers first, so nothing downstream is computed on inflated counts.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Split</b>Hold out validation and test now, so every statistic that follows is learned only from training.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Outliers</b>On the training split, clip impossible ages and cap extreme incomes, or invalidate them for the next step.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Missing</b>Impute numeric gaps with the median, categorical with the mode, add a missing-indicator where absence is meaningful. Store every value and bound for inference.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : decision signals */
   { steps: 3,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"We have labeled examples", "wrong format or tone", "specific task"</b>Supervised fine-tuning: prompt and completion, or Converse messages for conversational models.</p></div>
-      <div class="pill" data-step="2"><p><b>"Doesn't understand our jargon", "large unlabeled corpus", "few labels"</b>Continued pre-training on input-only text, then fine-tune the task on top.</p></div>
-      <div class="pill" data-step="3"><p><b>"Cheaper and faster model", "match the big model's quality", "we have production prompts or logs"</b>Distillation from prompts or invocation logs.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : validation and quality, step build */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal" style="font-size:24px">From raw pairs to a training bucket</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the preparation of 4,000 support conversations for a Claude 3 Haiku fine-tune.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>1. Clean and protect</b>Redact PII with Comprehend, drop duplicates and near-duplicates, remove conversations with unsafe content (Chapter 20).</p></div>
-      <div class="pill" data-step="2"><p><b>2. Reshape</b>Convert each conversation into the messages format with one consistent system prompt and alternating user and assistant turns; count tokens to stay under the per-record limit.</p></div>
-      <div class="pill" data-step="3"><p><b>3. Split</b>Hold out a validation file (Claude 3 Haiku allows up to 1,000 validation records) that shares no conversation with training.</p></div>
-      <div class="pill" data-step="4"><p><b>4. Land in S3</b>Training and validation JSONL in a bucket the customization service role can read, then submit the job and watch the validation loss.</p></div>
+      <div class="pill" data-step="1"><p><b>"Extreme values", "a few impossible entries", "skew"</b>Detect outliers by quantile or standard deviation; clip if the row is good, remove if it is junk, keep with a robust scaler if the extreme is real.</p></div>
+      <div class="pill" data-step="2"><p><b>"Nulls the algorithm rejects", "absence may be meaningful"</b>Impute (median or mode) plus an add-indicator column; drop rows only when few and missingness is random.</p></div>
+      <div class="pill" data-step="3"><p><b>"Same record twice", "test score too good to be true", "scraped twice"</b>Deduplicate before splitting; exact rows with dropDuplicates, near-duplicates by embedding and clustering.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -404,53 +382,40 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team wants a smaller, cheaper Bedrock model that answers like the large model they run in production today. They have invocation logging enabled and thousands of real prompts, but no labeled answers. Which customization path fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A model trained on scraped product reviews scores 0.98 on its test set but 0.71 in production. Investigation shows many reviews appear two or three times across the file. What went wrong and what fixes it?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Model distillation using the invocation logs as the prompt source</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Supervised fine-tuning with the prompts as completions</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the concatenated prompts</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Fine-tuning the large model on its own outputs</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Duplicates put the same review in train and test; deduplicate before splitting</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>The learning rate is too high; lower it and retrain</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The test set is too small; increase its share to 40%</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Missing values were imputed with the mean; use the median instead</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Distillation is the path that needs prompts only: the teacher generates or already logged the responses, and the student is fine-tuned on them, giving a smaller model that imitates the large one. Continued pre-training (C) is the tempting distractor since it also needs no labels, but it teaches domain language, not the teacher's behavior, and prompts are not a domain corpus.</div>` },
+    <div class="feedback"><b>Correct.</b> When duplicates are split after the fact, copies of a review land on both sides, so the model is tested on rows it trained on and the score is inflated, exactly the train-versus-production gap seen here. Enlarging the test set (C) is the tempting distractor: it changes the ratio but still lets duplicates straddle the split, so the leak remains.</div>` },
 
   /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team has 5,000 labeled question-and-answer pairs as prompt and completion JSONL and wants to fine-tune Claude 3 Haiku for a multi-turn support assistant. What must they do to the data?</h2>
+    <h2 class="reveal" style="font-size:22px">A credit dataset has 4% of income values missing, and rows with missing income turn out to be mostly applicants who were unemployed. What is the best handling?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Nothing; prompt and completion is the universal fine-tuning format on Bedrock</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Merge all pairs into one input field for continued pre-training</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Convert each record to the messages format with a system prompt and user and assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Convert the pairs to CSV with a header row</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Drop every row with a missing income</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Impute the mean income and move on</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Impute a value (such as the median) and add a missing-indicator column</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Replace missing incomes with the maximum observed income</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Conversational models such as Claude 3 Haiku are fine-tuned in the Converse message format (system, user, assistant), which also carries multi-turn context. Leaving the data as is (A) is the tempting distractor: prompt and completion is valid for non-conversational models such as Titan Text or Llama 3.1, not for this one.</div>` },
+    <div class="feedback"><b>Correct.</b> Missingness here carries signal (it tracks unemployment), so an indicator column lets the model use "income was absent" while imputation keeps the row usable. Dropping the rows (A) is the tempting distractor: it removes nulls, but because missingness correlates with the outcome it biases the sample toward employed applicants. The mean (B) discards that signal entirely.</div>` },
 
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A distillation prompt set generated from manual headings</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A messages-format fine-tuning set with the manuals as assistant turns</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A metadata sidecar per manual for a knowledge base</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>A cleaned, deduplicated input-only JSONL corpus for continued pre-training</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. The knowledge base (C) is the tempting distractor because RAG also exposes the manuals, but retrieval hands the model passages at runtime and does not fix how the model itself uses the terminology.</div>` },
-
-  /* 11 : done */
+  /* 10 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Data shaped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Labeled pairs, raw text, or prompts alone: the record you can produce picks the path.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Data cleaned</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Deduplicate before splitting, then handle outliers and missing values on the training split alone.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Fine-tuning</b>prompt and completion, or Converse messages; hundreds to 10,000 records within token limits.</p></div>
-      <div class="pill"><p><b>Continued pre-training</b>input-only passages, deduplicated and cleaned, measured in tokens.</p></div>
-      <div class="pill"><p><b>Distillation</b>prompts or invocation logs; the teacher writes the answers, up to 15,000 pairs.</p></div>
-      <div class="pill"><p><b>Always</b>JSONL in S3, PII out, duplicates out, a validation split, model-specific quotas.</p></div>
+      <div class="pill"><p><b>Outliers</b>Detect by quantile or deviation; clip, remove, or keep with a robust scaler.</p></div>
+      <div class="pill"><p><b>Missing</b>Impute median or mode, add an indicator, drop only when few and random.</p></div>
+      <div class="pill"><p><b>Duplicates</b>Exact by dropDuplicates, near by embedding and clustering, always before the split.</p></div>
+      <div class="pill"><p><b>Tools</b>Data Wrangler, DataBrew, or Spark; statistics learned on train and reused everywhere.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
