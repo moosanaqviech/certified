@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR · MLA-C02 Chapter 10</title>
+<title>Masking, Redaction, and Anonymization · MLA-C02 Chapter 14</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-10-transformation-tools.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-14-masking-redaction-anonymization.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #130b04;            /* page background */
-    --bg-tint: #2b1708;       /* ambient glow tint behind the card */
-    --accent: #fb923c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(251,146,60,0.12);  /* correct-answer fill */
-    --accent-ink: #130b04;    /* text on top of the accent key chip */
+    --bg: #0b0e14;            /* page background */
+    --bg-tint: #1a2030;       /* ambient glow tint behind the card */
+    --accent: #94a3b8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(148,163,184,0.12);  /* correct-answer fill */
+    --accent-ink: #0b0e14;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,9 +215,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-11-embedding-models.html",
+  next:      "lesson-15-preparing-data-for-fm-customization.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,43 +226,33 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m10hand { transform-origin: 160px 132px; animation: m10sweep 6s ease-in-out infinite; }
-      .m10l1 { animation: m10l1 6s ease-in-out infinite; }
-      .m10l2 { animation: m10l2 6s ease-in-out infinite; }
-      .m10l3 { animation: m10l3 6s ease-in-out infinite; }
-      @keyframes m10sweep { 0%, 12% { transform: rotate(-58deg); } 33%, 45% { transform: rotate(0deg); } 66%, 78% { transform: rotate(58deg); } 100% { transform: rotate(-58deg); } }
-      @keyframes m10l1 { 0%, 12% { opacity: 1; } 25%, 88% { opacity: 0.35; } 100% { opacity: 1; } }
-      @keyframes m10l2 { 0%, 22% { opacity: 0.35; } 33%, 45% { opacity: 1; } 58%, 100% { opacity: 0.35; } }
-      @keyframes m10l3 { 0%, 55% { opacity: 0.35; } 66%, 78% { opacity: 1; } 92%, 100% { opacity: 0.35; } }
-      @media (prefers-reduced-motion: reduce) { .m10hand { animation: none; transform: rotate(0deg); } .m10l1, .m10l2, .m10l3 { animation: none; opacity: 1; } }
+      .m14raw { animation: m14raw 5s ease-in-out infinite; }
+      .m14msk { animation: m14msk 5s ease-in-out infinite; }
+      .m14scan { animation: m14scan 5s ease-in-out infinite; }
+      @keyframes m14raw { 0%, 30% { opacity: 1; } 45%, 85% { opacity: 0; } 100% { opacity: 1; } }
+      @keyframes m14msk { 0%, 30% { opacity: 0; } 45%, 85% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes m14scan { 0%, 25% { transform: translateX(0); opacity: 0; } 30% { opacity: 1; } 45% { transform: translateX(250px); opacity: 1; } 50%, 100% { transform: translateX(250px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m14raw { animation: none; opacity: 0; } .m14msk { animation: none; opacity: 1; } .m14scan { animation: none; opacity: 0; } }
     </style>
     <defs>
-      <radialGradient id="m10glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(251,146,60,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(251,146,60,0)"/>
+      <radialGradient id="m14glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(148,163,184,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(148,163,184,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="110" rx="150" ry="80" fill="url(#m10glow)"/>
-    <path d="M60 132 a100 100 0 0 1 200 0" fill="none" stroke="rgba(254,215,170,0.3)" stroke-width="10" stroke-linecap="round"/>
-    <g class="m10l1">
-      <rect x="16" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="59" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Data Wrangler</text>
-      <text x="59" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">ML-native, visual</text>
-    </g>
-    <g class="m10l2">
-      <rect x="117" y="6" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="160" y="22" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">DataBrew</text>
-      <text x="160" y="35" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">no code, recipes</text>
-    </g>
-    <g class="m10l3">
-      <rect x="218" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="261" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Spark on EMR</text>
-      <text x="261" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">code, any scale</text>
-    </g>
-    <line x1="160" y1="132" x2="160" y2="52" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" class="m10hand"/>
-    <circle cx="160" cy="132" r="7" fill="var(--accent)"/>
-    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">who transforms, how, and at what scale</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SKILL 1.2.1</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m14glow)"/>
+    <rect x="24" y="44" width="272" height="112" rx="12" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="40" y="70" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Hello</text>
+    <text x="74" y="70" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700" class="m14raw">Paulo Santos,</text>
+    <text x="74" y="70" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="10" font-weight="700" class="m14msk">[NAME],</text>
+    <text x="40" y="94" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">your card</text>
+    <text x="100" y="94" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700" class="m14raw">1111-0000-1111-0000</text>
+    <text x="100" y="94" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="10" font-weight="700" class="m14msk">****-****-****-****</text>
+    <text x="40" y="118" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">statement went to</text>
+    <text x="40" y="140" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700" class="m14raw">123 Any Street, Seattle, WA 98109.</text>
+    <text x="40" y="140" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="10" font-weight="700" class="m14msk">[ADDRESS].</text>
+    <rect x="28" y="48" width="4" height="104" rx="2" fill="var(--accent)" class="m14scan"/>
+    <text x="160" y="178" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">detect the entity, then mask it or name its type</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -277,169 +268,139 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 10</div>
-    <h1 class="reveal">Choosing the transformation tool</h1>
-    <p class="lead reveal">SageMaker Data Wrangler, AWS Glue DataBrew, and Spark on Amazon EMR all clean and reshape data. <strong>Who is doing it, how much code they want, and how big the data is</strong> pick the tool.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 14</div>
+    <h1 class="reveal">Masking, redaction, and anonymization</h1>
+    <p class="lead reveal">Personal data has to come out before text becomes training data, a prompt, or a log. <strong>Find it, then choose whether the removal must be reversible</strong>, and pick the service that matches the data's shape.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : the three verbs */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Same inputs, same outputs, different hands</h2>
-    <p class="lead reveal" style="margin-bottom:16px">All three read from S3 and the AWS Glue Data Catalog, apply the transforms from Chapters 8 and 9, and write results back to S3. The differences are about <strong>persona, interface, scale, and where the output plugs in</strong>.</p>
+    <div class="eyebrow reveal">Three verbs</div>
+    <h2 class="reveal">Mask, redact, or anonymize</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.2.8 names three operations. They differ in what survives and whether anyone can get the original back.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Persona</b>A data scientist inside SageMaker AI, a business analyst who will not write code, or a data engineer who already owns Spark jobs.</p></div>
-      <div class="pill"><p><b>Interface and scale</b>Point-and-click with an automatic sample, or code that runs on as many workers as the data needs.</p></div>
-      <div class="pill"><p><b>Destination</b>Straight into a SageMaker pipeline or Feature Store, a scheduled S3 output for analytics, or whatever a Spark job can write.</p></div>
-      <div class="pill"><p><b>Not on this menu</b>AWS Glue ETL jobs (Chapter 4) are the serverless Spark option and DataBrew's engineer-side sibling; the exam names DataBrew and EMR here because they are the two ends of the code spectrum.</p></div>
+      <div class="pill"><p><b>Masking</b>Hide characters but keep the shape: a card number becomes asterisks, a date keeps its year. The field stays parseable and the row keeps its structure.</p></div>
+      <div class="pill"><p><b>Redaction</b>Remove the value or replace it with its type, such as "[NAME]". The text still reads, and the model can learn that a name was there without learning which.</p></div>
+      <div class="pill"><p><b>Anonymization and pseudonymization</b>Replace the identifier with something that cannot be traced back (hashing, random substitution, shuffling) or that can be reversed by a key holder (deterministic or probabilistic encryption). Pseudonyms keep joins working across tables.</p></div>
+      <div class="pill"><p><b>Before any of them</b>Discovery. You cannot mask what you have not found, and the failure mode is a column or a free-text field nobody flagged.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : Data Wrangler */
+  /* 2 : discover */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon SageMaker Data Wrangler</div>
-    <h2 class="reveal">The ML-native prep tool</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler lives inside SageMaker AI (now in SageMaker Canvas, with a natural-language interface, and in Studio Classic). It is the tool whose <strong>transforms and exports are built for model training</strong>.</p>
+    <div class="eyebrow reveal">Step 0 · Discover</div>
+    <h2 class="reveal">Amazon Macie finds it; it does not remove it</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Macie scans S3 with machine learning and pattern matching and reports <strong>findings</strong>: which objects hold which sensitive data types, at what severity.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>Imports from S3, Athena, Amazon Redshift, Snowflake, and Databricks; 300-plus built-in transforms plus custom PySpark, pandas, and Spark SQL; a data quality and insights report; target-leakage analysis and a quick model to test features early.</p></div>
-      <div class="pill"><p><b>Where it exports</b>S3, a SageMaker Pipelines step, Feature Store (Chapter 7), or a Python script. The flow runs as a SageMaker Processing job, so it scales past the interactive sample.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is an ML practitioner, the output feeds a SageMaker AI training job or feature group, and reproducibility across training and inference matters.</p></div>
+      <div class="pill"><p><b>Two modes</b>Automated sensitive data discovery samples representative objects across your buckets continuously; sensitive data discovery jobs run a deep, targeted scan of chosen buckets, once or on a schedule.</p></div>
+      <div class="pill"><p><b>What it recognizes</b>Managed data identifiers for PII, financial data, and credentials across many countries; custom data identifiers (regex plus keywords and proximity) for your own identifiers; allow lists for known public values.</p></div>
+      <div class="pill"><p><b>Then act elsewhere</b>Findings go to EventBridge and Security Hub, so a finding can trigger the redaction job described next. In DataBrew, profile jobs report PII statistics per column for tabular data.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : DataBrew */
+  /* 3 : text with Comprehend */
   { html: `
-    <div class="eyebrow reveal">Option 2 · AWS Glue DataBrew</div>
-    <h2 class="reveal">No code, reusable recipes</h2>
-    <p class="lead reveal" style="margin-bottom:16px">DataBrew is a visual, serverless preparation tool for analysts and engineers who want to <strong>clean and normalize without writing code</strong>, and reuse the steps as a recipe.</p>
+    <div class="eyebrow reveal">Free text · Amazon Comprehend</div>
+    <h2 class="reveal">Detect entities, redact in batch</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Comprehend locates PII entities in English or Spanish text with a type, a confidence score, and character offsets, and can write a redacted copy of a corpus.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">"Mode": "ONLY_REDACTION",<br>"RedactionConfig": { "PiiEntityTypes": ["ALL"],<br>&nbsp;&nbsp;"MaskMode": "<span class="al">REPLACE_WITH_PII_ENTITY_TYPE</span>" }</div>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>250-plus point-and-click transforms (nulls, invalid values, schema fixes, binning, one-hot, NLP sentence splitting) with live previews; profile jobs surface data quality issues; recipe jobs apply a saved recipe to a whole dataset on a schedule.</p></div>
-      <div class="pill"><p><b>Where it plugs in</b>Sources are S3, the Data Catalog, and JDBC stores; output goes to S3 for whatever consumes it next. It does not export into a SageMaker pipeline or Feature Store on its own.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is not a coder, the same cleaning must repeat on new files, and the output is a tidy dataset rather than a model-specific feature set.</p></div>
+      <div class="pill"><p><b>Real time versus batch</b><code>DetectPiiEntities</code> answers for one document up to 100 KB. Redaction is only available as an asynchronous job over S3 with <code>Mode</code> set to <code>ONLY_REDACTION</code>.</p></div>
+      <div class="pill"><p><b>MaskMode</b><code>REPLACE_WITH_PII_ENTITY_TYPE</code> writes "[NAME]" and "[ADDRESS]"; <code>MASK</code> writes a chosen <code>MaskCharacter</code> (one of ! # $ % &amp; * @) per character. <code>PiiEntityTypes</code> can be ALL or a list such as NAME, EMAIL, PHONE, SSN, CREDIT_DEBIT_NUMBER, BANK_ACCOUNT_NUMBER, AWS_SECRET_KEY.</p></div>
+      <div class="pill"><p><b>On read</b>An S3 Object Lambda access point can run Comprehend so consumers fetch a redacted copy while the original stays untouched.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : Spark on EMR */
+  /* 4 : tabular with DataBrew */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Apache Spark on Amazon EMR</div>
-    <h2 class="reveal">Code at any scale</h2>
-    <p class="lead reveal" style="margin-bottom:16px">EMR runs Spark (and Hive, Presto, Flink) on managed clusters, on EKS, or serverless. It is the choice when the transform is <strong>custom code over very large data</strong>.</p>
+    <div class="eyebrow reveal">Tables · AWS Glue DataBrew PII recipe steps</div>
+    <h2 class="reveal">Column-level masking, hashing, and encryption</h2>
+    <p class="lead reveal" style="margin-bottom:16px">DataBrew ships recipe actions purpose-built for PII columns, with a choice between <strong>irreversible and reversible</strong> obfuscation.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Deployment options</b>EMR on EC2 for full control and Spot savings; EMR on EKS to share a Kubernetes platform; EMR Serverless, which sizes and scales workers per job, releases them when it finishes, and can keep pre-initialized capacity warm for fast starts.</p></div>
-      <div class="pill"><p><b>Integration</b>Reads and writes S3 directly, uses the Glue Data Catalog as its metastore, and ships the Feature Store Spark connector for batch feature ingestion.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Terabytes or more, existing Spark or Scala code and UDFs, complex joins across many sources, or an engineering team that already runs Spark. Someone has to own the code and the cluster or application configuration.</p></div>
+      <div class="pill"><p><b>Irreversible</b><code>CRYPTOGRAPHIC_HASH</code>; masking with <code>MASK_CUSTOM</code>, <code>MASK_DATE</code>, <code>MASK_DELIMITER</code>, <code>MASK_RANGE</code>; substitution with <code>REPLACE_WITH_RANDOM_BETWEEN</code> and its date variant; <code>SHUFFLE_ROWS</code> to keep a column's distribution while breaking row linkage; or plain <code>DELETE</code> and null-out.</p></div>
+      <div class="pill"><p><b>Reversible</b><code>DETERMINISTIC_ENCRYPT</code> yields the same ciphertext for the same value, so an encrypted customer_id still joins across tables; <code>ENCRYPT</code> is probabilistic (different ciphertext each time); <code>DECRYPT</code> and <code>DETERMINISTIC_DECRYPT</code> restore values for key holders.</p></div>
+      <div class="pill"><p><b>Free text inside a table</b>Mask actions accept an entity type filter, so only detected PII inside a notes column is masked and the rest of the sentence survives.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : audio and the model boundary */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three tools, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Data Wrangler</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">DataBrew</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Spark on EMR</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Persona</td>
-          <td style="padding:8px 5px; color:var(--ink);">ML practitioner</td>
-          <td style="padding:8px 5px; color:var(--ink);">analyst, no code</td>
-          <td style="padding:8px 5px; color:var(--ink);">data engineer</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Interface</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual + code cells</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual recipes</td>
-          <td style="padding:8px 5px; color:var(--ink);">code</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">processing job</td>
-          <td style="padding:8px 5px; color:var(--ink);">serverless jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">clusters, largest</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">ML extras</td>
-          <td style="padding:8px 5px; color:var(--ink);">quick model, leakage</td>
-          <td style="padding:8px 5px; color:var(--ink);">profile jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">Spark ML, UDFs</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Exports to</td>
-          <td style="padding:8px 5px; color:var(--ink);">Pipelines, Feature Store, S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">anything</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Audio and the model boundary</div>
+    <h2 class="reveal">Transcribe redaction and Bedrock Guardrails</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Two more places PII appears in an ML pipeline: inside speech, and inside prompts and responses at inference time.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Amazon Transcribe</b>PII redaction for batch and streaming jobs replaces sensitive spans with a [PII] tag; streaming can also flag PII without redacting. Choose a redacted transcript only, or redacted plus unredacted, remembering that if the media is deleted the redacted copy is all that remains. The docs stress it is not HIPAA de-identification and outputs should be reviewed.</p></div>
+      <div class="pill"><p><b>Amazon Bedrock Guardrails</b>Sensitive information filters block or mask PII in prompts and model responses at request time (Chapter 76). They protect the live application; they do not clean a training corpus.</p></div>
+      <div class="pill"><p><b>Rule of placement</b>Clean the corpus before it lands in the feature store, the fine-tuning bucket, or the knowledge base; guard the boundary for whatever users type later.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : decision signals */
-  { steps: 3,
+  /* 6 : pipeline, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">Support transcripts into a fine-tuning set</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the protection steps for chat transcripts joined to a customer table.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Discover</b>Macie automated discovery flags the transcript bucket and the customer export; DataBrew's profile job reports which columns carry PII.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Redact the text</b>A Comprehend async job with ONLY_REDACTION and REPLACE_WITH_PII_ENTITY_TYPE rewrites every transcript with [NAME], [PHONE], [EMAIL] tokens.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Pseudonymize the keys</b>A DataBrew recipe applies DETERMINISTIC_ENCRYPT to customer_id in both tables and MASK_DATE to birth dates, so the join still works and no real identifier ships.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Verify, then train</b>Sample the output and run Comprehend detection again on it; a clean sample is the gate before the fine-tuning bucket (Chapter 15).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : decision signals */
+  { steps: 4,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Data scientist", "feed a SageMaker pipeline or feature group", "check for target leakage", "little code"</b>Data Wrangler.</p></div>
-      <div class="pill" data-step="2"><p><b>"Business analysts", "no code", "reuse the same cleaning steps every week", "profile the data"</b>DataBrew with a saved recipe and a scheduled recipe job.</p></div>
-      <div class="pill" data-step="3"><p><b>"Terabytes", "existing Spark code or UDFs", "complex joins across many sources", "Kubernetes platform"</b>Spark on EMR; EMR Serverless when nobody wants to size a cluster.</p></div>
+      <div class="pill" data-step="1"><p><b>"Where is the PII in our buckets", "findings", "compliance report"</b>Amazon Macie discovery, jobs or automated.</p></div>
+      <div class="pill" data-step="2"><p><b>"Free text", "names and phone numbers in transcripts", "keep the sentences"</b>Comprehend async redaction, replace with entity type or mask characters.</p></div>
+      <div class="pill" data-step="3"><p><b>"Join across tables", "reversible for the fraud team", "same value maps the same way"</b>DataBrew DETERMINISTIC_ENCRYPT (or a keyed hash when reversal is never needed).</p></div>
+      <div class="pill" data-step="4"><p><b>"Call recordings", "prompts at runtime"</b>Transcribe PII redaction for audio; Bedrock Guardrails sensitive information filters at the model boundary.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : quiz 1 */
+  /* 8 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A data scientist has a 30 GB churn dataset in Athena and wants to featurize it, check for target leakage, and push the result into a SageMaker Feature Store feature group and a SageMaker pipeline, writing as little code as possible. Which tool fits?</h2>
+    <h2 class="reveal" style="font-size:22px">Two tables must be joined on customer_id for training, but real identifiers may not leave the secure account. The fraud team occasionally needs to trace a prediction back to a customer. Which DataBrew step fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>AWS Glue DataBrew with a recipe job writing to S3</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Data Wrangler, exporting the flow to Feature Store and Pipelines</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Spark on EMR Serverless with the Feature Store Spark connector</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A Lambda function per row calling PutRecord</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>SHUFFLE_ROWS on customer_id in both tables</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>DETERMINISTIC_ENCRYPT on customer_id in both tables with the same key</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>ENCRYPT (probabilistic) on customer_id in both tables</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>MASK_RANGE to hide all but the last two characters</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Data Wrangler imports from Athena, runs leakage analysis and a quick model as built-in analyses, and exports directly to Feature Store and SageMaker Pipelines, all with little or no code. DataBrew (A) is the tempting distractor because it is also visual and low-code, but it has no leakage analysis and its output stops at S3, leaving the Feature Store and pipeline wiring to be built separately.</div>` },
+    <div class="feedback"><b>Correct.</b> Deterministic encryption maps each value to the same ciphertext every time, so the join still matches across tables, and the key holder can decrypt when a trace is authorized. Probabilistic ENCRYPT (C) is the tempting distractor: it is also reversible, but different ciphertext for the same value breaks the join. Shuffling destroys the linkage entirely.</div>` },
 
-  /* 8 : quiz 2 */
+  /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Marketing analysts receive a new CSV export every Monday with inconsistent date formats, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up for them?</h2>
+    <h2 class="reveal" style="font-size:22px">Millions of English chat transcripts in S3 will fine-tune a support model. Names, phone numbers, and card numbers must be removed while keeping the sentences readable and showing what kind of value was removed. What should the ML engineer run?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A Spark job on EMR scheduled weekly with Amazon EventBridge</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A Data Wrangler flow the analysts rerun in Studio each week</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>AWS Glue DataBrew: a saved recipe run as a scheduled recipe job, plus a profile job</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>An Athena CTAS query the analysts edit each week</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Amazon Macie sensitive data discovery job with automatic remediation</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>DetectPiiEntities in real time for each transcript, dropping any transcript with a hit</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>A Comprehend asynchronous job with Mode ONLY_REDACTION and MaskMode REPLACE_WITH_PII_ENTITY_TYPE</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Bedrock Guardrails with a sensitive information filter on the fine-tuning bucket</button>
     </div>
-    <div class="feedback"><b>Correct.</b> DataBrew is built for non-coders: the recipe captures the cleanup once, a scheduled recipe job reapplies it to each new file, and profile jobs report the quality issues. The Data Wrangler flow (B) is the tempting distractor: it can do the transforms, but it is a SageMaker AI tool aimed at ML practitioners, and the analysts here have no model to feed and no SageMaker environment to work in.</div>` },
-
-  /* 9 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A data engineering team must join 40 TB of clickstream logs with three other sources, applying custom Scala UDFs they already maintain, to produce a training set nightly. Which tool fits?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Apache Spark on Amazon EMR, reusing the existing code</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>SageMaker Data Wrangler with custom PySpark transform steps</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>AWS Glue DataBrew with a multi-dataset recipe</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon Athena federated queries joining the four sources</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> Tens of terabytes, multi-source joins, and existing Scala UDFs are the Spark-on-EMR profile: the code runs unchanged at whatever scale the cluster or EMR Serverless application provides. Data Wrangler (B) is the tempting distractor because it accepts custom PySpark, but it is a visual flow for practitioners, not a home for a maintained Scala codebase over 40 TB nightly.</div>` },
+    <div class="feedback"><b>Correct.</b> Redaction at corpus scale is an asynchronous Comprehend job over S3, and replacing each entity with its type keeps the sentence intact while marking that a [NAME] or [PHONE] stood there. Macie (A) is the tempting distractor: it discovers and reports sensitive data but does not rewrite objects. Guardrails (D) act on prompts and responses at inference, not on files in a bucket.</div>` },
 
   /* 10 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Tool chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Persona and destination pick the tool; scale confirms it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Data protected</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Discover with Macie, redact text with Comprehend, obfuscate columns with DataBrew, guard the boundary at inference.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Data Wrangler</b>ML practitioners, exports to Pipelines and Feature Store, leakage checks.</p></div>
-      <div class="pill"><p><b>DataBrew</b>No-code recipes and profile jobs, scheduled, output to S3.</p></div>
-      <div class="pill"><p><b>Spark on EMR</b>Custom code at the largest scale; Serverless when nobody wants a cluster.</p></div>
+      <div class="pill"><p><b>Mask, redact, anonymize</b>Keep shape, remove or type-label, or replace irreversibly or reversibly.</p></div>
+      <div class="pill"><p><b>Comprehend</b>Detect in real time; redact in an async job with MASK or REPLACE_WITH_PII_ENTITY_TYPE.</p></div>
+      <div class="pill"><p><b>DataBrew</b>Hash, mask, substitute, shuffle, or deterministic and probabilistic encryption with decrypt.</p></div>
+      <div class="pill"><p><b>Transcribe and Guardrails</b>[PII] tags in transcripts; sensitive information filters on prompts and responses.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
