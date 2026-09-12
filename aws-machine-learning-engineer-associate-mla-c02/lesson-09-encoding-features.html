@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3 · MLA-C02 Chapter 5</title>
+<title>Encoding Features: One-Hot, Binary, Label, and Tokenization · MLA-C02 Chapter 9</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-05-vector-databases.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-09-encoding-features.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #120810;            /* page background */
-    --bg-tint: #2a1224;       /* ambient glow tint behind the card */
-    --accent: #f472b6;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(244,114,182,0.12);  /* correct-answer fill */
-    --accent-ink: #120810;    /* text on top of the accent key chip */
+    --bg: #0a0b16;            /* page background */
+    --bg-tint: #161a3a;       /* ambient glow tint behind the card */
+    --accent: #818cf8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(129,140,248,0.12);  /* correct-answer fill */
+    --accent-ink: #0a0b16;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -218,7 +218,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-06-ingesting-multimodal-data.html",
+  next:      "lesson-10-transformation-tools.html",
   nextLabel: "Next chapter"
 };
 
@@ -226,36 +226,75 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m5ring { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; }
-      .m5ring2 { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; animation-delay: 1s; }
-      .m5nn { animation: m5nn 3s ease-in-out infinite; }
-      @keyframes m5ring { 0% { transform: scale(0.1); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
-      @keyframes m5nn { 0%, 20% { opacity: 0.35; } 55%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m5ring, .m5ring2, .m5nn { animation: none; opacity: 1; } }
+      .m9c { animation: m9cell 4.5s ease-in-out infinite; }
+      .m9c1 { animation-delay: 0s; }
+      .m9c2 { animation-delay: 1.5s; }
+      .m9c3 { animation-delay: 3s; }
+      .m9w { animation: m9word 4.5s ease-in-out infinite; }
+      .m9w1 { animation-delay: 0s; }
+      .m9w2 { animation-delay: 1.5s; }
+      .m9w3 { animation-delay: 3s; }
+      @keyframes m9cell { 0%, 5% { fill: rgba(241,241,246,0.08); } 12%, 28% { fill: var(--accent); } 36%, 100% { fill: rgba(241,241,246,0.08); } }
+      @keyframes m9word { 0%, 5% { opacity: 0.3; } 12%, 28% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
+      @media (prefers-reduced-motion: reduce) { .m9c, .m9w { animation: none; } .m9c1 { fill: var(--accent); } .m9w1 { opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m5glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(244,114,182,0.26)"/>
-        <stop offset="1" style="stop-color:rgba(244,114,182,0)"/>
+      <radialGradient id="m9glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(129,140,248,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(129,140,248,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="176" cy="96" rx="140" ry="82" fill="url(#m5glow)"/>
-    <path d="M40 176 h250 M40 176 v-150" stroke="rgba(251,207,232,0.3)" stroke-width="1.2"/>
-    <text x="292" y="188" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">dimension 1</text>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring"/>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring2"/>
-    <circle cx="70" cy="60" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="96" cy="140" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="250" cy="150" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="270" cy="52" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="130" cy="42" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="214" cy="164" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="150" cy="118" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="204" cy="72" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="196" cy="126" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="176" cy="96" r="6" fill="#fff" stroke="var(--accent)" stroke-width="2.5"/>
-    <text x="176" y="82" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">query</text>
-    <text x="234" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">k = 3 NEAREST</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m9glow)"/>
+    <g>
+      <rect x="20" y="42" width="84" height="30" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="62" y="61" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700" class="m9w m9w1">red</text>
+      <rect x="20" y="85" width="84" height="30" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="62" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700" class="m9w m9w2">green</text>
+      <rect x="20" y="128" width="84" height="30" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="62" y="147" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700" class="m9w m9w3">blue</text>
+    </g>
+    <path d="M104 57 C 130 57, 140 100, 166 100" stroke="rgba(199,210,254,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M104 100 h62" stroke="rgba(199,210,254,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M104 143 C 130 143, 140 100, 166 100" stroke="rgba(199,210,254,0.35)" stroke-width="1.5" fill="none"/>
+    <text x="135" y="92" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1">ENCODE</text>
+    <g>
+      <rect x="170" y="78" width="36" height="44" rx="7" fill="rgba(241,241,246,0.08)" stroke="var(--accent)" class="m9c m9c1"/>
+      <rect x="214" y="78" width="36" height="44" rx="7" fill="rgba(241,241,246,0.08)" stroke="var(--accent)" class="m9c m9c2"/>
+      <rect x="258" y="78" width="36" height="44" rx="7" fill="rgba(241,241,246,0.08)" stroke="var(--accent)" class="m9c m9c3"/>
+      <text x="188" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">is_red</text>
+      <text x="232" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">is_green</text>
+      <text x="276" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">is_blue</text>
+    </g>
+    <text x="232" y="62" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">ONE-HOT</text>
+    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">a number the model can use, without inventing an order</text>
+  </svg>`,
+
+  four: `<svg viewBox="0 0 320 200">
+    <g>
+      <rect x="8" y="10" width="304" height="26" rx="8" fill="rgba(129,140,248,0.14)" stroke="var(--accent)"/>
+      <text x="20" y="27" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">size = "L"</text>
+      <text x="300" y="27" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">categories: S, M, L, XL</text>
+    </g>
+    <g data-step="1">
+      <rect x="8" y="48" width="304" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="20" y="67" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">ONE-HOT</text>
+      <text x="300" y="67" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="10">[0, 0, 1, 0]</text>
+    </g>
+    <g data-step="2">
+      <rect x="8" y="86" width="304" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="20" y="105" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">ORDINAL</text>
+      <text x="300" y="105" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="10">2  (S=0, M=1, L=2, XL=3)</text>
+    </g>
+    <g data-step="3">
+      <rect x="8" y="124" width="304" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="20" y="143" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">BINARY</text>
+      <text x="300" y="143" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="10">[1, 0]  (2 in base 2)</text>
+    </g>
+    <g data-step="4">
+      <rect x="8" y="162" width="304" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="20" y="181" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">SIMILARITY</text>
+      <text x="300" y="181" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="10">[0.12, 0.87, ... ] 30 dims</text>
+    </g>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,129 +310,98 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 5</div>
-    <h1 class="reveal">Vector databases for AI</h1>
-    <p class="lead reveal">OpenSearch Service, RDS with pgvector, and Amazon S3 Vectors all store embeddings and return nearest neighbors. <strong>Query rate, cost, and where the data already lives</strong> decide which one meets the specification.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 9</div>
+    <h1 class="reveal">Encoding features</h1>
+    <p class="lead reveal">Models read numbers. Categories and text have to become numbers <strong>without inventing an order that is not there</strong>, and without exploding into a million columns.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : nominal vs ordinal */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Reading a vector store specification</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.7 says "configure scalable vector databases based on specifications". Every store is configured with the same handful of settings.</p>
+    <div class="eyebrow reveal">First question</div>
+    <h2 class="reveal">Does the category have an order?</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Every encoding choice starts here. Data Wrangler's docs draw the line the same way.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Dimension</b>Must equal the embedding model's output: Amazon Titan Text Embeddings v2 emits 1,024, 512, or 256; Titan v1.2 emits 1,536; Cohere Embed emits 1,024. Mismatch and ingestion fails.</p></div>
-      <div class="pill"><p><b>Distance metric and index</b>Cosine, Euclidean (L2), or dot product. Approximate nearest neighbor indexes (HNSW is the common one) trade a little recall for speed; exact search is only for small sets.</p></div>
-      <div class="pill"><p><b>Filters, scale, and cost</b>Metadata filtering on the query, target queries per second and latency, vector count, and whether you pay for provisioned capacity or per use. Amazon Bedrock Knowledge Bases can sit on top of all three stores here.</p></div>
+      <div class="pill"><p><b>Nominal</b>Country, color, merchant name: labels with no ranking. Encoding them as 0, 1, 2 tells a linear model that Algeria is "between" Afghanistan and Albania. Use one-hot, binary, hashing, or similarity encoding.</p></div>
+      <div class="pill"><p><b>Ordinal</b>High school, Bachelor's, Master's; S, M, L, XL. The order carries signal, so an integer map that respects it (High school 1, Bachelor's 2, Master's 3) is the right encoding.</p></div>
+      <div class="pill"><p><b>The model matters too</b>Tree ensembles tolerate integer codes for nominal data because they split on thresholds repeatedly; linear models and neural networks do not.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : OpenSearch */
+  /* 2 : one-hot */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon OpenSearch Service</div>
-    <h2 class="reveal">The high-QPS, hybrid-search engine</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A <code>knn_vector</code> field in an index with <code>index.knn</code> enabled, queried with the <code>knn</code> clause, next to full-text fields, aggregations, and geo queries in the <strong>same request</strong>.</p>
+    <div class="eyebrow reveal">Encoding 1 · One-hot</div>
+    <h2 class="reveal">One column per category</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Each category becomes an indicator: Dog is [1, 0], Cat is [0, 1]. No order is implied, and linear models can weight each category on its own.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Managed domains</b>Engines faiss (the one Bedrock Knowledge Bases requires), Lucene, and nmslib; HNSW graphs live in memory, so size nodes for them: half the RAM is heap, and k-NN may use half of the rest (a 32 GiB node holds about 8 GiB of graphs). Watch <code>KNNGraphMemoryUsage</code>.</p></div>
-      <div class="pill"><p><b>OpenSearch Serverless vector collections</b>Up to 16,000 dimensions, billed in OCUs. NextGen collections scale to zero when idle, default to 32x compressed indexes, and accelerate index builds on GPUs; they are also the quick-create store for Knowledge Bases.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Thousands of queries per second, low latency, hybrid keyword plus vector ranking, faceting, or binary vectors are in the spec.</p></div>
+      <div class="pill"><p><b>Data Wrangler options</b>Output as separate columns or one sparse vector. Drop last category removes the redundant column (a missing value then encodes as all zeros). Invalid handling: skip the row, keep missing as its own category, or error.</p></div>
+      <div class="pill"><p><b>Cost</b>Width grows with cardinality. A ZIP code column becomes 40,000 columns, most of them zero, which is slow and sparse. One-hot is for low- to medium-cardinality nominal features.</p></div>
+      <div class="pill"><p><b>Unseen values</b>Encoders fix their category list when the step is defined; a category that first appears at job time is treated as missing and handled by the invalid strategy you chose. Design for that day up front.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : pgvector */
+  /* 3 : ordinal and label */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Amazon RDS and Aurora PostgreSQL with pgvector</div>
-    <h2 class="reveal">Vectors next to the rows they describe</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The <code>pgvector</code> extension adds a <code>vector(n)</code> column type, distance operators, and ANN indexes to PostgreSQL, so embeddings <strong>join and filter with relational data</strong> in one SQL statement.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;<br><span class="kw">CREATE INDEX ON</span> kb <span class="kw">USING</span> hnsw (embedding <span class="al">vector_cosine_ops</span>);</div>
+    <div class="eyebrow reveal">Encoding 2 · Ordinal and label</div>
+    <h2 class="reveal">One integer per category</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Ordinal encoding maps each category to an integer from 0 to the category count. <strong>Label encoding</strong> is the same trick applied to the target column.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexes</b>HNSW (pgvector 0.5.0 and later, the one Bedrock asks for) or IVFFlat. Add a GIN index on a <code>jsonb</code> metadata column for filtering and a <code>tsvector</code> index for hybrid search. pgvector 0.8.0 iterative scans fix filtered queries returning too few rows.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The data already lives in PostgreSQL, results must respect transactions and row-level joins (accounts, permissions), and scale is moderate. Capacity is the instance size and read replicas, so it is the least elastic of the three.</p></div>
+      <div class="pill"><p><b>Right use</b>Truly ordered categories with a map you control, or a nominal feature feeding a tree ensemble that will split on it many times.</p></div>
+      <div class="pill"><p><b>Wrong use</b>A nominal feature feeding a linear or distance-based model: the integers become a fake magnitude. This is the classic exam trap.</p></div>
+      <div class="pill"><p><b>Data Wrangler options</b>Invalid handling adds Replace with NaN, recommended when the downstream algorithm can handle missing values itself. The One-hot step can also take an ordinal-encoded column as input.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : S3 Vectors */
+  /* 4 : high cardinality */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Amazon S3 Vectors</div>
-    <h2 class="reveal">Object storage that answers similarity queries</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Vector buckets hold vector indexes; a dedicated API stores, filters, and queries them with <strong>no infrastructure to provision</strong> and S3 durability.</p>
+    <div class="eyebrow reveal">Encoding 3 · High cardinality</div>
+    <h2 class="reveal">Binary, hashing, and similarity</h2>
+    <p class="lead reveal" style="margin-bottom:16px">When a column has thousands of values, one-hot is too wide and ordinal is wrong. Three compact encodings fill the gap.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Limits that matter</b>1 to 4,096 dimensions, float vectors only (no binary), cosine or Euclidean, up to 2 billion vectors per index, metadata up to 40 KB per vector of which 2 KB is filterable, strongly consistent writes.</p></div>
-      <div class="pill"><p><b>Performance and cost</b>Sub-second latency for infrequent queries and around 100 milliseconds when queried more often; pay for storage and requests only. AWS positions it for RAG and semantic search where queries are infrequent, and it is a supported Knowledge Bases store.</p></div>
-      <div class="pill"><p><b>Escape hatch</b>Need high QPS or hybrid search later? Export a snapshot of the index to OpenSearch Serverless, or use OpenSearch on top of S3 Vectors to cut storage cost while keeping the OpenSearch APIs.</p></div>
+      <div class="pill"><p><b>Binary encoding</b>Ordinal-encode, then write the integer in base 2 across a handful of columns: 1,000 categories fit in 10 bits. Compact, but the bits carry no meaning individually.</p></div>
+      <div class="pill"><p><b>Hashing</b>A hash function maps each value to one of N buckets (Spark's FeatureHasher). Fixed width, no category list to maintain, unseen values just hash; the cost is occasional collisions, fewer with a larger N.</p></div>
+      <div class="pill"><p><b>Similarity encoding</b>Data Wrangler tokenizes each value into 3-grams and min-hashes them into an embedding (default 30 dimensions), so "California" and "Calfornia" land close together. Built for many categories and noisy, typo-laden data.</p></div>
+      <div class="pill"><p><b>Replace rare</b>Collapse categories below a count or fraction threshold into "Other" before any of the above, shrinking the long tail.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : text */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three stores, one specification</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">OpenSearch</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">pgvector</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">S3 Vectors</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Query rate</td>
-          <td style="padding:8px 5px; color:var(--ink);">highest, lowest latency</td>
-          <td style="padding:8px 5px; color:var(--ink);">moderate, per instance</td>
-          <td style="padding:8px 5px; color:var(--ink);">infrequent, sub-second</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Cost model</td>
-          <td style="padding:8px 5px; color:var(--ink);">nodes or OCUs</td>
-          <td style="padding:8px 5px; color:var(--ink);">DB instance hours</td>
-          <td style="padding:8px 5px; color:var(--ink);">storage + requests</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Hybrid search</td>
-          <td style="padding:8px 5px; color:var(--ink);">native, facets</td>
-          <td style="padding:8px 5px; color:var(--ink);">SQL + tsvector</td>
-          <td style="padding:8px 5px; color:var(--ink);">metadata filters only</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Max dims</td>
-          <td style="padding:8px 5px; color:var(--ink);">10,000 / 16,000</td>
-          <td style="padding:8px 5px; color:var(--ink);">model-sized column</td>
-          <td style="padding:8px 5px; color:var(--ink);">4,096</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Best when</td>
-          <td style="padding:8px 5px; color:var(--ink);">serving at scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">data is in Postgres</td>
-          <td style="padding:8px 5px; color:var(--ink);">big, rarely queried</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Encoding 4 · Text</div>
+    <h2 class="reveal">Tokenize, then vectorize</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Free text is a category column with infinite cardinality. The classic pipeline splits it into tokens and counts them; Chapter 11 covers the embedding alternative.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Tokenizer</b>Standard splits on whitespace and lowercases; custom sets a regex, a minimum token length (3 drops "a", "at", "in"), and casing. Chapter 12 goes deeper into tokenization for language models.</p></div>
+      <div class="pill"><p><b>Vectorizer</b>Count vectorize builds a vocabulary (default cap 262,144 terms) and filters by minimum and maximum document frequency; binary output records presence instead of counts. Hashing vectorize skips the vocabulary for speed at the cost of collisions.</p></div>
+      <div class="pill"><p><b>Apply IDF</b>Multiplying term frequency by inverse document frequency gives TF-IDF: rare, discriminating words score high, filler words score low. Output as one sparse vector, or flattened into columns for count vectorize.</p></div>
+      <div class="pill"><p><b>Character statistics</b>Word count, character count, ratios of upper, lower, digits, and special characters: cheap features that often help spam and fraud text.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : configuring to spec, step build */
+  /* 6 : one value four ways, step build */
   { steps: 4,
     html: `
-    <div class="eyebrow reveal">Configuring to a specification</div>
-    <h2 class="reveal" style="font-size:24px">Four lines every spec must fill</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to fill the spec for a support-article search over Bedrock Knowledge Bases.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Dimension = embedding model</b>Titan Text Embeddings v2 at 1,024, so the index (or the <code>vector(1024)</code> column) is created at 1,024. Change the model, rebuild the index.</p></div>
-      <div class="pill" data-step="2"><p><b>Metric and index</b>Cosine for text similarity; HNSW so retrieval stays fast as the corpus grows. Bedrock recommends Euclidean on OpenSearch and cosine on pgvector; either way, pick one and keep it.</p></div>
-      <div class="pill" data-step="3"><p><b>Filters</b>Product line and language as filterable metadata: a keyword field in OpenSearch, a GIN-indexed jsonb column in PostgreSQL, filterable keys (within 2 KB) in S3 Vectors.</p></div>
-      <div class="pill" data-step="4"><p><b>Scale and cost</b>50 queries per minute and 20 million chunks: S3 Vectors. 2,000 queries per second: OpenSearch. Already joined to account rows in Aurora: pgvector.</p></div>
-    </div>
-    <div class="spacer"></div>` },
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">One value, four encodings</h2>
+    <div class="art reveal">${A.four}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A T-shirt size column holds S, M, L, XL. Tap to encode the value "L" four ways.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">One-hot: four indicator columns, exactly one set. Safe for any model, wide for many categories.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Ordinal: a single integer that respects the real order, so a linear model can learn "bigger sizes cost more".</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Binary: the ordinal code written in bits, two columns instead of four. Compact, meaningless bit by bit.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">Similarity: a learned-looking dense vector from character 3-grams. Overkill for four clean sizes; exactly right for 40,000 messy merchant names.</p>
+    </div>` },
 
   /* 7 : decision signals */
-  { steps: 3,
+  { steps: 4,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Thousands of QPS", "p99 under 50 ms", "keyword and vector together", "facets", "binary embeddings"</b>OpenSearch Service, Serverless for elastic capacity or a managed domain sized for graph memory.</p></div>
-      <div class="pill" data-step="2"><p><b>"Already in PostgreSQL", "join with customer rows", "transactional", "row-level permissions"</b>Aurora or RDS PostgreSQL with pgvector and an HNSW index.</p></div>
-      <div class="pill" data-step="3"><p><b>"Hundreds of millions of vectors", "queries are infrequent", "lowest cost", "no infrastructure"</b>Amazon S3 Vectors, with an export to OpenSearch Serverless if the query rate ever climbs.</p></div>
+      <div class="pill" data-step="1"><p><b>"No natural order", "a handful of values", "linear model or neural net"</b>One-hot, columns or sparse vector, with an invalid-handling strategy chosen.</p></div>
+      <div class="pill" data-step="2"><p><b>"Ranked levels", "small, medium, large", "XGBoost with many categories"</b>Ordinal encode with an explicit order map.</p></div>
+      <div class="pill" data-step="3"><p><b>"Tens of thousands of distinct values", "typos", "new values appear weekly"</b>Similarity encoding or hashing, after Replace rare collapses the tail.</p></div>
+      <div class="pill" data-step="4"><p><b>"Free-text field", "keyword presence matters", "classic classifier"</b>Tokenize plus count or hashing vectorize with IDF. Embeddings (Chapter 11) when meaning matters more than words.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -401,52 +409,40 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A retailer's product search must serve 2,000 queries per second at p99 under 50 ms, rank by keyword match and image-embedding similarity together, and return facet counts by category. Which vector store meets the specification?</h2>
+    <h2 class="reveal" style="font-size:22px">A payments model uses a merchant-name column with 40,000 distinct values, many of them misspelled variants of the same merchant, and the model is a logistic regression. How should the ML engineer encode the column?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Amazon S3 Vectors with category as filterable metadata</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon OpenSearch Service with a knn_vector field beside the text fields</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon RDS for PostgreSQL with pgvector and a GIN index on category</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon DynamoDB storing embeddings as lists, scanned by category</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Similarity encoding, so typo variants map to nearby vectors and width stays fixed</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>One-hot encoding with one column per merchant</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Ordinal encoding sorted alphabetically</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Drop the column, since it has too many values to be useful</button>
     </div>
-    <div class="feedback"><b>Correct.</b> High QPS with low latency, hybrid keyword plus vector ranking, and aggregations for facets are the OpenSearch feature set, on a managed domain or a Serverless vector collection. S3 Vectors (A) is the tempting distractor because it filters on metadata cheaply, but it is positioned for infrequent queries at sub-second latency and has no keyword ranking or facet aggregations.</div>` },
+    <div class="feedback"><b>Correct.</b> Similarity encoding is built for exactly this: it tokenizes each name into 3-grams and min-hashes them into a low-dimensional embedding, so "Starbuks" and "Starbucks" land close together and 40,000 values become 30 columns. One-hot (B) is the tempting distractor: it is order-free and linear-model friendly, but it produces 40,000 sparse columns and treats every misspelling as an unrelated merchant.</div>` },
 
   /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A legal team wants a Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day and sub-second answers are fine. The main requirement is the lowest storage and operating cost. Which store fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A demand model uses a shirt-size feature with values S, M, L, and XL. The team wants the model to be able to learn that larger sizes sell fewer units. Which encoding best supports that?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>An OpenSearch Service domain sized so all HNSW graphs fit in memory</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An OpenSearch Serverless vector collection with the OCU minimum raised</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Aurora PostgreSQL with pgvector on a large memory-optimized instance</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>An Amazon S3 Vectors index chosen as the knowledge base's vector store</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>One-hot encoding into four indicator columns</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Hashing the size into 16 buckets</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>TF-IDF vectorization of the size string</button>
+      <button class="choice" data-correct="true"><span class="key">D</span>Ordinal encoding with an explicit map S=0, M=1, L=2, XL=3</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Infrequent queries, a huge corpus (S3 Vectors indexes hold up to 2 billion vectors), sub-second latency accepted, and cost as the deciding axis is exactly the workload S3 Vectors was built for, and Knowledge Bases supports it directly. The Serverless collection (B) is the tempting distractor: NextGen collections can scale to zero when idle, but a corpus this size still pays for OCUs and memory whenever it serves, far more than pay-per-use object storage.</div>` },
+    <div class="feedback"><b>Correct.</b> Size is a genuinely ordered category, so an integer map that preserves the order gives the model one feature whose direction means something. One-hot (A) is the tempting distractor: it is never wrong for a nominal feature, but here it discards the order and forces the model to learn four unrelated weights.</div>` },
 
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A SaaS support assistant must retrieve only ticket embeddings belonging to the caller's account, with the account and ticket tables already in Aurora PostgreSQL and strict transactional consistency on new tickets. Which configuration is the best fit?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Enable pgvector in the Aurora cluster, add a <code>vector</code> column with an HNSW index, and filter by account in the same query</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Replicate embeddings to OpenSearch Serverless and pass the account as a filter</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Write embeddings to an S3 Vectors index with account as filterable metadata</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Store embeddings in DynamoDB keyed by account and compute distances in Lambda</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> The data already lives in PostgreSQL and the requirement is a transactional, row-level join (account ownership), so pgvector keeps vectors and rows in one consistent database with SQL doing the filtering. OpenSearch Serverless (B) is the tempting distractor: metadata filters work, but replication breaks the strict consistency on newly written tickets and adds a second system to secure.</div>` },
-
-  /* 11 : done */
+  /* 10 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Vector store chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match dimension and metric to the model, then let query rate, cost, and data locality pick the store.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Categories encoded</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Ask whether the order is real, then match the width to the cardinality.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>OpenSearch Service</b>High QPS, hybrid search, facets; size memory for HNSW graphs or go Serverless.</p></div>
-      <div class="pill"><p><b>pgvector</b>Vectors joined to rows in PostgreSQL, HNSW index, transactional filtering.</p></div>
-      <div class="pill"><p><b>S3 Vectors</b>Billions of vectors, infrequent queries, pay per use, 4,096 dimensions, export to OpenSearch when QPS grows.</p></div>
+      <div class="pill"><p><b>One-hot</b>Nominal, low cardinality, any model.</p></div>
+      <div class="pill"><p><b>Ordinal and label</b>Real order, or trees; never nominal into a linear model.</p></div>
+      <div class="pill"><p><b>Binary, hashing, similarity</b>High cardinality; similarity when values are noisy.</p></div>
+      <div class="pill"><p><b>Text</b>Tokenize, count or hash, apply IDF; embeddings when meaning matters.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

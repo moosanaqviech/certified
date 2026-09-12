@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3 · MLA-C02 Chapter 5</title>
+<title>Feature Engineering: Scaling, Binning, and Log Transforms · MLA-C02 Chapter 8</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-05-vector-databases.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-08-feature-engineering.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #120810;            /* page background */
-    --bg-tint: #2a1224;       /* ambient glow tint behind the card */
-    --accent: #f472b6;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(244,114,182,0.12);  /* correct-answer fill */
-    --accent-ink: #120810;    /* text on top of the accent key chip */
+    --bg: #0b1004;            /* page background */
+    --bg-tint: #1a2a08;       /* ambient glow tint behind the card */
+    --accent: #a3e635;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(163,230,53,0.12);  /* correct-answer fill */
+    --accent-ink: #0b1004;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -218,7 +218,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-06-ingesting-multimodal-data.html",
+  next:      "lesson-09-encoding-features.html",
   nextLabel: "Next chapter"
 };
 
@@ -226,36 +226,74 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m5ring { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; }
-      .m5ring2 { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; animation-delay: 1s; }
-      .m5nn { animation: m5nn 3s ease-in-out infinite; }
-      @keyframes m5ring { 0% { transform: scale(0.1); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
-      @keyframes m5nn { 0%, 20% { opacity: 0.35; } 55%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m5ring, .m5ring2, .m5nn { animation: none; opacity: 1; } }
+      .m8b { transform-origin: 50% 100%; transform-box: fill-box; animation: m8morph 4s ease-in-out infinite; }
+      .m8b1 { --m8from: 1; --m8to: 0.35; }
+      .m8b2 { --m8from: 0.7; --m8to: 0.6; }
+      .m8b3 { --m8from: 0.45; --m8to: 0.85; }
+      .m8b4 { --m8from: 0.3; --m8to: 1; }
+      .m8b5 { --m8from: 0.2; --m8to: 0.85; }
+      .m8b6 { --m8from: 0.14; --m8to: 0.6; }
+      .m8b7 { --m8from: 0.1; --m8to: 0.35; }
+      .m8b8 { --m8from: 0.07; --m8to: 0.18; }
+      .m8lbl1 { animation: m8lbl1 4s ease-in-out infinite; }
+      .m8lbl2 { animation: m8lbl2 4s ease-in-out infinite; }
+      @keyframes m8morph { 0%, 30% { transform: scaleY(var(--m8from)); } 60%, 90% { transform: scaleY(var(--m8to)); } 100% { transform: scaleY(var(--m8from)); } }
+      @keyframes m8lbl1 { 0%, 30% { opacity: 1; } 60%, 90% { opacity: 0.2; } 100% { opacity: 1; } }
+      @keyframes m8lbl2 { 0%, 30% { opacity: 0.2; } 60%, 90% { opacity: 1; } 100% { opacity: 0.2; } }
+      @media (prefers-reduced-motion: reduce) { .m8b { animation: none; transform: scaleY(var(--m8to)); } .m8lbl1 { animation: none; opacity: 0.2; } .m8lbl2 { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m5glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(244,114,182,0.26)"/>
-        <stop offset="1" style="stop-color:rgba(244,114,182,0)"/>
+      <radialGradient id="m8glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(163,230,53,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(163,230,53,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="176" cy="96" rx="140" ry="82" fill="url(#m5glow)"/>
-    <path d="M40 176 h250 M40 176 v-150" stroke="rgba(251,207,232,0.3)" stroke-width="1.2"/>
-    <text x="292" y="188" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">dimension 1</text>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring"/>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring2"/>
-    <circle cx="70" cy="60" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="96" cy="140" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="250" cy="150" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="270" cy="52" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="130" cy="42" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="214" cy="164" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="150" cy="118" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="204" cy="72" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="196" cy="126" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="176" cy="96" r="6" fill="#fff" stroke="var(--accent)" stroke-width="2.5"/>
-    <text x="176" y="82" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">query</text>
-    <text x="234" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">k = 3 NEAREST</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m8glow)"/>
+    <path d="M40 160 h240" stroke="rgba(217,249,157,0.35)" stroke-width="1.2"/>
+    <rect x="52" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b1"/>
+    <rect x="80" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b2"/>
+    <rect x="108" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b3"/>
+    <rect x="136" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b4"/>
+    <rect x="164" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b5"/>
+    <rect x="192" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b6"/>
+    <rect x="220" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b7"/>
+    <rect x="248" y="40" width="22" height="120" rx="4" fill="var(--accent)" class="m8b m8b8"/>
+    <text x="160" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9" class="m8lbl1">raw: long right tail</text>
+    <text x="160" y="182" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700" class="m8lbl2">log then standardize</text>
+    <text x="160" y="26" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SAME ROWS, NEW SHAPE</text>
+  </svg>`,
+
+  order: `<svg viewBox="0 0 320 196">
+    <g>
+      <rect x="8" y="76" width="64" height="44" rx="9" fill="rgba(163,230,53,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="40" y="94" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">RAW</text>
+      <text x="40" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">split first</text>
+    </g>
+    <g data-step="1">
+      <path d="M72 98 h16" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="88" y="76" width="64" height="44" rx="9" fill="rgba(163,230,53,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="120" y="94" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">OUTLIERS</text>
+      <text x="120" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">clip or drop</text>
+      <text x="120" y="134" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">stats from train only</text>
+    </g>
+    <g data-step="2">
+      <path d="M152 98 h16" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="168" y="76" width="64" height="44" rx="9" fill="rgba(163,230,53,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="200" y="94" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">RESHAPE</text>
+      <text x="200" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">log, bin, split</text>
+    </g>
+    <g data-step="3">
+      <path d="M232 98 h16" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="248" y="76" width="64" height="44" rx="9" fill="rgba(163,230,53,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="280" y="94" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SCALE</text>
+      <text x="280" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">fit on train</text>
+    </g>
+    <g data-step="4">
+      <path d="M280 120 v22" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="120" y="142" width="194" height="44" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="217" y="160" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">same parameters at inference</text>
+      <text x="217" y="175" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">the flow stores the means, quantiles, and bins</text>
+    </g>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,182 +309,150 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 5</div>
-    <h1 class="reveal">Vector databases for AI</h1>
-    <p class="lead reveal">OpenSearch Service, RDS with pgvector, and Amazon S3 Vectors all store embeddings and return nearest neighbors. <strong>Query rate, cost, and where the data already lives</strong> decide which one meets the specification.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 8</div>
+    <h1 class="reveal">Feature engineering for numbers</h1>
+    <p class="lead reveal">Scaling, standardization, log transforms, binning, and splitting change a column's <strong>shape, not its information</strong>. Which one you reach for depends on the algorithm that will read it.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Reading a vector store specification</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.7 says "configure scalable vector databases based on specifications". Every store is configured with the same handful of settings.</p>
+    <div class="eyebrow reveal">Why reshape at all</div>
+    <h2 class="reveal">Some algorithms measure distance</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.2.4 lists the transforms; the exam tests whether you know <strong>which models care</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Dimension</b>Must equal the embedding model's output: Amazon Titan Text Embeddings v2 emits 1,024, 512, or 256; Titan v1.2 emits 1,536; Cohere Embed emits 1,024. Mismatch and ingestion fails.</p></div>
-      <div class="pill"><p><b>Distance metric and index</b>Cosine, Euclidean (L2), or dot product. Approximate nearest neighbor indexes (HNSW is the common one) trade a little recall for speed; exact search is only for small sets.</p></div>
-      <div class="pill"><p><b>Filters, scale, and cost</b>Metadata filtering on the query, target queries per second and latency, vector count, and whether you pay for provisioned capacity or per use. Amazon Bedrock Knowledge Bases can sit on top of all three stores here.</p></div>
+      <div class="pill"><p><b>Scale-sensitive</b>Anything built on distances or gradients: k-means, k-NN, PCA, Linear Learner, logistic regression, neural networks, SVMs. A feature in the millions dominates one in the tens unless you rescale.</p></div>
+      <div class="pill"><p><b>Scale-indifferent</b>Tree ensembles such as XGBoost and Random Cut Forest split on thresholds, so monotone rescaling changes nothing. Scaling them is harmless but pointless.</p></div>
+      <div class="pill"><p><b>The one rule that always applies</b>Fit the transform on the training split and reuse those parameters on validation, test, and inference. Data Wrangler does this by computing statistics when the step is defined and reusing them when the job runs.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : OpenSearch */
+  /* 2 : scalers */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon OpenSearch Service</div>
-    <h2 class="reveal">The high-QPS, hybrid-search engine</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A <code>knn_vector</code> field in an index with <code>index.knn</code> enabled, queried with the <code>knn</code> clause, next to full-text fields, aggregations, and geo queries in the <strong>same request</strong>.</p>
+    <div class="eyebrow reveal">Standardization and normalization</div>
+    <h2 class="reveal">Four scalers, four situations</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler's <strong>Process numeric</strong> group exposes the four Spark ML scalers; the same four exist in scikit-learn.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Managed domains</b>Engines faiss (the one Bedrock Knowledge Bases requires), Lucene, and nmslib; HNSW graphs live in memory, so size nodes for them: half the RAM is heap, and k-NN may use half of the rest (a 32 GiB node holds about 8 GiB of graphs). Watch <code>KNNGraphMemoryUsage</code>.</p></div>
-      <div class="pill"><p><b>OpenSearch Serverless vector collections</b>Up to 16,000 dimensions, billed in OCUs. NextGen collections scale to zero when idle, default to 32x compressed indexes, and accelerate index builds on GPUs; they are also the quick-create store for Knowledge Bases.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Thousands of queries per second, low latency, hybrid keyword plus vector ranking, faceting, or binary vectors are in the spec.</p></div>
+      <div class="pill"><p><b>Standard scaler (z-score)</b>Subtract the mean, divide by the standard deviation: mean 0, unit variance. The default for linear models, PCA, and neural nets when the feature is roughly bell-shaped.</p></div>
+      <div class="pill"><p><b>Min-max scaler (normalization)</b>Rescales to a fixed range, usually 0 to 1. Good for bounded inputs such as pixel intensities; a single extreme value squashes everything else toward zero.</p></div>
+      <div class="pill"><p><b>Robust scaler</b>Centers on the median and scales by the interquartile range, so outliers barely move the result. Use it when you must keep the outliers in the data.</p></div>
+      <div class="pill"><p><b>Max-absolute scaler</b>Divides by the largest absolute value, mapping into minus 1 to 1 without shifting, which preserves sparsity in sparse vectors.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : pgvector */
+  /* 3 : log */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Amazon RDS and Aurora PostgreSQL with pgvector</div>
-    <h2 class="reveal">Vectors next to the rows they describe</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The <code>pgvector</code> extension adds a <code>vector(n)</code> column type, distance operators, and ANN indexes to PostgreSQL, so embeddings <strong>join and filter with relational data</strong> in one SQL statement.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;<br><span class="kw">CREATE INDEX ON</span> kb <span class="kw">USING</span> hnsw (embedding <span class="al">vector_cosine_ops</span>);</div>
+    <div class="eyebrow reveal">Log transformation</div>
+    <h2 class="reveal">Tame the long tail</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Income, transaction amounts, page views, and file sizes pile up near zero with a few huge values. A log <strong>compresses the tail</strong> so linear models and distance measures stop being dominated by it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexes</b>HNSW (pgvector 0.5.0 and later, the one Bedrock asks for) or IVFFlat. Add a GIN index on a <code>jsonb</code> metadata column for filtering and a <code>tsvector</code> index for hybrid search. pgvector 0.8.0 iterative scans fix filtered queries returning too few rows.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The data already lives in PostgreSQL, results must respect transactions and row-level joins (accounts, permissions), and scale is moderate. Capacity is the instance size and read replicas, so it is the least elastic of the three.</p></div>
+      <div class="pill"><p><b>Mechanics</b>Apply log to strictly positive values; use log(1 plus x) when zeros exist. Negative values need a shift first or a different transform. Scale after the log, not before.</p></div>
+      <div class="pill"><p><b>Tooling</b>Data Wrangler's Custom formula takes any Spark SQL expression, so <code>log(amount)</code> or <code>log1p(amount)</code> is a one-line step; DataBrew's math recipe actions do the same without code.</p></div>
+      <div class="pill"><p><b>Tell</b>"Heavily right-skewed", "a few very large values", "linear model underperforms on amounts". Trees do not need it, but it rarely hurts them.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : S3 Vectors */
+  /* 4 : binning */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Amazon S3 Vectors</div>
-    <h2 class="reveal">Object storage that answers similarity queries</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Vector buckets hold vector indexes; a dedicated API stores, filters, and queries them with <strong>no infrastructure to provision</strong> and S3 durability.</p>
+    <div class="eyebrow reveal">Binning</div>
+    <h2 class="reveal">Turn a number into a bucket</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Binning discretizes a continuous feature into ordered categories: age becomes 18 to 24, 25 to 34, and so on. It trades precision for <strong>robustness and non-linearity</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Limits that matter</b>1 to 4,096 dimensions, float vectors only (no binary), cosine or Euclidean, up to 2 billion vectors per index, metadata up to 40 KB per vector of which 2 KB is filterable, strongly consistent writes.</p></div>
-      <div class="pill"><p><b>Performance and cost</b>Sub-second latency for infrequent queries and around 100 milliseconds when queried more often; pay for storage and requests only. AWS positions it for RAG and semantic search where queries are infrequent, and it is a supported Knowledge Bases store.</p></div>
-      <div class="pill"><p><b>Escape hatch</b>Need high QPS or hybrid search later? Export a snapshot of the index to OpenSearch Serverless, or use OpenSearch on top of S3 Vectors to cut storage cost while keeping the OpenSearch APIs.</p></div>
+      <div class="pill"><p><b>Fixed-width vs quantile</b>Fixed-width bins keep equal ranges and expose gaps; quantile bins hold equal counts and survive skew. DataBrew ships a binning recipe action; in Spark, Bucketizer takes explicit edges and QuantileDiscretizer computes them.</p></div>
+      <div class="pill"><p><b>When it helps</b>A linear model can then learn a different weight per bucket (a step function), outliers collapse into the top bin, and business rules such as credit-score bands map cleanly.</p></div>
+      <div class="pill"><p><b>When it hurts</b>Trees already find their own thresholds, and information inside a bin is lost. Binned features usually get one-hot or ordinal encoded next (Chapter 9).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : splitting and datetime */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three stores, one specification</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">OpenSearch</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">pgvector</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">S3 Vectors</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Query rate</td>
-          <td style="padding:8px 5px; color:var(--ink);">highest, lowest latency</td>
-          <td style="padding:8px 5px; color:var(--ink);">moderate, per instance</td>
-          <td style="padding:8px 5px; color:var(--ink);">infrequent, sub-second</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Cost model</td>
-          <td style="padding:8px 5px; color:var(--ink);">nodes or OCUs</td>
-          <td style="padding:8px 5px; color:var(--ink);">DB instance hours</td>
-          <td style="padding:8px 5px; color:var(--ink);">storage + requests</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Hybrid search</td>
-          <td style="padding:8px 5px; color:var(--ink);">native, facets</td>
-          <td style="padding:8px 5px; color:var(--ink);">SQL + tsvector</td>
-          <td style="padding:8px 5px; color:var(--ink);">metadata filters only</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Max dims</td>
-          <td style="padding:8px 5px; color:var(--ink);">10,000 / 16,000</td>
-          <td style="padding:8px 5px; color:var(--ink);">model-sized column</td>
-          <td style="padding:8px 5px; color:var(--ink);">4,096</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Best when</td>
-          <td style="padding:8px 5px; color:var(--ink);">serving at scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">data is in Postgres</td>
-          <td style="padding:8px 5px; color:var(--ink);">big, rarely queried</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Feature splitting</div>
+    <h2 class="reveal">One column hiding several</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A timestamp, an address, or a product code packs several signals into one string. Splitting them out lets the model use each.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Datetime</b>Data Wrangler's Featurize date/time extracts year, month, day, weekday, hour as columns or a vector. Pick the cyclic embedding for linear models and neural networks (December sits next to January) and ordinal for tree-based algorithms.</p></div>
+      <div class="pill"><p><b>Strings</b>Split by delimiter or regex: "Austin, TX 78701" into city, state, ZIP; "SKU-EU-2024" into region and year. Data Wrangler's Format string and Split column steps, DataBrew's split actions, or a Spark SQL expression.</p></div>
+      <div class="pill"><p><b>Ratios and interactions</b>Custom formula builds price per unit, bytes per session, or col_a times col_b in one expression, often worth more than either source column alone.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : configuring to spec, step build */
+  /* 6 : outliers before scaling */
+  { html: `
+    <div class="eyebrow reveal">Sequence matters</div>
+    <h2 class="reveal">Handle outliers before you scale</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Every scaler computes statistics from the data, so an outlier left in place <strong>distorts the parameters</strong> for every other row.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Detection options</b>Data Wrangler's Handle outliers group: standard deviation (mean-based), robust standard deviation (quantile-trimmed), quantile bounds, or explicit min-max thresholds when you already know the valid range.</p></div>
+      <div class="pill"><p><b>Fix methods</b>Clip to the bound (keeps the row, caps the value), remove the row, or invalidate the value so an imputation step can handle it. Clipping is the usual choice for training data you cannot afford to lose.</p></div>
+      <div class="pill"><p><b>Then</b>Log if skewed, bin or split if useful, and scale last. Chapter 16 covers the deeper cleaning story: missing values and deduplication.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : order of operations, step build */
   { steps: 4,
     html: `
-    <div class="eyebrow reveal">Configuring to a specification</div>
-    <h2 class="reveal" style="font-size:24px">Four lines every spec must fill</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to fill the spec for a support-article search over Bedrock Knowledge Bases.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Dimension = embedding model</b>Titan Text Embeddings v2 at 1,024, so the index (or the <code>vector(1024)</code> column) is created at 1,024. Change the model, rebuild the index.</p></div>
-      <div class="pill" data-step="2"><p><b>Metric and index</b>Cosine for text similarity; HNSW so retrieval stays fast as the corpus grows. Bedrock recommends Euclidean on OpenSearch and cosine on pgvector; either way, pick one and keep it.</p></div>
-      <div class="pill" data-step="3"><p><b>Filters</b>Product line and language as filterable metadata: a keyword field in OpenSearch, a GIN-indexed jsonb column in PostgreSQL, filterable keys (within 2 KB) in S3 Vectors.</p></div>
-      <div class="pill" data-step="4"><p><b>Scale and cost</b>50 queries per minute and 20 million chunks: S3 Vectors. 2,000 queries per second: OpenSearch. Already joined to account rows in Aurora: pgvector.</p></div>
-    </div>
-    <div class="spacer"></div>` },
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">The order of operations</h2>
+    <div class="art reveal">${A.order}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A transactions table feeds a Linear Learner model. Tap to build the flow in the order that keeps statistics honest.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Split train, validation, and test first, then detect outliers on the training split and clip them. Statistics computed here are the only ones the flow will ever use.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Reshape: log the skewed amount, bin the customer tenure, split the timestamp into weekday and hour.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Standardize the numeric columns. Fit on train; the same means and deviations apply to every other split.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">Export the flow to a SageMaker Processing job or pipeline step, so inference runs the identical transforms with the stored parameters.</p>
+    </div>` },
 
-  /* 7 : decision signals */
-  { steps: 3,
+  /* 8 : decision signals */
+  { steps: 4,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Thousands of QPS", "p99 under 50 ms", "keyword and vector together", "facets", "binary embeddings"</b>OpenSearch Service, Serverless for elastic capacity or a managed domain sized for graph memory.</p></div>
-      <div class="pill" data-step="2"><p><b>"Already in PostgreSQL", "join with customer rows", "transactional", "row-level permissions"</b>Aurora or RDS PostgreSQL with pgvector and an HNSW index.</p></div>
-      <div class="pill" data-step="3"><p><b>"Hundreds of millions of vectors", "queries are infrequent", "lowest cost", "no infrastructure"</b>Amazon S3 Vectors, with an export to OpenSearch Serverless if the query rate ever climbs.</p></div>
+      <div class="pill" data-step="1"><p><b>"Features on wildly different ranges", "k-means", "PCA", "neural network"</b>Standardize (z-score). Min-max when the model wants a bounded 0 to 1 input.</p></div>
+      <div class="pill" data-step="2"><p><b>"Right-skewed", "a few huge values", "amounts or counts"</b>Log or log1p transform, then scale.</p></div>
+      <div class="pill" data-step="3"><p><b>"Outliers must stay", "median-based"</b>Robust scaler, or clip with the Handle outliers step first.</p></div>
+      <div class="pill" data-step="4"><p><b>"Bands", "buckets", "non-linear effect in a linear model"</b>Binning, quantile bins when the distribution is skewed. Trees do not need it.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 8 : quiz 1 */
+  /* 9 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A retailer's product search must serve 2,000 queries per second at p99 under 50 ms, rank by keyword match and image-embedding similarity together, and return facet counts by category. Which vector store meets the specification?</h2>
+    <h2 class="reveal" style="font-size:22px">A k-means job clusters customers on annual income (0 to 900,000) and age (18 to 90). Every cluster splits purely by income and age contributes nothing. What is the right fix?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Amazon S3 Vectors with category as filterable metadata</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon OpenSearch Service with a knn_vector field beside the text fields</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon RDS for PostgreSQL with pgvector and a GIN index on category</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon DynamoDB storing embeddings as lists, scanned by category</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Bin age into decades so it carries more weight</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Switch to XGBoost, which handles mixed ranges</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Standardize both features with the standard scaler before clustering</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Apply a log transform to age so its range grows</button>
     </div>
-    <div class="feedback"><b>Correct.</b> High QPS with low latency, hybrid keyword plus vector ranking, and aggregations for facets are the OpenSearch feature set, on a managed domain or a Serverless vector collection. S3 Vectors (A) is the tempting distractor because it filters on metadata cheaply, but it is positioned for infrequent queries at sub-second latency and has no keyword ranking or facet aggregations.</div>` },
+    <div class="feedback"><b>Correct.</b> k-means measures Euclidean distance, so a feature spanning hundreds of thousands drowns one spanning seventy; z-score standardization puts both on unit variance and lets age matter. Switching to XGBoost (B) is the tempting distractor because trees are scale-indifferent, but the task is clustering, not supervised prediction, so it does not apply.</div>` },
 
-  /* 9 : quiz 2 */
+  /* 10 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A legal team wants a Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day and sub-second answers are fine. The main requirement is the lowest storage and operating cost. Which store fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A logistic regression model uses transaction amount as a feature. Amounts are heavily right-skewed: most are under 50, a few reach 200,000, and the model underfits on the typical range. Which transform should come first?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>An OpenSearch Service domain sized so all HNSW graphs fit in memory</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An OpenSearch Serverless vector collection with the OCU minimum raised</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Aurora PostgreSQL with pgvector on a large memory-optimized instance</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>An Amazon S3 Vectors index chosen as the knowledge base's vector store</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Min-max scale the amount to 0 to 1</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Apply a log1p transform to the amount, then standardize</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>One-hot encode the amount</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Drop rows above 10,000 so the range is reasonable</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Infrequent queries, a huge corpus (S3 Vectors indexes hold up to 2 billion vectors), sub-second latency accepted, and cost as the deciding axis is exactly the workload S3 Vectors was built for, and Knowledge Bases supports it directly. The Serverless collection (B) is the tempting distractor: NextGen collections can scale to zero when idle, but a corpus this size still pays for OCUs and memory whenever it serves, far more than pay-per-use object storage.</div>` },
-
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A SaaS support assistant must retrieve only ticket embeddings belonging to the caller's account, with the account and ticket tables already in Aurora PostgreSQL and strict transactional consistency on new tickets. Which configuration is the best fit?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Enable pgvector in the Aurora cluster, add a <code>vector</code> column with an HNSW index, and filter by account in the same query</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Replicate embeddings to OpenSearch Serverless and pass the account as a filter</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Write embeddings to an S3 Vectors index with account as filterable metadata</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Store embeddings in DynamoDB keyed by account and compute distances in Lambda</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> The data already lives in PostgreSQL and the requirement is a transactional, row-level join (account ownership), so pgvector keeps vectors and rows in one consistent database with SQL doing the filtering. OpenSearch Serverless (B) is the tempting distractor: metadata filters work, but replication breaks the strict consistency on newly written tickets and adds a second system to secure.</div>` },
+    <div class="feedback"><b>Correct.</b> A log compresses the long tail so the typical range stops being squeezed into a sliver, and the subsequent standardization gives the linear model a well-behaved input. Min-max (A) is the tempting distractor: with a 200,000 maximum, almost every ordinary transaction lands within 0.00025 of zero, which is exactly the compression the team is suffering from.</div>` },
 
   /* 11 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Vector store chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match dimension and metric to the model, then let query rate, cost, and data locality pick the store.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Numbers reshaped</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Distance-based models need scaling; skew needs a log; bands need bins; fit everything on train.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>OpenSearch Service</b>High QPS, hybrid search, facets; size memory for HNSW graphs or go Serverless.</p></div>
-      <div class="pill"><p><b>pgvector</b>Vectors joined to rows in PostgreSQL, HNSW index, transactional filtering.</p></div>
-      <div class="pill"><p><b>S3 Vectors</b>Billions of vectors, infrequent queries, pay per use, 4,096 dimensions, export to OpenSearch when QPS grows.</p></div>
+      <div class="pill"><p><b>Scalers</b>Standard, min-max, robust, max-absolute: pick by distribution and model.</p></div>
+      <div class="pill"><p><b>Log and binning</b>Compress tails, or discretize into bands a linear model can weight.</p></div>
+      <div class="pill"><p><b>Splitting</b>Datetime parts (cyclic or ordinal), string parts, and ratios.</p></div>
+      <div class="pill"><p><b>Order</b>Split, outliers, reshape, scale; store the parameters for inference.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

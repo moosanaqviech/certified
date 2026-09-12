@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3 · MLA-C02 Chapter 5</title>
+<title>Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR · MLA-C02 Chapter 10</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-05-vector-databases.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-10-transformation-tools.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #120810;            /* page background */
-    --bg-tint: #2a1224;       /* ambient glow tint behind the card */
-    --accent: #f472b6;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(244,114,182,0.12);  /* correct-answer fill */
-    --accent-ink: #120810;    /* text on top of the accent key chip */
+    --bg: #130b04;            /* page background */
+    --bg-tint: #2b1708;       /* ambient glow tint behind the card */
+    --accent: #fb923c;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(251,146,60,0.12);  /* correct-answer fill */
+    --accent-ink: #130b04;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,47 +215,55 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
-/* ----------  NAV  ---------- */
+/* Chapter 11 is not authored yet, so this is the course frontier for now:
+   set next to lesson-11-embedding-models.html when it ships. */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-06-ingesting-multimodal-data.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m5ring { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; }
-      .m5ring2 { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; animation-delay: 1s; }
-      .m5nn { animation: m5nn 3s ease-in-out infinite; }
-      @keyframes m5ring { 0% { transform: scale(0.1); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
-      @keyframes m5nn { 0%, 20% { opacity: 0.35; } 55%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m5ring, .m5ring2, .m5nn { animation: none; opacity: 1; } }
+      .m10hand { transform-origin: 160px 132px; animation: m10sweep 6s ease-in-out infinite; }
+      .m10l1 { animation: m10l1 6s ease-in-out infinite; }
+      .m10l2 { animation: m10l2 6s ease-in-out infinite; }
+      .m10l3 { animation: m10l3 6s ease-in-out infinite; }
+      @keyframes m10sweep { 0%, 12% { transform: rotate(-58deg); } 33%, 45% { transform: rotate(0deg); } 66%, 78% { transform: rotate(58deg); } 100% { transform: rotate(-58deg); } }
+      @keyframes m10l1 { 0%, 12% { opacity: 1; } 25%, 88% { opacity: 0.35; } 100% { opacity: 1; } }
+      @keyframes m10l2 { 0%, 22% { opacity: 0.35; } 33%, 45% { opacity: 1; } 58%, 100% { opacity: 0.35; } }
+      @keyframes m10l3 { 0%, 55% { opacity: 0.35; } 66%, 78% { opacity: 1; } 92%, 100% { opacity: 0.35; } }
+      @media (prefers-reduced-motion: reduce) { .m10hand { animation: none; transform: rotate(0deg); } .m10l1, .m10l2, .m10l3 { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m5glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(244,114,182,0.26)"/>
-        <stop offset="1" style="stop-color:rgba(244,114,182,0)"/>
+      <radialGradient id="m10glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(251,146,60,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(251,146,60,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="176" cy="96" rx="140" ry="82" fill="url(#m5glow)"/>
-    <path d="M40 176 h250 M40 176 v-150" stroke="rgba(251,207,232,0.3)" stroke-width="1.2"/>
-    <text x="292" y="188" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">dimension 1</text>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring"/>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring2"/>
-    <circle cx="70" cy="60" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="96" cy="140" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="250" cy="150" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="270" cy="52" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="130" cy="42" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="214" cy="164" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="150" cy="118" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="204" cy="72" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="196" cy="126" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="176" cy="96" r="6" fill="#fff" stroke="var(--accent)" stroke-width="2.5"/>
-    <text x="176" y="82" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">query</text>
-    <text x="234" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">k = 3 NEAREST</text>
+    <ellipse cx="160" cy="110" rx="150" ry="80" fill="url(#m10glow)"/>
+    <path d="M60 132 a100 100 0 0 1 200 0" fill="none" stroke="rgba(254,215,170,0.3)" stroke-width="10" stroke-linecap="round"/>
+    <g class="m10l1">
+      <rect x="16" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
+      <text x="59" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Data Wrangler</text>
+      <text x="59" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">ML-native, visual</text>
+    </g>
+    <g class="m10l2">
+      <rect x="117" y="6" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
+      <text x="160" y="22" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">DataBrew</text>
+      <text x="160" y="35" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">no code, recipes</text>
+    </g>
+    <g class="m10l3">
+      <rect x="218" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
+      <text x="261" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Spark on EMR</text>
+      <text x="261" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">code, any scale</text>
+    </g>
+    <line x1="160" y1="132" x2="160" y2="52" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" class="m10hand"/>
+    <circle cx="160" cy="132" r="7" fill="var(--accent)"/>
+    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">who transforms, how, and at what scale</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SKILL 1.2.1</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,182 +279,169 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 5</div>
-    <h1 class="reveal">Vector databases for AI</h1>
-    <p class="lead reveal">OpenSearch Service, RDS with pgvector, and Amazon S3 Vectors all store embeddings and return nearest neighbors. <strong>Query rate, cost, and where the data already lives</strong> decide which one meets the specification.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 10</div>
+    <h1 class="reveal">Choosing the transformation tool</h1>
+    <p class="lead reveal">SageMaker Data Wrangler, AWS Glue DataBrew, and Spark on Amazon EMR all clean and reshape data. <strong>Who is doing it, how much code they want, and how big the data is</strong> pick the tool.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
   /* 1 : shared ground */
   { html: `
     <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Reading a vector store specification</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.7 says "configure scalable vector databases based on specifications". Every store is configured with the same handful of settings.</p>
+    <h2 class="reveal">Same inputs, same outputs, different hands</h2>
+    <p class="lead reveal" style="margin-bottom:16px">All three read from S3 and the AWS Glue Data Catalog, apply the transforms from Chapters 8 and 9, and write results back to S3. The differences are about <strong>persona, interface, scale, and where the output plugs in</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Dimension</b>Must equal the embedding model's output: Amazon Titan Text Embeddings v2 emits 1,024, 512, or 256; Titan v1.2 emits 1,536; Cohere Embed emits 1,024. Mismatch and ingestion fails.</p></div>
-      <div class="pill"><p><b>Distance metric and index</b>Cosine, Euclidean (L2), or dot product. Approximate nearest neighbor indexes (HNSW is the common one) trade a little recall for speed; exact search is only for small sets.</p></div>
-      <div class="pill"><p><b>Filters, scale, and cost</b>Metadata filtering on the query, target queries per second and latency, vector count, and whether you pay for provisioned capacity or per use. Amazon Bedrock Knowledge Bases can sit on top of all three stores here.</p></div>
+      <div class="pill"><p><b>Persona</b>A data scientist inside SageMaker AI, a business analyst who will not write code, or a data engineer who already owns Spark jobs.</p></div>
+      <div class="pill"><p><b>Interface and scale</b>Point-and-click with an automatic sample, or code that runs on as many workers as the data needs.</p></div>
+      <div class="pill"><p><b>Destination</b>Straight into a SageMaker pipeline or Feature Store, a scheduled S3 output for analytics, or whatever a Spark job can write.</p></div>
+      <div class="pill"><p><b>Not on this menu</b>AWS Glue ETL jobs (Chapter 4) are the serverless Spark option and DataBrew's engineer-side sibling; the exam names DataBrew and EMR here because they are the two ends of the code spectrum.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : OpenSearch */
+  /* 2 : Data Wrangler */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon OpenSearch Service</div>
-    <h2 class="reveal">The high-QPS, hybrid-search engine</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A <code>knn_vector</code> field in an index with <code>index.knn</code> enabled, queried with the <code>knn</code> clause, next to full-text fields, aggregations, and geo queries in the <strong>same request</strong>.</p>
+    <div class="eyebrow reveal">Option 1 · Amazon SageMaker Data Wrangler</div>
+    <h2 class="reveal">The ML-native prep tool</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler lives inside SageMaker AI (now in SageMaker Canvas, with a natural-language interface, and in Studio Classic). It is the tool whose <strong>transforms and exports are built for model training</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Managed domains</b>Engines faiss (the one Bedrock Knowledge Bases requires), Lucene, and nmslib; HNSW graphs live in memory, so size nodes for them: half the RAM is heap, and k-NN may use half of the rest (a 32 GiB node holds about 8 GiB of graphs). Watch <code>KNNGraphMemoryUsage</code>.</p></div>
-      <div class="pill"><p><b>OpenSearch Serverless vector collections</b>Up to 16,000 dimensions, billed in OCUs. NextGen collections scale to zero when idle, default to 32x compressed indexes, and accelerate index builds on GPUs; they are also the quick-create store for Knowledge Bases.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Thousands of queries per second, low latency, hybrid keyword plus vector ranking, faceting, or binary vectors are in the spec.</p></div>
+      <div class="pill"><p><b>What it does</b>Imports from S3, Athena, Amazon Redshift, Snowflake, and Databricks; 300-plus built-in transforms plus custom PySpark, pandas, and Spark SQL; a data quality and insights report; target-leakage analysis and a quick model to test features early.</p></div>
+      <div class="pill"><p><b>Where it exports</b>S3, a SageMaker Pipelines step, Feature Store (Chapter 7), or a Python script. The flow runs as a SageMaker Processing job, so it scales past the interactive sample.</p></div>
+      <div class="pill"><p><b>Pick it when</b>The person is an ML practitioner, the output feeds a SageMaker AI training job or feature group, and reproducibility across training and inference matters.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : pgvector */
+  /* 3 : DataBrew */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Amazon RDS and Aurora PostgreSQL with pgvector</div>
-    <h2 class="reveal">Vectors next to the rows they describe</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The <code>pgvector</code> extension adds a <code>vector(n)</code> column type, distance operators, and ANN indexes to PostgreSQL, so embeddings <strong>join and filter with relational data</strong> in one SQL statement.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;<br><span class="kw">CREATE INDEX ON</span> kb <span class="kw">USING</span> hnsw (embedding <span class="al">vector_cosine_ops</span>);</div>
+    <div class="eyebrow reveal">Option 2 · AWS Glue DataBrew</div>
+    <h2 class="reveal">No code, reusable recipes</h2>
+    <p class="lead reveal" style="margin-bottom:16px">DataBrew is a visual, serverless preparation tool for analysts and engineers who want to <strong>clean and normalize without writing code</strong>, and reuse the steps as a recipe.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexes</b>HNSW (pgvector 0.5.0 and later, the one Bedrock asks for) or IVFFlat. Add a GIN index on a <code>jsonb</code> metadata column for filtering and a <code>tsvector</code> index for hybrid search. pgvector 0.8.0 iterative scans fix filtered queries returning too few rows.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The data already lives in PostgreSQL, results must respect transactions and row-level joins (accounts, permissions), and scale is moderate. Capacity is the instance size and read replicas, so it is the least elastic of the three.</p></div>
+      <div class="pill"><p><b>What it does</b>250-plus point-and-click transforms (nulls, invalid values, schema fixes, binning, one-hot, NLP sentence splitting) with live previews; profile jobs surface data quality issues; recipe jobs apply a saved recipe to a whole dataset on a schedule.</p></div>
+      <div class="pill"><p><b>Where it plugs in</b>Sources are S3, the Data Catalog, and JDBC stores; output goes to S3 for whatever consumes it next. It does not export into a SageMaker pipeline or Feature Store on its own.</p></div>
+      <div class="pill"><p><b>Pick it when</b>The person is not a coder, the same cleaning must repeat on new files, and the output is a tidy dataset rather than a model-specific feature set.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : S3 Vectors */
+  /* 4 : Spark on EMR */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Amazon S3 Vectors</div>
-    <h2 class="reveal">Object storage that answers similarity queries</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Vector buckets hold vector indexes; a dedicated API stores, filters, and queries them with <strong>no infrastructure to provision</strong> and S3 durability.</p>
+    <div class="eyebrow reveal">Option 3 · Apache Spark on Amazon EMR</div>
+    <h2 class="reveal">Code at any scale</h2>
+    <p class="lead reveal" style="margin-bottom:16px">EMR runs Spark (and Hive, Presto, Flink) on managed clusters, on EKS, or serverless. It is the choice when the transform is <strong>custom code over very large data</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Limits that matter</b>1 to 4,096 dimensions, float vectors only (no binary), cosine or Euclidean, up to 2 billion vectors per index, metadata up to 40 KB per vector of which 2 KB is filterable, strongly consistent writes.</p></div>
-      <div class="pill"><p><b>Performance and cost</b>Sub-second latency for infrequent queries and around 100 milliseconds when queried more often; pay for storage and requests only. AWS positions it for RAG and semantic search where queries are infrequent, and it is a supported Knowledge Bases store.</p></div>
-      <div class="pill"><p><b>Escape hatch</b>Need high QPS or hybrid search later? Export a snapshot of the index to OpenSearch Serverless, or use OpenSearch on top of S3 Vectors to cut storage cost while keeping the OpenSearch APIs.</p></div>
+      <div class="pill"><p><b>Deployment options</b>EMR on EC2 for full control and Spot savings; EMR on EKS to share a Kubernetes platform; EMR Serverless, which sizes and scales workers per job, releases them when it finishes, and can keep pre-initialized capacity warm for fast starts.</p></div>
+      <div class="pill"><p><b>Integration</b>Reads and writes S3 directly, uses the Glue Data Catalog as its metastore, and ships the Feature Store Spark connector for batch feature ingestion.</p></div>
+      <div class="pill"><p><b>Pick it when</b>Terabytes or more, existing Spark or Scala code and UDFs, complex joins across many sources, or an engineering team that already runs Spark. Someone has to own the code and the cluster or application configuration.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 5 : table */
   { html: `
     <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three stores, one specification</h2>
+    <h2 class="reveal" style="font-size:24px">Three tools, four axes</h2>
     <div class="reveal" style="overflow-x:auto;margin-top:6px">
       <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
         <tr style="border-bottom:1px solid var(--line);">
           <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">OpenSearch</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">pgvector</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">S3 Vectors</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Data Wrangler</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">DataBrew</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Spark on EMR</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Query rate</td>
-          <td style="padding:8px 5px; color:var(--ink);">highest, lowest latency</td>
-          <td style="padding:8px 5px; color:var(--ink);">moderate, per instance</td>
-          <td style="padding:8px 5px; color:var(--ink);">infrequent, sub-second</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Persona</td>
+          <td style="padding:8px 5px; color:var(--ink);">ML practitioner</td>
+          <td style="padding:8px 5px; color:var(--ink);">analyst, no code</td>
+          <td style="padding:8px 5px; color:var(--ink);">data engineer</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Cost model</td>
-          <td style="padding:8px 5px; color:var(--ink);">nodes or OCUs</td>
-          <td style="padding:8px 5px; color:var(--ink);">DB instance hours</td>
-          <td style="padding:8px 5px; color:var(--ink);">storage + requests</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Interface</td>
+          <td style="padding:8px 5px; color:var(--ink);">visual + code cells</td>
+          <td style="padding:8px 5px; color:var(--ink);">visual recipes</td>
+          <td style="padding:8px 5px; color:var(--ink);">code</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Hybrid search</td>
-          <td style="padding:8px 5px; color:var(--ink);">native, facets</td>
-          <td style="padding:8px 5px; color:var(--ink);">SQL + tsvector</td>
-          <td style="padding:8px 5px; color:var(--ink);">metadata filters only</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Scale</td>
+          <td style="padding:8px 5px; color:var(--ink);">processing job</td>
+          <td style="padding:8px 5px; color:var(--ink);">serverless jobs</td>
+          <td style="padding:8px 5px; color:var(--ink);">clusters, largest</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Max dims</td>
-          <td style="padding:8px 5px; color:var(--ink);">10,000 / 16,000</td>
-          <td style="padding:8px 5px; color:var(--ink);">model-sized column</td>
-          <td style="padding:8px 5px; color:var(--ink);">4,096</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">ML extras</td>
+          <td style="padding:8px 5px; color:var(--ink);">quick model, leakage</td>
+          <td style="padding:8px 5px; color:var(--ink);">profile jobs</td>
+          <td style="padding:8px 5px; color:var(--ink);">Spark ML, UDFs</td>
         </tr>
         <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Best when</td>
-          <td style="padding:8px 5px; color:var(--ink);">serving at scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">data is in Postgres</td>
-          <td style="padding:8px 5px; color:var(--ink);">big, rarely queried</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Exports to</td>
+          <td style="padding:8px 5px; color:var(--ink);">Pipelines, Feature Store, S3</td>
+          <td style="padding:8px 5px; color:var(--ink);">S3</td>
+          <td style="padding:8px 5px; color:var(--ink);">anything</td>
         </tr>
       </table>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : configuring to spec, step build */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Configuring to a specification</div>
-    <h2 class="reveal" style="font-size:24px">Four lines every spec must fill</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to fill the spec for a support-article search over Bedrock Knowledge Bases.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Dimension = embedding model</b>Titan Text Embeddings v2 at 1,024, so the index (or the <code>vector(1024)</code> column) is created at 1,024. Change the model, rebuild the index.</p></div>
-      <div class="pill" data-step="2"><p><b>Metric and index</b>Cosine for text similarity; HNSW so retrieval stays fast as the corpus grows. Bedrock recommends Euclidean on OpenSearch and cosine on pgvector; either way, pick one and keep it.</p></div>
-      <div class="pill" data-step="3"><p><b>Filters</b>Product line and language as filterable metadata: a keyword field in OpenSearch, a GIN-indexed jsonb column in PostgreSQL, filterable keys (within 2 KB) in S3 Vectors.</p></div>
-      <div class="pill" data-step="4"><p><b>Scale and cost</b>50 queries per minute and 20 million chunks: S3 Vectors. 2,000 queries per second: OpenSearch. Already joined to account rows in Aurora: pgvector.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 7 : decision signals */
+  /* 6 : decision signals */
   { steps: 3,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Thousands of QPS", "p99 under 50 ms", "keyword and vector together", "facets", "binary embeddings"</b>OpenSearch Service, Serverless for elastic capacity or a managed domain sized for graph memory.</p></div>
-      <div class="pill" data-step="2"><p><b>"Already in PostgreSQL", "join with customer rows", "transactional", "row-level permissions"</b>Aurora or RDS PostgreSQL with pgvector and an HNSW index.</p></div>
-      <div class="pill" data-step="3"><p><b>"Hundreds of millions of vectors", "queries are infrequent", "lowest cost", "no infrastructure"</b>Amazon S3 Vectors, with an export to OpenSearch Serverless if the query rate ever climbs.</p></div>
+      <div class="pill" data-step="1"><p><b>"Data scientist", "feed a SageMaker pipeline or feature group", "check for target leakage", "little code"</b>Data Wrangler.</p></div>
+      <div class="pill" data-step="2"><p><b>"Business analysts", "no code", "reuse the same cleaning steps every week", "profile the data"</b>DataBrew with a saved recipe and a scheduled recipe job.</p></div>
+      <div class="pill" data-step="3"><p><b>"Terabytes", "existing Spark code or UDFs", "complex joins across many sources", "Kubernetes platform"</b>Spark on EMR; EMR Serverless when nobody wants to size a cluster.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 8 : quiz 1 */
+  /* 7 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A retailer's product search must serve 2,000 queries per second at p99 under 50 ms, rank by keyword match and image-embedding similarity together, and return facet counts by category. Which vector store meets the specification?</h2>
+    <h2 class="reveal" style="font-size:22px">A data scientist has a 30 GB churn dataset in Athena and wants to featurize it, check for target leakage, and push the result into a SageMaker Feature Store feature group and a SageMaker pipeline, writing as little code as possible. Which tool fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Amazon S3 Vectors with category as filterable metadata</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon OpenSearch Service with a knn_vector field beside the text fields</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon RDS for PostgreSQL with pgvector and a GIN index on category</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon DynamoDB storing embeddings as lists, scanned by category</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>AWS Glue DataBrew with a recipe job writing to S3</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Data Wrangler, exporting the flow to Feature Store and Pipelines</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Spark on EMR Serverless with the Feature Store Spark connector</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A Lambda function per row calling PutRecord</button>
     </div>
-    <div class="feedback"><b>Correct.</b> High QPS with low latency, hybrid keyword plus vector ranking, and aggregations for facets are the OpenSearch feature set, on a managed domain or a Serverless vector collection. S3 Vectors (A) is the tempting distractor because it filters on metadata cheaply, but it is positioned for infrequent queries at sub-second latency and has no keyword ranking or facet aggregations.</div>` },
+    <div class="feedback"><b>Correct.</b> Data Wrangler imports from Athena, runs leakage analysis and a quick model as built-in analyses, and exports directly to Feature Store and SageMaker Pipelines, all with little or no code. DataBrew (A) is the tempting distractor because it is also visual and low-code, but it has no leakage analysis and its output stops at S3, leaving the Feature Store and pipeline wiring to be built separately.</div>` },
 
-  /* 9 : quiz 2 */
+  /* 8 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A legal team wants a Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day and sub-second answers are fine. The main requirement is the lowest storage and operating cost. Which store fits?</h2>
+    <h2 class="reveal" style="font-size:22px">Marketing analysts receive a new CSV export every Monday with inconsistent date formats, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up for them?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>An OpenSearch Service domain sized so all HNSW graphs fit in memory</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An OpenSearch Serverless vector collection with the OCU minimum raised</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Aurora PostgreSQL with pgvector on a large memory-optimized instance</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>An Amazon S3 Vectors index chosen as the knowledge base's vector store</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A Spark job on EMR scheduled weekly with Amazon EventBridge</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A Data Wrangler flow the analysts rerun in Studio each week</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>AWS Glue DataBrew: a saved recipe run as a scheduled recipe job, plus a profile job</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>An Athena CTAS query the analysts edit each week</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Infrequent queries, a huge corpus (S3 Vectors indexes hold up to 2 billion vectors), sub-second latency accepted, and cost as the deciding axis is exactly the workload S3 Vectors was built for, and Knowledge Bases supports it directly. The Serverless collection (B) is the tempting distractor: NextGen collections can scale to zero when idle, but a corpus this size still pays for OCUs and memory whenever it serves, far more than pay-per-use object storage.</div>` },
+    <div class="feedback"><b>Correct.</b> DataBrew is built for non-coders: the recipe captures the cleanup once, a scheduled recipe job reapplies it to each new file, and profile jobs report the quality issues. The Data Wrangler flow (B) is the tempting distractor: it can do the transforms, but it is a SageMaker AI tool aimed at ML practitioners, and the analysts here have no model to feed and no SageMaker environment to work in.</div>` },
 
-  /* 10 : quiz 3 */
+  /* 9 : quiz 3 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A SaaS support assistant must retrieve only ticket embeddings belonging to the caller's account, with the account and ticket tables already in Aurora PostgreSQL and strict transactional consistency on new tickets. Which configuration is the best fit?</h2>
+    <h2 class="reveal" style="font-size:22px">A data engineering team must join 40 TB of clickstream logs with three other sources, applying custom Scala UDFs they already maintain, to produce a training set nightly. Which tool fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Enable pgvector in the Aurora cluster, add a <code>vector</code> column with an HNSW index, and filter by account in the same query</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Replicate embeddings to OpenSearch Serverless and pass the account as a filter</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Write embeddings to an S3 Vectors index with account as filterable metadata</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Store embeddings in DynamoDB keyed by account and compute distances in Lambda</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Apache Spark on Amazon EMR, reusing the existing code</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>SageMaker Data Wrangler with custom PySpark transform steps</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>AWS Glue DataBrew with a multi-dataset recipe</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Amazon Athena federated queries joining the four sources</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The data already lives in PostgreSQL and the requirement is a transactional, row-level join (account ownership), so pgvector keeps vectors and rows in one consistent database with SQL doing the filtering. OpenSearch Serverless (B) is the tempting distractor: metadata filters work, but replication breaks the strict consistency on newly written tickets and adds a second system to secure.</div>` },
+    <div class="feedback"><b>Correct.</b> Tens of terabytes, multi-source joins, and existing Scala UDFs are the Spark-on-EMR profile: the code runs unchanged at whatever scale the cluster or EMR Serverless application provides. Data Wrangler (B) is the tempting distractor because it accepts custom PySpark, but it is a visual flow for practitioners, not a home for a maintained Scala codebase over 40 TB nightly.</div>` },
 
-  /* 11 : done */
+  /* 10 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Vector store chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match dimension and metric to the model, then let query rate, cost, and data locality pick the store.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Tool chosen</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Persona and destination pick the tool; scale confirms it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>OpenSearch Service</b>High QPS, hybrid search, facets; size memory for HNSW graphs or go Serverless.</p></div>
-      <div class="pill"><p><b>pgvector</b>Vectors joined to rows in PostgreSQL, HNSW index, transactional filtering.</p></div>
-      <div class="pill"><p><b>S3 Vectors</b>Billions of vectors, infrequent queries, pay per use, 4,096 dimensions, export to OpenSearch when QPS grows.</p></div>
+      <div class="pill"><p><b>Data Wrangler</b>ML practitioners, exports to Pipelines and Feature Store, leakage checks.</p></div>
+      <div class="pill"><p><b>DataBrew</b>No-code recipes and profile jobs, scheduled, output to S3.</p></div>
+      <div class="pill"><p><b>Spark on EMR</b>Custom code at the largest scale; Serverless when nobody wants a cluster.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
