@@ -45,6 +45,17 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-generative-ai-engineer-associate/` folder as they're authored
   (see curriculum-index-databricks-genai-associate.md). Exam files use the
   `genai-practice-exam-NN.html` prefix.
+- AWS Machine Learning Engineer Associate has two courses, one per exam
+  version, each with its own folder and course index page:
+  `aws-machine-learning-engineer-associate-mla-c01/` (MLA-C01, offered in
+  English until 28 Sep 2026, see curriculum-index-aws-mla-c01.md) and
+  `aws-machine-learning-engineer-associate-mla-c02/` (MLA-C02, delivery
+  from 29 Sep 2026, see curriculum-index-aws-mla-c02.md). Both indexes are
+  DRAFT (chapter placement derived from the official exam guides, not yet
+  locked). No lessons or exams exist yet: the course index pages list every
+  chapter as "Coming soon" with `file:null`, and the practice exams will use
+  the `mla-c01-practice-exam-NN.html` and `mla-c02-practice-exam-NN.html`
+  prefixes.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
