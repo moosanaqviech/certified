@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Streaming Ingestion and Transformation: Kinesis, Flink, Kafka, Lambda, and Spark · MLA-C02 Chapter 3</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-03-streaming-ingestion-transformation.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #061014;            /* page background */
+    --bg-tint: #0b2430;       /* ambient glow tint behind the card */
+    --accent: #22d3ee;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(34,211,238,0.12);  /* correct-answer fill */
+    --accent-ink: #061014;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-04-merging-sources-troubleshooting.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <style>
+      .m3a { animation: m3flow 2.6s linear infinite; }
+      .m3b { animation: m3flow 2.6s linear infinite; animation-delay: 0.65s; }
+      .m3c { animation: m3flow 2.6s linear infinite; animation-delay: 1.3s; }
+      .m3d { animation: m3flow 2.6s linear infinite; animation-delay: 1.95s; }
+      .m3out1 { animation: m3out 2.6s linear infinite; }
+      .m3out2 { animation: m3out 2.6s linear infinite; animation-delay: 0.9s; }
+      .m3out3 { animation: m3out 2.6s linear infinite; animation-delay: 1.8s; }
+      @keyframes m3flow { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateX(120px); opacity: 0; } }
+      @keyframes m3out { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(56px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m3a, .m3b, .m3c, .m3d, .m3out1, .m3out2, .m3out3 { animation: none; opacity: 1; } }
+    </style>
+    <defs>
+      <linearGradient id="m3pipe" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:rgba(34,211,238,0.06)"/>
+        <stop offset="1" style="stop-color:rgba(34,211,238,0.2)"/>
+      </linearGradient>
+      <radialGradient id="m3glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(34,211,238,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(34,211,238,0)"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m3glow)"/>
+    <g>
+      <rect x="12" y="76" width="44" height="48" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <circle cx="34" cy="92" r="6" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+      <path d="M26 112 c4 -8, 12 -8, 16 0" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="34" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">producers</text>
+    </g>
+    <rect x="66" y="58" width="128" height="18" rx="9" fill="url(#m3pipe)" stroke="rgba(165,243,252,0.4)"/>
+    <rect x="66" y="91" width="128" height="18" rx="9" fill="url(#m3pipe)" stroke="rgba(165,243,252,0.4)"/>
+    <rect x="66" y="124" width="128" height="18" rx="9" fill="url(#m3pipe)" stroke="rgba(165,243,252,0.4)"/>
+    <text x="130" y="52" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SHARDS</text>
+    <circle cx="70" cy="67" r="3.2" fill="var(--accent)" class="m3a"/>
+    <circle cx="70" cy="100" r="3.2" fill="var(--accent)" class="m3b"/>
+    <circle cx="70" cy="133" r="3.2" fill="var(--accent)" class="m3c"/>
+    <circle cx="70" cy="100" r="3.2" fill="var(--accent)" class="m3d"/>
+    <path d="M194 67 C 214 67, 220 44, 240 44" stroke="rgba(165,243,252,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M194 100 h46" stroke="rgba(165,243,252,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M194 133 C 214 133, 220 156, 240 156" stroke="rgba(165,243,252,0.35)" stroke-width="1.5" fill="none"/>
+    <circle cx="196" cy="100" r="3" fill="var(--accent)" class="m3out1"/>
+    <circle cx="196" cy="100" r="3" fill="var(--accent)" class="m3out2"/>
+    <circle cx="196" cy="100" r="3" fill="var(--accent)" class="m3out3"/>
+    <g>
+      <rect x="240" y="30" width="70" height="28" rx="8" fill="rgba(34,211,238,0.12)" stroke="var(--accent)"/>
+      <text x="275" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Lambda</text>
+      <rect x="240" y="86" width="70" height="28" rx="8" fill="rgba(34,211,238,0.12)" stroke="var(--accent)"/>
+      <text x="275" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Flink</text>
+      <rect x="240" y="142" width="70" height="28" rx="8" fill="rgba(34,211,238,0.12)" stroke="var(--accent)"/>
+      <text x="275" y="160" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Firehose</text>
+    </g>
+  </svg>`,
+
+  journey: `<svg viewBox="0 0 320 190">
+    <g>
+      <rect x="8" y="64" width="64" height="44" rx="9" fill="rgba(34,211,238,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="40" y="82" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">STREAM</text>
+      <text x="40" y="97" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Kinesis</text>
+    </g>
+    <g data-step="1">
+      <path d="M72 86 h20" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="92" y="64" width="64" height="44" rx="9" fill="rgba(34,211,238,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="124" y="82" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">ENRICH</text>
+      <text x="124" y="97" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Lambda</text>
+      <text x="124" y="126" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">per record, stateless</text>
+    </g>
+    <g data-step="2">
+      <path d="M156 86 h20" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="176" y="64" width="64" height="44" rx="9" fill="rgba(34,211,238,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="208" y="82" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">DELIVER</text>
+      <text x="208" y="97" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Firehose</text>
+      <text x="208" y="126" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">buffer, to Parquet</text>
+    </g>
+    <g data-step="3">
+      <path d="M240 86 h20" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="260" y="64" width="54" height="44" rx="9" fill="rgba(34,211,238,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="287" y="82" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">LAND</text>
+      <text x="287" y="97" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">S3</text>
+    </g>
+    <g data-step="4">
+      <path d="M40 108 v34" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="6" y="142" width="130" height="40" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="71" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Flink app on the same stream:</text>
+      <text x="71" y="171" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">windows, joins, live features</text>
+      <path d="M287 108 v34" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="184" y="142" width="130" height="40" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="249" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Glue or Spark reads the lake:</text>
+      <text x="249" y="171" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">batch features, training sets</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 : cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 3</div>
+    <h1 class="reveal">Streaming ingestion and transformation</h1>
+    <p class="lead reveal">Kinesis and Kafka carry the events. Lambda, Apache Flink, Firehose, and Spark each transform them differently. <strong>How much state the transform needs</strong> picks the tool.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 : Kinesis Data Streams */
+  { html: `
+    <div class="eyebrow reveal">Source · Amazon Kinesis Data Streams</div>
+    <h2 class="reveal">A durable buffer made of shards</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Producers put records; consumers read them in order, typically <strong>under a second</strong> after arrival. Several consumers can read the same stream independently.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Capacity</b>Provisioned mode: each shard takes 1 MB/s or 1,000 records/s in and serves 2 MB/s out, shared by all consumers. On-demand mode scales shards for you. Enhanced fan-out gives a registered consumer its own 2 MB/s per shard, pushed over HTTP/2.</p></div>
+      <div class="pill"><p><b>Retention</b>24 hours by default, extendable to 365 days, so a consumer that falls behind or a replay for backfilling training data can catch up.</p></div>
+      <div class="pill"><p><b>Consumers</b>The Kinesis Client Library on EC2, Lambda, Managed Service for Apache Flink, Amazon Data Firehose, and AWS Glue streaming jobs all read directly from a stream.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : Firehose */
+  { html: `
+    <div class="eyebrow reveal">Delivery · Amazon Data Firehose</div>
+    <h2 class="reveal">Buffer, convert, land, no code</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Firehose is delivery, not processing. It <strong>buffers by size or time</strong> and writes to a destination; you never write a consumer or manage a shard.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Destinations</b>S3, Amazon Redshift (staged in S3, then COPY), OpenSearch Service and Serverless, Apache Iceberg tables, Splunk, and HTTP endpoints. Source: direct PUTs or an existing Kinesis data stream.</p></div>
+      <div class="pill"><p><b>Transform on the way</b>An optional Lambda function reshapes each record, and record format conversion writes Parquet or ORC to S3, which is how streaming JSON becomes the lake's columnar format (Chapter 1).</p></div>
+      <div class="pill"><p><b>Latency</b>Near real time: records wait for the buffer size or interval before delivery. If sub-second output matters, Firehose is the wrong stage.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : Kafka / MSK */
+  { html: `
+    <div class="eyebrow reveal">Source · Apache Kafka on Amazon MSK</div>
+    <h2 class="reveal">Topics and partitions instead of shards</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Amazon MSK runs Apache Kafka for you. Choose it when producers and consumers <strong>already speak Kafka</strong> or the estate relies on the Kafka ecosystem.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The model</b>A topic is split into partitions; consumer groups share partitions and track offsets. Same ordering-per-key idea as a shard, with Kafka's client protocol and tooling.</p></div>
+      <div class="pill"><p><b>Reading it on AWS</b>AWS Glue streaming jobs connect through a Glue connection using TLS bootstrap brokers (plaintext is not accepted) with IAM authentication available for MSK; Managed Service for Apache Flink and Lambda consume MSK topics too.</p></div>
+      <div class="pill"><p><b>Kinesis or Kafka?</b>Kinesis Data Streams is the AWS-native default with the simplest integrations. MSK wins when compatibility with existing Kafka clients, connectors, or a migration is the requirement.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : Managed Service for Apache Flink */
+  { html: `
+    <div class="eyebrow reveal">Transform · Amazon Managed Service for Apache Flink</div>
+    <h2 class="reveal">Stateful processing with exactly-once</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Flink keeps state across events: <strong>windows, joins between streams, running aggregates</strong>. The service provisions compute, scales parallelism, fails over across AZs, and checkpoints state for you.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>APIs</b>Flink SQL and the Table API for most jobs; the DataStream API (Java, Scala, Python) when you need fine-grained state, custom timers, or asynchronous calls to an external endpoint such as a model for inference.</p></div>
+      <div class="pill"><p><b>Two ways to run it</b>A packaged application for long-running streaming ETL with normal CI/CD, or a Studio notebook for interactive SQL over live streams that can be promoted to an application.</p></div>
+      <div class="pill"><p><b>Sources and sinks</b>Kinesis Data Streams, MSK, Firehose, and S3, so a Flink job can compute live features and hand them straight to a feature store or a stream.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : Lambda */
+  { html: `
+    <div class="eyebrow reveal">Transform · AWS Lambda</div>
+    <h2 class="reveal">Per-record work with no servers</h2>
+    <p class="lead reveal" style="margin-bottom:16px">An event source mapping polls each shard and invokes the function with a <strong>batch of records from one shard</strong>. Ideal for stateless enrich, filter, and reformat steps.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Batching</b>Batch size plus a batching window of up to 5 minutes, capped at a 6 MB payload. One invocation per shard by default; ParallelizationFactor (1 to 10) adds concurrent batches per shard while keeping order per partition key.</p></div>
+      <div class="pill"><p><b>Failure semantics</b>At-least-once delivery, so the function must be idempotent. An error stops that shard's progress until the batch succeeds, which is why bisect-on-error and retry limits exist.</p></div>
+      <div class="pill"><p><b>Limits of the shape</b>Tumbling windows give simple per-shard aggregates, but there is no cross-stream join and no large durable state. When the transform needs those, move to Flink.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 : Spark structured streaming */
+  { html: `
+    <div class="eyebrow reveal">Transform · Spark Structured Streaming</div>
+    <h2 class="reveal">Micro-batches into the lake</h2>
+    <p class="lead reveal" style="margin-bottom:16px">AWS Glue streaming ETL jobs (and Spark on EMR) run Structured Streaming: the stream is consumed in <strong>micro-batches</strong> and written with the full Spark and Glue transform library.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Glue streaming defaults</b>Reads Kinesis Data Streams, Kafka, or MSK; processes 100-second windows by default (tunable for timeliness versus late-data accuracy); writes any format to S3 or JDBC targets. G.025X workers keep low-volume streams cheap.</p></div>
+      <div class="pill"><p><b>State tracking</b>Checkpoints, not job bookmarks: a stopped and restarted job resumes where it left off, and deleting the checkpoint folder reprocesses the stream.</p></div>
+      <div class="pill"><p><b>Watch for</b>Schema detection is convenient but disables joins of streaming data; declare the schema when you need to join. Billing is hourly while the job runs, so it is not a good fit for a sparse trickle of events.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : journey, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">One event stream, two paths</h2>
+    <div class="art reveal">${A.journey}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Clickstream events land in a Kinesis data stream. Tap to follow them to the lake and to live features.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">A Lambda function, invoked with batches per shard, adds device metadata to each record. Stateless, so it stays simple.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Firehose buffers the enriched records and converts them to Parquet on the way out.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">They land in S3 partitioned by hour, where Athena and Glue batch jobs build training sets from them.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">Meanwhile a Flink application reads the same stream and computes five-minute windowed counts per user for online features. Two consumers, one stream.</p>
+    </div>` },
+
+  /* 8 : picking the transformer, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Decision signals</div>
+    <h2 class="reveal" style="font-size:24px">Match the transform to its state</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>"Just land it in S3 as Parquet", "minimal operations"</b>Firehose, with record format conversion and an optional Lambda for light reshaping.</p></div>
+      <div class="pill" data-step="2"><p><b>"Enrich or filter each record", "no aggregation"</b>Lambda with an event source mapping. Make it idempotent.</p></div>
+      <div class="pill" data-step="3"><p><b>"Sliding windows", "join two streams", "sub-second", "exactly-once"</b>Managed Service for Apache Flink.</p></div>
+      <div class="pill" data-step="4"><p><b>"Existing Spark transforms", "micro-batches into the lake", "Glue Data Catalog tables"</b>AWS Glue streaming ETL or Spark on EMR.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 9 : quiz 1 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check 1</div>
+    <h2 class="reveal" style="font-size:22px">IoT sensor readings arrive in a Kinesis data stream. Within about a minute they must be in S3 as Parquet, with a device-type field added to each record. The team wants the least code and no infrastructure to run. What should they use?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A Managed Service for Apache Flink application with an S3 sink</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>An AWS Glue streaming ETL job writing Parquet every micro-batch</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Amazon Data Firehose reading the stream, with a Lambda transform and record format conversion to Parquet</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A Kinesis Client Library consumer on EC2 that writes Parquet files</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Firehose is purpose-built for buffered delivery to S3: the Lambda transform adds the field per record and format conversion emits Parquet, with no consumer code or cluster to manage. The Glue streaming job (B) is the tempting distractor: it can do the same work, but it is a running Spark job billed hourly, far more than a stateless enrich-and-land step needs.</div>` },
+
+  /* 10 : quiz 2 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check 2</div>
+    <h2 class="reveal" style="font-size:22px">A fraud feature needs the count of transactions per card over a 5-minute sliding window, joined against a second stream of card-status updates, with sub-second latency and exactly-once results. Which transform fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A Lambda function using tumbling windows on the transaction stream</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A Managed Service for Apache Flink application consuming both streams</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Amazon Data Firehose with a Lambda transform and a 60-second buffer</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>An AWS Glue streaming job with schema detection enabled</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Sliding windows, a stream-to-stream join, durable state, and exactly-once semantics through checkpoints are exactly what Flink provides and the managed service operates. Lambda (A) is the tempting distractor: its tumbling windows aggregate per shard but cannot slide and cannot join a second stream. Glue with schema detection (D) cannot join streaming data at all, and its 100-second micro-batches miss the latency target.</div>` },
+
+  /* 11 : done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Stream handled</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The source buffers; the amount of state the transform needs picks the processor.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Kinesis Data Streams and MSK</b>Shards or partitions, ordered per key, replayable within retention.</p></div>
+      <div class="pill"><p><b>Firehose</b>Buffered delivery to S3 and friends, with Parquet conversion and a Lambda hook.</p></div>
+      <div class="pill"><p><b>Lambda</b>Stateless per-record transforms in shard batches; idempotent by design.</p></div>
+      <div class="pill"><p><b>Flink and Spark</b>Flink for stateful windows and joins at low latency; Glue or EMR Spark for micro-batches into the lake.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
