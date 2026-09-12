@@ -59,6 +59,8 @@ FREE_STEMS = {
 # Free courses: every page ships.
 OPEN_COURSES = [
     "aws-data-engineer-associate",
+    "aws-machine-learning-engineer-associate-mla-c01",
+    "aws-machine-learning-engineer-associate-mla-c02",
     "databricks-machine-learning-associate",
     "databricks-generative-ai-engineer-associate",
 ]
