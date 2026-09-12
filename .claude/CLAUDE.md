@@ -52,8 +52,13 @@ each course). Each course lives in its own top-level folder and has its own
   `aws-machine-learning-engineer-associate-mla-c02/` (MLA-C02, delivery
   from 29 Sep 2026, see curriculum-index-aws-mla-c02.md). Both indexes are
   DRAFT (chapter placement derived from the official exam guides, not yet
-  locked). No lessons or exams exist yet: the course index pages list every
-  chapter as "Coming soon" with `file:null`, and the practice exams will use
+  locked). MLA-C02 chapters 01 to 05 are live (see
+  cert-config-aws-mla-c02.md for the badge, terminology, and palette
+  registry); the last authored MLA-C02 chapter carries `next: null` in its
+  NAV until the following chapter ships, because `scripts/validate.py`
+  derives the expected next chapter from the index entries that have a
+  `file`. Every other MLA chapter is listed as "Coming soon" with
+  `file:null`, and MLA-C01 has no lessons yet. The practice exams will use
   the `mla-c01-practice-exam-NN.html` and `mla-c02-practice-exam-NN.html`
   prefixes.
 

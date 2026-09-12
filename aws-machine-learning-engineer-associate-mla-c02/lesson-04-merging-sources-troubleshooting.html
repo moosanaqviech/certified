@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Merging Sources and Troubleshooting Ingestion with AWS Glue and Spark · MLA-C02 Chapter 4</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-04-merging-sources-troubleshooting.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0d0814;            /* page background */
+    --bg-tint: #1f1233;       /* ambient glow tint behind the card */
+    --accent: #c084fc;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(192,132,252,0.12);  /* correct-answer fill */
+    --accent-ink: #0d0814;    /* text on top of the accent key chip */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   This block (A + cards) is the ONLY thing that changes per
+   lesson. Replace it and the palette vars above; leave the
+   ENGINE below untouched.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-05-vector-databases.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <style>
+      .m4a { animation: m4in 3s linear infinite; }
+      .m4a2 { animation: m4in 3s linear infinite; animation-delay: 1s; }
+      .m4a3 { animation: m4in 3s linear infinite; animation-delay: 2s; }
+      .m4b { animation: m4in2 3s linear infinite; animation-delay: 0.5s; }
+      .m4b2 { animation: m4in2 3s linear infinite; animation-delay: 1.5s; }
+      .m4b3 { animation: m4in2 3s linear infinite; animation-delay: 2.5s; }
+      .m4o { animation: m4out 3s linear infinite; animation-delay: 0.4s; }
+      .m4o2 { animation: m4out 3s linear infinite; animation-delay: 1.9s; }
+      .m4needle { transform-origin: 268px 158px; animation: m4gauge 3s ease-in-out infinite; }
+      @keyframes m4in { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translate(78px,34px); opacity: 0; } }
+      @keyframes m4in2 { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translate(78px,-34px); opacity: 0; } }
+      @keyframes m4out { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(46px); opacity: 0; } }
+      @keyframes m4gauge { 0%, 100% { transform: rotate(-60deg); } 50% { transform: rotate(50deg); } }
+      @media (prefers-reduced-motion: reduce) { .m4a, .m4a2, .m4a3, .m4b, .m4b2, .m4b3, .m4o, .m4o2, .m4needle { animation: none; opacity: 1; } }
+    </style>
+    <defs>
+      <radialGradient id="m4glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(192,132,252,0.26)"/>
+        <stop offset="1" style="stop-color:rgba(192,132,252,0)"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="140" cy="100" rx="140" ry="80" fill="url(#m4glow)"/>
+    <g>
+      <rect x="14" y="44" width="62" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="45" y="58" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">orders</text>
+      <text x="45" y="70" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">S3 · JSON</text>
+      <rect x="14" y="122" width="62" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="45" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">customers</text>
+      <text x="45" y="148" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">RDS · JDBC</text>
+    </g>
+    <path d="M76 61 C 110 61, 120 95, 154 95" stroke="rgba(233,213,255,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M76 139 C 110 139, 120 105, 154 105" stroke="rgba(233,213,255,0.35)" stroke-width="1.5" fill="none"/>
+    <rect x="78" y="57" width="9" height="7" rx="2" fill="var(--accent)" class="m4a"/>
+    <rect x="78" y="57" width="9" height="7" rx="2" fill="var(--accent)" class="m4a2"/>
+    <rect x="78" y="57" width="9" height="7" rx="2" fill="var(--accent)" class="m4a3"/>
+    <rect x="78" y="135" width="9" height="7" rx="2" fill="var(--accent)" class="m4b"/>
+    <rect x="78" y="135" width="9" height="7" rx="2" fill="var(--accent)" class="m4b2"/>
+    <rect x="78" y="135" width="9" height="7" rx="2" fill="var(--accent)" class="m4b3"/>
+    <circle cx="176" cy="100" r="24" fill="rgba(192,132,252,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="176" y="104" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">JOIN</text>
+    <path d="M200 100 h46" stroke="rgba(233,213,255,0.35)" stroke-width="1.5"/>
+    <rect x="202" y="96" width="9" height="7" rx="2" fill="var(--accent)" class="m4o"/>
+    <rect x="202" y="96" width="9" height="7" rx="2" fill="var(--accent)" class="m4o2"/>
+    <g>
+      <rect x="248" y="82" width="58" height="36" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)"/>
+      <text x="277" y="97" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">features</text>
+      <text x="277" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="ui-monospace, Menlo, monospace" font-size="8">Parquet</text>
+    </g>
+    <g>
+      <path d="M246 158 a22 22 0 0 1 44 0" fill="none" stroke="rgba(233,213,255,0.35)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M278 138 a22 22 0 0 1 12 20" fill="none" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
+      <line x1="268" y1="158" x2="268" y2="140" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" class="m4needle"/>
+      <circle cx="268" cy="158" r="2.5" fill="var(--accent)"/>
+      <text x="268" y="174" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">executor memory</text>
+    </g>
+  </svg>`,
+
+  merge: `<svg viewBox="0 0 320 200">
+    <g>
+      <rect x="8" y="14" width="88" height="40" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="52" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">READ A</text>
+      <text x="52" y="45" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">events, S3 JSON</text>
+      <rect x="8" y="146" width="88" height="40" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="52" y="162" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">READ B</text>
+      <text x="52" y="177" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">customers, JDBC</text>
+    </g>
+    <g data-step="1">
+      <path d="M96 34 h20" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="116" y="14" width="92" height="40" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="162" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SHAPE</text>
+      <text x="162" y="45" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Relationalize, ResolveChoice</text>
+      <path d="M96 166 h20" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="116" y="146" width="92" height="40" rx="9" fill="rgba(192,132,252,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="162" y="162" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">SHAPE</text>
+      <text x="162" y="177" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">ApplyMapping, rename</text>
+    </g>
+    <g data-step="2">
+      <path d="M208 34 C 230 34, 232 82, 248 82" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+      <path d="M208 166 C 230 166, 232 118, 248 118" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+      <circle cx="272" cy="100" r="26" fill="rgba(192,132,252,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="272" y="97" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">JOIN</text>
+      <text x="272" y="109" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">customer_id</text>
+    </g>
+    <g data-step="3">
+      <path d="M272 126 v14" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="226" y="140" width="92" height="46" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="272" y="157" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">write Parquet</text>
+      <text x="272" y="171" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">partitioned by date</text>
+      <text x="272" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">bookmark: new files only</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 : cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 4</div>
+    <h1 class="reveal">Merging sources and troubleshooting ingestion</h1>
+    <p class="lead reveal">Training tables come from several systems. AWS Glue and Spark join them, and when the job dies, <strong>the memory graphs tell you where</strong>.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 : DynamicFrame vs DataFrame */
+  { html: `
+    <div class="eyebrow reveal">Foundation</div>
+    <h2 class="reveal">DynamicFrames and DataFrames</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A Glue job can hold data in either. The <strong>DynamicFrame</strong> is Glue's own structure; the Spark <strong>DataFrame</strong> is what the wider Spark API expects.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>DynamicFrame</b>Schema per record, so a column that is a string in some files and an int in others becomes a choice type instead of a failed read. <code>ResolveChoice</code> settles it (cast, split into columns, or project one type). Glue adds file grouping and a safe 1,000-row JDBC fetch by default.</p></div>
+      <div class="pill"><p><b>DataFrame</b>One fixed schema and the full Spark SQL surface: left and outer joins, window functions, broadcast hints. Convert with <code>toDF()</code> and back with <code>fromDF()</code> when a transform needs it.</p></div>
+      <div class="pill"><p><b>Recommended path</b>Read with DynamicFrames (grouping, fetch size, choice types come free), drop to a DataFrame only for operations Glue transforms lack.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : Join */
+  { html: `
+    <div class="eyebrow reveal">Merging · keys in common</div>
+    <h2 class="reveal">Join on the keys, after fixing the names</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Glue's <code>Join</code> transform is an <strong>equality join</strong> between two DynamicFrames on the key columns you name.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">joined</span> = Join.apply(<span class="st">orders</span>, <span class="st">customers</span>,<br>&nbsp;&nbsp;<span class="al">"customer_id"</span>, <span class="al">"id"</span>)<br><span class="cm"># keys1 from frame1, keys2 from frame2</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Before joining</b>Run <code>ApplyMapping</code> to rename and cast so both keys share a type, and <code>ResolveChoice</code> so no key is still a choice type. Overlapping non-key columns get suffixed, so rename what you care about first.</p></div>
+      <div class="pill"><p><b>Beyond equality</b>Left, right, and outer joins, or a broadcast of a small lookup table, live in the Spark DataFrame API: <code>toDF()</code>, join with <code>how=</code>, <code>fromDF()</code>.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : other merge shapes */
+  { html: `
+    <div class="eyebrow reveal">Merging · other shapes</div>
+    <h2 class="reveal">Flatten, stack, or upsert</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Not every merge is a join. Three other Glue moves cover the rest of Skill 1.1.6.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Relationalize</b>Nested JSON (arrays and structs) becomes a set of flat tables linked by generated keys. Flatten first, then join the pieces like any other tables; this is how API payloads become training rows.</p></div>
+      <div class="pill"><p><b>Union</b>Same-shape data from two sources (two Regions, two years, two vendors) stacks with a union by column name after <code>ApplyMapping</code> aligns the schemas.</p></div>
+      <div class="pill"><p><b>mergeDynamicFrame</b>A staging frame merged into a source frame on primary keys, replacing matched records: the upsert pattern for a nightly delta landing on top of last night's table.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : merge pipeline, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">Two sources, one feature table</h2>
+    <div class="art reveal">${A.merge}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Clickstream events land in S3 as nested JSON; customer attributes sit in RDS. Tap to build the job.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Shape each side: Relationalize and ResolveChoice flatten the events; ApplyMapping renames and casts the customer key to match.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Join on customer_id. Equality join through Glue's transform, or a DataFrame left join if unmatched events must survive.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Write Parquet partitioned by date, with a job bookmark so the next run reads only new files.</p>
+    </div>` },
+
+  /* 5 : driver OOM */
+  { html: `
+    <div class="eyebrow reveal">Troubleshooting · the driver</div>
+    <h2 class="reveal">Driver out of memory: too many files</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Symptom: the driver's heap usage shoots past 50% while executors sit near idle, then <strong>Command Failed with Exit Code 1</strong> and <code>java.lang.OutOfMemoryError: Java heap space</code> in the logs.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Cause</b>Reading a million small files: the driver lists every file into an in-memory index and schedules one task per file, and that bookkeeping alone exhausts its heap.</p></div>
+      <div class="pill"><p><b>Fix</b>File grouping. <code>groupFiles: inPartition</code> (with an optional <code>groupSize</code> in bytes) lets one task read a whole group. Glue turns it on automatically above 50,000 input files for DynamicFrame reads of CSV, JSON, XML, Ion, and grok logs. It does not apply to Parquet, ORC, or Avro, so compact those upstream.</p></div>
+      <div class="pill"><p><b>Tell</b>Adding workers does nothing here: the driver is the bottleneck, not the executors.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 : executor OOM */
+  { html: `
+    <div class="eyebrow reveal">Troubleshooting · executors</div>
+    <h2 class="reveal">Executor out of memory: one task, all the data</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Symptom: executor memory climbs past 50% within a minute, a single executor is doing all the work, and YARN reports <strong>Container killed for exceeding memory limits</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Cause 1: an unpartitioned JDBC read</b>Spark's JDBC reader defaults to a fetch size of zero, so the driver library tries to hold a 34-million-row table in one executor. DynamicFrames fetch 1,000 rows at a time by default; with DataFrames set <code>fetchsize</code> and partition the read across a column.</p></div>
+      <div class="pill"><p><b>Cause 2: skew or giant partitions</b>One key holds most rows, so one task holds most memory. Repartition, salt the hot key, or pre-aggregate before the join.</p></div>
+      <div class="pill"><p><b>Last resort</b>More memory per worker: G.2X or G.4X, or the R worker types (R.1X to R.8X), which Glue recommends for jobs that frequently hit OOM. Fix the read pattern first; bigger boxes only postpone the same failure.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : capacity knobs */
+  { html: `
+    <div class="eyebrow reveal">Capacity and scalability</div>
+    <h2 class="reveal">The knobs a Glue job exposes</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.3 is about capacity. Glue measures it in DPUs: one DPU is <strong>4 vCPUs and 16 GB</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Worker type and count</b>G.1X (1 DPU) and G.2X (2 DPU) for most transforms and joins; G.4X, G.8X, up to G.16X for the heaviest; R types for memory. Auto scaling adds and removes workers with the workload. G.025X exists only for low-volume streaming.</p></div>
+      <div class="pill"><p><b>Runs and queues</b>Max concurrency defaults to 1 per job. Job run queuing holds a run until quotas free up instead of failing it. Flex execution class trades start latency for cost on non-urgent runs (G.1X and G.2X only).</p></div>
+      <div class="pill"><p><b>Seeing the problem</b>Enable job metrics, observability metrics, continuous logging, and the Spark UI. The driver and executor heap graphs, plus the executor count, are what separate the two OOM stories above.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 : diagnosis, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Diagnosis</div>
+    <h2 class="reveal" style="font-size:24px">Symptom to fix</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the four patterns the exam likes to describe.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Driver heap high, executors idle, millions of small files</b>Enable file grouping (or compact upstream if the input is Parquet or ORC).</p></div>
+      <div class="pill" data-step="2"><p><b>One executor working, YARN kills it, source is a database</b>Read through a DynamicFrame or set fetchsize and partition the JDBC read.</p></div>
+      <div class="pill" data-step="3"><p><b>Most tasks finish fast, one runs forever or dies</b>Data skew on the join key: repartition or salt, then consider a larger worker type.</p></div>
+      <div class="pill" data-step="4"><p><b>Runs fail at launch with quota or resource errors</b>Enable job run queuing, right-size workers, or move non-urgent runs to Flex.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 9 : quiz 1 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check 1</div>
+    <h2 class="reveal" style="font-size:22px">A Glue job converts two million small JSON files from S3 into Parquet. The driver's memory graph climbs past 50% within minutes while executors stay below 5%, and the run fails with Exit Code 1. What should the ML engineer change?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Read the input as a DynamicFrame with <code>groupFiles</code> set to <code>inPartition</code></button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Double the number of G.1X workers so more executors share the files</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Enable job bookmarks so each run processes fewer files</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Switch the job to the R.4X memory-optimized worker type</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Idle executors and a saturated driver mean the driver is drowning in per-file bookkeeping; grouping lets each task read a whole group of files, so the driver tracks far fewer tasks. Adding workers (B) is the tempting distractor: it scales executors, which are not the bottleneck. A bigger worker type (D) buys time but leaves the task-per-file pattern in place.</div>` },
+
+  /* 10 : quiz 2 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check 2</div>
+    <h2 class="reveal" style="font-size:22px">A Glue job reads a 40-million-row MySQL table with the Spark DataFrame JDBC reader using default options. Only one executor ever runs, its memory spikes, and YARN kills the container four times before the job fails. What is the root cause and fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Too many small partitions; set a larger <code>groupSize</code> on the read</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Not enough executors; enable auto scaling with more workers</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Wrong execution class; switch the job to Flex so it gets more memory</button>
+      <button class="choice" data-correct="true"><span class="key">D</span>A zero fetch size on a single JDBC connection; read through a DynamicFrame or set <code>fetchsize</code> and partition the read</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The default JDBC fetch size of zero makes the driver library cache the entire table in the one executor that opened the connection; DynamicFrames use a 1,000-row fetch, and partitioning the read spreads it across executors. Auto scaling (B) is the tempting distractor: extra executors cannot help when a single unpartitioned connection does all the reading.</div>` },
+
+  /* 11 : done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Merged and debugged</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Shape each source, join on clean keys, and read the memory graphs when it breaks.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Join, Relationalize, union, merge</b>Four merge shapes; ApplyMapping and ResolveChoice come first.</p></div>
+      <div class="pill"><p><b>Driver OOM</b>Too many small files: group them.</p></div>
+      <div class="pill"><p><b>Executor OOM</b>Unpartitioned JDBC reads or skew: fetch size, partitioning, salting, then bigger workers.</p></div>
+      <div class="pill"><p><b>Capacity</b>DPUs, worker types, auto scaling, queuing, and Flex.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
