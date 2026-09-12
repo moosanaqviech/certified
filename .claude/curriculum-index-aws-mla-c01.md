@@ -9,6 +9,8 @@ Course folder: `aws-machine-learning-engineer-associate-mla-c01/`. Lessons: `les
 Exam facts (from the guide): 65 questions (50 scored, 15 unscored), 130 minutes, scaled score 100 to 1,000, pass at 720, compensatory scoring. Pace: 2 minutes per question.
 Question types: multiple choice, multiple response, ordering, matching. MLA-C01 is offered in English until September 28, 2026; MLA-C02 replaces it from September 29, 2026.
 
+Structure note: when this index is next revised, group each unit's chapters into modules that mirror the MLA-C01 guide's task statements, the way curriculum-index-aws-mla-c02.md does (Unit > Module N.M > Chapter), and nest `modules:[...]` in the course index.html the same way.
+
 Chapters marked (removed in MLA-C02) are still in scope for MLA-C01 but have no counterpart in the MLA-C02 index; do not port them across.
 
 Terminology: say "Amazon SageMaker AI" (the platform) and "Amazon Bedrock". Say "Amazon Data Firehose" and "Amazon Managed Service for Apache Flink", never the old Kinesis names (see the DEA-C01 rule in CLAUDE.md). IAM, CLI, and SDK identifiers keep the pre-rename names.
