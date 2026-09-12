@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3 · MLA-C02 Chapter 5</title>
+<title>Ingesting Multimodal Data: Text, Images, and Audio · MLA-C02 Chapter 6</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-05-vector-databases.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-06-ingesting-multimodal-data.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #120810;            /* page background */
-    --bg-tint: #2a1224;       /* ambient glow tint behind the card */
-    --accent: #f472b6;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(244,114,182,0.12);  /* correct-answer fill */
-    --accent-ink: #120810;    /* text on top of the accent key chip */
+    --bg: #120e04;            /* page background */
+    --bg-tint: #2a2008;       /* ambient glow tint behind the card */
+    --accent: #fbbf24;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(251,191,36,0.12);  /* correct-answer fill */
+    --accent-ink: #120e04;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -218,7 +218,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 /* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-06-ingesting-multimodal-data.html",
+  next:      "lesson-07-sagemaker-feature-store.html",
   nextLabel: "Next chapter"
 };
 
@@ -226,36 +226,95 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m5ring { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; }
-      .m5ring2 { transform-origin: 176px 96px; animation: m5ring 3s ease-out infinite; animation-delay: 1s; }
-      .m5nn { animation: m5nn 3s ease-in-out infinite; }
-      @keyframes m5ring { 0% { transform: scale(0.1); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
-      @keyframes m5nn { 0%, 20% { opacity: 0.35; } 55%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m5ring, .m5ring2, .m5nn { animation: none; opacity: 1; } }
+      .m6w1 { transform-origin: 50% 100%; animation: m6wave 1.4s ease-in-out infinite; }
+      .m6w2 { transform-origin: 50% 100%; animation: m6wave 1.4s ease-in-out infinite; animation-delay: 0.2s; }
+      .m6w3 { transform-origin: 50% 100%; animation: m6wave 1.4s ease-in-out infinite; animation-delay: 0.4s; }
+      .m6w4 { transform-origin: 50% 100%; animation: m6wave 1.4s ease-in-out infinite; animation-delay: 0.6s; }
+      .m6w5 { transform-origin: 50% 100%; animation: m6wave 1.4s ease-in-out infinite; animation-delay: 0.8s; }
+      .m6d1 { animation: m6flow 3s linear infinite; }
+      .m6d2 { animation: m6flow 3s linear infinite; animation-delay: 1s; }
+      .m6d3 { animation: m6flow 3s linear infinite; animation-delay: 2s; }
+      @keyframes m6wave { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+      @keyframes m6flow { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(66px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m6w1, .m6w2, .m6w3, .m6w4, .m6w5, .m6d1, .m6d2, .m6d3 { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m5glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(244,114,182,0.26)"/>
-        <stop offset="1" style="stop-color:rgba(244,114,182,0)"/>
+      <linearGradient id="m6bkt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:#4a3308"/>
+        <stop offset="1" style="stop-color:#2a1d04"/>
+      </linearGradient>
+      <radialGradient id="m6glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(251,191,36,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(251,191,36,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="176" cy="96" rx="140" ry="82" fill="url(#m5glow)"/>
-    <path d="M40 176 h250 M40 176 v-150" stroke="rgba(251,207,232,0.3)" stroke-width="1.2"/>
-    <text x="292" y="188" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">dimension 1</text>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring"/>
-    <circle cx="176" cy="96" r="70" fill="none" stroke="var(--accent)" stroke-width="1.5" class="m5ring2"/>
-    <circle cx="70" cy="60" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="96" cy="140" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="250" cy="150" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="270" cy="52" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="130" cy="42" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="214" cy="164" r="4" fill="rgba(241,241,246,0.35)"/>
-    <circle cx="150" cy="118" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="204" cy="72" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="196" cy="126" r="5" fill="var(--accent)" class="m5nn"/>
-    <circle cx="176" cy="96" r="6" fill="#fff" stroke="var(--accent)" stroke-width="2.5"/>
-    <text x="176" y="82" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">query</text>
-    <text x="234" y="30" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">k = 3 NEAREST</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m6glow)"/>
+    <g>
+      <rect x="18" y="22" width="88" height="44" rx="10" fill="rgba(251,191,36,0.12)" stroke="var(--accent)"/>
+      <path d="M30 36 h64 M30 46 h48 M30 56 h56" stroke="var(--ink-soft)" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="62" y="80" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">TEXT</text>
+    </g>
+    <g>
+      <rect x="18" y="86" width="88" height="44" rx="10" fill="rgba(251,191,36,0.12)" stroke="var(--accent)"/>
+      <circle cx="40" cy="100" r="5" fill="var(--accent)"/>
+      <path d="M26 124 l18 -16 l14 10 l12 -14 l24 20 z" fill="rgba(241,241,246,0.35)"/>
+      <text x="62" y="144" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">IMAGE</text>
+    </g>
+    <g>
+      <rect x="18" y="150" width="88" height="44" rx="10" fill="rgba(251,191,36,0.12)" stroke="var(--accent)"/>
+      <rect x="36" y="160" width="6" height="24" rx="3" fill="var(--accent)" class="m6w1"/>
+      <rect x="48" y="160" width="6" height="24" rx="3" fill="var(--accent)" class="m6w2"/>
+      <rect x="60" y="160" width="6" height="24" rx="3" fill="var(--accent)" class="m6w3"/>
+      <rect x="72" y="160" width="6" height="24" rx="3" fill="var(--accent)" class="m6w4"/>
+      <rect x="84" y="160" width="6" height="24" rx="3" fill="var(--accent)" class="m6w5"/>
+    </g>
+    <path d="M106 44 C 140 44, 150 100, 186 100" stroke="rgba(253,230,138,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M106 108 h80" stroke="rgba(253,230,138,0.35)" stroke-width="1.5" fill="none"/>
+    <path d="M106 172 C 140 172, 150 116, 186 116" stroke="rgba(253,230,138,0.35)" stroke-width="1.5" fill="none"/>
+    <circle cx="110" cy="44" r="3" fill="var(--accent)" class="m6d1"/>
+    <circle cx="110" cy="108" r="3" fill="var(--accent)" class="m6d2"/>
+    <circle cx="110" cy="172" r="3" fill="var(--accent)" class="m6d3"/>
+    <path d="M196 74 a34 10 0 0 1 68 0 v50 a34 10 0 0 1 -68 0 z" fill="url(#m6bkt)" stroke="var(--accent)" stroke-width="1.6"/>
+    <ellipse cx="230" cy="74" rx="34" ry="10" fill="#3a2806" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="230" y="106" text-anchor="middle" fill="#fde68a" font-family="Hanken Grotesk" font-size="9" font-weight="700">S3 RAW</text>
+    <text x="230" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">plus a manifest</text>
+    <text x="230" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">Transcribe · BDA · Textract</text>
+    <text x="230" y="162" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">turn media into text</text>
+  </svg>`,
+
+  pipe: `<svg viewBox="0 0 320 196">
+    <g>
+      <rect x="8" y="70" width="60" height="44" rx="9" fill="rgba(251,191,36,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="38" y="88" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">UPLOAD</text>
+      <text x="38" y="103" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">multipart</text>
+    </g>
+    <g data-step="1">
+      <path d="M68 92 h18" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="86" y="70" width="60" height="44" rx="9" fill="rgba(251,191,36,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="116" y="88" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">RAW</text>
+      <text x="116" y="103" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">S3 originals</text>
+      <text x="116" y="130" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">one prefix per modality</text>
+    </g>
+    <g data-step="2">
+      <path d="M146 92 h18" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="164" y="70" width="70" height="44" rx="9" fill="rgba(251,191,36,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="199" y="88" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">EXTRACT</text>
+      <text x="199" y="103" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Transcribe, BDA</text>
+      <text x="199" y="130" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSON next to the media</text>
+    </g>
+    <g data-step="3">
+      <path d="M234 92 h18" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="252" y="70" width="62" height="44" rx="9" fill="rgba(251,191,36,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="283" y="88" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">MANIFEST</text>
+      <text x="283" y="103" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">JSON Lines</text>
+      <text x="283" y="130" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">refs plus labels</text>
+    </g>
+    <g data-step="4">
+      <path d="M283 114 v30" stroke="var(--accent)" stroke-width="1.5"/>
+      <rect x="150" y="144" width="164" height="44" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="232" y="162" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">training job or knowledge base</text>
+      <text x="232" y="177" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">reads references, streams the media</text>
+    </g>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,182 +330,150 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 5</div>
-    <h1 class="reveal">Vector databases for AI</h1>
-    <p class="lead reveal">OpenSearch Service, RDS with pgvector, and Amazon S3 Vectors all store embeddings and return nearest neighbors. <strong>Query rate, cost, and where the data already lives</strong> decide which one meets the specification.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 6</div>
+    <h1 class="reveal">Ingesting multimodal data</h1>
+    <p class="lead reveal">Text, images, and audio do not fit in a table. The pattern is the same for all three: <strong>originals in S3, a manifest that points at them</strong>, and a service that turns media into something a model can read.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : the pattern */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Reading a vector store specification</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.7 says "configure scalable vector databases based on specifications". Every store is configured with the same handful of settings.</p>
+    <div class="eyebrow reveal">The pattern</div>
+    <h2 class="reveal">Store the object, index the reference</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.1.8 is about storing diverse data types for AI and ML. Whatever the modality, the media itself lives as <strong>immutable objects in S3</strong> and everything downstream works from references.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Dimension</b>Must equal the embedding model's output: Amazon Titan Text Embeddings v2 emits 1,024, 512, or 256; Titan v1.2 emits 1,536; Cohere Embed emits 1,024. Mismatch and ingestion fails.</p></div>
-      <div class="pill"><p><b>Distance metric and index</b>Cosine, Euclidean (L2), or dot product. Approximate nearest neighbor indexes (HNSW is the common one) trade a little recall for speed; exact search is only for small sets.</p></div>
-      <div class="pill"><p><b>Filters, scale, and cost</b>Metadata filtering on the query, target queries per second and latency, vector count, and whether you pay for provisioned capacity or per use. Amazon Bedrock Knowledge Bases can sit on top of all three stores here.</p></div>
+      <div class="pill"><p><b>One prefix per modality, originals untouched</b>Raw audio, raw images, raw documents each under their own prefix. Derived text and thumbnails go to a separate prefix, so a reprocessing run never overwrites a source.</p></div>
+      <div class="pill"><p><b>A manifest carries the metadata</b>A JSON Lines file with one line per object: the S3 URI, the label, the speaker, the capture time. Training jobs and knowledge bases read the manifest and fetch the object it names.</p></div>
+      <div class="pill"><p><b>Text is the bridge</b>Audio becomes a transcript, a scanned contract becomes extracted fields, an image becomes captions or embeddings. Those derived artifacts are what most models actually consume.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : OpenSearch */
+  /* 2 : getting large media in */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon OpenSearch Service</div>
-    <h2 class="reveal">The high-QPS, hybrid-search engine</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A <code>knn_vector</code> field in an index with <code>index.knn</code> enabled, queried with the <code>knn</code> clause, next to full-text fields, aggregations, and geo queries in the <strong>same request</strong>.</p>
+    <div class="eyebrow reveal">Getting it in</div>
+    <h2 class="reveal">Large files and live feeds</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Media is big and often arrives continuously, so the upload path matters before storage does.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Managed domains</b>Engines faiss (the one Bedrock Knowledge Bases requires), Lucene, and nmslib; HNSW graphs live in memory, so size nodes for them: half the RAM is heap, and k-NN may use half of the rest (a 32 GiB node holds about 8 GiB of graphs). Watch <code>KNNGraphMemoryUsage</code>.</p></div>
-      <div class="pill"><p><b>OpenSearch Serverless vector collections</b>Up to 16,000 dimensions, billed in OCUs. NextGen collections scale to zero when idle, default to 32x compressed indexes, and accelerate index builds on GPUs; they are also the quick-create store for Knowledge Bases.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Thousands of queries per second, low latency, hybrid keyword plus vector ranking, faceting, or binary vectors are in the spec.</p></div>
+      <div class="pill"><p><b>Multipart upload</b>S3's best practice for objects of 100 MB or more: split into up to 10,000 parts, upload them in parallel, retry only the part that failed, and complete the upload to assemble the object. Add a lifecycle rule that aborts incomplete multipart uploads, or you pay for orphaned parts.</p></div>
+      <div class="pill"><p><b>Amazon Kinesis Video Streams</b>Ingests live video, and also audio, thermal, depth, and radar time series, from millions of devices. Streams are time-indexed and durably stored for a retention period you set, so real-time consumers and batch analytics read the same feed.</p></div>
+      <div class="pill"><p><b>Bulk from elsewhere</b>An existing archive on premises moves with the AWS DataSync or Snow family paths (Chapter 2's storage axes still apply once it lands).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : pgvector */
+  /* 3 : text and documents */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Amazon RDS and Aurora PostgreSQL with pgvector</div>
-    <h2 class="reveal">Vectors next to the rows they describe</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The <code>pgvector</code> extension adds a <code>vector(n)</code> column type, distance operators, and ANN indexes to PostgreSQL, so embeddings <strong>join and filter with relational data</strong> in one SQL statement.</p>
-    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;<br><span class="kw">CREATE INDEX ON</span> kb <span class="kw">USING</span> hnsw (embedding <span class="al">vector_cosine_ops</span>);</div>
+    <div class="eyebrow reveal">Modality 1 · Text and documents</div>
+    <h2 class="reveal">Documents are text plus layout</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Plain text stores like any other tabular column: JSON Lines or Parquet. Documents (PDFs, scans, slides) need <strong>extraction</strong> before a model can use them.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexes</b>HNSW (pgvector 0.5.0 and later, the one Bedrock asks for) or IVFFlat. Add a GIN index on a <code>jsonb</code> metadata column for filtering and a <code>tsvector</code> index for hybrid search. pgvector 0.8.0 iterative scans fix filtered queries returning too few rows.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The data already lives in PostgreSQL, results must respect transactions and row-level joins (accounts, permissions), and scale is moderate. Capacity is the instance size and read replicas, so it is the least elastic of the three.</p></div>
+      <div class="pill"><p><b>For RAG</b>Amazon Bedrock Knowledge Bases ingests supported document formats straight from S3, up to 50 MB per file, and accepts JPEG and PNG images (up to 3.75 MB) as well as documents that contain tables, charts, and diagrams. Chapter 13 covers how those are chunked.</p></div>
+      <div class="pill"><p><b>For structured fields</b>Amazon Textract pulls text, forms, and tables from documents; Amazon Bedrock Data Automation goes further with classification, extraction, normalization, and validation in one call.</p></div>
+      <div class="pill"><p><b>Store both</b>Keep the original document object and the extracted JSON side by side. The JSON is what gets embedded or joined; the original is what auditors and re-extraction runs need.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : S3 Vectors */
+  /* 4 : images */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Amazon S3 Vectors</div>
-    <h2 class="reveal">Object storage that answers similarity queries</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Vector buckets hold vector indexes; a dedicated API stores, filters, and queries them with <strong>no infrastructure to provision</strong> and S3 durability.</p>
+    <div class="eyebrow reveal">Modality 2 · Images</div>
+    <h2 class="reveal">Images ride on manifests</h2>
+    <p class="lead reveal" style="margin-bottom:16px">An image dataset is a folder of objects plus a file that says what each one is. SageMaker AI formalizes that file as the <strong>augmented manifest</strong>.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">{"image-ref": "s3://bucket/cats/01.jpg", "is-a-cat": 1}<br>{"image-ref": "s3://bucket/dogs/07.jpg", "is-a-cat": 0}</div>
     <div class="pills reveal">
-      <div class="pill"><p><b>Limits that matter</b>1 to 4,096 dimensions, float vectors only (no binary), cosine or Euclidean, up to 2 billion vectors per index, metadata up to 40 KB per vector of which 2 KB is filterable, strongly consistent writes.</p></div>
-      <div class="pill"><p><b>Performance and cost</b>Sub-second latency for infrequent queries and around 100 milliseconds when queried more often; pay for storage and requests only. AWS positions it for RAG and semantic search where queries are infrequent, and it is a supported Knowledge Bases store.</p></div>
-      <div class="pill"><p><b>Escape hatch</b>Need high QPS or hybrid search later? Export a snapshot of the index to OpenSearch Serverless, or use OpenSearch on top of S3 Vectors to cut storage cost while keeping the OpenSearch APIs.</p></div>
+      <div class="pill"><p><b>The rules</b>JSON Lines; any attribute ending in <code>-ref</code> is an S3 URI the job fetches; <code>AttributeNames</code> picks which attributes reach the algorithm and in what order; the channel uses Pipe mode. Amazon SageMaker Ground Truth labeling jobs emit this format directly.</p></div>
+      <div class="pill"><p><b>Why it exists</b>It replaces a preprocessing pass that would otherwise join labels to pixels: the docs call it the alternative to preprocessing when you already have labeled data.</p></div>
+      <div class="pill"><p><b>Small-file rule still applies</b>Millions of tiny JPEGs slow File mode down (Chapter 2); pack them into RecordIO or TFRecord containers, or use Fast File mode or FSx for Lustre. SageMaker Data Wrangler can import an S3 image folder for resizing and augmentation before export.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : audio and video */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three stores, one specification</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">OpenSearch</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">pgvector</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">S3 Vectors</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Query rate</td>
-          <td style="padding:8px 5px; color:var(--ink);">highest, lowest latency</td>
-          <td style="padding:8px 5px; color:var(--ink);">moderate, per instance</td>
-          <td style="padding:8px 5px; color:var(--ink);">infrequent, sub-second</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Cost model</td>
-          <td style="padding:8px 5px; color:var(--ink);">nodes or OCUs</td>
-          <td style="padding:8px 5px; color:var(--ink);">DB instance hours</td>
-          <td style="padding:8px 5px; color:var(--ink);">storage + requests</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Hybrid search</td>
-          <td style="padding:8px 5px; color:var(--ink);">native, facets</td>
-          <td style="padding:8px 5px; color:var(--ink);">SQL + tsvector</td>
-          <td style="padding:8px 5px; color:var(--ink);">metadata filters only</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Max dims</td>
-          <td style="padding:8px 5px; color:var(--ink);">10,000 / 16,000</td>
-          <td style="padding:8px 5px; color:var(--ink);">model-sized column</td>
-          <td style="padding:8px 5px; color:var(--ink);">4,096</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Best when</td>
-          <td style="padding:8px 5px; color:var(--ink);">serving at scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">data is in Postgres</td>
-          <td style="padding:8px 5px; color:var(--ink);">big, rarely queried</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Modality 3 · Audio and video</div>
+    <h2 class="reveal">Sound becomes a transcript with timestamps</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Amazon Transcribe turns audio in S3 (batch) or a live stream into JSON text that carries a start time, end time, and confidence for every word.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Input rules</b>Batch jobs accept AMR, FLAC, M4A, MP3, MP4, Ogg, WebM, and WAV, with lossless FLAC or 16-bit PCM WAV recommended. Telephone audio is typically 8,000 Hz; high fidelity runs 16,000 to 48,000 Hz. Mono or two channels only.</p></div>
+      <div class="pill"><p><b>Who said what</b>Speaker partitioning labels speakers on one channel; channel identification transcribes each of two channels separately (agent on one, customer on the other). Both still produce one transcript file.</p></div>
+      <div class="pill"><p><b>Output goes back to S3</b>Batch transcripts land in your bucket (or a service bucket that expires them after 90 days). Streaming transcripts return on the same stream. Video frames come out of Kinesis Video Streams for Amazon Rekognition or a SageMaker AI model.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : configuring to spec, step build */
+  /* 6 : BDA */
+  { html: `
+    <div class="eyebrow reveal">One API for all of it</div>
+    <h2 class="reveal">Amazon Bedrock Data Automation</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Bedrock Data Automation takes documents, images, video, and audio through <strong>a single API</strong> and returns structured output, so you do not orchestrate one service per modality.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What it produces</b>Document classification and extraction, scene summaries and on-screen text for video, unsafe-content flags, transcripts for audio, all with confidence scores and visual grounding that points back to where a value came from.</p></div>
+      <div class="pill"><p><b>Why AI teams reach for it</b>The docs name three jobs: intelligent document processing at scale, media analysis, and feeding RAG assistants with modality-specific representations of documents, images, video, and audio.</p></div>
+      <div class="pill"><p><b>Versus the single-purpose services</b>Transcribe, Textract, and Rekognition remain the precise tools when you need one modality with fine control (channel identification, form key-value pairs). BDA wins when the corpus is mixed and the output must be uniform.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : pipeline, step build */
   { steps: 4,
     html: `
-    <div class="eyebrow reveal">Configuring to a specification</div>
-    <h2 class="reveal" style="font-size:24px">Four lines every spec must fill</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to fill the spec for a support-article search over Bedrock Knowledge Bases.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Dimension = embedding model</b>Titan Text Embeddings v2 at 1,024, so the index (or the <code>vector(1024)</code> column) is created at 1,024. Change the model, rebuild the index.</p></div>
-      <div class="pill" data-step="2"><p><b>Metric and index</b>Cosine for text similarity; HNSW so retrieval stays fast as the corpus grows. Bedrock recommends Euclidean on OpenSearch and cosine on pgvector; either way, pick one and keep it.</p></div>
-      <div class="pill" data-step="3"><p><b>Filters</b>Product line and language as filterable metadata: a keyword field in OpenSearch, a GIN-indexed jsonb column in PostgreSQL, filterable keys (within 2 KB) in S3 Vectors.</p></div>
-      <div class="pill" data-step="4"><p><b>Scale and cost</b>50 queries per minute and 20 million chunks: S3 Vectors. 2,000 queries per second: OpenSearch. Already joined to account rows in Aurora: pgvector.</p></div>
-    </div>
-    <div class="spacer"></div>` },
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">From upload to model</h2>
+    <div class="art reveal">${A.pipe}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A field team uploads dashcam video, photos, and voice notes. Tap to follow the data.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Multipart uploads land the originals under raw/video, raw/images, raw/audio. Nothing ever rewrites them.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Transcribe turns the voice notes into JSON; Bedrock Data Automation summarizes the video. Derived JSON lands under a derived/ prefix.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">A JSON Lines manifest ties each photo's S3 URI to its label and each note to its transcript.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px">The training job reads the manifest in Pipe mode; the knowledge base ingests the derived text. Neither ever copies the raw media.</p>
+    </div>` },
 
-  /* 7 : decision signals */
-  { steps: 3,
+  /* 8 : decision signals */
+  { steps: 4,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Thousands of QPS", "p99 under 50 ms", "keyword and vector together", "facets", "binary embeddings"</b>OpenSearch Service, Serverless for elastic capacity or a managed domain sized for graph memory.</p></div>
-      <div class="pill" data-step="2"><p><b>"Already in PostgreSQL", "join with customer rows", "transactional", "row-level permissions"</b>Aurora or RDS PostgreSQL with pgvector and an HNSW index.</p></div>
-      <div class="pill" data-step="3"><p><b>"Hundreds of millions of vectors", "queries are infrequent", "lowest cost", "no infrastructure"</b>Amazon S3 Vectors, with an export to OpenSearch Serverless if the query rate ever climbs.</p></div>
+      <div class="pill" data-step="1"><p><b>"Labeled images, no preprocessing step", "labels in a separate file"</b>An augmented manifest with an image-ref attribute, Pipe mode channel.</p></div>
+      <div class="pill" data-step="2"><p><b>"Call recordings", "who said what", "word timestamps"</b>Amazon Transcribe batch from S3, with channel identification or speaker partitioning.</p></div>
+      <div class="pill" data-step="3"><p><b>"Mixed PDFs, images, video", "one structured output", "feed a RAG app"</b>Amazon Bedrock Data Automation, or Knowledge Bases' own multimodal ingestion for RAG.</p></div>
+      <div class="pill" data-step="4"><p><b>"Live camera feeds", "millions of devices", "replay hours later"</b>Amazon Kinesis Video Streams with retention set for the replay window.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 8 : quiz 1 */
+  /* 9 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A retailer's product search must serve 2,000 queries per second at p99 under 50 ms, rank by keyword match and image-embedding similarity together, and return facet counts by category. Which vector store meets the specification?</h2>
+    <h2 class="reveal" style="font-size:22px">Two million product photos sit in S3 and their labels sit in a CSV keyed by file name. The team wants to train a SageMaker AI image classifier without writing a preprocessing job that joins labels to pixels. What should they build?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Amazon S3 Vectors with category as filterable metadata</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon OpenSearch Service with a knn_vector field beside the text fields</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon RDS for PostgreSQL with pgvector and a GIN index on category</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon DynamoDB storing embeddings as lists, scanned by category</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A Glue job that copies each image into a folder named after its label</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>An augmented manifest in JSON Lines with an image-ref URI and the label per line, read in Pipe mode</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A Parquet table with the image bytes stored in a binary column</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A DynamoDB table mapping file names to labels that the training script queries</button>
     </div>
-    <div class="feedback"><b>Correct.</b> High QPS with low latency, hybrid keyword plus vector ranking, and aggregations for facets are the OpenSearch feature set, on a managed domain or a Serverless vector collection. S3 Vectors (A) is the tempting distractor because it filters on metadata cheaply, but it is positioned for infrequent queries at sub-second latency and has no keyword ranking or facet aggregations.</div>` },
+    <div class="feedback"><b>Correct.</b> The augmented manifest is exactly the mechanism SageMaker AI provides to attach metadata to S3 objects at training time: the job follows each <code>-ref</code> URI and passes the listed attributes to the algorithm, no join step required. Copying images into label folders (A) is the tempting distractor: it works, but it duplicates two million objects to encode one column that a manifest line carries for free.</div>` },
 
-  /* 9 : quiz 2 */
+  /* 10 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A legal team wants a Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day and sub-second answers are fine. The main requirement is the lowest storage and operating cost. Which store fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A bank has 50,000 two-channel call recordings (agent on one channel, customer on the other) in S3 and needs per-speaker transcripts with word timestamps to train an escalation classifier. Which ingestion step fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>An OpenSearch Service domain sized so all HNSW graphs fit in memory</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>An OpenSearch Serverless vector collection with the OCU minimum raised</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Aurora PostgreSQL with pgvector on a large memory-optimized instance</button>
-      <button class="choice" data-correct="true"><span class="key">D</span>An Amazon S3 Vectors index chosen as the knowledge base's vector store</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Amazon Comprehend on the recordings with sentiment enabled</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Amazon Kinesis Video Streams with the recordings replayed as a stream</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Amazon Transcribe batch jobs with channel identification, output JSON to S3</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Amazon Rekognition to segment the audio by speaker</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Infrequent queries, a huge corpus (S3 Vectors indexes hold up to 2 billion vectors), sub-second latency accepted, and cost as the deciding axis is exactly the workload S3 Vectors was built for, and Knowledge Bases supports it directly. The Serverless collection (B) is the tempting distractor: NextGen collections can scale to zero when idle, but a corpus this size still pays for OCUs and memory whenever it serves, far more than pay-per-use object storage.</div>` },
-
-  /* 10 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A SaaS support assistant must retrieve only ticket embeddings belonging to the caller's account, with the account and ticket tables already in Aurora PostgreSQL and strict transactional consistency on new tickets. Which configuration is the best fit?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Enable pgvector in the Aurora cluster, add a <code>vector</code> column with an HNSW index, and filter by account in the same query</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Replicate embeddings to OpenSearch Serverless and pass the account as a filter</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Write embeddings to an S3 Vectors index with account as filterable metadata</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Store embeddings in DynamoDB keyed by account and compute distances in Lambda</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> The data already lives in PostgreSQL and the requirement is a transactional, row-level join (account ownership), so pgvector keeps vectors and rows in one consistent database with SQL doing the filtering. OpenSearch Serverless (B) is the tempting distractor: metadata filters work, but replication breaks the strict consistency on newly written tickets and adds a second system to secure.</div>` },
+    <div class="feedback"><b>Correct.</b> Transcribe batch reads media from S3, channel identification transcribes each channel separately so speakers are attributed, and every word carries start and end times in the JSON output. Comprehend (A) is the tempting distractor: it analyzes text, so it can only run after transcription, and Rekognition (D) is for images and video, not audio.</div>` },
 
   /* 11 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Vector store chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match dimension and metric to the model, then let query rate, cost, and data locality pick the store.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Media ingested</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Originals in S3, references in a manifest, text as the bridge.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>OpenSearch Service</b>High QPS, hybrid search, facets; size memory for HNSW graphs or go Serverless.</p></div>
-      <div class="pill"><p><b>pgvector</b>Vectors joined to rows in PostgreSQL, HNSW index, transactional filtering.</p></div>
-      <div class="pill"><p><b>S3 Vectors</b>Billions of vectors, infrequent queries, pay per use, 4,096 dimensions, export to OpenSearch when QPS grows.</p></div>
+      <div class="pill"><p><b>Upload</b>Multipart for large objects, Kinesis Video Streams for live feeds.</p></div>
+      <div class="pill"><p><b>Images</b>Augmented manifests with -ref attributes, Pipe mode, packed containers for small files.</p></div>
+      <div class="pill"><p><b>Audio and documents</b>Transcribe for speech, Textract or Bedrock Data Automation for documents, Knowledge Bases for RAG ingestion.</p></div>
+      <div class="pill"><p><b>Mixed corpora</b>Bedrock Data Automation gives one structured output across every modality.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

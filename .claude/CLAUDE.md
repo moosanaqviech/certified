@@ -56,7 +56,7 @@ each course). Each course lives in its own top-level folder and has its own
   each unit is split into modules that mirror the exam guide's task
   statements (Module 1.1 is Task Statement 1.1), the course index.html
   nests `modules:[...]` inside each unit, and cover eyebrows read
-  "Unit N · Module N.M · Chapter NN". MLA-C02 chapters 01 to 05 are live (see
+  "Unit N · Module N.M · Chapter NN". MLA-C02 chapters 01 to 10 are live (see
   cert-config-aws-mla-c02.md for the badge, terminology, and palette
   registry); the last authored MLA-C02 chapter carries `next: null` in its
   NAV until the following chapter ships, because `scripts/validate.py`
