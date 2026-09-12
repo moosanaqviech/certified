@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR · MLA-C02 Chapter 10</title>
+<title>Embedding Models: Turning Text and Images into Vectors · MLA-C02 Chapter 11</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-10-transformation-tools.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-11-embedding-models.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #130b04;            /* page background */
-    --bg-tint: #2b1708;       /* ambient glow tint behind the card */
-    --accent: #fb923c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(251,146,60,0.12);  /* correct-answer fill */
-    --accent-ink: #130b04;    /* text on top of the accent key chip */
+    --bg: #06111a;            /* page background */
+    --bg-tint: #0c2436;       /* ambient glow tint behind the card */
+    --accent: #38bdf8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(56,189,248,0.12);  /* correct-answer fill */
+    --accent-ink: #06111a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,9 +215,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* ----------  NAV  ---------- */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-11-embedding-models.html",
+  next:      "lesson-12-text-pre-processing.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,43 +226,44 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m10hand { transform-origin: 160px 132px; animation: m10sweep 6s ease-in-out infinite; }
-      .m10l1 { animation: m10l1 6s ease-in-out infinite; }
-      .m10l2 { animation: m10l2 6s ease-in-out infinite; }
-      .m10l3 { animation: m10l3 6s ease-in-out infinite; }
-      @keyframes m10sweep { 0%, 12% { transform: rotate(-58deg); } 33%, 45% { transform: rotate(0deg); } 66%, 78% { transform: rotate(58deg); } 100% { transform: rotate(-58deg); } }
-      @keyframes m10l1 { 0%, 12% { opacity: 1; } 25%, 88% { opacity: 0.35; } 100% { opacity: 1; } }
-      @keyframes m10l2 { 0%, 22% { opacity: 0.35; } 33%, 45% { opacity: 1; } 58%, 100% { opacity: 0.35; } }
-      @keyframes m10l3 { 0%, 55% { opacity: 0.35; } 66%, 78% { opacity: 1; } 92%, 100% { opacity: 0.35; } }
-      @media (prefers-reduced-motion: reduce) { .m10hand { animation: none; transform: rotate(0deg); } .m10l1, .m10l2, .m10l3 { animation: none; opacity: 1; } }
+      .m11t { animation: m11travel 4s ease-in-out infinite; }
+      .m11i { animation: m11travel 4s ease-in-out infinite; animation-delay: 0.6s; }
+      .m11p { animation: m11pulse 4s ease-in-out infinite; animation-delay: 2s; }
+      @keyframes m11travel { 0%, 10% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 55% { transform: translateX(118px); opacity: 1; } 65%, 100% { transform: translateX(118px); opacity: 0; } }
+      @keyframes m11pulse { 0%, 45% { opacity: 0.25; r: 4px; } 60% { opacity: 1; } 80%, 100% { opacity: 0.25; } }
+      @media (prefers-reduced-motion: reduce) { .m11t, .m11i { animation: none; transform: translateX(118px); opacity: 1; } .m11p { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m10glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(251,146,60,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(251,146,60,0)"/>
+      <radialGradient id="m11glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(56,189,248,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(56,189,248,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="110" rx="150" ry="80" fill="url(#m10glow)"/>
-    <path d="M60 132 a100 100 0 0 1 200 0" fill="none" stroke="rgba(254,215,170,0.3)" stroke-width="10" stroke-linecap="round"/>
-    <g class="m10l1">
-      <rect x="16" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="59" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Data Wrangler</text>
-      <text x="59" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">ML-native, visual</text>
+    <ellipse cx="200" cy="100" rx="120" ry="80" fill="url(#m11glow)"/>
+    <g>
+      <rect x="12" y="52" width="72" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="48" y="73" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">"red sneakers"</text>
+      <rect x="12" y="114" width="72" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <path d="M22 140 l14 -14 l10 8 l9 -11 l16 17 z" fill="rgba(241,241,246,0.35)"/>
+      <circle cx="30" cy="123" r="3.5" fill="var(--accent)"/>
+      <text x="70" y="145" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">photo</text>
     </g>
-    <g class="m10l2">
-      <rect x="117" y="6" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="160" y="22" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">DataBrew</text>
-      <text x="160" y="35" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">no code, recipes</text>
+    <path d="M84 69 h40" stroke="rgba(186,230,253,0.35)" stroke-width="1.5"/>
+    <path d="M84 131 h40" stroke="rgba(186,230,253,0.35)" stroke-width="1.5"/>
+    <rect x="124" y="46" width="30" height="108" rx="9" fill="rgba(56,189,248,0.14)" stroke="var(--accent)"/>
+    <text x="139" y="104" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" transform="rotate(-90 139 104)">EMBED</text>
+    <g>
+      <text x="88" y="64" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m11t">[0.12, -0.4, ...]</text>
+      <text x="88" y="126" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m11i">[0.11, -0.38, ...]</text>
     </g>
-    <g class="m10l3">
-      <rect x="218" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="261" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Spark on EMR</text>
-      <text x="261" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">code, any scale</text>
-    </g>
-    <line x1="160" y1="132" x2="160" y2="52" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" class="m10hand"/>
-    <circle cx="160" cy="132" r="7" fill="var(--accent)"/>
-    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">who transforms, how, and at what scale</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SKILL 1.2.1</text>
+    <path d="M176 176 h134 M176 176 v-150" stroke="rgba(186,230,253,0.3)" stroke-width="1.2"/>
+    <circle cx="206" cy="62" r="4" fill="rgba(241,241,246,0.3)"/>
+    <circle cx="292" cy="150" r="4" fill="rgba(241,241,246,0.3)"/>
+    <circle cx="236" cy="152" r="4" fill="rgba(241,241,246,0.3)"/>
+    <circle cx="290" cy="46" r="4" fill="rgba(241,241,246,0.3)"/>
+    <circle cx="256" cy="98" r="5" fill="var(--accent)" class="m11p"/>
+    <circle cx="263" cy="106" r="5" fill="var(--accent)" class="m11p"/>
+    <text x="243" y="188" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">text and image land together</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -277,169 +279,138 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 10</div>
-    <h1 class="reveal">Choosing the transformation tool</h1>
-    <p class="lead reveal">SageMaker Data Wrangler, AWS Glue DataBrew, and Spark on Amazon EMR all clean and reshape data. <strong>Who is doing it, how much code they want, and how big the data is</strong> pick the tool.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 11</div>
+    <h1 class="reveal">Embedding models</h1>
+    <p class="lead reveal">An embedding model turns text or an image into a vector whose <strong>distance from other vectors tracks meaning</strong>. Configuring one is mostly about dimensions, input type, and using the same model on both sides of a search.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : what an embedding is */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Same inputs, same outputs, different hands</h2>
-    <p class="lead reveal" style="margin-bottom:16px">All three read from S3 and the AWS Glue Data Catalog, apply the transforms from Chapters 8 and 9, and write results back to S3. The differences are about <strong>persona, interface, scale, and where the output plugs in</strong>.</p>
+    <div class="eyebrow reveal">The idea</div>
+    <h2 class="reveal">A numerical representation that keeps neighbors</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Skill 1.2.5 is "configure and use embedding models to transform text and image data into numerical representations". Three properties make the numbers useful.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Persona</b>A data scientist inside SageMaker AI, a business analyst who will not write code, or a data engineer who already owns Spark jobs.</p></div>
-      <div class="pill"><p><b>Interface and scale</b>Point-and-click with an automatic sample, or code that runs on as many workers as the data needs.</p></div>
-      <div class="pill"><p><b>Destination</b>Straight into a SageMaker pipeline or Feature Store, a scheduled S3 output for analytics, or whatever a Spark job can write.</p></div>
-      <div class="pill"><p><b>Not on this menu</b>AWS Glue ETL jobs (Chapter 4) are the serverless Spark option and DataBrew's engineer-side sibling; the exam names DataBrew and EMR here because they are the two ends of the code spectrum.</p></div>
+      <div class="pill"><p><b>Dense and fixed-length</b>Every input becomes the same number of floats, chosen by the model (256 to 1,536 in the models here). Chapter 5's vector index is created at exactly that dimension.</p></div>
+      <div class="pill"><p><b>Distance means similarity</b>Cosine similarity, Euclidean distance, or dot product between two vectors approximates how related the inputs are. Normalized vectors make cosine and dot product agree.</p></div>
+      <div class="pill"><p><b>One model per index</b>Vectors from different models, or the same model at different dimensions, are not comparable. Embed the corpus and every query with the same model and settings, and re-embed everything when you change either.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : Data Wrangler */
+  /* 2 : Titan Text v2 */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon SageMaker Data Wrangler</div>
-    <h2 class="reveal">The ML-native prep tool</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler lives inside SageMaker AI (now in SageMaker Canvas, with a natural-language interface, and in Studio Classic). It is the tool whose <strong>transforms and exports are built for model training</strong>.</p>
+    <div class="eyebrow reveal">Text · Amazon Titan Text Embeddings V2</div>
+    <h2 class="reveal">Pick the size, keep it normalized</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The Amazon-native text embedder on Bedrock, invoked through <code>InvokeModel</code> with a small JSON body.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">{"inputText": "...", "dimensions": <span class="al">512</span>,<br>&nbsp;"normalize": true, "embeddingTypes": ["float"]}</div>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>Imports from S3, Athena, Amazon Redshift, Snowflake, and Databricks; 300-plus built-in transforms plus custom PySpark, pandas, and Spark SQL; a data quality and insights report; target-leakage analysis and a quick model to test features early.</p></div>
-      <div class="pill"><p><b>Where it exports</b>S3, a SageMaker Pipelines step, Feature Store (Chapter 7), or a Python script. The flow runs as a SageMaker Processing job, so it scales past the interactive sample.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is an ML practitioner, the output feeds a SageMaker AI training job or feature group, and reproducibility across training and inference matters.</p></div>
+      <div class="pill"><p><b>Dimensions</b>1,024 (default), 512, or 256. Smaller vectors cost less to store and search with a modest recall trade, so 256 or 512 is the lever when the index is the expensive part.</p></div>
+      <div class="pill"><p><b>Types and normalization</b><code>embeddingTypes</code> can return float, binary, or both; binary vectors are far smaller and need a store that supports them (OpenSearch does). <code>normalize</code> defaults to true. The response also reports <code>inputTextTokenCount</code>, which is what you are billed on.</p></div>
+      <div class="pill"><p><b>The predecessor</b>Titan Embeddings G1 (v1) takes only <code>inputText</code> and always returns 1,536 floats. An index built for v1 cannot be queried with v2.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : DataBrew */
+  /* 3 : Titan Multimodal */
   { html: `
-    <div class="eyebrow reveal">Option 2 · AWS Glue DataBrew</div>
-    <h2 class="reveal">No code, reusable recipes</h2>
-    <p class="lead reveal" style="margin-bottom:16px">DataBrew is a visual, serverless preparation tool for analysts and engineers who want to <strong>clean and normalize without writing code</strong>, and reuse the steps as a recipe.</p>
+    <div class="eyebrow reveal">Images · Amazon Titan Multimodal Embeddings G1</div>
+    <h2 class="reveal">Text and images in one space</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Send <code>inputText</code>, a base64 <code>inputImage</code>, or both. Because the two land in the <strong>same vector space</strong>, a text query can retrieve images and an image can retrieve captions.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>250-plus point-and-click transforms (nulls, invalid values, schema fixes, binning, one-hot, NLP sentence splitting) with live previews; profile jobs surface data quality issues; recipe jobs apply a saved recipe to a whole dataset on a schedule.</p></div>
-      <div class="pill"><p><b>Where it plugs in</b>Sources are S3, the Data Catalog, and JDBC stores; output goes to S3 for whatever consumes it next. It does not export into a SageMaker pipeline or Feature Store on its own.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is not a coder, the same cleaning must repeat on new files, and the output is a tidy dataset rather than a model-specific feature set.</p></div>
+      <div class="pill"><p><b>Output length</b><code>embeddingConfig.outputEmbeddingLength</code> is 256, 384, or 1,024 (default). Send text and image together and the result is the average of the two vectors.</p></div>
+      <div class="pill"><p><b>Fine-tunable</b>It is one of the few embedding models Bedrock lets you fine-tune: a JSONL of <code>image-ref</code> S3 URIs and <code>caption</code> text, 1,000 to 500,000 records, images up to 5 MB, for retrieval or classification in a specific visual domain.</p></div>
+      <div class="pill"><p><b>Where it plugs in</b>Product search over catalog photos, image deduplication, and Knowledge Bases multimodal ingestion, where image chunks are embedded by the model rather than split by a text chunker.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : Spark on EMR */
+  /* 4 : Cohere Embed */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Apache Spark on Amazon EMR</div>
-    <h2 class="reveal">Code at any scale</h2>
-    <p class="lead reveal" style="margin-bottom:16px">EMR runs Spark (and Hive, Presto, Flink) on managed clusters, on EKS, or serverless. It is the choice when the transform is <strong>custom code over very large data</strong>.</p>
+    <div class="eyebrow reveal">Text · Cohere Embed v3 on Bedrock</div>
+    <h2 class="reveal">Tell it what the vector is for</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Cohere Embed batches up to a list of <code>texts</code> (each at most 512 tokens) and returns 1,024-dimensional vectors. Its distinctive knob is <code>input_type</code>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Deployment options</b>EMR on EC2 for full control and Spot savings; EMR on EKS to share a Kubernetes platform; EMR Serverless, which sizes and scales workers per job, releases them when it finishes, and can keep pre-initialized capacity warm for fast starts.</p></div>
-      <div class="pill"><p><b>Integration</b>Reads and writes S3 directly, uses the Glue Data Catalog as its metastore, and ships the Feature Store Spark connector for batch feature ingestion.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Terabytes or more, existing Spark or Scala code and UDFs, complex joins across many sources, or an engineering team that already runs Spark. Someone has to own the code and the cluster or application configuration.</p></div>
+      <div class="pill"><p><b>input_type</b><code>search_document</code> when embedding the corpus you store; <code>search_query</code> when embedding a query against it; <code>classification</code> and <code>clustering</code> for those tasks; <code>image</code> for one JPEG or PNG up to 5 MB. Do not mix types, except the document and query pair for retrieval.</p></div>
+      <div class="pill"><p><b>truncate</b>Inputs longer than the limit either error (<code>NONE</code>) or lose their start or end (<code>START</code>, <code>END</code> is the default). Chunk first if the tail matters.</p></div>
+      <div class="pill"><p><b>embedding_types</b>float (default), int8, uint8, binary, ubinary: quantized outputs for cheaper storage when the vector store accepts them.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : table */
+  /* 5 : at scale */
   { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three tools, four axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Data Wrangler</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">DataBrew</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Spark on EMR</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Persona</td>
-          <td style="padding:8px 5px; color:var(--ink);">ML practitioner</td>
-          <td style="padding:8px 5px; color:var(--ink);">analyst, no code</td>
-          <td style="padding:8px 5px; color:var(--ink);">data engineer</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Interface</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual + code cells</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual recipes</td>
-          <td style="padding:8px 5px; color:var(--ink);">code</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">processing job</td>
-          <td style="padding:8px 5px; color:var(--ink);">serverless jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">clusters, largest</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">ML extras</td>
-          <td style="padding:8px 5px; color:var(--ink);">quick model, leakage</td>
-          <td style="padding:8px 5px; color:var(--ink);">profile jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">Spark ML, UDFs</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Exports to</td>
-          <td style="padding:8px 5px; color:var(--ink);">Pipelines, Feature Store, S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">anything</td>
-        </tr>
-      </table>
+    <div class="eyebrow reveal">Configuring at scale</div>
+    <h2 class="reveal">Where the embedding call actually runs</h2>
+    <p class="lead reveal" style="margin-bottom:16px">One <code>InvokeModel</code> per chunk is fine for a demo. Production picks one of three paths.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Let Knowledge Bases do it</b>Point a data source at S3, choose the embedding model, and ingestion chunks, embeds, and writes the vector store for you (Chapter 13). The model choice fixes the index dimension.</p></div>
+      <div class="pill"><p><b>Bedrock batch inference</b>Upload a JSONL of model inputs to S3, submit one asynchronous job, collect outputs from S3. Built for large offline runs such as embedding a whole archive; not available on provisioned models.</p></div>
+      <div class="pill"><p><b>Your own endpoint</b>SageMaker JumpStart hosts open embedding models on a SageMaker AI endpoint when you need a specific open model, a private VPC path, or fine-tuning beyond what Bedrock offers.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : decision signals */
-  { steps: 3,
+  /* 6 : retrieval loop, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">Both sides of a search</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through a semantic search built on Cohere Embed and OpenSearch.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Embed the corpus</b>Every chunk goes through Embed with <code>input_type: search_document</code>, in batches, via a batch inference job.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Index the vectors</b>A knn_vector field of dimension 1,024 with cosine similarity, one document per chunk, metadata alongside.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Embed the query</b>The user's question goes through the same model with <code>input_type: search_query</code>. Same model, same dimension, different type tag.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Nearest neighbors</b>A k-NN query returns the closest chunks. Change the model or the dimension later and steps 1 and 2 run again from scratch.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7 : decision signals */
+  { steps: 4,
     html: `
     <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Data scientist", "feed a SageMaker pipeline or feature group", "check for target leakage", "little code"</b>Data Wrangler.</p></div>
-      <div class="pill" data-step="2"><p><b>"Business analysts", "no code", "reuse the same cleaning steps every week", "profile the data"</b>DataBrew with a saved recipe and a scheduled recipe job.</p></div>
-      <div class="pill" data-step="3"><p><b>"Terabytes", "existing Spark code or UDFs", "complex joins across many sources", "Kubernetes platform"</b>Spark on EMR; EMR Serverless when nobody wants to size a cluster.</p></div>
+      <div class="pill" data-step="1"><p><b>"Search images with text", "catalog photos"</b>Titan Multimodal Embeddings G1, one space for both modalities.</p></div>
+      <div class="pill" data-step="2"><p><b>"Vector storage cost", "hundreds of millions of chunks"</b>Titan Text V2 at 256 or 512 dimensions, or binary and int8 outputs, with a store that supports them.</p></div>
+      <div class="pill" data-step="3"><p><b>"Queries and documents", "retrieval quality"</b>Cohere Embed with search_document for the corpus and search_query for questions; never one type for both.</p></div>
+      <div class="pill" data-step="4"><p><b>"Embed an archive overnight", "no endpoint to run"</b>Bedrock batch inference from a JSONL in S3, or let Knowledge Bases ingest.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : quiz 1 */
+  /* 8 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A data scientist has a 30 GB churn dataset in Athena and wants to featurize it, check for target leakage, and push the result into a SageMaker Feature Store feature group and a SageMaker pipeline, writing as little code as possible. Which tool fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A team embeds a knowledge base with Cohere Embed using input_type "classification" for every call, then embeds user questions the same way. Retrieval returns weak matches. What should change?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>AWS Glue DataBrew with a recipe job writing to S3</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Data Wrangler, exporting the flow to Feature Store and Pipelines</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Spark on EMR Serverless with the Feature Store Spark connector</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A Lambda function per row calling PutRecord</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Set truncate to NONE so long documents are not cut</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Switch to int8 embeddings to reduce noise in the vectors</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Embed the corpus with search_document and the questions with search_query</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Increase the vector index dimension to 2,048</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Data Wrangler imports from Athena, runs leakage analysis and a quick model as built-in analyses, and exports directly to Feature Store and SageMaker Pipelines, all with little or no code. DataBrew (A) is the tempting distractor because it is also visual and low-code, but it has no leakage analysis and its output stops at S3, leaving the Feature Store and pipeline wiring to be built separately.</div>` },
+    <div class="feedback"><b>Correct.</b> Cohere's <code>input_type</code> prepends special tokens that shape the vector for its job, and the documented pairing for retrieval is search_document for stored content and search_query for queries. Truncation (A) is the tempting distractor because long documents can lose their tails, but that would not explain uniformly weak matches, and the dimension (D) is fixed at 1,024 by the model.</div>` },
 
-  /* 8 : quiz 2 */
+  /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Marketing analysts receive a new CSV export every Monday with inconsistent date formats, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up for them?</h2>
+    <h2 class="reveal" style="font-size:22px">A RAG index of 400 million chunks uses Titan Text Embeddings V2 at the default settings, and vector storage is now the largest line item. Recall can drop slightly. What is the most direct fix?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A Spark job on EMR scheduled weekly with Amazon EventBridge</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A Data Wrangler flow the analysts rerun in Studio each week</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>AWS Glue DataBrew: a saved recipe run as a scheduled recipe job, plus a profile job</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>An Athena CTAS query the analysts edit each week</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Switch to Titan Embeddings G1 (v1), which produces a single vector per input</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Re-embed with dimensions set to 256 and rebuild the index at 256</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Set normalize to false so the vectors take less space</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Keep the vectors but change the index metric from cosine to Euclidean</button>
     </div>
-    <div class="feedback"><b>Correct.</b> DataBrew is built for non-coders: the recipe captures the cleanup once, a scheduled recipe job reapplies it to each new file, and profile jobs report the quality issues. The Data Wrangler flow (B) is the tempting distractor: it can do the transforms, but it is a SageMaker AI tool aimed at ML practitioners, and the analysts here have no model to feed and no SageMaker environment to work in.</div>` },
-
-  /* 9 : quiz 3 */
-  { quiz: true,
-    html: `
-    <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A data engineering team must join 40 TB of clickstream logs with three other sources, applying custom Scala UDFs they already maintain, to produce a training set nightly. Which tool fits?</h2>
-    <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Apache Spark on Amazon EMR, reusing the existing code</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>SageMaker Data Wrangler with custom PySpark transform steps</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>AWS Glue DataBrew with a multi-dataset recipe</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon Athena federated queries joining the four sources</button>
-    </div>
-    <div class="feedback"><b>Correct.</b> Tens of terabytes, multi-source joins, and existing Scala UDFs are the Spark-on-EMR profile: the code runs unchanged at whatever scale the cluster or EMR Serverless application provides. Data Wrangler (B) is the tempting distractor because it accepts custom PySpark, but it is a visual flow for practitioners, not a home for a maintained Scala codebase over 40 TB nightly.</div>` },
+    <div class="feedback"><b>Correct.</b> Titan Text V2 accepts 1,024, 512, or 256 dimensions; a quarter-size vector cuts storage roughly fourfold at a small recall cost, and the index must be recreated at the new dimension. Switching to v1 (A) is the tempting distractor: it moves in the wrong direction, since G1 emits a fixed 1,536 floats. Normalization and the distance metric change nothing about vector size.</div>` },
 
   /* 10 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Tool chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Persona and destination pick the tool; scale confirms it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Vectors configured</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Same model on both sides, dimensions chosen for the index, input type chosen for the task.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Data Wrangler</b>ML practitioners, exports to Pipelines and Feature Store, leakage checks.</p></div>
-      <div class="pill"><p><b>DataBrew</b>No-code recipes and profile jobs, scheduled, output to S3.</p></div>
-      <div class="pill"><p><b>Spark on EMR</b>Custom code at the largest scale; Serverless when nobody wants a cluster.</p></div>
+      <div class="pill"><p><b>Titan Text V2</b>1,024, 512, or 256 dimensions; float or binary; normalized by default.</p></div>
+      <div class="pill"><p><b>Titan Multimodal G1</b>Text and images in one space, 256 to 1,024 length, fine-tunable on image-caption pairs.</p></div>
+      <div class="pill"><p><b>Cohere Embed</b>input_type per task, 512-token inputs, truncate control, quantized outputs.</p></div>
+      <div class="pill"><p><b>At scale</b>Knowledge Bases ingestion, batch inference, or a JumpStart endpoint.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

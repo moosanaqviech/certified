@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR · MLA-C02 Chapter 10</title>
+<title>Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation · MLA-C02 Chapter 15</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-10-transformation-tools.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-15-preparing-data-for-fm-customization.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #130b04;            /* page background */
-    --bg-tint: #2b1708;       /* ambient glow tint behind the card */
-    --accent: #fb923c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(251,146,60,0.12);  /* correct-answer fill */
-    --accent-ink: #130b04;    /* text on top of the accent key chip */
+    --bg: #0e0a1a;            /* page background */
+    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
+    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
+    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -215,53 +215,56 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
    ENGINE below untouched.
    ============================================================ */
 
+/* Chapter 16 is not authored yet, so this is the course frontier for now:
+   set next to lesson-16-cleaning-data.html when it ships. */
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-11-embedding-models.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m10hand { transform-origin: 160px 132px; animation: m10sweep 6s ease-in-out infinite; }
-      .m10l1 { animation: m10l1 6s ease-in-out infinite; }
-      .m10l2 { animation: m10l2 6s ease-in-out infinite; }
-      .m10l3 { animation: m10l3 6s ease-in-out infinite; }
-      @keyframes m10sweep { 0%, 12% { transform: rotate(-58deg); } 33%, 45% { transform: rotate(0deg); } 66%, 78% { transform: rotate(58deg); } 100% { transform: rotate(-58deg); } }
-      @keyframes m10l1 { 0%, 12% { opacity: 1; } 25%, 88% { opacity: 0.35; } 100% { opacity: 1; } }
-      @keyframes m10l2 { 0%, 22% { opacity: 0.35; } 33%, 45% { opacity: 1; } 58%, 100% { opacity: 0.35; } }
-      @keyframes m10l3 { 0%, 55% { opacity: 0.35; } 66%, 78% { opacity: 1; } 92%, 100% { opacity: 0.35; } }
-      @media (prefers-reduced-motion: reduce) { .m10hand { animation: none; transform: rotate(0deg); } .m10l1, .m10l2, .m10l3 { animation: none; opacity: 1; } }
+      .m15a { animation: m15in 6s ease-in-out infinite; }
+      .m15b { animation: m15in 6s ease-in-out infinite; animation-delay: 2s; }
+      .m15c { animation: m15in 6s ease-in-out infinite; animation-delay: 4s; }
+      .m15l1 { animation: m15lbl 6s ease-in-out infinite; }
+      .m15l2 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 2s; }
+      .m15l3 { animation: m15lbl 6s ease-in-out infinite; animation-delay: 4s; }
+      @keyframes m15in { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 28% { transform: translateX(150px); opacity: 1; } 33%, 100% { transform: translateX(150px); opacity: 0; } }
+      @keyframes m15lbl { 0%, 2% { opacity: 0.3; } 8%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
+      @media (prefers-reduced-motion: reduce) { .m15a, .m15b, .m15c { animation: none; transform: translateX(150px); opacity: 1; } .m15l1, .m15l2, .m15l3 { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m10glow" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" style="stop-color:rgba(251,146,60,0.24)"/>
-        <stop offset="1" style="stop-color:rgba(251,146,60,0)"/>
+      <radialGradient id="m15glow" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(167,139,250,0.24)"/>
+        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="110" rx="150" ry="80" fill="url(#m10glow)"/>
-    <path d="M60 132 a100 100 0 0 1 200 0" fill="none" stroke="rgba(254,215,170,0.3)" stroke-width="10" stroke-linecap="round"/>
-    <g class="m10l1">
-      <rect x="16" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="59" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Data Wrangler</text>
-      <text x="59" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">ML-native, visual</text>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#m15glow)"/>
+    <g>
+      <rect x="12" y="34" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l1"/>
+      <text x="67" y="49" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l1">FINE-TUNE</text>
+      <text x="67" y="61" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l1">{prompt, completion}</text>
+      <rect x="12" y="83" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l2"/>
+      <text x="67" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l2">PRE-TRAIN</text>
+      <text x="67" y="110" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l2">{input}</text>
+      <rect x="12" y="132" width="110" height="34" rx="9" fill="var(--surface-2)" stroke="var(--line)" class="m15l3"/>
+      <text x="67" y="147" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" class="m15l3">DISTILL</text>
+      <text x="67" y="159" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="7.5" class="m15l3">{messages: [user]}</text>
     </g>
-    <g class="m10l2">
-      <rect x="117" y="6" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="160" y="22" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">DataBrew</text>
-      <text x="160" y="35" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">no code, recipes</text>
-    </g>
-    <g class="m10l3">
-      <rect x="218" y="32" width="86" height="38" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--accent)"/>
-      <text x="261" y="48" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">Spark on EMR</text>
-      <text x="261" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">code, any scale</text>
-    </g>
-    <line x1="160" y1="132" x2="160" y2="52" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" class="m10hand"/>
-    <circle cx="160" cy="132" r="7" fill="var(--accent)"/>
-    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">who transforms, how, and at what scale</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">SKILL 1.2.1</text>
+    <path d="M122 51 C 160 51, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
+    <path d="M122 100 h84" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
+    <path d="M122 149 C 160 149, 170 100, 206 100" stroke="rgba(221,214,254,0.3)" stroke-width="1.5" fill="none"/>
+    <rect x="126" y="46" width="12" height="10" rx="2" fill="var(--accent)" class="m15a"/>
+    <rect x="126" y="95" width="12" height="10" rx="2" fill="var(--accent)" class="m15b"/>
+    <rect x="126" y="144" width="12" height="10" rx="2" fill="var(--accent)" class="m15c"/>
+    <rect x="212" y="70" width="96" height="60" rx="12" fill="rgba(167,139,250,0.14)" stroke="var(--accent)" stroke-width="1.6"/>
+    <text x="260" y="95" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">custom model</text>
+    <text x="260" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">JSONL in S3, one job</text>
+    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">three shapes of record, one training bucket</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -277,101 +280,96 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 10</div>
-    <h1 class="reveal">Choosing the transformation tool</h1>
-    <p class="lead reveal">SageMaker Data Wrangler, AWS Glue DataBrew, and Spark on Amazon EMR all clean and reshape data. <strong>Who is doing it, how much code they want, and how big the data is</strong> pick the tool.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 15</div>
+    <h1 class="reveal">Preparing data for FM customization</h1>
+    <p class="lead reveal">Fine-tuning wants labeled pairs, continued pre-training wants raw domain text, and distillation wants only prompts. <strong>The shape of the record you can produce</strong> is what picks the customization path.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
   /* 1 : shared ground */
   { html: `
     <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Same inputs, same outputs, different hands</h2>
-    <p class="lead reveal" style="margin-bottom:16px">All three read from S3 and the AWS Glue Data Catalog, apply the transforms from Chapters 8 and 9, and write results back to S3. The differences are about <strong>persona, interface, scale, and where the output plugs in</strong>.</p>
+    <h2 class="reveal">JSONL in S3, sized to the model</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Every Amazon Bedrock customization job reads <code>.jsonl</code> files from S3: one JSON object per line, a training set and, where supported, a validation set.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Persona</b>A data scientist inside SageMaker AI, a business analyst who will not write code, or a data engineer who already owns Spark jobs.</p></div>
-      <div class="pill"><p><b>Interface and scale</b>Point-and-click with an automatic sample, or code that runs on as many workers as the data needs.</p></div>
-      <div class="pill"><p><b>Destination</b>Straight into a SageMaker pipeline or Feature Store, a scheduled S3 output for analytics, or whatever a Spark job can write.</p></div>
-      <div class="pill"><p><b>Not on this menu</b>AWS Glue ETL jobs (Chapter 4) are the serverless Spark option and DataBrew's engineer-side sibling; the exam names DataBrew and EMR here because they are the two ends of the code spectrum.</p></div>
+      <div class="pill"><p><b>Model-specific quotas</b>Record counts and token budgets differ per model: Claude 3 Haiku fine-tuning takes 32 to 10,000 records, up to 32,000 tokens each and a 10 GB training file; Llama 3.1 to 3.3 take 100 to 10,000 records at 16,000 tokens; Titan Text models cap the training file at 1 GB. Plan with about 6 characters per token.</p></div>
+      <div class="pill"><p><b>Cost model</b>Training is billed on tokens processed times epochs, plus monthly storage per custom model, so a deduplicated dataset is cheaper as well as better.</p></div>
+      <div class="pill"><p><b>Quality gates</b>Consistent format, PII removed (Chapter 14), duplicates dropped, a held-out validation set, and safety screening of prompt-response pairs (Chapter 20). The job validates format; it does not validate sense.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : Data Wrangler */
+  /* 2 : fine-tuning */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Amazon SageMaker Data Wrangler</div>
-    <h2 class="reveal">The ML-native prep tool</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Data Wrangler lives inside SageMaker AI (now in SageMaker Canvas, with a natural-language interface, and in Studio Classic). It is the tool whose <strong>transforms and exports are built for model training</strong>.</p>
+    <div class="eyebrow reveal">Option 1 · Supervised fine-tuning</div>
+    <h2 class="reveal">Labeled pairs in the model's own format</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The model learns which output belongs to which input, so every record carries both. Two record shapes exist.</p>
+    <div class="codeblock reveal" style="margin-bottom:12px">{"prompt": "Summarize: ...", "completion": "..."}<br><span class="cm">// or, for conversational models</span><br>{"schemaVersion": "bedrock-conversation-2024",<br>&nbsp;"system": [{"text": "..."}],<br>&nbsp;"messages": [{"role": "user", "content": [{"text": "..."}]},<br>&nbsp;&nbsp;{"role": "assistant", "content": [{"text": "..."}]}]}</div>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>Imports from S3, Athena, Amazon Redshift, Snowflake, and Databricks; 300-plus built-in transforms plus custom PySpark, pandas, and Spark SQL; a data quality and insights report; target-leakage analysis and a quick model to test features early.</p></div>
-      <div class="pill"><p><b>Where it exports</b>S3, a SageMaker Pipelines step, Feature Store (Chapter 7), or a Python script. The flow runs as a SageMaker Processing job, so it scales past the interactive sample.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is an ML practitioner, the output feeds a SageMaker AI training job or feature group, and reproducibility across training and inference matters.</p></div>
+      <div class="pill"><p><b>Non-conversational models</b>Titan Text, Cohere Command, Llama 3.1: <code>prompt</code> and <code>completion</code> per line, for summarization, extraction, translation, question answering.</p></div>
+      <div class="pill"><p><b>Conversational models</b>Claude 3 Haiku, Llama 3.2 and 3.3 use the Converse message format with system, user, and assistant turns, single or multi-turn. Vision variants add an image block with an S3 URI; Titan Multimodal Embeddings and Titan Image Generator take <code>image-ref</code> plus <code>caption</code>.</p></div>
+      <div class="pill"><p><b>Pick it when</b>You have (or can label) hundreds to thousands of examples of the exact output style, format, or task the base model gets wrong.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : DataBrew */
+  /* 3 : continued pre-training */
   { html: `
-    <div class="eyebrow reveal">Option 2 · AWS Glue DataBrew</div>
-    <h2 class="reveal">No code, reusable recipes</h2>
-    <p class="lead reveal" style="margin-bottom:16px">DataBrew is a visual, serverless preparation tool for analysts and engineers who want to <strong>clean and normalize without writing code</strong>, and reuse the steps as a recipe.</p>
+    <div class="eyebrow reveal">Option 2 · Continued pre-training</div>
+    <h2 class="reveal">Unlabeled domain text, and lots of it</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Continued pre-training keeps training the base model's language objective on your own corpus, so it absorbs <strong>vocabulary and phrasing</strong> rather than a task. Records carry text only, no answer.</p>
+    <div class="codeblock reveal" style="margin-bottom:12px">{"input": "Section 4.2: the overcurrent relay shall trip within ..."}<br>{"input": "Torque the M12 fasteners to 80 Nm in a star pattern ..."}</div>
     <div class="pills reveal">
-      <div class="pill"><p><b>What it does</b>250-plus point-and-click transforms (nulls, invalid values, schema fixes, binning, one-hot, NLP sentence splitting) with live previews; profile jobs surface data quality issues; recipe jobs apply a saved recipe to a whole dataset on a schedule.</p></div>
-      <div class="pill"><p><b>Where it plugs in</b>Sources are S3, the Data Catalog, and JDBC stores; output goes to S3 for whatever consumes it next. It does not export into a SageMaker pipeline or Feature Store on its own.</p></div>
-      <div class="pill"><p><b>Pick it when</b>The person is not a coder, the same cleaning must repeat on new files, and the output is a tidy dataset rather than a model-specific feature set.</p></div>
+      <div class="pill"><p><b>What the data looks like</b>Cleaned domain documents (Chapter 12), one passage per line, deduplicated, PII removed, volume measured in tokens rather than examples. No labels to write is the whole appeal.</p></div>
+      <div class="pill"><p><b>Where it runs today</b>Bedrock's current customization menu lists supervised fine-tuning, reinforcement fine-tuning, and distillation; the input-only path was offered on Amazon Titan Text models. For open models, SageMaker AI training jobs and JumpStart cover the same need, and fine-tuning usually follows to teach the task.</p></div>
+      <div class="pill"><p><b>Pick it when</b>The base model misreads the domain's language (jargon, formats, regulatory phrasing) and you have a large unlabeled corpus but few labeled examples.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : Spark on EMR */
+  /* 4 : distillation */
   { html: `
-    <div class="eyebrow reveal">Option 3 · Apache Spark on Amazon EMR</div>
-    <h2 class="reveal">Code at any scale</h2>
-    <p class="lead reveal" style="margin-bottom:16px">EMR runs Spark (and Hive, Presto, Flink) on managed clusters, on EKS, or serverless. It is the choice when the transform is <strong>custom code over very large data</strong>.</p>
+    <div class="eyebrow reveal">Option 3 · Model distillation</div>
+    <h2 class="reveal">Prompts in, teacher answers, student learns</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Model Distillation sends your prompts to a larger <strong>teacher</strong> model, synthesizes responses, and fine-tunes a smaller, cheaper <strong>student</strong> on them. You supply prompts, not answers.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Deployment options</b>EMR on EC2 for full control and Spot savings; EMR on EKS to share a Kubernetes platform; EMR Serverless, which sizes and scales workers per job, releases them when it finishes, and can keep pre-initialized capacity warm for fast starts.</p></div>
-      <div class="pill"><p><b>Integration</b>Reads and writes S3 directly, uses the Glue Data Catalog as its metastore, and ships the Feature Store Spark connector for batch feature ingestion.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Terabytes or more, existing Spark or Scala code and UDFs, complex joins across many sources, or an engineering team that already runs Spark. Someone has to own the code and the cluster or application configuration.</p></div>
+      <div class="pill"><p><b>Record shape</b>The same <code>bedrock-conversation-2024</code> JSONL, but the messages usually end at the user turn. Format prompts for the target use case (a RAG prompt with context tags, an agent prompt with a tool list) because the synthetic data mirrors them. A handful of labeled prompt-response pairs can be included as golden examples.</p></div>
+      <div class="pill"><p><b>Invocation logs instead</b>With model invocation logging on, production prompts (and optionally the teacher's real responses) become the dataset, filtered by requestMetadata. Prompt-response pairs are only used when the logged model matches the chosen teacher.</p></div>
+      <div class="pill"><p><b>Costs and limits</b>Data synthesis can grow the set to a maximum of 15,000 prompt-response pairs and bills teacher inference at on-demand rates. Text-to-text only.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 5 : table */
   { html: `
     <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Three tools, four axes</h2>
+    <h2 class="reveal" style="font-size:24px">Three paths, four axes</h2>
     <div class="reveal" style="overflow-x:auto;margin-top:6px">
       <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
         <tr style="border-bottom:1px solid var(--line);">
           <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Data Wrangler</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">DataBrew</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Spark on EMR</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Continued pre-training</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Distillation</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Persona</td>
-          <td style="padding:8px 5px; color:var(--ink);">ML practitioner</td>
-          <td style="padding:8px 5px; color:var(--ink);">analyst, no code</td>
-          <td style="padding:8px 5px; color:var(--ink);">data engineer</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Record</td>
+          <td style="padding:8px 5px; color:var(--ink);">prompt + completion, or messages</td>
+          <td style="padding:8px 5px; color:var(--ink);">input text only</td>
+          <td style="padding:8px 5px; color:var(--ink);">prompt only (labels optional)</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Interface</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual + code cells</td>
-          <td style="padding:8px 5px; color:var(--ink);">visual recipes</td>
-          <td style="padding:8px 5px; color:var(--ink);">code</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Who labels</td>
+          <td style="padding:8px 5px; color:var(--ink);">you</td>
+          <td style="padding:8px 5px; color:var(--ink);">nobody</td>
+          <td style="padding:8px 5px; color:var(--ink);">the teacher model</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Scale</td>
-          <td style="padding:8px 5px; color:var(--ink);">processing job</td>
-          <td style="padding:8px 5px; color:var(--ink);">serverless jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">clusters, largest</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">ML extras</td>
-          <td style="padding:8px 5px; color:var(--ink);">quick model, leakage</td>
-          <td style="padding:8px 5px; color:var(--ink);">profile jobs</td>
-          <td style="padding:8px 5px; color:var(--ink);">Spark ML, UDFs</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Teaches</td>
+          <td style="padding:8px 5px; color:var(--ink);">a task or style</td>
+          <td style="padding:8px 5px; color:var(--ink);">domain language</td>
+          <td style="padding:8px 5px; color:var(--ink);">a big model's behavior</td>
         </tr>
         <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Exports to</td>
-          <td style="padding:8px 5px; color:var(--ink);">Pipelines, Feature Store, S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">S3</td>
-          <td style="padding:8px 5px; color:var(--ink);">anything</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Volume</td>
+          <td style="padding:8px 5px; color:var(--ink);">hundreds to 10k</td>
+          <td style="padding:8px 5px; color:var(--ink);">tokens, large</td>
+          <td style="padding:8px 5px; color:var(--ink);">prompts, up to 15k pairs</td>
         </tr>
       </table>
     </div>
@@ -384,62 +382,77 @@ const cards = [
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Data scientist", "feed a SageMaker pipeline or feature group", "check for target leakage", "little code"</b>Data Wrangler.</p></div>
-      <div class="pill" data-step="2"><p><b>"Business analysts", "no code", "reuse the same cleaning steps every week", "profile the data"</b>DataBrew with a saved recipe and a scheduled recipe job.</p></div>
-      <div class="pill" data-step="3"><p><b>"Terabytes", "existing Spark code or UDFs", "complex joins across many sources", "Kubernetes platform"</b>Spark on EMR; EMR Serverless when nobody wants to size a cluster.</p></div>
+      <div class="pill" data-step="1"><p><b>"We have labeled examples", "wrong format or tone", "specific task"</b>Supervised fine-tuning: prompt and completion, or Converse messages for conversational models.</p></div>
+      <div class="pill" data-step="2"><p><b>"Doesn't understand our jargon", "large unlabeled corpus", "few labels"</b>Continued pre-training on input-only text, then fine-tune the task on top.</p></div>
+      <div class="pill" data-step="3"><p><b>"Cheaper and faster model", "match the big model's quality", "we have production prompts or logs"</b>Distillation from prompts or invocation logs.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : quiz 1 */
+  /* 7 : validation and quality, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:24px">From raw pairs to a training bucket</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the preparation of 4,000 support conversations for a Claude 3 Haiku fine-tune.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Clean and protect</b>Redact PII with Comprehend, drop duplicates and near-duplicates, remove conversations with unsafe content (Chapter 20).</p></div>
+      <div class="pill" data-step="2"><p><b>2. Reshape</b>Convert each conversation into the messages format with one consistent system prompt and alternating user and assistant turns; count tokens to stay under the per-record limit.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Split</b>Hold out a validation file (Claude 3 Haiku allows up to 1,000 validation records) that shares no conversation with training.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Land in S3</b>Training and validation JSONL in a bucket the customization service role can read, then submit the job and watch the validation loss.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A data scientist has a 30 GB churn dataset in Athena and wants to featurize it, check for target leakage, and push the result into a SageMaker Feature Store feature group and a SageMaker pipeline, writing as little code as possible. Which tool fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A team wants a smaller, cheaper Bedrock model that answers like the large model they run in production today. They have invocation logging enabled and thousands of real prompts, but no labeled answers. Which customization path fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>AWS Glue DataBrew with a recipe job writing to S3</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Data Wrangler, exporting the flow to Feature Store and Pipelines</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Spark on EMR Serverless with the Feature Store Spark connector</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A Lambda function per row calling PutRecord</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Model distillation using the invocation logs as the prompt source</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Supervised fine-tuning with the prompts as completions</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the concatenated prompts</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Fine-tuning the large model on its own outputs</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Data Wrangler imports from Athena, runs leakage analysis and a quick model as built-in analyses, and exports directly to Feature Store and SageMaker Pipelines, all with little or no code. DataBrew (A) is the tempting distractor because it is also visual and low-code, but it has no leakage analysis and its output stops at S3, leaving the Feature Store and pipeline wiring to be built separately.</div>` },
+    <div class="feedback"><b>Correct.</b> Distillation is the path that needs prompts only: the teacher generates or already logged the responses, and the student is fine-tuned on them, giving a smaller model that imitates the large one. Continued pre-training (C) is the tempting distractor since it also needs no labels, but it teaches domain language, not the teacher's behavior, and prompts are not a domain corpus.</div>` },
 
-  /* 8 : quiz 2 */
+  /* 9 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">Marketing analysts receive a new CSV export every Monday with inconsistent date formats, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up for them?</h2>
+    <h2 class="reveal" style="font-size:22px">A team has 5,000 labeled question-and-answer pairs as prompt and completion JSONL and wants to fine-tune Claude 3 Haiku for a multi-turn support assistant. What must they do to the data?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A Spark job on EMR scheduled weekly with Amazon EventBridge</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>A Data Wrangler flow the analysts rerun in Studio each week</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>AWS Glue DataBrew: a saved recipe run as a scheduled recipe job, plus a profile job</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>An Athena CTAS query the analysts edit each week</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Nothing; prompt and completion is the universal fine-tuning format on Bedrock</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Merge all pairs into one input field for continued pre-training</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Convert each record to the messages format with a system prompt and user and assistant turns</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Convert the pairs to CSV with a header row</button>
     </div>
-    <div class="feedback"><b>Correct.</b> DataBrew is built for non-coders: the recipe captures the cleanup once, a scheduled recipe job reapplies it to each new file, and profile jobs report the quality issues. The Data Wrangler flow (B) is the tempting distractor: it can do the transforms, but it is a SageMaker AI tool aimed at ML practitioners, and the analysts here have no model to feed and no SageMaker environment to work in.</div>` },
+    <div class="feedback"><b>Correct.</b> Conversational models such as Claude 3 Haiku are fine-tuned in the Converse message format (system, user, assistant), which also carries multi-turn context. Leaving the data as is (A) is the tempting distractor: prompt and completion is valid for non-conversational models such as Titan Text or Llama 3.1, not for this one.</div>` },
 
-  /* 9 : quiz 3 */
+  /* 10 : quiz 3 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 3</div>
-    <h2 class="reveal" style="font-size:22px">A data engineering team must join 40 TB of clickstream logs with three other sources, applying custom Scala UDFs they already maintain, to produce a training set nightly. Which tool fits?</h2>
+    <h2 class="reveal" style="font-size:22px">An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Apache Spark on Amazon EMR, reusing the existing code</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>SageMaker Data Wrangler with custom PySpark transform steps</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>AWS Glue DataBrew with a multi-dataset recipe</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Amazon Athena federated queries joining the four sources</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A distillation prompt set generated from manual headings</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A messages-format fine-tuning set with the manuals as assistant turns</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>A metadata sidecar per manual for a knowledge base</button>
+      <button class="choice" data-correct="true"><span class="key">D</span>A cleaned, deduplicated input-only JSONL corpus for continued pre-training</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Tens of terabytes, multi-source joins, and existing Scala UDFs are the Spark-on-EMR profile: the code runs unchanged at whatever scale the cluster or EMR Serverless application provides. Data Wrangler (B) is the tempting distractor because it accepts custom PySpark, but it is a visual flow for practitioners, not a home for a maintained Scala codebase over 40 TB nightly.</div>` },
+    <div class="feedback"><b>Correct.</b> Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. The knowledge base (C) is the tempting distractor because RAG also exposes the manuals, but retrieval hands the model passages at runtime and does not fix how the model itself uses the terminology.</div>` },
 
-  /* 10 : done */
+  /* 11 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Tool chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Persona and destination pick the tool; scale confirms it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Data shaped</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Labeled pairs, raw text, or prompts alone: the record you can produce picks the path.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Data Wrangler</b>ML practitioners, exports to Pipelines and Feature Store, leakage checks.</p></div>
-      <div class="pill"><p><b>DataBrew</b>No-code recipes and profile jobs, scheduled, output to S3.</p></div>
-      <div class="pill"><p><b>Spark on EMR</b>Custom code at the largest scale; Serverless when nobody wants a cluster.</p></div>
+      <div class="pill"><p><b>Fine-tuning</b>prompt and completion, or Converse messages; hundreds to 10,000 records within token limits.</p></div>
+      <div class="pill"><p><b>Continued pre-training</b>input-only passages, deduplicated and cleaned, measured in tokens.</p></div>
+      <div class="pill"><p><b>Distillation</b>prompts or invocation logs; the teacher writes the answers, up to 15,000 pairs.</p></div>
+      <div class="pill"><p><b>Always</b>JSONL in S3, PII out, duplicates out, a validation split, model-specific quotas.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
