@@ -60,10 +60,13 @@ each course). Each course lives in its own top-level folder and has its own
   across Units 1 to 4 are live (Unit 1 chapters 01 to 20, Unit 2 chapters
   21 to 39, Unit 3 chapters 40 to 59, Unit 4 chapters 60 to 76), and each
   of the four units has its own practice exam (mla-c02-practice-exam-01
-  through 04). A full-length 65-question mock is the only remaining planned
-  work (see cert-config-aws-mla-c02.md for the badge, terminology, and
-  palette registry). The last chapter of the course (76) carries
-  `next` pointing at the Unit 4 practice exam. MLA-C01 has no lessons yet;
+  through 04), plus three full-length 65-question mock exams
+  (mla-c02-practice-exam-05 through 07, each 130 minutes, sampling all four
+  domains at the 28/24/24/24 weighting, surfaced in a separate "Full-length
+  mock exams" section of the course index). The course and its exams are now
+  content-complete (see cert-config-aws-mla-c02.md for the badge,
+  terminology, and palette registry). The last chapter of the course (76)
+  carries `next` pointing at the Unit 4 practice exam. MLA-C01 has no lessons yet;
   its chapters are listed as "Coming soon" with `file:null`. The practice
   exams use the `mla-c01-practice-exam-NN.html` and
   `mla-c02-practice-exam-NN.html` prefixes.

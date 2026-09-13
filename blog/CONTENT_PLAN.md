@@ -93,6 +93,9 @@ Note on the Filename column: published posts are `.html` files in the
 | 6 | Study plan and prep time for the updated AWS Machine Learning Engineer Associate exam (MLA-C02: beta, new GenAI and FM scope, 28/24/24/24 weights) | "MLA-C02 study plan" / "how long to prepare for MLA-C02" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate-mla-c02.html |
 | 7 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
 | 8 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | No | |
+| 9 | Complete AWS Machine Learning Engineer Associate (MLA-C02) certification guide (pillar) | "aws machine learning engineer associate mla-c02 certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c02-certification-guide.html |
+| 10 | MLA-C02 exam guide breakdown: domains and weighting | "MLA-C02 exam domains" | Yes | blog/mla-c02-exam-guide-domains-weighting.html |
+| 11 | AWS Machine Learning Engineer Associate exam cost, format and question types (MLA-C02) | "what's on the MLA-C02 exam" | Yes | blog/mla-c02-exam-cost-format-question-types.html |
 
 ## Databricks Machine Learning Associate
 
