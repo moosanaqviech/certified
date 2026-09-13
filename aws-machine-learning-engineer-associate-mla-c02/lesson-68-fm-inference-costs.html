@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Troubleshooting Tools: CloudWatch, Bedrock AgentCore Observability, and X-Ray · MLA-C02</title>
+<title>FM Inference Costs: Token Usage, Provisioned Throughput, and Usage Optimization · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-65-troubleshooting-tools.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-68-fm-inference-costs.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #190a0f;            /* page background */
-    --bg-tint: #3a1421;       /* ambient glow tint behind the card */
-    --accent: #fb6f92;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(251,111,146,0.12);  /* correct-answer fill */
-    --accent-ink: #190a0f;    /* text on top of the accent key chip */
+    --bg: #190a0e;            /* page background */
+    --bg-tint: #38101d;       /* ambient glow tint behind the card */
+    --accent: #e11d48;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(225,29,72,0.12);  /* correct-answer fill */
+    --accent-ink: #fff1f2;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-66-dashboards-capacity-optimization.html",
+  next:      "lesson-69-ai-cost-patterns.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,33 +225,41 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m65node { opacity: 0; animation: m65node 6s ease-in-out infinite; }
-      .m65n2 { animation-delay: 0.4s; } .m65n3 { animation-delay: 0.8s; } .m65n4 { animation-delay: 1.2s; }
-      .m65edge { stroke-dasharray: 4 3; animation: m65edge 3s linear infinite; }
-      @keyframes m65node { 0%, 6% { opacity: 0; transform: scale(0.8); } 22%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
-      @keyframes m65edge { to { stroke-dashoffset: -14; } }
-      @media (prefers-reduced-motion: reduce) { .m65node { animation: none; opacity: 1; transform: scale(1); } .m65edge { animation: none; } }
+      .m68tok { opacity: 0; animation: m68tok 5s ease-in-out infinite; }
+      .m68t2 { animation-delay: 0.15s; } .m68t3 { animation-delay: 0.3s; } .m68t4 { animation-delay: 0.45s; } .m68t5 { animation-delay: 0.6s; }
+      .m68meter { animation: m68meter 5s ease-in-out infinite; }
+      @keyframes m68tok { 0%, 6% { opacity: 0; } 20%, 100% { opacity: 1; } }
+      @keyframes m68meter { 0% { width: 0; } 55%, 100% { width: 120px; } }
+      @media (prefers-reduced-motion: reduce) { .m68tok { animation: none; opacity: 1; } .m68meter { animation: none; width: 120px; } }
     </style>
     <defs>
-      <radialGradient id="m65glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m68glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(251,111,146,0)"/>
+        <stop offset="1" style="stop-color:rgba(225,29,72,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m65glow)"/>
-    <g stroke="var(--accent)" stroke-width="1.6" fill="none" opacity="0.6">
-      <path class="m65edge" d="M64 84 L128 84"/>
-      <path class="m65edge" d="M164 84 L228 66"/>
-      <path class="m65edge" d="M164 92 L228 110"/>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m68glow)"/>
+    <text x="30" y="52" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" font-weight="700">prompt tokens</text>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="8" fill="var(--ink-soft)">
+      <rect x="30" y="58" width="22" height="14" rx="3" fill="var(--surface-2)" stroke="var(--line)" class="m68tok"/><text x="41" y="68" text-anchor="middle" class="m68tok">Sum</text>
+      <rect x="56" y="58" width="30" height="14" rx="3" fill="var(--surface-2)" stroke="var(--line)" class="m68tok m68t2"/><text x="71" y="68" text-anchor="middle" class="m68tok m68t2">marize</text>
+      <rect x="90" y="58" width="18" height="14" rx="3" fill="var(--surface-2)" stroke="var(--line)" class="m68tok m68t3"/><text x="99" y="68" text-anchor="middle" class="m68tok m68t3">the</text>
+      <rect x="112" y="58" width="26" height="14" rx="3" fill="var(--surface-2)" stroke="var(--line)" class="m68tok m68t4"/><text x="125" y="68" text-anchor="middle" class="m68tok m68t4">doc</text>
     </g>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
-      <g class="m65node"><circle cx="44" cy="84" r="20" fill="var(--surface-2)" stroke="var(--accent)"/><text x="44" y="87" fill="var(--ink)">API</text></g>
-      <g class="m65node m65n2"><circle cx="146" cy="84" r="20" fill="var(--surface-2)" stroke="var(--accent)"/><text x="146" y="87" fill="var(--ink)">agent</text></g>
-      <g class="m65node m65n3"><circle cx="248" cy="62" r="18" fill="var(--surface-2)" stroke="var(--line)"/><text x="248" y="65" fill="var(--ink-soft)">model</text></g>
-      <g class="m65node m65n4"><circle cx="248" cy="114" r="18" fill="var(--surface-2)" stroke="#ef4444"/><text x="248" y="112" fill="#ef4444">tool</text><text x="248" y="121" fill="#ef4444" font-weight="400" font-size="6">slow</text></g>
+    <text x="30" y="98" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" font-weight="700">output tokens</text>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="8" fill="var(--accent)">
+      <rect x="30" y="104" width="26" height="14" rx="3" fill="var(--surface-2)" stroke="var(--accent)" class="m68tok m68t3"/>
+      <rect x="60" y="104" width="34" height="14" rx="3" fill="var(--surface-2)" stroke="var(--accent)" class="m68tok m68t4"/>
+      <rect x="98" y="104" width="22" height="14" rx="3" fill="var(--surface-2)" stroke="var(--accent)" class="m68tok m68t5"/>
     </g>
-    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">trace the request to find the slow hop</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">TROUBLESHOOTING TOOLS</text>
+    <g transform="translate(180,66)">
+      <text x="60" y="-6" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" font-weight="700">cost</text>
+      <rect x="0" y="2" width="120" height="14" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="0" y="2" height="14" rx="7" fill="var(--accent)" class="m68meter"/>
+      <text x="60" y="40" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">tokens x rate x volume</text>
+    </g>
+    <text x="160" y="152" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">every token in and out is billed</text>
+    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">FM INFERENCE COSTS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -267,110 +275,111 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 65</div>
-    <h1 class="reveal">Troubleshooting tools</h1>
-    <p class="lead reveal">When an ML or AI system misbehaves, three tools answer three different questions. <strong>CloudWatch</strong> tells you what and how much, <strong>X-Ray</strong> tells you where across services, and <strong>AgentCore observability</strong> traces inside a GenAI or agent run.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 68</div>
+    <h1 class="reveal">FM inference costs</h1>
+    <p class="lead reveal">Foundation model inference is billed by the token, so cost scales with <strong>prompt length, output length, and volume</strong>. Understanding the pricing modes and the optimization levers keeps a GenAI feature affordable at scale.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : three lenses (step build) */
+  /* 1 : how billing works (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Three lenses</div>
-    <h2 class="reveal" style="font-size:24px">Match the question to the tool</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the three questions troubleshooting asks.</p>
+    <div class="eyebrow reveal">How FM billing works</div>
+    <h2 class="reveal" style="font-size:24px">Tokens in, tokens out, times volume</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what drives the bill.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>What and how much?</b>Metrics and logs: is latency up, are errors spiking, what did the service log? CloudWatch.</p></div>
-      <div class="pill" data-step="2"><p><b>Where in the request?</b>A request crossing several services is slow, but which hop? Distributed tracing with X-Ray.</p></div>
-      <div class="pill" data-step="3"><p><b>Where inside the AI run?</b>A GenAI or agent request has many internal steps; which span failed? Agent and GenAI observability.</p></div>
+      <div class="pill" data-step="1"><p><b>Input tokens</b>Everything you send: the instruction, examples, and any retrieved context. A long prompt costs on every single call.</p></div>
+      <div class="pill" data-step="2"><p><b>Output tokens</b>Everything the model generates, usually priced higher per token than input.</p></div>
+      <div class="pill" data-step="3"><p><b>Times volume</b>Multiply per-call token cost by request volume. A small per-call saving becomes large across millions of calls.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : CloudWatch */
+  /* 2 : pricing modes */
   { html: `
-    <div class="eyebrow reveal">Amazon CloudWatch</div>
-    <h2 class="reveal">Metrics, logs, and alarms</h2>
-    <p class="lead reveal" style="margin-bottom:16px">CloudWatch is the base layer: it <strong>collects metrics and logs</strong> from endpoints, jobs, and functions, and alerts on them.</p>
+    <div class="eyebrow reveal">Pricing modes</div>
+    <h2 class="reveal">On-demand, provisioned, batch</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same tokens cost differently depending on how you buy the throughput (Chapter 43).</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Metrics and alarms</b>Latency, errors, utilization, and invocation counts, with alarms and anomaly detection (Chapter 61).</p></div>
-      <div class="pill"><p><b>Logs and Logs Insights</b>Application and job logs, queried with Logs Insights to find the error message behind a spike.</p></div>
-      <div class="pill"><p><b>Dashboards</b>Bring the signals together in one view (Chapter 66) for at-a-glance health.</p></div>
+      <div class="pill"><p><b>On-demand</b>Pay per token with no commitment; best for spiky or exploratory traffic.</p></div>
+      <div class="pill"><p><b>Provisioned Throughput</b>Reserve capacity for a term; cheaper per token once steady volume is high enough to pass the break-even point, and required for custom models.</p></div>
+      <div class="pill"><p><b>Batch inference</b>For non-real-time workloads, batch processing runs at a significant discount (around half the on-demand price).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : X-Ray */
+  /* 3 : optimization levers */
   { html: `
-    <div class="eyebrow reveal">AWS X-Ray</div>
-    <h2 class="reveal">Trace a request across services</h2>
-    <p class="lead reveal" style="margin-bottom:16px">When a request flows through API Gateway, Lambda, an endpoint, and a database, X-Ray shows <strong>where the time and errors actually go</strong>.</p>
+    <div class="eyebrow reveal">Usage optimization</div>
+    <h2 class="reveal">Spend fewer tokens per answer</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Most FM savings come from using fewer tokens and the right model, not from a pricing switch.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Distributed tracing</b>Each service adds a segment to the trace, so you see the full path of one request end to end.</p></div>
-      <div class="pill"><p><b>Service map</b>A visual graph of services with latency and error rates on each edge, pinpointing the slow or failing hop.</p></div>
-      <div class="pill"><p><b>Use it when</b>Overall latency is high but no single service's metrics obviously explain it.</p></div>
+      <div class="pill"><p><b>Shorten input and output</b>Trim instructions, retrieve only the context you need (RAG beats stuffing whole documents), and cap max output tokens.</p></div>
+      <div class="pill"><p><b>Prompt caching</b>Cache a repeated prompt prefix (a long system prompt or shared context) so its tokens are not reprocessed and billed on every call.</p></div>
+      <div class="pill"><p><b>Right-size the model</b>Route easy requests to a smaller, cheaper model and escalate only hard ones (Chapters 22 and 31).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : AgentCore / GenAI observability */
-  { html: `
-    <div class="eyebrow reveal">Agent and GenAI observability</div>
-    <h2 class="reveal">Inside the AI run</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A GenAI or agent request has many internal steps a service-level trace does not break down.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>CloudWatch generative AI observability</b>Traces model invocations, tokens, and latency for Bedrock and agents using OpenTelemetry spans.</p></div>
-      <div class="pill"><p><b>AgentCore Observability</b>For agents on Bedrock AgentCore, traces each reasoning, retrieval, and tool step (Chapter 63).</p></div>
-      <div class="pill"><p><b>Use it when</b>The failing thing is a step inside an agent or GenAI call, not a separate AWS service.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : match (step build) */
+  /* 4 : match (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Match the symptom</div>
-    <h2 class="reveal" style="font-size:24px">Read the symptom for the tool</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each symptom selects.</p>
+    <div class="eyebrow reveal">Match the lever</div>
+    <h2 class="reveal" style="font-size:24px">Read the situation for the fix</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each situation calls for.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Error rate spiked; what is the log message?"</b>CloudWatch metrics and Logs Insights.</p></div>
-      <div class="pill" data-step="2"><p><b>"A multi-service request is slow; which service?"</b>AWS X-Ray distributed tracing and the service map.</p></div>
-      <div class="pill" data-step="3"><p><b>"An agent request fails at some internal step"</b>Agent and GenAI observability (CloudWatch GenAI observability or AgentCore).</p></div>
+      <div class="pill" data-step="1"><p><b>"Steady, high, predictable FM volume in production"</b>Provisioned Throughput past the break-even point.</p></div>
+      <div class="pill" data-step="2"><p><b>"Millions of documents to summarize overnight, not real-time"</b>Batch inference for the discount.</p></div>
+      <div class="pill" data-step="3"><p><b>"Every call resends the same long system prompt"</b>Prompt caching to stop re-billing the shared prefix.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : quiz 1 */
+  /* 5 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">An inference request that fans out across API Gateway, a Lambda, a SageMaker endpoint, and a database has high end-to-end latency, but each service's own metrics look unremarkable. Which tool best pinpoints the slow hop?</h2>
+    <h2 class="reveal" style="font-size:22px">A team must run a foundation model over 10 million archived documents to extract fields. The job is not time-sensitive and can finish over several hours. What is the most cost-effective way to run it?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A single CloudWatch latency alarm on the endpoint</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>AWS X-Ray distributed tracing with its service map</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Model Monitor data-quality drift</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>An auto scaling policy on the endpoint</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>On-demand real-time calls, one per document, as fast as possible</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Bedrock batch inference, which runs non-real-time workloads at a significant discount</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Provisioned Throughput sized for peak real-time traffic</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A larger flagship model to finish sooner</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A slow request spanning several services with no single culprit metric is what X-Ray is for: the trace and service map show latency per hop, revealing where the time goes. A single endpoint latency alarm (A) only measures one service and cannot attribute latency across the whole request path.</div>` },
+    <div class="feedback"><b>Correct.</b> A large, non-time-sensitive job is the batch inference case: it processes the corpus at roughly half the on-demand token price. On-demand real-time calls (A) pay full price per token and add no value when the work does not need real-time latency.</div>` },
 
-  /* 7 : quiz 2 */
+  /* 6 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">An operator needs to find the exact error message behind a sudden spike in a training job's failures. Which tool is the most direct?</h2>
+    <h2 class="reveal" style="font-size:22px">A production assistant sends the same 2,000-token system prompt on every request, and token costs are high at scale. Aside from shortening it, what most directly reduces the cost of that repeated prefix?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>AWS X-Ray service map</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>CloudWatch Logs (with Logs Insights to query the log messages)</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Bedrock model evaluation</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A production-variant A/B test</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Increase the max output token limit</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Prompt caching, so the repeated prefix is not reprocessed and billed on every call</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Raise the temperature</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Switch every request to the largest flagship model</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The literal error message lives in the logs, and CloudWatch Logs Insights queries them directly to surface what failed and why. The X-Ray service map (A) shows where latency and errors occur across services but does not give you the underlying log message text.</div>` },
+    <div class="feedback"><b>Correct.</b> A large, repeated prompt prefix is exactly what prompt caching addresses: the cached tokens are not reprocessed and re-billed each call. Increasing the output token limit (A) would raise cost, since output tokens are billed too and usually priced higher than input.</div>` },
+
+  /* 7 : quiz 3 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check 3</div>
+    <h2 class="reveal" style="font-size:22px">A GenAI feature sends full 50-page documents in the prompt for every question, driving input-token costs sky high, though each question only needs a small part of the document. What is the best fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Send the documents twice for reliability</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Use RAG to retrieve only the relevant passages instead of stuffing the whole document into the prompt</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Switch to Provisioned Throughput and keep sending full documents</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Remove all instructions from the prompt</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Stuffing whole documents wastes input tokens; RAG retrieves only the passages a question needs (Chapter 25), cutting input tokens dramatically. Provisioned Throughput (C) changes how you buy capacity but does nothing about the excessive per-call token count, which is the actual cost driver here.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">The right lens</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Metrics and logs for what, X-Ray for where across services, agent observability for inside the AI run.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Tokens under control</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Cost is tokens times rate times volume; cut tokens, pick the right pricing mode and model.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>CloudWatch</b>Metrics, logs, Logs Insights, alarms, dashboards.</p></div>
-      <div class="pill"><p><b>X-Ray</b>Distributed tracing and service maps across services.</p></div>
-      <div class="pill"><p><b>Agent and GenAI observability</b>Spans inside a Bedrock or agent request.</p></div>
+      <div class="pill"><p><b>Pricing modes</b>On-demand, Provisioned Throughput past break-even, batch for a discount.</p></div>
+      <div class="pill"><p><b>Fewer tokens</b>Shorter prompts, RAG over stuffing, capped output, prompt caching.</p></div>
+      <div class="pill"><p><b>Right model</b>Route easy work to a smaller model.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
