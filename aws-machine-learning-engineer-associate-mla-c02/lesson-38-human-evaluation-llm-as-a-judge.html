@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>Human-in-the-Loop Evaluation and LLM-as-a-Judge · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-38-human-evaluation-llm-as-a-judge.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #0d0a1a;            /* page background */
+    --bg-tint: #1d1338;       /* ambient glow tint behind the card */
+    --accent: #6d28d9;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(109,40,217,0.12);  /* correct-answer fill */
+    --accent-ink: #f5f3ff;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-39-rag-system-monitoring.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,40 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m38human { opacity: 0; animation: m38human 6s ease-in-out infinite; }
+      .m38judge { opacity: 0; animation: m38judge 6s ease-in-out infinite; }
+      .m38star { opacity: 0; animation: m38star 6s ease-in-out infinite; }
+      @keyframes m38human { 0%, 12% { opacity: 0; } 26%, 100% { opacity: 1; } }
+      @keyframes m38judge { 0%, 40% { opacity: 0; } 54%, 100% { opacity: 1; } }
+      @keyframes m38star { 0%, 55% { opacity: 0; transform: scale(0.5); } 70%, 100% { opacity: 1; transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { .m38human, .m38judge, .m38star { animation: none; opacity: 1; transform: scale(1); } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m38glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(109,40,217,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m38glow)"/>
+    <rect x="128" y="30" width="64" height="24" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="160" y="46" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8" font-weight="700">output</text>
+    <g class="m38human" transform="translate(38,74)">
+      <path d="M28 40 L92 40" stroke="var(--accent)" stroke-width="1.4" fill="none" opacity="0.5"/>
+      <circle cx="30" cy="14" r="9" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <path d="M18 40 q12 -18 24 0" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <text x="30" y="58" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">human</text>
+      <text x="30" y="70" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">slow, nuanced</text>
     </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
-      </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
+    <g class="m38judge" transform="translate(196,74)">
+      <rect x="8" y="4" width="44" height="30" rx="7" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <circle cx="22" cy="19" r="2.5" fill="var(--accent)"/><circle cx="38" cy="19" r="2.5" fill="var(--accent)"/>
+      <text x="30" y="58" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">LLM judge</text>
+      <text x="30" y="70" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">fast, scalable</text>
     </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <path d="M150 54 L96 78" stroke="var(--accent)" stroke-width="1.4" fill="none" opacity="0.5"/>
+    <path d="M170 54 L226 78" stroke="var(--accent)" stroke-width="1.4" fill="none" opacity="0.5"/>
+    <g class="m38star" transform="translate(146,150)"><path d="M14 0 l4 9 l10 1 l-7 7 l2 10 l-9 -5 l-9 5 l2 -10 l-7 -7 l10 -1 z" fill="var(--accent)"/></g>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">HUMAN OR LLM JUDGE</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,82 +274,77 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 38</div>
+    <h1 class="reveal">Human or LLM judge</h1>
+    <p class="lead reveal">Open-ended GenAI output has no single reference answer, so overlap metrics fall short. You judge quality, safety, and bias with people or with another model, trading <strong>fidelity against speed and scale</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
   /* 1 : shared ground */
   { html: `
     <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <h2 class="reveal">When metrics are not enough</h2>
+    <p class="lead reveal" style="margin-bottom:16px">For summaries, chat, and generation there is no one right string, so BLEU and ROUGE (Chapter 37) miss the point. You need a <strong>judgment of quality</strong> against a rubric.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+      <div class="pill"><p><b>What you judge</b>Helpfulness and correctness, tone and style, plus safety concerns: toxicity, bias, and harmful content.</p></div>
+      <div class="pill"><p><b>How you judge</b>A rubric (rate 1 to 5 on accuracy, say) or a preference comparison (is output A or B better). Both need a judge to apply them.</p></div>
+      <div class="pill"><p><b>The choice</b>Who applies the rubric: people, or a capable model acting as the judge.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : prompt engineering */
+  /* 2 : human evaluation */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
+    <div class="eyebrow reveal">Option 1 · Human evaluation</div>
+    <h2 class="reveal">People apply the rubric</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Reviewers, employees or subject-matter experts, rate or rank outputs. It is the <strong>gold standard</strong> for nuance, safety, and domain judgment.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
+      <div class="pill"><p><b>Strengths</b>Catches subtle quality, cultural nuance, and bias that automated judges miss; the trusted reference for high-stakes and safety decisions.</p></div>
+      <div class="pill"><p><b>Costs</b>Slow, expensive, and hard to scale; can be inconsistent between reviewers without careful rubrics and training.</p></div>
+      <div class="pill"><p><b>On AWS</b>Bedrock model evaluation supports human-worker jobs; Amazon A2I and SageMaker Ground Truth manage review workforces and workflows.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : fine-tuning */
+  /* 3 : LLM as a judge */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
+    <div class="eyebrow reveal">Option 2 · LLM as a judge</div>
+    <h2 class="reveal">A model applies the rubric</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A capable model scores each response against the rubric and explains its rating. <strong>Fast, cheap, and scalable</strong> enough to run on every change.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
+      <div class="pill"><p><b>Strengths</b>Evaluates thousands of outputs in minutes at a fraction of the cost, consistently, so it fits in CI and regression testing. Bedrock evaluations offer a judge-model option.</p></div>
+      <div class="pill"><p><b>Costs</b>Can inherit the judge model's biases (favoring verbosity or its own style), and may miss domain nuance a human expert would catch.</p></div>
+      <div class="pill"><p><b>Guardrail</b>Validate the judge against a sample of human ratings before trusting it, and re-check periodically.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 4 : table */
   { html: `
     <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
+    <h2 class="reveal" style="font-size:24px">Human vs LLM judge</h2>
     <div class="reveal" style="overflow-x:auto;margin-top:6px">
       <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
         <tr style="border-bottom:1px solid var(--line);">
           <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Human</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">LLM judge</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Fidelity</td>
+          <td style="padding:8px 5px; color:var(--ink);">highest, gold standard</td>
+          <td style="padding:8px 5px; color:var(--ink);">good, can be biased</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Speed and scale</td>
+          <td style="padding:8px 5px; color:var(--ink);">slow, limited</td>
+          <td style="padding:8px 5px; color:var(--ink);">fast, massive</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Cost</td>
+          <td style="padding:8px 5px; color:var(--ink);">high</td>
+          <td style="padding:8px 5px; color:var(--ink);">low</td>
         </tr>
         <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Best for</td>
+          <td style="padding:8px 5px; color:var(--ink);">high-stakes, nuance, safety sign-off</td>
+          <td style="padding:8px 5px; color:var(--ink);">large-scale, continuous checks</td>
         </tr>
       </table>
     </div>
@@ -370,9 +357,9 @@ const cards = [
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>"Score thousands of responses on every release, cheaply and fast"</b>LLM as a judge.</p></div>
+      <div class="pill" data-step="2"><p><b>"High-stakes medical or legal sign-off, subtle bias and safety"</b>Human evaluation by experts.</p></div>
+      <div class="pill" data-step="3"><p><b>"Practical program"</b>Use the LLM judge broadly and continuously, and validate it with periodic human review, combining both.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +367,38 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A team wants to score the quality of 50,000 chatbot responses after every model or prompt change, quickly and within a small budget, as part of their release pipeline. Which approach fits best?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A human review panel rating all 50,000 responses each release</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>An LLM-as-a-judge evaluation with a clear rubric, run automatically</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>BLEU against a single reference answer</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Accuracy on exact string match</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> Scoring tens of thousands of open-ended responses on every release, fast and cheap, is the LLM-as-a-judge case: it applies the rubric consistently at scale inside the pipeline. A full human panel every release (A) is the tempting distractor because it is the highest fidelity, but it cannot meet the volume, speed, or budget for continuous checks.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">Before launching a medical advice assistant, a company must certify that its answers are clinically safe and free of harmful bias, a high-stakes sign-off. What is the appropriate primary evaluation?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>An LLM-as-a-judge score alone</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Human evaluation by clinical subject-matter experts</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>ROUGE against reference answers</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Overall accuracy on a held-out set</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> High-stakes clinical safety and subtle bias demand the gold standard, expert human judgment, for the sign-off. An LLM judge alone (A) is the tempting distractor because it is fast and cheap, but it can inherit biases and miss clinical nuance, so it should support, not replace, expert review for a safety-critical launch.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Judge chosen</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Scale and speed favor the LLM judge; high-stakes fidelity favors humans; a strong program uses both.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>Human</b>Gold standard for nuance, bias, and safety sign-off; slow and costly.</p></div>
+      <div class="pill"><p><b>LLM judge</b>Fast, cheap, scalable, continuous; validate against human ratings.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

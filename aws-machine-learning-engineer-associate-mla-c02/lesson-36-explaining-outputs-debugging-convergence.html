@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>Explaining Outputs and Debugging Convergence: Clarify and Debugger · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-36-explaining-outputs-debugging-convergence.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #0e0819;            /* page background */
+    --bg-tint: #1e1138;       /* ambient glow tint behind the card */
+    --accent: #7c3aed;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(124,58,237,0.12);  /* correct-answer fill */
+    --accent-ink: #f5f3ff;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-37-nlp-evaluation-metrics.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,42 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m36bar { transform-origin: left center; animation: m36bar 5s ease-in-out infinite; }
+      .m36b2 { animation-delay: 0.2s; } .m36b3 { animation-delay: 0.4s; }
+      .m36loss { stroke-dasharray: 160; stroke-dashoffset: 160; animation: m36loss 5s ease-in-out infinite; }
+      .m36flag { opacity: 0; animation: m36flag 5s ease-in-out infinite; }
+      @keyframes m36bar { 0% { transform: scaleX(0); } 40%, 100% { transform: scaleX(1); } }
+      @keyframes m36loss { 0%, 10% { stroke-dashoffset: 160; } 60%, 100% { stroke-dashoffset: 0; } }
+      @keyframes m36flag { 0%, 62% { opacity: 0; } 76%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m36bar { animation: none; transform: scaleX(1); } .m36loss { animation: none; stroke-dashoffset: 0; } .m36flag { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m36glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(124,58,237,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
-    </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m36glow)"/>
+    <g transform="translate(20,42)">
+      <text x="0" y="-2" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" font-weight="700">why this prediction?</text>
+      <g font-family="Hanken Grotesk" font-size="7" text-anchor="end">
+        <text x="44" y="16" fill="var(--ink-soft)">income</text><rect x="48" y="9" width="76" height="9" rx="2" fill="var(--accent)" class="m36bar"/>
+        <text x="44" y="34" fill="var(--ink-soft)">age</text><rect x="48" y="27" width="50" height="9" rx="2" fill="var(--accent)" class="m36bar m36b2" opacity="0.7"/>
+        <text x="44" y="52" fill="var(--ink-soft)">zip</text><rect x="48" y="45" width="30" height="9" rx="2" fill="var(--accent)" class="m36bar m36b3" opacity="0.5"/>
       </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
+      <text x="62" y="72" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">Clarify (SHAP)</text>
     </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <line x1="160" y1="38" x2="160" y2="128" stroke="var(--line)" stroke-width="1"/>
+    <g transform="translate(184,44)">
+      <text x="0" y="-2" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" font-weight="700">why won't it converge?</text>
+      <line x1="0" y1="60" x2="104" y2="60" stroke="var(--line)" stroke-width="1.2"/>
+      <line x1="0" y1="4" x2="0" y2="60" stroke="var(--line)" stroke-width="1.2"/>
+      <path class="m36loss" d="M2 10 C 20 12, 30 40, 50 40 C 70 40, 78 42, 104 41" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <g class="m36flag"><circle cx="62" cy="41" r="7" fill="rgba(239,68,68,0.2)" stroke="#ef4444"/><path d="M59 38 l6 6 M65 38 l-6 6" stroke="#ef4444" stroke-width="1.6"/><text x="52" y="80" fill="#ef4444" font-family="Hanken Grotesk" font-size="7" font-weight="700">loss not decreasing</text></g>
+      <text x="52" y="72" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">Debugger</text>
+    </g>
+    <text x="160" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">explain the output, debug the training</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">CLARIFY AND DEBUGGER</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,97 +276,69 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 36</div>
+    <h1 class="reveal">Clarify and Debugger</h1>
+    <p class="lead reveal">Two different "why" questions need two different tools. <strong>Why did the model predict this?</strong> is explainability, answered by SageMaker Clarify. <strong>Why won't training converge?</strong> is a training problem, answered by SageMaker Debugger.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : two questions (step build) */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Two questions, two tools</div>
+    <h2 class="reveal" style="font-size:24px">Sort the "why" before picking the tool</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the split.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>"Why did the model output this?"</b>A question about a trained model's predictions: which features drove it, is it fair. That is explainability and bias, the job of SageMaker Clarify.</p></div>
+      <div class="pill" data-step="2"><p><b>"Why is training misbehaving?"</b>A question about the training run itself: the loss is stuck, gradients vanished, it is overfitting. That is convergence debugging, the job of SageMaker Debugger.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : Clarify explainability */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <div class="eyebrow reveal">Explainability · SageMaker Clarify</div>
+    <h2 class="reveal">Which features drove the prediction</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Clarify uses <strong>SHAP feature attributions</strong> to assign each feature an importance for a prediction, model-agnostically.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+      <div class="pill"><p><b>SHAP</b>Shapley values from game theory show how much each feature pushed a specific prediction up or down, for the dataset overall or one instance.</p></div>
+      <div class="pill"><p><b>More views</b>Partial dependence plots show a feature's marginal effect; Clarify also explains computer-vision and NLP models with the same approach.</p></div>
+      <div class="pill"><p><b>Online explainability</b>Clarify can return per-prediction feature attributions in real time from an endpoint, for auditing and user-facing reasons.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : prompt engineering */
+  /* 3 : Clarify bias + drift link */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
+    <div class="eyebrow reveal">Fairness · SageMaker Clarify</div>
+    <h2 class="reveal">Bias, before and after training</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same tool measures <strong>bias</strong> across sensitive groups, and its attributions feed production monitoring.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
+      <div class="pill"><p><b>Pre-training bias</b>Detects imbalance in the data itself (for example, class or label skew across groups) before you train.</p></div>
+      <div class="pill"><p><b>Post-training bias</b>Measures whether the trained model's predictions differ unfairly across groups.</p></div>
+      <div class="pill"><p><b>Feeds monitoring</b>Clarify attributions power Model Monitor's feature attribution drift (Chapter 34): if the drivers of predictions shift in production, you are alerted.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : fine-tuning */
+  /* 4 : Debugger */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
+    <div class="eyebrow reveal">Convergence · SageMaker Debugger</div>
+    <h2 class="reveal">Catch a training run going wrong</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Debugger captures <strong>tensors during training</strong> (gradients, weights, losses) and runs built-in rules to flag non-converging behavior in real time.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
+      <div class="pill"><p><b>Built-in rules</b>Detect vanishing or exploding gradients, loss not decreasing, saturated activations, overfitting, and overtraining, without you writing the checks.</p></div>
+      <div class="pill"><p><b>Real-time actions</b>When a rule fires, Debugger can alert through CloudWatch and even stop a doomed job early to save compute.</p></div>
+      <div class="pill"><p><b>Inspect</b>Captured tensors visualize in TensorBoard so you can see where and why training broke.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : decision signals (step build) */
+  /* 5 : match the symptom (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
+    <div class="eyebrow reveal">Match the symptom</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>"Explain to an auditor which features caused a denial"</b>Clarify SHAP feature attributions (online explainability for real-time).</p></div>
+      <div class="pill" data-step="2"><p><b>"Check the model is not unfair across demographic groups"</b>Clarify bias metrics (pre- and post-training).</p></div>
+      <div class="pill" data-step="3"><p><b>"The training loss is flat and we suspect vanishing gradients"</b>SageMaker Debugger built-in rules.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +346,38 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A lender must show regulators, for each declined application, which input features most drove the model's decision, in real time as decisions are made. Which capability fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>SageMaker Debugger built-in rules</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Clarify online explainability with SHAP feature attributions</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Model Monitor data quality</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Automatic Model Tuning</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> Per-prediction feature importance, served in real time, is Clarify's online explainability using SHAP. Debugger (A) is the tempting distractor because it also answers a "why," but its "why" is about training convergence, not about explaining a deployed model's individual predictions.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">During training of a deep network, the loss plateaus almost immediately and never improves. The team suspects vanishing gradients and wants automated detection with the option to stop the job early. Which tool should they use?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>SageMaker Clarify explainability</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>SageMaker Debugger with built-in rules and early-stop actions</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Model Monitor model quality</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Bedrock model evaluation</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> A stuck loss and suspected vanishing gradients are training-convergence problems, which Debugger detects with built-in rules and can act on by stopping the job. Clarify (A) is the tempting distractor, but it explains a trained model's predictions and says nothing about why a training run fails to converge.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">The right "why" tool</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Explain a prediction with Clarify; debug a training run with Debugger.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>Clarify</b>SHAP explainability, bias detection, online explanations, feeds attribution drift.</p></div>
+      <div class="pill"><p><b>Debugger</b>Built-in rules for vanishing gradients, stuck loss, overfitting; alerts and early stop.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

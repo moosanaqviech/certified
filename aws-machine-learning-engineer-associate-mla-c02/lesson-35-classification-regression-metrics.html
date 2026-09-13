@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>Classification and Regression Metrics: Confusion Matrix, F1, ROC AUC, RMSE · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-35-classification-regression-metrics.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-36-explaining-outputs-debugging-convergence.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,36 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m35cell { opacity: 0; animation: m35cell 6s ease-in-out infinite; }
+      .m35c2 { animation-delay: 0.25s; } .m35c3 { animation-delay: 0.5s; } .m35c4 { animation-delay: 0.75s; }
+      .m35curve { stroke-dasharray: 180; stroke-dashoffset: 180; animation: m35curve 6s ease-in-out infinite; }
+      @keyframes m35cell { 0%, 8% { opacity: 0; transform: scale(0.8); } 22%, 90% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+      @keyframes m35curve { 0%, 40% { stroke-dashoffset: 180; } 80%, 100% { stroke-dashoffset: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m35cell { animation: none; opacity: 1; transform: scale(1); } .m35curve { animation: none; stroke-dashoffset: 0; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m35glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
         <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m35glow)"/>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700" text-anchor="middle" transform="translate(36,44)">
+      <text x="46" y="-4" fill="var(--ink-faint)" font-size="7">confusion matrix</text>
+      <g class="m35cell"><rect x="0" y="0" width="46" height="42" rx="6" fill="rgba(99,102,241,0.25)" stroke="var(--accent)"/><text x="23" y="20" fill="var(--ink)">TP</text><text x="23" y="33" fill="var(--ink-faint)" font-size="7" font-weight="400">hit</text></g>
+      <g class="m35cell m35c2"><rect x="50" y="0" width="46" height="42" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="73" y="20" fill="var(--ink-soft)">FP</text><text x="73" y="33" fill="var(--ink-faint)" font-size="7" font-weight="400">false alarm</text></g>
+      <g class="m35cell m35c3"><rect x="0" y="46" width="46" height="42" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="23" y="66" fill="var(--ink-soft)">FN</text><text x="23" y="79" fill="var(--ink-faint)" font-size="7" font-weight="400">miss</text></g>
+      <g class="m35cell m35c4"><rect x="50" y="46" width="46" height="42" rx="6" fill="rgba(99,102,241,0.25)" stroke="var(--accent)"/><text x="73" y="66" fill="var(--ink)">TN</text><text x="73" y="79" fill="var(--ink-faint)" font-size="7" font-weight="400">correct pass</text></g>
     </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
-      </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
+    <g transform="translate(198,50)">
+      <line x1="0" y1="80" x2="86" y2="80" stroke="var(--line)" stroke-width="1.4"/>
+      <line x1="0" y1="0" x2="0" y2="80" stroke="var(--line)" stroke-width="1.4"/>
+      <path class="m35curve" d="M0 80 C 8 30, 40 8, 86 4" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <line x1="0" y1="80" x2="86" y2="4" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="43" y="96" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">ROC, AUC</text>
     </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <text x="160" y="164" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">the metric must match the problem</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">EVALUATION METRICS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,136 +270,125 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 35</div>
+    <h1 class="reveal">Evaluation metrics</h1>
+    <p class="lead reveal">The wrong metric hides a broken model. For classification, the confusion matrix and what you build from it; for regression, the error measures. The skill is <strong>choosing the metric that matches the cost of being wrong</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
-  { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 2 : prompt engineering */
-  { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 3 : fine-tuning */
-  { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 4 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : decision signals (step build) */
-  { steps: 3,
+  /* 1 : confusion matrix (step build) */
+  { steps: 4,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
+    <div class="eyebrow reveal">The foundation</div>
+    <h2 class="reveal" style="font-size:24px">The confusion matrix</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Every classification metric is built from these four counts. Tap through them.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>True positive (TP)</b>Predicted positive, and it was. The hit.</p></div>
+      <div class="pill" data-step="2"><p><b>False positive (FP)</b>Predicted positive, but it was negative. The false alarm.</p></div>
+      <div class="pill" data-step="3"><p><b>False negative (FN)</b>Predicted negative, but it was positive. The miss.</p></div>
+      <div class="pill" data-step="4"><p><b>True negative (TN)</b>Predicted negative, and it was. The correct pass. Which of FP and FN costs more decides your metric.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : precision vs recall */
+  { html: `
+    <div class="eyebrow reveal">Precision and recall</div>
+    <h2 class="reveal">Two costs of being wrong</h2>
+    <p class="lead reveal" style="margin-bottom:16px">These trade off against each other as you move the decision threshold.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Precision</b>TP / (TP + FP): of everything flagged positive, how much really was. Optimize it when a <strong>false positive is costly</strong> (flagging a good transaction as fraud, a spam filter deleting real mail).</p></div>
+      <div class="pill"><p><b>Recall (sensitivity)</b>TP / (TP + FN): of all real positives, how many you caught. Optimize it when a <strong>false negative is costly</strong> (missing a disease, missing actual fraud).</p></div>
+      <div class="pill"><p><b>The trade-off</b>Raising the threshold lifts precision and lowers recall, and vice versa. You cannot maximize both at once.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : F1 and accuracy pitfall */
+  { html: `
+    <div class="eyebrow reveal">F1 and the accuracy trap</div>
+    <h2 class="reveal">Why accuracy lies on imbalance</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Accuracy is (TP + TN) / all. It is fine when classes are balanced and <strong>misleading when they are not</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The trap</b>If 99% of transactions are legitimate, a model that always says "not fraud" scores 99% accuracy while catching zero fraud. Accuracy hid a useless model.</p></div>
+      <div class="pill"><p><b>F1 score</b>The harmonic mean of precision and recall. It stays low unless both are decent, so it is the go-to single number for imbalanced classification.</p></div>
+      <div class="pill"><p><b>Rule</b>On imbalanced problems, report precision, recall, and F1, not accuracy.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : ROC AUC */
+  { html: `
+    <div class="eyebrow reveal">ROC and AUC</div>
+    <h2 class="reveal">Ranking quality across thresholds</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Precision and recall depend on one chosen threshold. ROC AUC judges the model <strong>across all thresholds at once</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>ROC curve</b>Plots true positive rate against false positive rate as the threshold sweeps from strict to lenient.</p></div>
+      <div class="pill"><p><b>AUC</b>The area under that curve: the probability the model ranks a random positive above a random negative. 1.0 is perfect, 0.5 is a coin flip.</p></div>
+      <div class="pill"><p><b>Use it</b>To compare models independent of a threshold, or when you will pick the operating threshold later. On heavy imbalance, precision-recall AUC can be more informative.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : regression metrics */
+  { html: `
+    <div class="eyebrow reveal">Regression metrics</div>
+    <h2 class="reveal">Measuring numeric error</h2>
+    <p class="lead reveal" style="margin-bottom:16px">For continuous targets, you measure how far predictions land from the truth.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>MAE</b>Mean absolute error: average size of the miss, in the target's units. Robust to outliers and easy to explain.</p></div>
+      <div class="pill"><p><b>MSE and RMSE</b>Mean squared error squares each error, so large misses dominate; RMSE is its square root, back in the target's units. Use them when big errors matter most.</p></div>
+      <div class="pill"><p><b>R squared</b>The fraction of variance the model explains, from 0 to 1. A unitless sense of overall fit.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6 : pick the metric (step build) */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Pick the metric</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>"Missing a real case is dangerous" (disease, fraud)</b>Optimize recall.</p></div>
+      <div class="pill" data-step="2"><p><b>"A false alarm is costly or annoying"</b>Optimize precision.</p></div>
+      <div class="pill" data-step="3"><p><b>"Rare positive class, need one balanced number"</b>F1 (not accuracy); compare models with AUC.</p></div>
+      <div class="pill" data-step="4"><p><b>"Predicting a number, and large errors are the worst"</b>RMSE.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : quiz 1 */
+  /* 7 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A model screens patients for a serious disease. Only 2% of patients have it, and missing a true case is far worse than a false alarm. Which evaluation approach is appropriate?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Overall accuracy, aiming for above 98%</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Recall (with precision and F1), because false negatives are the costly error on a rare class</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>RMSE on the predicted probabilities</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Precision alone, maximized toward 1.0</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> Missing a real case is a false negative, so recall is the priority, reported with precision and F1 on this imbalanced class. Accuracy (A) is the tempting distractor, but with 2% prevalence a model that predicts "healthy" for everyone scores 98% accuracy while catching no patients, exactly the trap.</div>` },
 
-  /* 7 : quiz 2 */
+  /* 8 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">A team forecasts delivery times in minutes. Occasional very large errors cause the worst customer complaints, so they want a metric that punishes big misses more than small ones, in the same units as the target. Which metric fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>F1 score</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Mean absolute error (MAE)</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Root mean squared error (RMSE)</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>ROC AUC</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> RMSE squares errors before averaging, so large misses dominate the score, and its square root puts it back in minutes. MAE (B) is the tempting distractor, but it weights every error equally and so does not punish the large misses the team cares about most.</div>` },
 
-  /* 8 : done */
+  /* 9 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Metric matched</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Let the cost of each error, and the class balance, pick the number.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>Precision vs recall</b>False alarms vs misses; F1 balances them.</p></div>
+      <div class="pill"><p><b>Accuracy</b>Only trustworthy on balanced classes.</p></div>
+      <div class="pill"><p><b>ROC AUC</b>Threshold-independent model comparison.</p></div>
+      <div class="pill"><p><b>MAE, RMSE, R squared</b>Regression error; RMSE punishes big misses.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
