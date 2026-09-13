@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage · MLA-C02</title>
+<title>Least Privilege and IAM · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-69-ai-cost-patterns.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-71-least-privilege-iam.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #1a0c10;            /* page background */
-    --bg-tint: #3a1822;       /* ambient glow tint behind the card */
-    --accent: #fda4af;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(253,164,175,0.12);  /* correct-answer fill */
-    --accent-ink: #1a0c10;    /* text on top of the accent key chip */
+    --bg: #0c1016;            /* page background */
+    --bg-tint: #1c2436;       /* ambient glow tint behind the card */
+    --accent: #7c8bb0;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(124,139,176,0.12);  /* correct-answer fill */
+    --accent-ink: #0c1016;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-70-securing-cicd-pipelines.html",
+  next:      "lesson-72-auditing-compliance.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,37 +225,33 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m69row { opacity: 0; animation: m69row 6s ease-in-out infinite; }
-      .m69r2 { animation-delay: 0.4s; } .m69r3 { animation-delay: 0.8s; }
-      .m69step { opacity: 0; animation: m69step 6s ease-in-out infinite; }
-      .m69s2 { animation-delay: 0.2s; } .m69s3 { animation-delay: 0.4s; } .m69s4 { animation-delay: 0.6s; }
-      @keyframes m69row { 0%, 6% { opacity: 0; transform: translateX(-6px); } 22%, 92% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
-      @keyframes m69step { 0%, 8% { opacity: 0; } 24%, 92% { opacity: 1; } 100% { opacity: 0; } }
-      @media (prefers-reduced-motion: reduce) { .m69row { animation: none; opacity: 1; transform: none; } .m69step { animation: none; opacity: 1; } }
+      .m71grant { opacity: 0; animation: m71grant 6.5s ease-in-out infinite; }
+      .m71g2 { animation-delay: 0.5s; } .m71g3 { animation-delay: 1s; }
+      .m71deny { opacity: 0; animation: m71deny 6.5s ease-in-out infinite; }
+      .m71d2 { animation-delay: 0.5s; } .m71d3 { animation-delay: 1s; }
+      @keyframes m71grant { 0%, 6% { opacity: 0; } 22%, 90% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes m71deny { 0%, 40% { opacity: 0; } 55%, 90% { opacity: 0.85; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m71grant { animation: none; opacity: 1; } .m71deny { animation: none; opacity: 0.85; } }
     </style>
     <defs>
-      <radialGradient id="m69glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m71glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(253,164,175,0)"/>
+        <stop offset="1" style="stop-color:rgba(124,139,176,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m69glow)"/>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
-      <g class="m69row"><rect x="24" y="46" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="62" fill="var(--ink-soft)">agent: many calls</text>
-        <g fill="var(--accent)"><circle class="m69step" cx="120" cy="59" r="3"/><circle class="m69step m69s2" cx="132" cy="59" r="3"/><circle class="m69step m69s3" cx="144" cy="59" r="3"/><circle class="m69step m69s4" cx="156" cy="59" r="3"/></g>
-      </g>
-      <g class="m69row m69r2"><rect x="24" y="78" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="94" fill="var(--ink-soft)">embeddings: compute</text><text x="166" y="94" text-anchor="end" fill="var(--accent)" font-size="7">index + query</text></g>
-      <g class="m69row m69r3"><rect x="24" y="110" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="32" y="126" fill="var(--ink)">vectors: storage</text><text x="166" y="126" text-anchor="end" fill="var(--accent)" font-size="7">count x dims</text></g>
+    <ellipse cx="160" cy="94" rx="152" ry="80" fill="url(#m71glow)"/>
+    <g transform="translate(38,52)">
+      <rect x="0" y="14" width="56" height="30" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/>
+      <text x="28" y="26" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7" font-weight="700">role</text>
+      <text x="28" y="37" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="6">least priv</text>
     </g>
-    <g transform="translate(200,58)">
-      <path d="M0 70 L0 6 M0 70 L64 70" stroke="var(--line)" stroke-width="1.4" fill="none"/>
-      <rect x="10" y="46" width="14" height="24" rx="2" fill="var(--accent)" opacity="0.55" class="m69step"/>
-      <rect x="30" y="30" width="14" height="40" rx="2" fill="var(--accent)" opacity="0.8" class="m69step m69s2"/>
-      <rect x="50" y="14" width="14" height="56" rx="2" fill="var(--accent)" class="m69step m69s3"/>
-      <text x="32" y="84" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">scale drives cost</text>
+    <g font-family="Hanken Grotesk" font-size="6.5" font-weight="700">
+      <g class="m71grant"><line x1="94" y1="72" x2="150" y2="60" stroke="var(--accent)" stroke-width="1.4"/><rect x="150" y="50" width="80" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)"/><text x="158" y="63" fill="var(--ink-soft)">s3:GetObject model/</text><path d="M218 56 l3 3 l6 -7" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></g>
+      <g class="m71grant m71g2"><line x1="94" y1="78" x2="150" y2="82" stroke="var(--accent)" stroke-width="1.4"/><rect x="150" y="72" width="80" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)"/><text x="158" y="85" fill="var(--ink-soft)">sagemaker:Invoke</text><path d="M218 78 l3 3 l6 -7" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></g>
+      <g class="m71deny m71d3"><line x1="94" y1="86" x2="150" y2="104" stroke="var(--line)" stroke-width="1.4" stroke-dasharray="3 2"/><rect x="150" y="94" width="80" height="20" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="158" y="107" fill="var(--ink-faint)">s3:* everything</text><path d="M244 98 l8 8 M252 98 l-8 8" stroke="var(--ink-faint)" stroke-width="1.8" stroke-linecap="round"/></g>
     </g>
-    <text x="160" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">AI has cost patterns beyond the model call</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AI COST PATTERNS</text>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Grant only the actions and resources the job needs</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">LEAST PRIVILEGE</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,110 +267,98 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 69</div>
-    <h1 class="reveal">AI cost patterns</h1>
-    <p class="lead reveal">Token cost (Chapter 68) is only part of an AI system's bill. <strong>Agents multiply calls, embeddings cost compute, and vectors cost storage.</strong> Each is an AI-specific pattern worth watching and controlling.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.3 · Chapter 71</div>
+    <h1 class="reveal">Least privilege and IAM</h1>
+    <p class="lead reveal">An ML system is a web of identities: users, notebooks, training jobs, and endpoints, each needing access to data and models. <strong>Least privilege means each identity gets exactly the permissions its job needs, and nothing more.</strong></p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : three patterns (step build) */
+  /* 1 : the building blocks (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Three AI cost patterns</div>
-    <h2 class="reveal" style="font-size:24px">Beyond a single model call</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the costs a GenAI system adds.</p>
+    <div class="eyebrow reveal">IAM building blocks</div>
+    <h2 class="reveal" style="font-size:24px">Who, what, and on which resource</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the pieces that grant access.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Agent consumption</b>One agent task is many model calls plus tool and retrieval calls, so cost per task is a multiple of a single inference.</p></div>
-      <div class="pill" data-step="2"><p><b>Embedding compute</b>Turning documents and queries into vectors costs compute, once to index the corpus and again on every query.</p></div>
-      <div class="pill" data-step="3"><p><b>Vector storage</b>Storing and searching the vectors costs money that scales with how many vectors you keep and how large each one is.</p></div>
+      <div class="pill" data-step="1"><p><b>Identity: role over user</b>People and applications assume IAM roles for temporary credentials. Prefer roles (auto-rotating) to long-lived IAM user access keys, which sit around waiting to leak.</p></div>
+      <div class="pill" data-step="2"><p><b>Policy: actions and resources</b>An IAM policy lists allowed actions (s3:GetObject) on specific resources (one bucket prefix), optionally narrowed by conditions.</p></div>
+      <div class="pill" data-step="3"><p><b>Execution role: the app's identity</b>A SageMaker training job or endpoint runs under an execution role, so scope that role to just the data and models that workload touches.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : agent consumption */
+  /* 2 : least privilege in practice */
   { html: `
-    <div class="eyebrow reveal">Agent consumption</div>
-    <h2 class="reveal">Many calls per task</h2>
-    <p class="lead reveal" style="margin-bottom:16px">An agent reasons, retrieves, and calls tools in a loop, so <strong>a single user request can trigger many billed model calls</strong>.</p>
+    <div class="eyebrow reveal">Least privilege in practice</div>
+    <h2 class="reveal">Narrow the actions and the resources</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A permissive policy like <code>s3:*</code> on <code>*</code> is the classic mistake. Scope both sides down.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>The multiplier</b>Cost per task equals tokens per call times the number of steps; a chatty or looping agent is expensive even at a low per-call price.</p></div>
-      <div class="pill"><p><b>Watch for loops</b>An agent that fails to converge keeps calling tools and the model, running up cost with no result (Chapter 63).</p></div>
-      <div class="pill"><p><b>Monitor and cap</b>Track tokens and steps per task with CloudWatch generative AI observability, and cap maximum steps to bound runaway cost.</p></div>
+      <div class="pill"><p><b>Name the actions</b>Grant <code>s3:GetObject</code> and <code>s3:PutObject</code>, not <code>s3:*</code>. A training role rarely needs to delete buckets.</p></div>
+      <div class="pill"><p><b>Name the resource</b>Point at one bucket and prefix (the model artifacts), not every bucket in the account.</p></div>
+      <div class="pill"><p><b>Add conditions</b>Restrict by VPC endpoint, source IP, or tag so the permission only applies in the intended context.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : embedding compute */
+  /* 3 : protecting artifacts */
   { html: `
-    <div class="eyebrow reveal">Embedding compute</div>
-    <h2 class="reveal">Index once, embed every query</h2>
-    <p class="lead reveal" style="margin-bottom:16px">RAG has two embedding costs, and refreshes add more.</p>
+    <div class="eyebrow reveal">Protecting artifacts</div>
+    <h2 class="reveal">Guard models and data at the resource</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Least privilege applies to <strong>the resources too</strong>, not just the callers, so model artifacts and training data stay locked down.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexing</b>Embedding a large corpus is a one-time (per refresh) compute cost that scales with the number of chunks.</p></div>
-      <div class="pill"><p><b>Per query</b>Every retrieval embeds the query, a small but constant per-request cost at scale.</p></div>
-      <div class="pill"><p><b>Refresh cost</b>Re-embedding on every knowledge base sync adds up; incremental sync (Chapter 59) re-embeds only what changed, avoiding a full re-index each time.</p></div>
+      <div class="pill"><p><b>Resource-based policies</b>An S3 bucket policy on the model-artifacts bucket can allow only the specific execution roles that must read it, denying everyone else.</p></div>
+      <div class="pill"><p><b>Encrypt with KMS</b>Encrypt artifacts with a KMS key and grant <code>kms:Decrypt</code> only to the roles that legitimately load the model.</p></div>
+      <div class="pill"><p><b>Separate duties</b>The role that writes training data should differ from the role that serves the model, so a compromise of one does not expose the other.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : vector storage */
-  { html: `
-    <div class="eyebrow reveal">Vector storage</div>
-    <h2 class="reveal">Cost scales with count and dimensions</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The vector store bills for holding and searching the embeddings.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>What drives it</b>The number of vectors times the dimensions per vector, plus the compute the store uses to index and search (for example OpenSearch Serverless OCUs).</p></div>
-      <div class="pill"><p><b>Reduce dimensions</b>A smaller embedding dimension, or binary vectors (Titan Text Embeddings V2 supports both), cuts storage and search cost with modest accuracy trade-offs.</p></div>
-      <div class="pill"><p><b>Prune</b>Remove stale or duplicate documents so you are not paying to store and search vectors nobody retrieves.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : match (step build) */
+  /* 4 : how to get there (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Match the pattern</div>
-    <h2 class="reveal" style="font-size:24px">Read the cost driver for the fix</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each driver calls for.</p>
+    <div class="eyebrow reveal">Getting to least privilege</div>
+    <h2 class="reveal" style="font-size:24px">Start tight, widen from evidence</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through a safe way to size a policy.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Agent cost per task keeps climbing"</b>Track tokens and steps per task and cap maximum steps; fix loops.</p></div>
-      <div class="pill" data-step="2"><p><b>"Every knowledge base refresh re-embeds everything"</b>Switch to incremental sync so only changed chunks are re-embedded.</p></div>
-      <div class="pill" data-step="3"><p><b>"Vector store cost grows with the index"</b>Reduce embedding dimensions (or use binary vectors) and prune stale vectors.</p></div>
+      <div class="pill" data-step="1"><p><b>1. Start from deny</b>Begin with minimal permissions and add only what a task actually fails without, rather than starting broad and trimming later.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Let the tools help</b>IAM Access Analyzer can generate a policy from CloudTrail activity, showing the exact actions a role really used.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Review and prune</b>Access Analyzer flags unused permissions and external access; remove what a role has stopped using so entitlements do not drift wide.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 6 : quiz 1 */
+  /* 5 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A multi-step agent's cost per completed task is far higher than a single model call, and occasionally a task's cost balloons with no answer produced. What is the most likely cause and control?</h2>
+    <h2 class="reveal" style="font-size:22px">A SageMaker training job needs to read one prefix of one S3 bucket and write model output to another prefix. A reviewer rejects the proposed <code>s3:*</code> on <code>*</code> policy. What best satisfies least privilege?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Vector storage growth; reduce embedding dimensions</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Many model and tool calls per task, sometimes looping; monitor tokens and steps per task and cap maximum steps</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Batch inference discount not applied</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>The embedding model is too small</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Attach AdministratorAccess to the execution role for simplicity</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Grant only s3:GetObject and s3:PutObject scoped to the two specific bucket prefixes the job uses</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Create an IAM user with long-lived access keys embedded in the training script</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Grant s3:* on the account's every bucket but add a strong password policy</button>
     </div>
-    <div class="feedback"><b>Correct.</b> An agent multiplies cost across its steps, and a non-converging loop runs up calls with no result; monitoring tokens and steps per task and capping maximum steps bounds it. Vector storage (A) is a different pattern and would not explain a per-task cost spike that produces no answer.</div>` },
+    <div class="feedback"><b>Correct.</b> Least privilege scopes both actions (just Get and Put) and resources (just the two prefixes) to what the job actually needs. Admin access (A) and account-wide s3:* (D) are the opposite of least privilege, and embedding long-lived keys in a script (C) adds a credential-leak risk on top.</div>` },
 
-  /* 7 : quiz 2 */
+  /* 6 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A RAG system's vector store bill grows steadily as more documents are indexed, and search cost is becoming significant. Which change most directly reduces vector storage and search cost?</h2>
+    <h2 class="reveal" style="font-size:22px">Security wants applications on EC2 and SageMaker to stop using long-lived IAM user access keys, and wants a way to right-size an existing over-broad role from what it actually uses. Which pair of practices fits?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Send longer prompts to the generation model</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Use a smaller embedding dimension (or binary vectors) and prune stale documents</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Switch the generation model to a flagship</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase topK at retrieval time</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Rotate the access keys weekly and keep the broad policy</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Use IAM roles for temporary credentials, and use IAM Access Analyzer to generate a least-privilege policy from CloudTrail activity</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Store the access keys in environment variables on each host</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Give every app the same shared role with full access</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Vector cost scales with the number of vectors times their dimensions, so reducing dimensions (or using binary vectors) and pruning stale documents directly cuts storage and search cost. Increasing topK (D) returns more vectors per query and adds cost rather than reducing it.</div>` },
+    <div class="feedback"><b>Correct.</b> IAM roles hand out short-lived, auto-rotating credentials so there are no long-lived keys to leak, and Access Analyzer builds a tightened policy from the actions CloudTrail shows the role actually used. Rotating keys (A) or moving them to env vars (C) keeps the long-lived-credential and over-broad-policy problems.</div>` },
 
-  /* 8 : done */
+  /* 7 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">AI costs mapped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Watch the patterns token pricing misses: agent calls, embedding compute, and vector storage.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Access, right-sized</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Give each identity exactly what its job needs, prefer roles over keys, and lock the resources too.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Agents</b>Many calls per task; monitor tokens and steps, cap steps, fix loops.</p></div>
-      <div class="pill"><p><b>Embeddings</b>Index once and per query; incremental sync over full re-index.</p></div>
-      <div class="pill"><p><b>Vectors</b>Count times dimensions; reduce dimensions and prune.</p></div>
+      <div class="pill"><p><b>Roles and execution roles</b>Temporary credentials over long-lived keys; scope each workload's execution role tightly.</p></div>
+      <div class="pill"><p><b>Narrow policies</b>Name the actions and the resources; add conditions; protect artifacts with resource-based policies and KMS.</p></div>
+      <div class="pill"><p><b>Right-size</b>Start from deny, generate policy from CloudTrail with Access Analyzer, and prune unused permissions.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
