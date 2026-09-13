@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Troubleshooting Tools: CloudWatch, Bedrock AgentCore Observability, and X-Ray · MLA-C02</title>
+<title>AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-65-troubleshooting-tools.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-69-ai-cost-patterns.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #190a0f;            /* page background */
-    --bg-tint: #3a1421;       /* ambient glow tint behind the card */
-    --accent: #fb6f92;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(251,111,146,0.12);  /* correct-answer fill */
-    --accent-ink: #190a0f;    /* text on top of the accent key chip */
+    --bg: #1a0c10;            /* page background */
+    --bg-tint: #3a1822;       /* ambient glow tint behind the card */
+    --accent: #fda4af;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(253,164,175,0.12);  /* correct-answer fill */
+    --accent-ink: #1a0c10;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,41 +217,45 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-66-dashboards-capacity-optimization.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m65node { opacity: 0; animation: m65node 6s ease-in-out infinite; }
-      .m65n2 { animation-delay: 0.4s; } .m65n3 { animation-delay: 0.8s; } .m65n4 { animation-delay: 1.2s; }
-      .m65edge { stroke-dasharray: 4 3; animation: m65edge 3s linear infinite; }
-      @keyframes m65node { 0%, 6% { opacity: 0; transform: scale(0.8); } 22%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
-      @keyframes m65edge { to { stroke-dashoffset: -14; } }
-      @media (prefers-reduced-motion: reduce) { .m65node { animation: none; opacity: 1; transform: scale(1); } .m65edge { animation: none; } }
+      .m69row { opacity: 0; animation: m69row 6s ease-in-out infinite; }
+      .m69r2 { animation-delay: 0.4s; } .m69r3 { animation-delay: 0.8s; }
+      .m69step { opacity: 0; animation: m69step 6s ease-in-out infinite; }
+      .m69s2 { animation-delay: 0.2s; } .m69s3 { animation-delay: 0.4s; } .m69s4 { animation-delay: 0.6s; }
+      @keyframes m69row { 0%, 6% { opacity: 0; transform: translateX(-6px); } 22%, 92% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
+      @keyframes m69step { 0%, 8% { opacity: 0; } 24%, 92% { opacity: 1; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m69row { animation: none; opacity: 1; transform: none; } .m69step { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m65glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m69glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(251,111,146,0)"/>
+        <stop offset="1" style="stop-color:rgba(253,164,175,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m65glow)"/>
-    <g stroke="var(--accent)" stroke-width="1.6" fill="none" opacity="0.6">
-      <path class="m65edge" d="M64 84 L128 84"/>
-      <path class="m65edge" d="M164 84 L228 66"/>
-      <path class="m65edge" d="M164 92 L228 110"/>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m69glow)"/>
+    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
+      <g class="m69row"><rect x="24" y="46" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="62" fill="var(--ink-soft)">agent: many calls</text>
+        <g fill="var(--accent)"><circle class="m69step" cx="120" cy="59" r="3"/><circle class="m69step m69s2" cx="132" cy="59" r="3"/><circle class="m69step m69s3" cx="144" cy="59" r="3"/><circle class="m69step m69s4" cx="156" cy="59" r="3"/></g>
+      </g>
+      <g class="m69row m69r2"><rect x="24" y="78" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="94" fill="var(--ink-soft)">embeddings: compute</text><text x="166" y="94" text-anchor="end" fill="var(--accent)" font-size="7">index + query</text></g>
+      <g class="m69row m69r3"><rect x="24" y="110" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="32" y="126" fill="var(--ink)">vectors: storage</text><text x="166" y="126" text-anchor="end" fill="var(--accent)" font-size="7">count x dims</text></g>
     </g>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
-      <g class="m65node"><circle cx="44" cy="84" r="20" fill="var(--surface-2)" stroke="var(--accent)"/><text x="44" y="87" fill="var(--ink)">API</text></g>
-      <g class="m65node m65n2"><circle cx="146" cy="84" r="20" fill="var(--surface-2)" stroke="var(--accent)"/><text x="146" y="87" fill="var(--ink)">agent</text></g>
-      <g class="m65node m65n3"><circle cx="248" cy="62" r="18" fill="var(--surface-2)" stroke="var(--line)"/><text x="248" y="65" fill="var(--ink-soft)">model</text></g>
-      <g class="m65node m65n4"><circle cx="248" cy="114" r="18" fill="var(--surface-2)" stroke="#ef4444"/><text x="248" y="112" fill="#ef4444">tool</text><text x="248" y="121" fill="#ef4444" font-weight="400" font-size="6">slow</text></g>
+    <g transform="translate(200,58)">
+      <path d="M0 70 L0 6 M0 70 L64 70" stroke="var(--line)" stroke-width="1.4" fill="none"/>
+      <rect x="10" y="46" width="14" height="24" rx="2" fill="var(--accent)" opacity="0.55" class="m69step"/>
+      <rect x="30" y="30" width="14" height="40" rx="2" fill="var(--accent)" opacity="0.8" class="m69step m69s2"/>
+      <rect x="50" y="14" width="14" height="56" rx="2" fill="var(--accent)" class="m69step m69s3"/>
+      <text x="32" y="84" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">scale drives cost</text>
     </g>
-    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">trace the request to find the slow hop</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">TROUBLESHOOTING TOOLS</text>
+    <text x="160" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">AI has cost patterns beyond the model call</text>
+    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AI COST PATTERNS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -267,70 +271,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 65</div>
-    <h1 class="reveal">Troubleshooting tools</h1>
-    <p class="lead reveal">When an ML or AI system misbehaves, three tools answer three different questions. <strong>CloudWatch</strong> tells you what and how much, <strong>X-Ray</strong> tells you where across services, and <strong>AgentCore observability</strong> traces inside a GenAI or agent run.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 69</div>
+    <h1 class="reveal">AI cost patterns</h1>
+    <p class="lead reveal">Token cost (Chapter 68) is only part of an AI system's bill. <strong>Agents multiply calls, embeddings cost compute, and vectors cost storage.</strong> Each is an AI-specific pattern worth watching and controlling.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : three lenses (step build) */
+  /* 1 : three patterns (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Three lenses</div>
-    <h2 class="reveal" style="font-size:24px">Match the question to the tool</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the three questions troubleshooting asks.</p>
+    <div class="eyebrow reveal">Three AI cost patterns</div>
+    <h2 class="reveal" style="font-size:24px">Beyond a single model call</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the costs a GenAI system adds.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>What and how much?</b>Metrics and logs: is latency up, are errors spiking, what did the service log? CloudWatch.</p></div>
-      <div class="pill" data-step="2"><p><b>Where in the request?</b>A request crossing several services is slow, but which hop? Distributed tracing with X-Ray.</p></div>
-      <div class="pill" data-step="3"><p><b>Where inside the AI run?</b>A GenAI or agent request has many internal steps; which span failed? Agent and GenAI observability.</p></div>
+      <div class="pill" data-step="1"><p><b>Agent consumption</b>One agent task is many model calls plus tool and retrieval calls, so cost per task is a multiple of a single inference.</p></div>
+      <div class="pill" data-step="2"><p><b>Embedding compute</b>Turning documents and queries into vectors costs compute, once to index the corpus and again on every query.</p></div>
+      <div class="pill" data-step="3"><p><b>Vector storage</b>Storing and searching the vectors costs money that scales with how many vectors you keep and how large each one is.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : CloudWatch */
+  /* 2 : agent consumption */
   { html: `
-    <div class="eyebrow reveal">Amazon CloudWatch</div>
-    <h2 class="reveal">Metrics, logs, and alarms</h2>
-    <p class="lead reveal" style="margin-bottom:16px">CloudWatch is the base layer: it <strong>collects metrics and logs</strong> from endpoints, jobs, and functions, and alerts on them.</p>
+    <div class="eyebrow reveal">Agent consumption</div>
+    <h2 class="reveal">Many calls per task</h2>
+    <p class="lead reveal" style="margin-bottom:16px">An agent reasons, retrieves, and calls tools in a loop, so <strong>a single user request can trigger many billed model calls</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Metrics and alarms</b>Latency, errors, utilization, and invocation counts, with alarms and anomaly detection (Chapter 61).</p></div>
-      <div class="pill"><p><b>Logs and Logs Insights</b>Application and job logs, queried with Logs Insights to find the error message behind a spike.</p></div>
-      <div class="pill"><p><b>Dashboards</b>Bring the signals together in one view (Chapter 66) for at-a-glance health.</p></div>
+      <div class="pill"><p><b>The multiplier</b>Cost per task equals tokens per call times the number of steps; a chatty or looping agent is expensive even at a low per-call price.</p></div>
+      <div class="pill"><p><b>Watch for loops</b>An agent that fails to converge keeps calling tools and the model, running up cost with no result (Chapter 63).</p></div>
+      <div class="pill"><p><b>Monitor and cap</b>Track tokens and steps per task with CloudWatch generative AI observability, and cap maximum steps to bound runaway cost.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : X-Ray */
+  /* 3 : embedding compute */
   { html: `
-    <div class="eyebrow reveal">AWS X-Ray</div>
-    <h2 class="reveal">Trace a request across services</h2>
-    <p class="lead reveal" style="margin-bottom:16px">When a request flows through API Gateway, Lambda, an endpoint, and a database, X-Ray shows <strong>where the time and errors actually go</strong>.</p>
+    <div class="eyebrow reveal">Embedding compute</div>
+    <h2 class="reveal">Index once, embed every query</h2>
+    <p class="lead reveal" style="margin-bottom:16px">RAG has two embedding costs, and refreshes add more.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Distributed tracing</b>Each service adds a segment to the trace, so you see the full path of one request end to end.</p></div>
-      <div class="pill"><p><b>Service map</b>A visual graph of services with latency and error rates on each edge, pinpointing the slow or failing hop.</p></div>
-      <div class="pill"><p><b>Use it when</b>Overall latency is high but no single service's metrics obviously explain it.</p></div>
+      <div class="pill"><p><b>Indexing</b>Embedding a large corpus is a one-time (per refresh) compute cost that scales with the number of chunks.</p></div>
+      <div class="pill"><p><b>Per query</b>Every retrieval embeds the query, a small but constant per-request cost at scale.</p></div>
+      <div class="pill"><p><b>Refresh cost</b>Re-embedding on every knowledge base sync adds up; incremental sync (Chapter 59) re-embeds only what changed, avoiding a full re-index each time.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : AgentCore / GenAI observability */
+  /* 4 : vector storage */
   { html: `
-    <div class="eyebrow reveal">Agent and GenAI observability</div>
-    <h2 class="reveal">Inside the AI run</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A GenAI or agent request has many internal steps a service-level trace does not break down.</p>
+    <div class="eyebrow reveal">Vector storage</div>
+    <h2 class="reveal">Cost scales with count and dimensions</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The vector store bills for holding and searching the embeddings.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>CloudWatch generative AI observability</b>Traces model invocations, tokens, and latency for Bedrock and agents using OpenTelemetry spans.</p></div>
-      <div class="pill"><p><b>AgentCore Observability</b>For agents on Bedrock AgentCore, traces each reasoning, retrieval, and tool step (Chapter 63).</p></div>
-      <div class="pill"><p><b>Use it when</b>The failing thing is a step inside an agent or GenAI call, not a separate AWS service.</p></div>
+      <div class="pill"><p><b>What drives it</b>The number of vectors times the dimensions per vector, plus the compute the store uses to index and search (for example OpenSearch Serverless OCUs).</p></div>
+      <div class="pill"><p><b>Reduce dimensions</b>A smaller embedding dimension, or binary vectors (Titan Text Embeddings V2 supports both), cuts storage and search cost with modest accuracy trade-offs.</p></div>
+      <div class="pill"><p><b>Prune</b>Remove stale or duplicate documents so you are not paying to store and search vectors nobody retrieves.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 5 : match (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Match the symptom</div>
-    <h2 class="reveal" style="font-size:24px">Read the symptom for the tool</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each symptom selects.</p>
+    <div class="eyebrow reveal">Match the pattern</div>
+    <h2 class="reveal" style="font-size:24px">Read the cost driver for the fix</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each driver calls for.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Error rate spiked; what is the log message?"</b>CloudWatch metrics and Logs Insights.</p></div>
-      <div class="pill" data-step="2"><p><b>"A multi-service request is slow; which service?"</b>AWS X-Ray distributed tracing and the service map.</p></div>
-      <div class="pill" data-step="3"><p><b>"An agent request fails at some internal step"</b>Agent and GenAI observability (CloudWatch GenAI observability or AgentCore).</p></div>
+      <div class="pill" data-step="1"><p><b>"Agent cost per task keeps climbing"</b>Track tokens and steps per task and cap maximum steps; fix loops.</p></div>
+      <div class="pill" data-step="2"><p><b>"Every knowledge base refresh re-embeds everything"</b>Switch to incremental sync so only changed chunks are re-embedded.</p></div>
+      <div class="pill" data-step="3"><p><b>"Vector store cost grows with the index"</b>Reduce embedding dimensions (or use binary vectors) and prune stale vectors.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -338,39 +342,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">An inference request that fans out across API Gateway, a Lambda, a SageMaker endpoint, and a database has high end-to-end latency, but each service's own metrics look unremarkable. Which tool best pinpoints the slow hop?</h2>
+    <h2 class="reveal" style="font-size:22px">A multi-step agent's cost per completed task is far higher than a single model call, and occasionally a task's cost balloons with no answer produced. What is the most likely cause and control?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A single CloudWatch latency alarm on the endpoint</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>AWS X-Ray distributed tracing with its service map</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Model Monitor data-quality drift</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>An auto scaling policy on the endpoint</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Vector storage growth; reduce embedding dimensions</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Many model and tool calls per task, sometimes looping; monitor tokens and steps per task and cap maximum steps</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Batch inference discount not applied</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>The embedding model is too small</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A slow request spanning several services with no single culprit metric is what X-Ray is for: the trace and service map show latency per hop, revealing where the time goes. A single endpoint latency alarm (A) only measures one service and cannot attribute latency across the whole request path.</div>` },
+    <div class="feedback"><b>Correct.</b> An agent multiplies cost across its steps, and a non-converging loop runs up calls with no result; monitoring tokens and steps per task and capping maximum steps bounds it. Vector storage (A) is a different pattern and would not explain a per-task cost spike that produces no answer.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">An operator needs to find the exact error message behind a sudden spike in a training job's failures. Which tool is the most direct?</h2>
+    <h2 class="reveal" style="font-size:22px">A RAG system's vector store bill grows steadily as more documents are indexed, and search cost is becoming significant. Which change most directly reduces vector storage and search cost?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>AWS X-Ray service map</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>CloudWatch Logs (with Logs Insights to query the log messages)</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Bedrock model evaluation</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A production-variant A/B test</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Send longer prompts to the generation model</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Use a smaller embedding dimension (or binary vectors) and prune stale documents</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Switch the generation model to a flagship</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Increase topK at retrieval time</button>
     </div>
-    <div class="feedback"><b>Correct.</b> The literal error message lives in the logs, and CloudWatch Logs Insights queries them directly to surface what failed and why. The X-Ray service map (A) shows where latency and errors occur across services but does not give you the underlying log message text.</div>` },
+    <div class="feedback"><b>Correct.</b> Vector cost scales with the number of vectors times their dimensions, so reducing dimensions (or using binary vectors) and pruning stale documents directly cuts storage and search cost. Increasing topK (D) returns more vectors per query and adds cost rather than reducing it.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">The right lens</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Metrics and logs for what, X-Ray for where across services, agent observability for inside the AI run.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">AI costs mapped</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Watch the patterns token pricing misses: agent calls, embedding compute, and vector storage.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>CloudWatch</b>Metrics, logs, Logs Insights, alarms, dashboards.</p></div>
-      <div class="pill"><p><b>X-Ray</b>Distributed tracing and service maps across services.</p></div>
-      <div class="pill"><p><b>Agent and GenAI observability</b>Spans inside a Bedrock or agent request.</p></div>
+      <div class="pill"><p><b>Agents</b>Many calls per task; monitor tokens and steps, cap steps, fix loops.</p></div>
+      <div class="pill"><p><b>Embeddings</b>Index once and per query; incremental sync over full re-index.</p></div>
+      <div class="pill"><p><b>Vectors</b>Count times dimensions; reduce dimensions and prune.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
