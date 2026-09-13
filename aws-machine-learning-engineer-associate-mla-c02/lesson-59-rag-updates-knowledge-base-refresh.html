@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Agent State Management and Agentic Workflow Infrastructure · MLA-C02</title>
+<title>Orchestrating RAG Updates and Knowledge Base Refresh Cycles · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-52-agent-state-agentic-infrastructure.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-59-rag-updates-knowledge-base-refresh.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #181009;            /* page background */
-    --bg-tint: #3a2712;       /* ambient glow tint behind the card */
-    --accent: #fdba74;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(253,186,116,0.12);  /* correct-answer fill */
-    --accent-ink: #181009;    /* text on top of the accent key chip */
+    --bg: #160f05;            /* page background */
+    --bg-tint: #33240a;       /* ambient glow tint behind the card */
+    --accent: #d97706;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(217,119,6,0.12);  /* correct-answer fill */
+    --accent-ink: #fff7ed;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,43 +217,40 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-53-deployment-strategies-rollback.html",
-  nextLabel: "Next chapter"
+  next:      "mla-c02-practice-exam-03.html",
+  nextLabel: "Practice test"
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m52turn { opacity: 0; animation: m52turn 6s ease-in-out infinite; }
-      .m52t2 { animation-delay: 0.5s; } .m52t3 { animation-delay: 1s; }
-      .m52mem { opacity: 0; animation: m52mem 6s ease-in-out infinite; }
-      @keyframes m52turn { 0%, 6% { opacity: 0; transform: translateX(-6px); } 22%, 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
-      @keyframes m52mem { 0%, 55% { opacity: 0; } 72%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m52turn { animation: none; opacity: 1; transform: none; } .m52mem { animation: none; opacity: 1; } }
+      .m59doc { opacity: 0; animation: m59doc 6s ease-in-out infinite; }
+      .m59sync { stroke-dasharray: 4 3; animation: m59sync 3s linear infinite; }
+      .m59fresh { opacity: 0; animation: m59fresh 6s ease-in-out infinite; }
+      @keyframes m59doc { 0%, 8% { opacity: 0; transform: translateY(6px); } 24%, 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+      @keyframes m59sync { to { stroke-dashoffset: -14; } }
+      @keyframes m59fresh { 0%, 55% { opacity: 0; } 70%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m59doc { animation: none; opacity: 1; transform: none; } .m59sync { animation: none; } .m59fresh { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m52glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m59glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(253,186,116,0)"/>
+        <stop offset="1" style="stop-color:rgba(217,119,6,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m52glow)"/>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
-      <g class="m52turn"><rect x="20" y="44" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="30" y="57" fill="var(--ink-soft)">turn 1</text></g>
-      <g class="m52turn m52t2"><rect x="20" y="68" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="30" y="81" fill="var(--ink-soft)">turn 2 (recalls 1)</text></g>
-      <g class="m52turn m52t3"><rect x="20" y="92" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--accent)"/><text x="30" y="105" fill="var(--accent)">turn 3 (recalls 1, 2)</text></g>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m59glow)"/>
+    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
+      <g class="m59doc"><rect x="26" y="66" width="52" height="30" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="52" y="82" fill="var(--ink)">new doc</text><text x="52" y="92" fill="var(--ink-faint)" font-weight="400" font-size="6.5">changed</text></g>
+      <rect x="126" y="60" width="60" height="42" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="156" y="78" fill="var(--ink-soft)">sync job</text><text x="156" y="90" fill="var(--ink-faint)" font-weight="400" font-size="6.5">re-embed</text>
+      <g class="m59fresh"><rect x="236" y="66" width="60" height="30" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/><text x="266" y="82" fill="var(--ink)">KB fresh</text><text x="266" y="92" fill="var(--accent)" font-weight="400" font-size="6.5">up to date</text></g>
     </g>
-    <path d="M172 80 L196 80" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#m52a)"/>
-    <defs><marker id="m52a" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="var(--accent)"/></marker></defs>
-    <g class="m52mem" transform="translate(200,50)">
-      <path d="M0 12 a24 8 0 0 0 48 0 v36 a24 8 0 0 1 -48 0 z" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.4"/>
-      <ellipse cx="24" cy="12" rx="24" ry="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.4"/>
-      <text x="24" y="40" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">memory</text>
-      <text x="24" y="72" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">short + long term</text>
-    </g>
-    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">state is what makes an agent more than one call</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AGENT STATE AND INFRASTRUCTURE</text>
+    <path class="m59sync" d="M80 81 L124 81" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+    <path class="m59sync m59fresh" d="M188 81 L234 81" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+    <text x="160" y="128" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">EventBridge, schedule, or S3 change triggers it</text>
+    <text x="160" y="152" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">keep the knowledge base in step with the source</text>
+    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">RAG UPDATES AND REFRESH</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -269,70 +266,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.2 · Chapter 52</div>
-    <h1 class="reveal">Agent state and infrastructure</h1>
-    <p class="lead reveal">A stateless model answers one prompt. An agent (Chapter 45) works across many steps, so it needs <strong>state to remember and infrastructure to run</strong> reliably. This chapter covers both.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.3 · Chapter 59</div>
+    <h1 class="reveal">RAG updates and refresh</h1>
+    <p class="lead reveal">A RAG system is only as current as its knowledge base. When source documents change, the index must be re-synced, so the last piece of MLOps for AI is <strong>orchestrating knowledge base refresh cycles</strong> reliably.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : two kinds of memory (step build) */
+  /* 1 : why refresh (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Why agents need state</div>
-    <h2 class="reveal" style="font-size:24px">Two kinds of memory</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what an agent has to remember.</p>
+    <div class="eyebrow reveal">Why refresh matters</div>
+    <h2 class="reveal" style="font-size:24px">A stale index gives stale answers</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the problem.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Short-term (session)</b>The conversation and intermediate results within one task, so the agent knows what it already asked, retrieved, and did.</p></div>
-      <div class="pill" data-step="2"><p><b>Long-term (persistent)</b>Facts that outlive a session: a user's preferences, past interactions, and durable knowledge carried across conversations.</p></div>
-      <div class="pill" data-step="3"><p><b>Without it</b>A stateless agent forgets between steps, repeats questions, and cannot complete multi-step or returning-user workflows.</p></div>
+      <div class="pill" data-step="1"><p><b>Sources change</b>Documents are added, edited, and deleted in the source (usually S3) all the time.</p></div>
+      <div class="pill" data-step="2"><p><b>The index lags</b>The vector index still holds the old chunks and embeddings until it is re-synced, so retrieval returns outdated content.</p></div>
+      <div class="pill" data-step="3"><p><b>Answers drift</b>The model grounds on stale context and confidently cites superseded or deleted information, a silent correctness failure.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : where state lives */
+  /* 2 : sync jobs */
   { html: `
-    <div class="eyebrow reveal">Where state lives</div>
-    <h2 class="reveal">Session stores and memory</h2>
-    <p class="lead reveal" style="margin-bottom:16px">State has to be stored somewhere durable and fast, separate from the model itself.</p>
+    <div class="eyebrow reveal">Ingestion and sync jobs</div>
+    <h2 class="reveal">How a knowledge base updates</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A Bedrock Knowledge Base re-indexes by running a <strong>data source sync (ingestion) job</strong>.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Session state</b>The agent runtime preserves conversation history across invocations within a session, so each turn sees prior context.</p></div>
-      <div class="pill"><p><b>Managed memory</b>Amazon Bedrock AgentCore Memory provides managed short-term and long-term memory, so you do not hand-build the storage layer.</p></div>
-      <div class="pill"><p><b>Roll your own</b>For custom agents, a fast key-value store like Amazon DynamoDB is a common backing store for session and user state.</p></div>
+      <div class="pill"><p><b>The job</b>StartIngestionJob re-reads the data source, chunks and embeds new or changed documents, and updates the vector store.</p></div>
+      <div class="pill"><p><b>Incremental vs full</b>Incremental sync processes only what changed since the last run (cheaper and faster); a full re-sync reprocesses everything, needed after a chunking or embedding-model change.</p></div>
+      <div class="pill"><p><b>Deletions</b>A sync also removes chunks for documents deleted from the source, so retrieval stops surfacing them.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : agentic workflow infrastructure */
+  /* 3 : triggering refresh */
   { html: `
-    <div class="eyebrow reveal">Agentic workflow infrastructure</div>
-    <h2 class="reveal">What it takes to run agents in production</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Beyond memory, deploying agents needs a runtime with isolation, tool access, and identity.</p>
+    <div class="eyebrow reveal">Triggering the refresh</div>
+    <h2 class="reveal">Event-driven or scheduled</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You choose how the sync gets kicked off, matching how the data changes.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Runtime</b>Amazon Bedrock AgentCore Runtime is a secure, serverless runtime that runs agents with per-session isolation and scales without servers to manage.</p></div>
-      <div class="pill"><p><b>Gateway and tools</b>A gateway exposes tools and APIs to agents through a standard interface (MCP, Chapter 45), so tool access is managed and reusable.</p></div>
-      <div class="pill"><p><b>Identity and observability</b>Scoped identity controls what an agent may access on a user's behalf, and tracing and logs make agent behavior auditable.</p></div>
+      <div class="pill"><p><b>Event-driven</b>An S3 change event (via EventBridge) triggers a sync when a document is added or updated, keeping the index near-real-time.</p></div>
+      <div class="pill"><p><b>Scheduled</b>An EventBridge schedule runs a periodic sync (nightly, hourly) when freshness needs are looser or changes arrive in batches.</p></div>
+      <div class="pill"><p><b>On-demand</b>Trigger a sync from a pipeline after a bulk content update, such as a documentation release.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : orchestrating and durability (step build) */
+  /* 4 : orchestrating reliably */
+  { html: `
+    <div class="eyebrow reveal">Orchestrating reliably</div>
+    <h2 class="reveal">Make the refresh a managed workflow</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A refresh is a pipeline like any other, with monitoring and cost to manage.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Orchestrate</b>EventBridge with Lambda or Step Functions starts the sync, waits for completion, and handles failures and retries.</p></div>
+      <div class="pill"><p><b>Monitor</b>Track ingestion job status and failures so a broken sync does not silently leave the index stale.</p></div>
+      <div class="pill"><p><b>Cost and consistency</b>Re-embedding costs money and time, so favor incremental syncs, and keep chunking and the embedding model consistent unless you intend a full re-index.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : match (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Orchestrating and durability</div>
-    <h2 class="reveal" style="font-size:24px">Keeping long workflows reliable</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what long-running agentic workflows need.</p>
+    <div class="eyebrow reveal">Match the need</div>
+    <h2 class="reveal" style="font-size:24px">Read the requirement for these tells</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each requirement selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Multi-agent coordination</b>Specialized agents delegate to one another (a supervisor pattern), communicating over an agent-to-agent protocol (Chapter 45).</p></div>
-      <div class="pill" data-step="2"><p><b>Durable orchestration</b>AWS Step Functions can drive deterministic, long-running workflows around agent steps, with retries and error handling built in.</p></div>
-      <div class="pill" data-step="3"><p><b>Checkpointing</b>Persisting state at each step lets a long or interrupted workflow resume instead of restarting, the same principle as training checkpoints (Chapter 28).</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : deploy considerations */
-  { html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal">Match the need to the piece</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Read the requirement and reach for the right component.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>"Remember context within a task"</b>Session state in the agent runtime.</p></div>
-      <div class="pill"><p><b>"Remember a returning user across sessions"</b>Long-term memory (AgentCore Memory or a DynamoDB-backed store).</p></div>
-      <div class="pill"><p><b>"Run agents securely at scale with isolation"</b>A managed agent runtime such as AgentCore Runtime.</p></div>
+      <div class="pill" data-step="1"><p><b>"New docs must be searchable within minutes of upload"</b>Event-driven sync from an S3 change via EventBridge.</p></div>
+      <div class="pill" data-step="2"><p><b>"Content changes in nightly batches"</b>A scheduled sync on an EventBridge rule.</p></div>
+      <div class="pill" data-step="3"><p><b>"We switched embedding models"</b>A full re-sync, not incremental, to re-embed everything.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -340,39 +337,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A customer-service agent must remember a returning user's preferences and past issues across separate conversations that happen days apart. What does this require?</h2>
+    <h2 class="reveal" style="font-size:22px">A support assistant backed by a Bedrock Knowledge Base keeps citing a policy document that was updated last week. The source file in S3 is current, but answers are not. What is the most likely fix?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Only the within-session conversation history</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Long-term (persistent) memory, for example AgentCore Memory or a DynamoDB-backed store</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A larger model context window on each call</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Retraining the model after every conversation</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Increase the model's context window</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Run a data source sync (ingestion job) so the updated document is re-chunked and re-embedded into the index</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Fine-tune the model on the new policy</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Raise topK at retrieval time</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Remembering a user across separate sessions is long-term memory that must persist beyond any one conversation, which managed memory or a DynamoDB-backed store provides. Session history alone (A) is cleared between conversations, so it cannot carry preferences from one session to the next days later.</div>` },
+    <div class="feedback"><b>Correct.</b> The index still holds the old chunks until a sync runs, so re-syncing the data source re-embeds the updated document and retrieval becomes current. Increasing the context window (A) does nothing, because the stale chunks are what retrieval returns; the fix is refreshing the index, not enlarging the prompt.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team must deploy agents in production with a secure, serverless runtime that isolates each user session and scales without managing servers, plus managed tool access. Which AWS capability fits?</h2>
+    <h2 class="reveal" style="font-size:22px">A knowledge base ingests thousands of documents, but only a handful change each day, and re-embedding everything nightly is slow and expensive. How should the refresh be orchestrated?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A single always-on EC2 instance running all sessions together</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon Bedrock AgentCore (Runtime with session isolation, plus a gateway for tools)</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon S3 static hosting</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A batch transform job</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A full re-sync of all documents every night</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Incremental syncs that process only changed documents, triggered by S3 change events via EventBridge</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Recreate the knowledge base from scratch daily</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Never sync and rely on the model's training data</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A secure, serverless, session-isolated runtime with managed tool access is what AgentCore provides for deploying agents at scale. One shared EC2 instance (A) mixes sessions together, manages its own servers, and provides none of the isolation or managed tool gateway the requirement calls for.</div>` },
+    <div class="feedback"><b>Correct.</b> When only a few documents change, incremental sync processes just those, and event-driven triggering keeps the index current without reprocessing everything, saving cost and time. A nightly full re-sync (A) re-embeds thousands of unchanged documents, exactly the slow, expensive work incremental sync avoids.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Stateful and running</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Give agents the memory to remember and the infrastructure to run reliably at scale.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Knowledge kept current</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Sync the index to the source, triggered the right way, orchestrated reliably.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>State</b>Short-term session context and long-term persistent memory.</p></div>
-      <div class="pill"><p><b>Infrastructure</b>A managed runtime with isolation, a tool gateway, and identity.</p></div>
-      <div class="pill"><p><b>Durability</b>Multi-agent coordination, Step Functions orchestration, checkpointing.</p></div>
+      <div class="pill"><p><b>Sync jobs</b>Incremental for changes, full for a chunking or embedding change.</p></div>
+      <div class="pill"><p><b>Triggers</b>S3 events for near-real-time, schedules for batches, on-demand from pipelines.</p></div>
+      <div class="pill"><p><b>Orchestrate</b>EventBridge with Step Functions, monitored, cost-aware.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

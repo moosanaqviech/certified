@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Agent State Management and Agentic Workflow Infrastructure · MLA-C02</title>
+<title>Retraining and Model Versioning: SageMaker Model Registry, MLflow, and Fine-Tuned FMs · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-52-agent-state-agentic-infrastructure.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-56-retraining-model-versioning.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #181009;            /* page background */
-    --bg-tint: #3a2712;       /* ambient glow tint behind the card */
-    --accent: #fdba74;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(253,186,116,0.12);  /* correct-answer fill */
-    --accent-ink: #181009;    /* text on top of the accent key chip */
+    --bg: #17110a;            /* page background */
+    --bg-tint: #35260c;       /* ambient glow tint behind the card */
+    --accent: #f59e0b;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(245,158,11,0.12);  /* correct-answer fill */
+    --accent-ink: #17110a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-53-deployment-strategies-rollback.html",
+  next:      "lesson-57-prompt-management.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,35 +225,35 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m52turn { opacity: 0; animation: m52turn 6s ease-in-out infinite; }
-      .m52t2 { animation-delay: 0.5s; } .m52t3 { animation-delay: 1s; }
-      .m52mem { opacity: 0; animation: m52mem 6s ease-in-out infinite; }
-      @keyframes m52turn { 0%, 6% { opacity: 0; transform: translateX(-6px); } 22%, 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
-      @keyframes m52mem { 0%, 55% { opacity: 0; } 72%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m52turn { animation: none; opacity: 1; transform: none; } .m52mem { animation: none; opacity: 1; } }
+      .m56loop { stroke-dasharray: 4 4; animation: m56loop 4s linear infinite; }
+      .m56ver { opacity: 0; animation: m56ver 6s ease-in-out infinite; }
+      .m56v2 { animation-delay: 0.4s; } .m56v3 { animation-delay: 0.8s; }
+      @keyframes m56loop { to { stroke-dashoffset: -16; } }
+      @keyframes m56ver { 0%, 6% { opacity: 0; transform: translateY(6px); } 22%, 92% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m56loop { animation: none; } .m56ver { animation: none; opacity: 1; transform: none; } }
     </style>
     <defs>
-      <radialGradient id="m52glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m56glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(253,186,116,0)"/>
+        <stop offset="1" style="stop-color:rgba(245,158,11,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m52glow)"/>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
-      <g class="m52turn"><rect x="20" y="44" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="30" y="57" fill="var(--ink-soft)">turn 1</text></g>
-      <g class="m52turn m52t2"><rect x="20" y="68" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="30" y="81" fill="var(--ink-soft)">turn 2 (recalls 1)</text></g>
-      <g class="m52turn m52t3"><rect x="20" y="92" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--accent)"/><text x="30" y="105" fill="var(--accent)">turn 3 (recalls 1, 2)</text></g>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m56glow)"/>
+    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
+      <rect x="24" y="60" width="60" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="54" y="76" fill="var(--ink)">new data</text>
+      <rect x="130" y="60" width="60" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="160" y="76" fill="var(--ink)">retrain</text>
+      <rect x="236" y="60" width="60" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="266" y="76" fill="var(--ink)">register</text>
     </g>
-    <path d="M172 80 L196 80" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#m52a)"/>
-    <defs><marker id="m52a" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="var(--accent)"/></marker></defs>
-    <g class="m52mem" transform="translate(200,50)">
-      <path d="M0 12 a24 8 0 0 0 48 0 v36 a24 8 0 0 1 -48 0 z" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.4"/>
-      <ellipse cx="24" cy="12" rx="24" ry="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.4"/>
-      <text x="24" y="40" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">memory</text>
-      <text x="24" y="72" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">short + long term</text>
+    <path class="m56loop" d="M84 73 L128 73" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+    <path class="m56loop" d="M190 73 L234 73" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+    <path class="m56loop" d="M266 88 C 266 120, 54 120, 54 90" stroke="var(--accent)" stroke-width="1.4" fill="none" opacity="0.5"/>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="7.5" text-anchor="start">
+      <g class="m56ver"><rect x="118" y="128" width="84" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/><text x="126" y="139" fill="var(--ink-faint)">v1  approved</text></g>
+      <g class="m56ver m56v2"><rect x="118" y="146" width="84" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/><text x="126" y="157" fill="var(--ink-faint)">v2  approved</text></g>
+      <g class="m56ver m56v3"><rect x="118" y="164" width="84" height="16" rx="4" fill="var(--surface-2)" stroke="var(--accent)"/><text x="126" y="175" fill="var(--accent)">v3  pending</text></g>
     </g>
-    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">state is what makes an agent more than one call</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AGENT STATE AND INFRASTRUCTURE</text>
+    <text x="160" y="110" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">retrain on a trigger, version every model</text>
+    <text x="160" y="193" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">RETRAINING AND VERSIONING</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -269,70 +269,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.2 · Chapter 52</div>
-    <h1 class="reveal">Agent state and infrastructure</h1>
-    <p class="lead reveal">A stateless model answers one prompt. An agent (Chapter 45) works across many steps, so it needs <strong>state to remember and infrastructure to run</strong> reliably. This chapter covers both.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.3 · Chapter 56</div>
+    <h1 class="reveal">Retraining and versioning</h1>
+    <p class="lead reveal">Models decay as the world shifts, so production models are retrained on a trigger. Every version must be <strong>tracked, approved, and auditable</strong>, whether it is a SageMaker model or a fine-tuned foundation model.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : two kinds of memory (step build) */
+  /* 1 : when to retrain (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Why agents need state</div>
-    <h2 class="reveal" style="font-size:24px">Two kinds of memory</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what an agent has to remember.</p>
+    <div class="eyebrow reveal">When to retrain</div>
+    <h2 class="reveal" style="font-size:24px">Three triggers</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what kicks off retraining.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Short-term (session)</b>The conversation and intermediate results within one task, so the agent knows what it already asked, retrieved, and did.</p></div>
-      <div class="pill" data-step="2"><p><b>Long-term (persistent)</b>Facts that outlive a session: a user's preferences, past interactions, and durable knowledge carried across conversations.</p></div>
-      <div class="pill" data-step="3"><p><b>Without it</b>A stateless agent forgets between steps, repeats questions, and cannot complete multi-step or returning-user workflows.</p></div>
+      <div class="pill" data-step="1"><p><b>Scheduled</b>Retrain on a fixed cadence (nightly, weekly) when data refreshes predictably, the simplest policy.</p></div>
+      <div class="pill" data-step="2"><p><b>Drift-triggered</b>SageMaker Model Monitor detects data or model-quality drift (Chapter 34) and fires an alarm that starts retraining, so you retrain when it is actually needed.</p></div>
+      <div class="pill" data-step="3"><p><b>New-data or performance</b>A threshold of new labeled data, or a drop in a live metric, triggers a retrain through an event.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : where state lives */
+  /* 2 : retraining mechanisms */
   { html: `
-    <div class="eyebrow reveal">Where state lives</div>
-    <h2 class="reveal">Session stores and memory</h2>
-    <p class="lead reveal" style="margin-bottom:16px">State has to be stored somewhere durable and fast, separate from the model itself.</p>
+    <div class="eyebrow reveal">Automating the retrain</div>
+    <h2 class="reveal">From trigger to a new candidate</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The trigger starts an <strong>automated pipeline</strong>, not a manual notebook run.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Session state</b>The agent runtime preserves conversation history across invocations within a session, so each turn sees prior context.</p></div>
-      <div class="pill"><p><b>Managed memory</b>Amazon Bedrock AgentCore Memory provides managed short-term and long-term memory, so you do not hand-build the storage layer.</p></div>
-      <div class="pill"><p><b>Roll your own</b>For custom agents, a fast key-value store like Amazon DynamoDB is a common backing store for session and user state.</p></div>
+      <div class="pill"><p><b>Event-driven</b>Amazon EventBridge routes a schedule, a drift alarm, or a data-arrival event to start a SageMaker Pipeline or CI/CD pipeline (Chapters 42 and 54).</p></div>
+      <div class="pill"><p><b>The pipeline</b>Reprocess data, train, evaluate against the quality gate (Chapter 55), and register the new model version, all without a human.</p></div>
+      <div class="pill"><p><b>Human in the loop</b>Registration can require manual approval before the version is allowed to deploy.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : agentic workflow infrastructure */
+  /* 3 : Model Registry */
   { html: `
-    <div class="eyebrow reveal">Agentic workflow infrastructure</div>
-    <h2 class="reveal">What it takes to run agents in production</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Beyond memory, deploying agents needs a runtime with isolation, tool access, and identity.</p>
+    <div class="eyebrow reveal">SageMaker Model Registry</div>
+    <h2 class="reveal">Versioned, approved, auditable</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The Model Registry is the <strong>system of record</strong> for trained models.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Runtime</b>Amazon Bedrock AgentCore Runtime is a secure, serverless runtime that runs agents with per-session isolation and scales without servers to manage.</p></div>
-      <div class="pill"><p><b>Gateway and tools</b>A gateway exposes tools and APIs to agents through a standard interface (MCP, Chapter 45), so tool access is managed and reusable.</p></div>
-      <div class="pill"><p><b>Identity and observability</b>Scoped identity controls what an agent may access on a user's behalf, and tracing and logs make agent behavior auditable.</p></div>
+      <div class="pill"><p><b>Groups and versions</b>A model package group holds successive versions of a model, each a numbered package with its artifacts and metrics.</p></div>
+      <div class="pill"><p><b>Approval status</b>A version moves from PendingManualApproval to Approved (or Rejected); deployment automation only ships approved versions.</p></div>
+      <div class="pill"><p><b>Audit and lineage</b>Each version records how it was produced (data, code, hyperparameters), giving the traceability audits require, exactly why versioning matters.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : orchestrating and durability (step build) */
+  /* 4 : versioning FMs */
+  { html: `
+    <div class="eyebrow reveal">Versioning models across the stack</div>
+    <h2 class="reveal">MLflow and fine-tuned FMs</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Versioning is not only for classical models.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>MLflow Model Registry</b>Managed MLflow (Chapter 33) registers and versions models from tracked runs and can register them into the SageMaker Model Registry.</p></div>
+      <div class="pill"><p><b>Fine-tuned FMs</b>Each fine-tuning or customization run produces a new version of the custom model; deploy a specific version and roll back by pointing at the previous one.</p></div>
+      <div class="pill"><p><b>Automated FM deployment</b>The same trigger-to-register-to-deploy flow applies, so a new fine-tuned version can roll out through the pipeline with the deployment guardrails of Chapter 53.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : match (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Orchestrating and durability</div>
-    <h2 class="reveal" style="font-size:24px">Keeping long workflows reliable</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what long-running agentic workflows need.</p>
+    <div class="eyebrow reveal">Match the need</div>
+    <h2 class="reveal" style="font-size:24px">Read the requirement for these tells</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each requirement selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Multi-agent coordination</b>Specialized agents delegate to one another (a supervisor pattern), communicating over an agent-to-agent protocol (Chapter 45).</p></div>
-      <div class="pill" data-step="2"><p><b>Durable orchestration</b>AWS Step Functions can drive deterministic, long-running workflows around agent steps, with retries and error handling built in.</p></div>
-      <div class="pill" data-step="3"><p><b>Checkpointing</b>Persisting state at each step lets a long or interrupted workflow resume instead of restarting, the same principle as training checkpoints (Chapter 28).</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : deploy considerations */
-  { html: `
-    <div class="eyebrow reveal">Putting it together</div>
-    <h2 class="reveal">Match the need to the piece</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Read the requirement and reach for the right component.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>"Remember context within a task"</b>Session state in the agent runtime.</p></div>
-      <div class="pill"><p><b>"Remember a returning user across sessions"</b>Long-term memory (AgentCore Memory or a DynamoDB-backed store).</p></div>
-      <div class="pill"><p><b>"Run agents securely at scale with isolation"</b>A managed agent runtime such as AgentCore Runtime.</p></div>
+      <div class="pill" data-step="1"><p><b>"Retrain only when live data drifts from training"</b>A Model Monitor drift alarm that triggers the retraining pipeline.</p></div>
+      <div class="pill" data-step="2"><p><b>"Prove to auditors which data and code produced the deployed model"</b>The SageMaker Model Registry version with its lineage.</p></div>
+      <div class="pill" data-step="3"><p><b>"Roll back to the prior fine-tuned model instantly"</b>Deploy the previous registered version.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -340,39 +340,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A customer-service agent must remember a returning user's preferences and past issues across separate conversations that happen days apart. What does this require?</h2>
+    <h2 class="reveal" style="font-size:22px">A team wants their model to retrain automatically only when production data has drifted meaningfully from the training distribution, rather than on a fixed schedule. How should they trigger retraining?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Only the within-session conversation history</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Long-term (persistent) memory, for example AgentCore Memory or a DynamoDB-backed store</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A larger model context window on each call</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Retraining the model after every conversation</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A nightly cron job that always retrains</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A SageMaker Model Monitor drift alarm that triggers the retraining pipeline via EventBridge</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Manually retrain whenever someone remembers</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Retrain on every single inference request</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Remembering a user across separate sessions is long-term memory that must persist beyond any one conversation, which managed memory or a DynamoDB-backed store provides. Session history alone (A) is cleared between conversations, so it cannot carry preferences from one session to the next days later.</div>` },
+    <div class="feedback"><b>Correct.</b> Retraining when data actually drifts is drift-triggered: Model Monitor detects the drift and fires an alarm that EventBridge routes to the retraining pipeline. A nightly cron (A) retrains on a schedule regardless of whether drift occurred, wasting compute when nothing changed and lagging when drift happens mid-day.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A team must deploy agents in production with a secure, serverless runtime that isolates each user session and scales without managing servers, plus managed tool access. Which AWS capability fits?</h2>
+    <h2 class="reveal" style="font-size:22px">Auditors need to know, for the model currently in production, exactly which dataset, code, and hyperparameters produced it, and to see the approval history of every version. What provides this?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>A single always-on EC2 instance running all sessions together</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon Bedrock AgentCore (Runtime with session isolation, plus a gateway for tools)</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Amazon S3 static hosting</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>A batch transform job</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>CloudWatch endpoint latency metrics</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>The SageMaker Model Registry, with versioned model packages, approval status, and lineage</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The S3 bucket where the model artifact happens to sit</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>The endpoint's auto scaling policy</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A secure, serverless, session-isolated runtime with managed tool access is what AgentCore provides for deploying agents at scale. One shared EC2 instance (A) mixes sessions together, manages its own servers, and provides none of the isolation or managed tool gateway the requirement calls for.</div>` },
+    <div class="feedback"><b>Correct.</b> Versioned model packages with approval status and lineage are exactly what the Model Registry records, giving auditors the full provenance and approval trail. A raw S3 artifact (C) is just the model file, with no version history, approval state, or record of how it was produced.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Stateful and running</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Give agents the memory to remember and the infrastructure to run reliably at scale.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Retrained and tracked</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Trigger retraining when it is needed, and version every model for audits and rollback.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>State</b>Short-term session context and long-term persistent memory.</p></div>
-      <div class="pill"><p><b>Infrastructure</b>A managed runtime with isolation, a tool gateway, and identity.</p></div>
-      <div class="pill"><p><b>Durability</b>Multi-agent coordination, Step Functions orchestration, checkpointing.</p></div>
+      <div class="pill"><p><b>Triggers</b>Scheduled, drift-based, or new-data, routed through EventBridge.</p></div>
+      <div class="pill"><p><b>Model Registry</b>Versions, approval status, and lineage for audits.</p></div>
+      <div class="pill"><p><b>FMs</b>MLflow registry and fine-tuned versions with deploy and rollback.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
