@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>NLP Evaluation Metrics: BLEU, ROUGE, BERTScore, and Semantic Similarity · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-37-nlp-evaluation-metrics.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #0e0a1a;            /* page background */
+    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
+    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
+    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-38-human-evaluation-llm-as-a-judge.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,42 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m37cand { opacity: 0; animation: m37cand 6s ease-in-out infinite; }
+      .m37overlap { opacity: 0; animation: m37overlap 6s ease-in-out infinite; }
+      .m37sem { opacity: 0; animation: m37sem 6s ease-in-out infinite; }
+      @keyframes m37cand { 0%, 6% { opacity: 0; } 18%, 100% { opacity: 1; } }
+      @keyframes m37overlap { 0%, 34% { opacity: 0; } 48%, 100% { opacity: 1; } }
+      @keyframes m37sem { 0%, 62% { opacity: 0; } 76%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m37cand, .m37overlap, .m37sem { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m37glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
-    </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m37glow)"/>
+    <g font-family="Hanken Grotesk" font-size="8">
+      <text x="24" y="42" fill="var(--ink-faint)" font-size="7" font-weight="700">reference</text>
+      <rect x="24" y="48" width="272" height="22" rx="6" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="34" y="63" fill="var(--ink-soft)">the cat sat on the mat</text>
+      <g class="m37cand">
+        <text x="24" y="88" fill="var(--ink-faint)" font-size="7" font-weight="700">candidate</text>
+        <rect x="24" y="94" width="272" height="22" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="34" y="109" fill="var(--ink)">a cat is on the mat</text>
       </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
     </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <g class="m37overlap" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
+      <rect x="150" y="103" width="30" height="12" rx="3" fill="rgba(167,139,250,0.3)"/>
+      <rect x="196" y="103" width="52" height="12" rx="3" fill="rgba(167,139,250,0.3)"/>
+      <text x="70" y="136" fill="var(--accent)">BLEU / ROUGE: n-gram overlap</text>
+    </g>
+    <g class="m37sem" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
+      <text x="70" y="150" fill="var(--accent)">BERTScore: same meaning</text>
+      <path d="M250 138 q 12 6 0 12" stroke="var(--accent)" stroke-width="1.4" fill="none"/>
+      <circle cx="256" cy="144" r="2.5" fill="var(--accent)"/>
+    </g>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">NLP EVALUATION METRICS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,97 +276,69 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 37</div>
+    <h1 class="reveal">NLP evaluation metrics</h1>
+    <p class="lead reveal">How do you score generated text against a reference? Some metrics count <strong>word overlap</strong>, others compare <strong>meaning</strong>. The task, translation, summarization, or open generation, decides which is fair.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : the core split (step build) */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">The core split</div>
+    <h2 class="reveal" style="font-size:24px">Overlap or meaning</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the two families.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>N-gram overlap</b>Count how many word sequences the candidate shares with the reference. Fast and cheap, but blind to paraphrase: "a car" and "an automobile" score as different.</p></div>
+      <div class="pill" data-step="2"><p><b>Semantic similarity</b>Compare meaning using embeddings, so paraphrases that say the same thing score as similar. Closer to human judgment, more compute.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : BLEU */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <div class="eyebrow reveal">Overlap · BLEU</div>
+    <h2 class="reveal">Precision, built for translation</h2>
+    <p class="lead reveal" style="margin-bottom:16px">BLEU measures <strong>n-gram precision</strong>: how much of the candidate's wording appears in the reference, with a penalty for being too short.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+      <div class="pill"><p><b>Leans precision</b>Of the words the model produced, how many were in the reference. A brevity penalty stops it from gaming the score with very short outputs.</p></div>
+      <div class="pill"><p><b>Home turf</b>Machine translation, where a good output should closely match a reference translation.</p></div>
+      <div class="pill"><p><b>Weakness</b>Blind to valid paraphrases and word order beyond the n-gram size.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : prompt engineering */
+  /* 3 : ROUGE */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
+    <div class="eyebrow reveal">Overlap · ROUGE</div>
+    <h2 class="reveal">Recall, built for summarization</h2>
+    <p class="lead reveal" style="margin-bottom:16px">ROUGE measures <strong>n-gram recall</strong>: how much of the reference's content the candidate captured.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
+      <div class="pill"><p><b>Leans recall</b>Of the important content in the reference, how much the summary covered. ROUGE-N counts n-gram overlap; ROUGE-L uses the longest common subsequence.</p></div>
+      <div class="pill"><p><b>Home turf</b>Summarization, where the worry is leaving out key information rather than adding extra words.</p></div>
+      <div class="pill"><p><b>Weakness</b>Same as BLEU: it counts words, not meaning, so paraphrased summaries can score low.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : fine-tuning */
+  /* 4 : BERTScore + semantic */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
+    <div class="eyebrow reveal">Meaning · BERTScore and similarity</div>
+    <h2 class="reveal">Score the meaning, not the words</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Embedding-based metrics judge whether two texts <strong>mean the same thing</strong>, even with different words.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
+      <div class="pill"><p><b>BERTScore</b>Embeds candidate and reference tokens with a language model and matches them by similarity, so paraphrases score high where BLEU and ROUGE would not.</p></div>
+      <div class="pill"><p><b>Semantic similarity</b>Embed both texts and take the cosine similarity of the vectors, a direct measure of closeness in meaning.</p></div>
+      <div class="pill"><p><b>Trade-off</b>Correlates better with human judgment for open-ended and paraphrase-heavy tasks, at more compute than counting n-grams.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : decision signals (step build) */
+  /* 5 : pick the metric (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
+    <div class="eyebrow reveal">Pick the metric</div>
+    <h2 class="reveal" style="font-size:24px">Read the task for these tells</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each task selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>"Machine translation against reference translations"</b>BLEU (n-gram precision).</p></div>
+      <div class="pill" data-step="2"><p><b>"Summaries, did we capture the key content"</b>ROUGE (n-gram recall, ROUGE-L).</p></div>
+      <div class="pill" data-step="3"><p><b>"Paraphrased or open-ended answers judged by meaning"</b>BERTScore or embedding cosine similarity.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +346,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A team evaluates an abstractive summarizer and worries most about whether summaries omit key points from the source. Reference summaries are available. Which metric is the most appropriate primary measure?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>BLEU</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>ROUGE (for example ROUGE-L)</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>RMSE</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>ROC AUC</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> The concern is coverage of the reference's content, which is recall, and ROUGE is the recall-oriented summarization metric. BLEU (A) is the tempting distractor, but it is precision-oriented and built for translation, so it rewards matching wording rather than capturing all the key content.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">An assistant answers questions in free-form language. Correct answers are often worded very differently from the reference, and BLEU and ROUGE unfairly penalize valid paraphrases. What should the team use to score answers by meaning?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Increase the BLEU n-gram size</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>BERTScore or embedding-based semantic similarity</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Accuracy on exact string match</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>ROUGE-N with larger N</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> Valid answers with different wording need a meaning-based metric, and BERTScore or cosine similarity of embeddings judge semantic closeness rather than exact words. Increasing the BLEU n-gram size (A) is the tempting distractor, but it makes overlap matching stricter, penalizing paraphrases even more.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Text scored fairly</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Match the metric to the task and to whether wording or meaning matters.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>BLEU</b>N-gram precision; translation.</p></div>
+      <div class="pill"><p><b>ROUGE</b>N-gram recall; summarization.</p></div>
+      <div class="pill"><p><b>BERTScore, similarity</b>Meaning-based; paraphrase and open-ended text.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

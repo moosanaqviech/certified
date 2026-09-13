@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>Baselines, Drift Detection, and Shadow vs Production Variants · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-34-baselines-shadow-variants.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #120a1e;            /* page background */
+    --bg-tint: #271043;       /* ambient glow tint behind the card */
+    --accent: #a855f7;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(168,85,247,0.12);  /* correct-answer fill */
+    --accent-ink: #120a1e;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-35-classification-regression-metrics.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,30 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m34live { stroke-dasharray: 3 3; animation: m34flow 4s linear infinite; }
+      .m34shadow { opacity: 0; animation: m34shadow 6s ease-in-out infinite; }
+      .m34ab { opacity: 0; animation: m34ab 6s ease-in-out infinite; }
+      @keyframes m34flow { to { stroke-dashoffset: -12; } }
+      @keyframes m34shadow { 0%, 20% { opacity: 0; } 34%, 90% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes m34ab { 0%, 45% { opacity: 0; } 58%, 90% { opacity: 1; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m34live { animation: none; } .m34shadow, .m34ab { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m34glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(168,85,247,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m34glow)"/>
+    <g font-family="Hanken Grotesk" font-size="8" font-weight="700" text-anchor="middle">
+      <rect x="18" y="82" width="56" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="46" y="99" fill="var(--accent)">traffic</text>
+      <path class="m34live" d="M74 95 L118 95" stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+      <rect x="120" y="60" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="153" y="77" fill="var(--ink)">production</text>
+      <g class="m34shadow"><path d="M100 100 L118 118" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="3 3" fill="none"/><rect x="120" y="106" width="66" height="24" rx="7" fill="var(--surface-2)" stroke="var(--ink-soft)"/><text x="153" y="122" fill="var(--ink-soft)" font-size="7.5">shadow copy</text></g>
+      <g class="m34ab"><rect x="210" y="52" width="52" height="22" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="236" y="67" fill="var(--ink)" font-size="7.5">A 90%</text><rect x="210" y="80" width="52" height="22" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="236" y="95" fill="var(--accent)" font-size="7.5">B 10%</text><path d="M186 73 L208 63" stroke="var(--accent)" stroke-width="1.4" fill="none"/><path d="M186 73 L208 91" stroke="var(--accent)" stroke-width="1.4" fill="none"/></g>
     </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
-      </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
-    </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <text x="160" y="150" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">test a new version safely, watch for drift</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">BASELINES, DRIFT, VARIANTS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,82 +264,77 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 34</div>
+    <h1 class="reveal">Baselines, drift, variants</h1>
+    <p class="lead reveal">A model in production degrades as the world shifts. You set a baseline, watch for drift, and test a new version before trusting it. Two ways to test trade <strong>safety against real-world signal</strong>: shadow testing and production variants.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : shared ground - baseline + drift */
   { html: `
     <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <h2 class="reveal">Baseline first, then watch for drift</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You capture a <strong>baseline</strong> of expected data and performance at deploy time, then SageMaker Model Monitor compares live traffic against it and alerts on deviation.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+      <div class="pill"><p><b>The baseline</b>Statistics and constraints computed from the training data; live predictions that fall outside them are flagged as violations.</p></div>
+      <div class="pill"><p><b>Four kinds of drift</b>Data quality (input distribution changed), model quality (accuracy dropped against labels), bias drift, and feature attribution drift (which features drive predictions changed).</p></div>
+      <div class="pill"><p><b>Then what</b>An alert prompts retraining or investigation. But before you promote the new model, you still need to test it, which is where the two options differ.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : prompt engineering */
+  /* 2 : shadow testing */
   { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
+    <div class="eyebrow reveal">Option 1 · Shadow testing</div>
+    <h2 class="reveal">Run it in the dark</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A shadow variant receives a <strong>copy of live production traffic, but its responses are never returned to users</strong>. You compare its outputs and metrics against production with zero user risk.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
+      <div class="pill"><p><b>How</b>SageMaker sends the same requests to the shadow model; you log and compare its predictions and latency to the live one.</p></div>
+      <div class="pill"><p><b>Strengths</b>No user is ever exposed to the new model, so a bad version cannot cause harm. Tests real production traffic and load.</p></div>
+      <div class="pill"><p><b>Limits</b>You see the model's outputs, but not real user outcomes (clicks, conversions), because users never receive its responses.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : fine-tuning */
+  /* 3 : production variants */
   { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
+    <div class="eyebrow reveal">Option 2 · Production variants (A/B)</div>
+    <h2 class="reveal">Give it a slice of real users</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Multiple production variants sit behind one endpoint, and you <strong>split real traffic between them by weight</strong> (a canary at 10%, say). Real users get the new model's responses.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
+      <div class="pill"><p><b>How</b>Assign traffic weights across variants on the same endpoint; shift weight toward the new variant as it proves out, or roll back instantly.</p></div>
+      <div class="pill"><p><b>Strengths</b>Measures real user outcomes and business metrics, the thing shadow testing cannot see. Gradual rollout limits blast radius.</p></div>
+      <div class="pill"><p><b>Limits</b>Real users are exposed to the new model, so a bad variant can affect some of them until you shift weight back.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 4 : table */
   { html: `
     <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
+    <h2 class="reveal" style="font-size:24px">Shadow vs production variants</h2>
     <div class="reveal" style="overflow-x:auto;margin-top:6px">
       <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
         <tr style="border-bottom:1px solid var(--line);">
           <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Shadow testing</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Production variants</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Users see it</td>
+          <td style="padding:8px 5px; color:var(--ink);">never</td>
+          <td style="padding:8px 5px; color:var(--ink);">a weighted slice</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">User risk</td>
+          <td style="padding:8px 5px; color:var(--ink);">none</td>
+          <td style="padding:8px 5px; color:var(--ink);">limited, real</td>
         </tr>
         <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Measures</td>
+          <td style="padding:8px 5px; color:var(--ink);">outputs, latency</td>
+          <td style="padding:8px 5px; color:var(--ink);">real user outcomes</td>
         </tr>
         <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
+          <td style="padding:8px 5px; color:var(--ink-soft);">Best for</td>
+          <td style="padding:8px 5px; color:var(--ink);">pre-promotion safety check</td>
+          <td style="padding:8px 5px; color:var(--ink);">measuring business impact</td>
         </tr>
       </table>
     </div>
@@ -370,9 +347,9 @@ const cards = [
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>"Validate a new model on real traffic with zero risk to users before promoting"</b>Shadow testing.</p></div>
+      <div class="pill" data-step="2"><p><b>"Measure whether the new model actually lifts conversions on real users"</b>Production variants (A/B), starting with a small canary weight.</p></div>
+      <div class="pill" data-step="3"><p><b>"Live accuracy is quietly dropping and inputs look different from training"</b>Not a promotion test: that is drift, caught by a baseline and Model Monitor.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +357,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A bank has a new fraud model and must confirm it behaves well on real production traffic and load, but regulators forbid exposing any customer to an unproven model. How should they test it before promotion?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Shadow testing: send a copy of live traffic to the new model without returning its responses to users</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>A production variant at 20% of real traffic</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Replace the live model outright and watch metrics</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Offline evaluation on last year's data only</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> Testing on real production traffic while exposing no customer to the new model is exactly shadow testing: it mirrors live requests to the shadow model but never returns its responses. A 20% production variant (B) is the tempting distractor, but it does expose one in five real customers to the unproven model, which the regulator forbids.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">A recommendation team believes their new model will raise click-through. Offline metrics look good and a shadow test showed sensible outputs, but they need to prove the business lift on real users while limiting risk. What is the right next step?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Another round of shadow testing</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A production variant taking a small weighted slice of real traffic, ramping up as it proves out</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Cut over 100% of traffic to the new model immediately</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Rely on the offline metrics and skip the rollout test</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> Only real users generate click-through, so measuring business lift needs a production variant, and a small weighted canary limits risk while it ramps. More shadow testing (A) is the tempting distractor, but shadow traffic never reaches users, so it can never measure click-through or any real user outcome.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Tested safely</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Baseline and monitor for drift; then choose the test by whether you can risk real users.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>Baseline + Model Monitor</b>Catch data, model, bias, and feature attribution drift.</p></div>
+      <div class="pill"><p><b>Shadow testing</b>Real traffic, zero user risk, outputs only.</p></div>
+      <div class="pill"><p><b>Production variants</b>Real user outcomes, limited risk via weights.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

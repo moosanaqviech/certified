@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>Reproducible Experiments: MLflow, Bedrock Evaluations, and Prompt Management · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-33-reproducible-experiments.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #0f0a1c;            /* page background */
+    --bg-tint: #201640;       /* ambient glow tint behind the card */
+    --accent: #8b5cf6;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(139,92,246,0.12);  /* correct-answer fill */
+    --accent-ink: #0f0a1c;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
+  next:      "lesson-34-baselines-shadow-variants.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,48 +225,31 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m33run { opacity: 0; animation: m33run 6s ease-in-out infinite; }
+      .m33r2 { animation-delay: 0.4s; } .m33r3 { animation-delay: 0.8s; }
+      .m33best { opacity: 0; animation: m33best 6s ease-in-out infinite; }
+      @keyframes m33run { 0%, 5% { opacity: 0; transform: translateY(6px); } 18%, 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+      @keyframes m33best { 0%, 60% { opacity: 0; } 74%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m33run { animation: none; opacity: 1; transform: none; } .m33best { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m33glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(139,92,246,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m33glow)"/>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="7.5">
+      <text x="30" y="38" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-weight="700" font-size="7.5">run</text>
+      <text x="120" y="38" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-weight="700" font-size="7.5">params</text>
+      <text x="238" y="38" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-weight="700" font-size="7.5">metric</text>
+      <g class="m33run"><rect x="24" y="46" width="272" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="34" y="61" fill="var(--ink-soft)">exp-01</text><text x="120" y="61" fill="var(--ink-soft)">lr=0.1</text><text x="238" y="61" fill="var(--ink-soft)">0.81</text></g>
+      <g class="m33run m33r2"><rect x="24" y="74" width="272" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="34" y="89" fill="var(--ink-soft)">exp-02</text><text x="120" y="89" fill="var(--ink-soft)">lr=0.03</text><text x="238" y="89" fill="var(--ink-soft)">0.88</text></g>
+      <g class="m33run m33r3"><rect x="24" y="102" width="272" height="24" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="34" y="117" fill="var(--ink)">exp-03</text><text x="120" y="117" fill="var(--ink)">lr=0.01</text><text x="238" y="117" fill="var(--accent)" font-weight="700" font-family="Hanken Grotesk">0.94</text></g>
     </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
-      </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
-    </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <g class="m33best"><path d="M296 114 l10 0" stroke="var(--accent)" stroke-width="1.6"/><text x="286" y="140" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">best run, registered</text></g>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">log every run so results are reproducible</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">REPRODUCIBLE EXPERIMENTS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,97 +265,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 33</div>
+    <h1 class="reveal">Reproducible experiments</h1>
+    <p class="lead reveal">Evaluation starts with being able to trust and repeat a result. Track every run, evaluate models and RAG systematically, and version prompts, so a good number can always be <strong>traced back to what produced it</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
-  { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 2 : prompt engineering */
-  { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 3 : fine-tuning */
-  { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 4 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : decision signals (step build) */
+  /* 1 : why reproducibility (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
+    <div class="eyebrow reveal">Why it matters</div>
+    <h2 class="reveal" style="font-size:24px">A result you cannot repeat is not a result</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what has to be captured.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>Inputs and code</b>The dataset version, the training code, and the environment. Without them, the same run cannot be recreated.</p></div>
+      <div class="pill" data-step="2"><p><b>Parameters and metrics</b>Every hyperparameter and every evaluation metric per run, so you can compare runs and know why one won.</p></div>
+      <div class="pill" data-step="3"><p><b>Artifacts and versions</b>The model file, plots, and a registered version, so the winning model is the one that actually ships.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : MLflow on SageMaker */
+  { html: `
+    <div class="eyebrow reveal">Tracking · managed MLflow on SageMaker AI</div>
+    <h2 class="reveal">One place for every run</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Fully managed MLflow tracking servers log <strong>parameters, metrics, and artifacts</strong> for each run and let you compare them in the MLflow UI inside SageMaker Studio.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Tracking</b>Log runs from training and evaluation, then compare performance across experiments side by side.</p></div>
+      <div class="pill"><p><b>Registry</b>Promote the best run in the MLflow Model Registry and automatically register it to the SageMaker Model Registry for deployment.</p></div>
+      <div class="pill"><p><b>GenAI tracing</b>Records inputs, outputs, and metadata at each step of a GenAI app, so a bad response can be traced to its cause.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : Bedrock evaluations */
+  { html: `
+    <div class="eyebrow reveal">Evaluating models · Amazon Bedrock evaluations</div>
+    <h2 class="reveal">Score candidates on your own data</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Bedrock evaluations judge a model's fitness for your task using a dataset of your prompts, with <strong>three ways to produce the scores</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Automatic metrics</b>Programmatic scoring against built-in or custom prompt datasets for a quick, repeatable read.</p></div>
+      <div class="pill"><p><b>LLM as a judge</b>A second model scores each response and explains the rating, fast and cheaper than humans (Chapter 38).</p></div>
+      <div class="pill"><p><b>Human workers</b>Employees or subject-matter experts rate and compare responses for the highest-fidelity judgment.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : prompt management */
+  { html: `
+    <div class="eyebrow reveal">Versioning prompts</div>
+    <h2 class="reveal">Prompts are artifacts too</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A prompt change can move quality as much as a model change, so prompts are <strong>versioned and promoted, not edited in place</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Versions and aliases</b>Each prompt edit is a new version; an alias (like "production") points at the version currently in use, so you can promote or roll back without touching application code.</p></div>
+      <div class="pill"><p><b>Where</b>Amazon Bedrock Prompt Management stores and versions prompts; MLflow can track prompt versions alongside runs.</p></div>
+      <div class="pill"><p><b>Payoff</b>Every evaluation result is tied to a specific prompt version, so comparisons stay honest.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : match tool to need (step build) */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Match the tool</div>
+    <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each need selects.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>"Compare training runs, log metrics, register the best model"</b>Managed MLflow on SageMaker AI.</p></div>
+      <div class="pill" data-step="2"><p><b>"Decide which foundation model fits our task on our prompts"</b>Amazon Bedrock model evaluation.</p></div>
+      <div class="pill" data-step="3"><p><b>"Roll a prompt change back without a code deploy"</b>Prompt versions and aliases in Prompt Management.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +336,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A data science team runs dozens of training jobs a week and cannot tell which hyperparameters produced their best model, or reproduce it later. What should they adopt?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Managed MLflow on SageMaker AI to track runs, parameters, metrics, and register the best model</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Amazon Bedrock RAG evaluation</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Model Monitor</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>A spreadsheet of final accuracies</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> Tracking parameters, metrics, and artifacts per run and registering the winner is exactly what managed MLflow provides, making runs comparable and reproducible. A spreadsheet of final accuracies (D) is the tempting distractor, but it drops the parameters, code, and dataset versions needed to actually reproduce or explain a result.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">A team tweaks the system prompt of a live assistant often. A recent edit hurt quality, and rolling back required a full application redeploy. How should they manage prompts instead?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Hard-code each prompt in the application and redeploy on every change</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune the model on each new prompt</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Use prompt versions with an alias that points at the current version, so promotion and rollback need no code deploy</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Store prompts in environment variables set at build time</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> Versioning prompts and moving an alias lets you promote or roll back instantly without redeploying, and ties every result to a known prompt version. Hard-coding and redeploying (A) is the tempting distractor because it is what they do now, and it is exactly the slow, risky path prompt management removes.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Made reproducible</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Track runs, evaluate systematically, version prompts; then every number is traceable.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>MLflow on SageMaker AI</b>Track runs and register the best model.</p></div>
+      <div class="pill"><p><b>Bedrock evaluations</b>Automatic, judge-model, or human scoring on your data.</p></div>
+      <div class="pill"><p><b>Prompt management</b>Versions and aliases for safe promotion and rollback.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
+<title>RAG System Monitoring: Retrieval Accuracy Assessment · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-39-rag-system-monitoring.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0b0d1f;            /* page background */
-    --bg-tint: #16193a;       /* ambient glow tint behind the card */
-    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
-    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
+    --bg: #0c0e1e;            /* page background */
+    --bg-tint: #181c3c;       /* ambient glow tint behind the card */
+    --accent: #818cf8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(129,140,248,0.12);  /* correct-answer fill */
+    --accent-ink: #0c0e1e;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,56 +217,41 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-33-reproducible-experiments.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m32type { animation: m32type 5.5s ease-in-out infinite; }
-      .m32cur { animation: m32cur 1s steps(1) infinite; }
-      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
-      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
-      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
-      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
+      .m39step { opacity: 0; animation: m39step 6s ease-in-out infinite; }
+      .m39s2 { animation-delay: 0.5s; } .m39s3 { animation-delay: 1s; }
+      .m39gauge { stroke-dasharray: 120; stroke-dashoffset: 120; animation: m39gauge 6s ease-in-out infinite; }
+      @keyframes m39step { 0%, 6% { opacity: 0; transform: translateX(-6px); } 20%, 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
+      @keyframes m39gauge { 0%, 30% { stroke-dashoffset: 120; } 70%, 100% { stroke-dashoffset: 34; } }
+      @media (prefers-reduced-motion: reduce) { .m39step { animation: none; opacity: 1; transform: none; } .m39gauge { animation: none; stroke-dashoffset: 34; } }
     </style>
     <defs>
-      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m39glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
+        <stop offset="1" style="stop-color:rgba(129,140,248,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
-    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
-    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
-      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
-      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
-      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
-      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m39glow)"/>
+    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
+      <g class="m39step"><rect x="16" y="46" width="80" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="56" y="60" fill="var(--ink)">retrieve</text><text x="56" y="70" fill="var(--ink-faint)" font-weight="400" font-size="7">relevant?</text></g>
+      <g class="m39step m39s2"><rect x="16" y="86" width="80" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="56" y="100" fill="var(--ink)">ground</text><text x="56" y="110" fill="var(--ink-faint)" font-weight="400" font-size="7">faithful?</text></g>
+      <g class="m39step m39s3"><rect x="16" y="126" width="80" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/><text x="56" y="140" fill="var(--ink)">answer</text><text x="56" y="150" fill="var(--ink-faint)" font-weight="400" font-size="7">on-topic?</text></g>
     </g>
-    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
-    <g transform="translate(164,50)">
-      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
-      <g>
-        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
-        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
-        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
-        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
-        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
-        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
-        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
-        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
-      </g>
-      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
+    <g transform="translate(196,58)">
+      <path d="M6 78 A 54 54 0 1 1 102 78" fill="none" stroke="var(--line)" stroke-width="8" stroke-linecap="round"/>
+      <path class="m39gauge" d="M6 78 A 54 54 0 1 1 102 78" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"/>
+      <text x="54" y="66" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="16" font-weight="700">92%</text>
+      <text x="54" y="82" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">retrieval quality</text>
     </g>
-    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
+    <text x="160" y="172" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">most RAG failures are retrieval failures</text>
+    <text x="160" y="188" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">RAG SYSTEM MONITORING</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -282,97 +267,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
-    <h1 class="reveal">Prompt or fine-tune</h1>
-    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.3 · Chapter 39</div>
+    <h1 class="reveal">RAG system monitoring</h1>
+    <p class="lead reveal">A RAG system (Chapter 25) can fail in ways a plain model cannot: it retrieves the wrong context, or ignores the right context. Monitoring it means measuring <strong>retrieval quality, not just the final answer</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
+  /* 1 : why RAG needs its own monitoring */
   { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Two levers on the same model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <div class="eyebrow reveal">Why RAG is different</div>
+    <h2 class="reveal">The answer can be wrong for two reasons</h2>
+    <p class="lead reveal" style="margin-bottom:16px">A RAG answer depends on both retrieval and generation, so a bad answer has <strong>two possible root causes</strong>, and you must tell them apart.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
-      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+      <div class="pill"><p><b>Retrieval failure</b>The system pulled the wrong or incomplete context. Even a perfect model cannot answer correctly from bad context.</p></div>
+      <div class="pill"><p><b>Generation failure</b>The right context was retrieved, but the model ignored it, contradicted it, or hallucinated beyond it.</p></div>
+      <div class="pill"><p><b>Why it matters</b>The fixes differ: retrieval failures point to chunking, embeddings, or search (Chapter 25); generation failures point to the prompt or model. Monitoring must locate the fault.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : prompt engineering */
-  { html: `
-    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
-    <h2 class="reveal">Change the input, not the model</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
-      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 3 : fine-tuning */
-  { html: `
-    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
-    <h2 class="reveal">Bake the behavior into weights</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
-      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
-      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 4 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
-          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
-          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
-          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
-          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
-          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
-          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
-          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
-          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
-          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : decision signals (step build) */
+  /* 2 : the RAG triad (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
-    <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
+    <div class="eyebrow reveal">The RAG triad</div>
+    <h2 class="reveal" style="font-size:24px">Three quality checks, one per stage</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the three questions LLM-based RAG evaluation scores.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
-      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
-      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
+      <div class="pill" data-step="1"><p><b>Context relevance</b>Are the retrieved passages actually relevant to the query? This scores the retriever directly.</p></div>
+      <div class="pill" data-step="2"><p><b>Groundedness (faithfulness)</b>Is the answer supported by the retrieved context, rather than made up? This catches hallucination.</p></div>
+      <div class="pill" data-step="3"><p><b>Answer relevance</b>Does the answer actually address the user's question? A grounded answer can still miss the point.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : measuring retrieval accuracy */
+  { html: `
+    <div class="eyebrow reveal">Measuring retrieval accuracy</div>
+    <h2 class="reveal">Did the right chunks come back</h2>
+    <p class="lead reveal" style="margin-bottom:16px">With a labeled set of queries and their correct passages, you score the retriever with <strong>ranking metrics</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Recall and precision at k</b>Of the correct passages, how many appeared in the top k results (recall), and how many of the top k were actually relevant (precision).</p></div>
+      <div class="pill"><p><b>Bedrock evaluations</b>Amazon Bedrock RAG evaluation scores a Knowledge Base against a dataset of queries with ground-truth passages and responses, reporting retrieval and generation quality with an LLM judge.</p></div>
+      <div class="pill"><p><b>Use it</b>To compare embedding models, chunk sizes, and search settings before and after a change (Chapter 25).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : operational monitoring */
+  { html: `
+    <div class="eyebrow reveal">In production</div>
+    <h2 class="reveal">Signals to watch continuously</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Beyond offline scores, live RAG needs <strong>continuous operational monitoring</strong> and a feedback loop.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Quality signals</b>Groundedness and citation rate, the share of "I do not know" or no-answer responses, and user feedback (thumbs up or down) as a running quality gauge.</p></div>
+      <div class="pill"><p><b>Operational signals</b>Retrieval and end-to-end latency, token cost per query, and error rates.</p></div>
+      <div class="pill"><p><b>Feedback loop</b>Low-scoring queries feed re-chunking, re-embedding, or index updates, and flagged answers can route to human review.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : diagnose a failure (step build) */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Diagnose the failure</div>
+    <h2 class="reveal" style="font-size:24px">Read the symptom for the culprit</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each symptom points to.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>"Retrieved passages are off-topic for the query"</b>Low context relevance: fix retrieval (embeddings, chunking, hybrid search, reranking).</p></div>
+      <div class="pill" data-step="2"><p><b>"Right context retrieved, but the answer states facts not in it"</b>Low groundedness: a generation or prompt problem, tighten grounding instructions.</p></div>
+      <div class="pill" data-step="3"><p><b>"Grounded and accurate, but does not answer what was asked"</b>Low answer relevance: refine the prompt or query handling.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -380,38 +338,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
+    <h2 class="reveal" style="font-size:22px">A RAG assistant frequently produces answers that state facts which do not appear anywhere in the passages it retrieved, even when the retrieved passages are on-topic. Which RAG quality metric is failing, and where is the fault?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Context relevance, a retrieval fault</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Groundedness (faithfulness), a generation fault</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Recall at k, a retrieval fault</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Latency, an operational fault</button>
     </div>
-    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
+    <div class="feedback"><b>Correct.</b> On-topic context but answers with unsupported facts is a groundedness (faithfulness) failure: the model is hallucinating beyond the retrieved context, a generation-side problem to fix with prompting or the model. Context relevance (A) is the tempting distractor, but the passages were on-topic, so retrieval is working; the breakdown is in how the answer uses them.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
+    <h2 class="reveal" style="font-size:22px">Before rolling out a new embedding model for a Knowledge Base, a team wants to measure whether retrieval returns the correct passages, using a labeled set of queries with known correct documents. What should they use?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>BLEU score on the final answers</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Retrieval metrics like recall and precision at k, via a Bedrock RAG evaluation with ground-truth passages</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>SageMaker Debugger built-in rules</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Overall endpoint latency</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
+    <div class="feedback"><b>Correct.</b> Measuring whether the correct passages are retrieved is exactly recall and precision at k against ground-truth passages, which Bedrock RAG evaluation reports for a Knowledge Base. BLEU on final answers (A) is the tempting distractor, but it scores generated text wording and says nothing about whether retrieval surfaced the right documents.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">RAG under watch</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Measure each stage so a bad answer points to its real cause.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
-      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
+      <div class="pill"><p><b>The triad</b>Context relevance, groundedness, answer relevance.</p></div>
+      <div class="pill"><p><b>Retrieval accuracy</b>Recall and precision at k; Bedrock RAG evaluation.</p></div>
+      <div class="pill"><p><b>In production</b>Citations, no-answer rate, latency, cost, and a feedback loop.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
