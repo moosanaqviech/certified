@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>RAG Architecture Patterns and Retrieval Optimization · MLA-C02</title>
+<title>Training Mechanics: Epochs, Batch Size, Early Stopping, Distributed Training · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-25-rag-architecture-patterns.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-28-training-mechanics.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0c0e1e;            /* page background */
-    --bg-tint: #181c3c;       /* ambient glow tint behind the card */
-    --accent: #818cf8;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(129,140,248,0.12);  /* correct-answer fill */
-    --accent-ink: #0c0e1e;    /* text on top of the accent key chip */
+    --bg: #100a1c;            /* page background */
+    --bg-tint: #241041;       /* ambient glow tint behind the card */
+    --accent: #9333ea;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(147,51,234,0.12);  /* correct-answer fill */
+    --accent-ink: #faf5ff;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-26-aws-ai-services.html",
+  next:      "lesson-29-hyperparameter-optimization-amt.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,43 +225,32 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m25q { animation: m25q 6s ease-in-out infinite; }
-      .m25hit { opacity: 0; animation: m25hit 6s ease-in-out infinite; }
-      .m25h2 { animation-delay: 0.2s; } .m25h3 { animation-delay: 0.4s; }
-      .m25ans { opacity: 0; animation: m25ans 6s ease-in-out infinite; }
-      @keyframes m25q { 0%, 100% { transform: translateX(0); opacity: 0.6; } 15%, 85% { transform: translateX(0); opacity: 1; } }
-      @keyframes m25hit { 0%, 25% { opacity: 0; transform: scale(0.7); } 40%, 80% { opacity: 1; transform: scale(1); } 92%, 100% { opacity: 0; } }
-      @keyframes m25ans { 0%, 55% { opacity: 0; } 70%, 92% { opacity: 1; } 100% { opacity: 0; } }
-      @media (prefers-reduced-motion: reduce) { .m25q { animation: none; opacity: 1; } .m25hit { animation: none; opacity: 1; transform: scale(1); } .m25ans { animation: none; opacity: 1; } }
+      .m28loss { stroke-dasharray: 300; stroke-dashoffset: 300; animation: m28loss 5s ease-in-out infinite; }
+      .m28stop { opacity: 0; animation: m28stop 5s ease-in-out infinite; }
+      .m28pulse { animation: m28pulse 5s ease-in-out infinite; }
+      @keyframes m28loss { 0% { stroke-dashoffset: 300; } 55%, 100% { stroke-dashoffset: 0; } }
+      @keyframes m28stop { 0%, 55% { opacity: 0; } 70%, 100% { opacity: 1; } }
+      @keyframes m28pulse { 0%, 54% { r: 0; } 62% { r: 6; } 100% { r: 5; } }
+      @media (prefers-reduced-motion: reduce) { .m28loss { animation: none; stroke-dashoffset: 0; } .m28stop { animation: none; opacity: 1; } .m28pulse { animation: none; r: 5; } }
     </style>
     <defs>
-      <radialGradient id="m25glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m28glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(129,140,248,0)"/>
+        <stop offset="1" style="stop-color:rgba(147,51,234,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m25glow)"/>
-    <g class="m25q">
-      <rect x="18" y="80" width="52" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
-      <text x="44" y="96" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">query</text>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m28glow)"/>
+    <line x1="44" y1="40" x2="44" y2="140" stroke="var(--line)" stroke-width="1.5"/>
+    <line x1="44" y1="140" x2="286" y2="140" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="30" y="54" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" transform="rotate(-90 30 90)">loss</text>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">epochs</text>
+    <path class="m28loss" d="M48 52 C 90 60, 110 108, 150 120 C 190 130, 210 132, 250 133" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+    <g class="m28stop">
+      <line x1="204" y1="44" x2="204" y2="140" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="4 3"/>
+      <circle cx="204" cy="131" class="m28pulse" fill="var(--accent)"/>
+      <text x="204" y="38" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">stop early</text>
     </g>
-    <g transform="translate(120,52)">
-      <rect x="0" y="0" width="72" height="84" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
-      <text x="36" y="15" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">vector store</text>
-      <rect x="12" y="24" width="48" height="12" rx="3" class="m25hit" fill="var(--accent)" opacity="0.85"/>
-      <rect x="12" y="40" width="48" height="12" rx="3" class="m25hit m25h2" fill="var(--accent)" opacity="0.6"/>
-      <rect x="12" y="56" width="48" height="12" rx="3" class="m25hit m25h3" fill="var(--accent)" opacity="0.4"/>
-    </g>
-    <path d="M72 93 L118 84" stroke="var(--accent)" stroke-width="1.6" fill="none" opacity="0.6"/>
-    <path d="M194 84 L238 84" stroke="var(--accent)" stroke-width="1.6" fill="none" opacity="0.6"/>
-    <g class="m25ans" transform="translate(240,58)">
-      <rect x="0" y="0" width="66" height="52" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
-      <text x="33" y="20" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8" font-weight="700">FM</text>
-      <text x="33" y="36" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5">grounded</text>
-      <text x="33" y="46" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5">answer</text>
-    </g>
-    <text x="160" y="152" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">retrieve the right context, then generate</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">RAG ARCHITECTURE PATTERNS</text>
+    <text x="160" y="182" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">TRAINING MECHANICS</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -277,146 +266,111 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.1 · Chapter 25</div>
-    <h1 class="reveal">RAG architecture patterns</h1>
-    <p class="lead reveal">Retrieval-augmented generation grounds a foundation model in your own documents. Two decisions matter: <strong>how much of the pipeline to manage yourself</strong>, and <strong>how to tune retrieval</strong> so the model gets the right context.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 28</div>
+    <h1 class="reveal">Training mechanics</h1>
+    <p class="lead reveal">A training job is shaped by a handful of knobs and how you spread the work. Get the <strong>epochs, batch size, and learning rate</strong> right, stop at the right moment, and use <strong>distributed training</strong> and spot to control time and cost.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : shared ground */
-  { html: `
-    <div class="eyebrow reveal">Shared ground</div>
-    <h2 class="reveal">Retrieve, then generate, on fresh facts</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Every RAG system embeds a query, finds the most similar chunks in a vector store (Chapter 5), and passes them to the model as context. It shines where <strong>facts change or must be cited</strong>, the case fine-tuning (Chapter 24) handles poorly.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>RAG vs fine-tuning</b>RAG adds current, source-attributable knowledge at inference; fine-tuning bakes in behavior and style. Changing a fact means re-indexing a document, not retraining.</p></div>
-      <div class="pill"><p><b>Two questions</b>Do you want AWS to run the pipeline, or control it yourself? And separately, how do you make retrieval return the right passages?</p></div>
-      <div class="pill"><p><b>Quality lives in retrieval</b>If the wrong chunks come back, even the best model answers wrong. Most RAG tuning is retrieval tuning.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 2 : managed KB */
-  { html: `
-    <div class="eyebrow reveal">Pattern 1 · Managed (Bedrock Knowledge Bases)</div>
-    <h2 class="reveal">AWS runs the pipeline</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Amazon Bedrock Knowledge Bases handles ingestion, chunking, embedding, and the vector store for you. You point it at S3, and <strong>RetrieveAndGenerate answers with citations</strong> in one call.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Fast to stand up, managed syncing and chunking, built-in source citations, and it can provision the vector store (OpenSearch Serverless, Aurora pgvector, and others).</p></div>
-      <div class="pill"><p><b>Costs</b>Less control over exactly how chunking, retrieval, and orchestration behave, within the options the service exposes.</p></div>
-      <div class="pill"><p><b>Pick it when</b>You want production RAG quickly, the built-in options fit, and you would rather not run the ingestion and vector infrastructure.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 3 : custom stack */
-  { html: `
-    <div class="eyebrow reveal">Pattern 2 · Customer-managed (custom stack)</div>
-    <h2 class="reveal">You own every component</h2>
-    <p class="lead reveal" style="margin-bottom:16px">You assemble the pipeline yourself: your own embedding model, vector store (OpenSearch Service, RDS with pgvector, others), chunking logic, and orchestration, calling Bedrock only for the final generation. Maximum <strong>control and flexibility</strong>.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Strengths</b>Tune every stage, use custom retrieval logic (multi-step, agentic, or graph retrieval), and integrate systems the managed path does not support.</p></div>
-      <div class="pill"><p><b>Costs</b>You build, host, secure, and operate the whole pipeline, and you own its scaling and reliability.</p></div>
-      <div class="pill"><p><b>Pick it when</b>Requirements exceed what Knowledge Bases exposes, or you need bespoke retrieval, storage, or orchestration.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 4 : retrieval optimization (step build) */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Retrieval optimization · the levers</div>
-    <h2 class="reveal" style="font-size:24px">Tune these when answers miss</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the knobs that decide retrieval quality, in either pattern.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Embedding model and chunk size</b>Pick a domain-fit embedding model; size chunks so each holds one coherent idea. Too big buries the signal, too small loses context.</p></div>
-      <div class="pill" data-step="2"><p><b>Semantic vs hybrid search</b>Semantic (vector) search catches meaning; hybrid adds keyword search so exact terms, codes, and names are not missed.</p></div>
-      <div class="pill" data-step="3"><p><b>Reranking</b>Retrieve a wider set, then a reranker (Amazon Rerank, Cohere Rerank) reorders by relevance so the best passages reach the model.</p></div>
-      <div class="pill" data-step="4"><p><b>topK and metadata filtering</b>Raise or lower how many chunks you pass, and filter by metadata (date, source, tenant) to scope retrieval to the right documents.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : table */
-  { html: `
-    <div class="eyebrow reveal">Side by side</div>
-    <h2 class="reveal" style="font-size:24px">Two patterns, same levers</h2>
-    <div class="reveal" style="overflow-x:auto;margin-top:6px">
-      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Managed KB</td>
-          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Custom stack</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Setup effort</td>
-          <td style="padding:8px 5px; color:var(--ink);">low</td>
-          <td style="padding:8px 5px; color:var(--ink);">high</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Control</td>
-          <td style="padding:8px 5px; color:var(--ink);">within options</td>
-          <td style="padding:8px 5px; color:var(--ink);">total</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 5px; color:var(--ink-soft);">Citations</td>
-          <td style="padding:8px 5px; color:var(--ink);">built in</td>
-          <td style="padding:8px 5px; color:var(--ink);">you build</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 5px; color:var(--ink-soft);">Ops burden</td>
-          <td style="padding:8px 5px; color:var(--ink);">AWS runs it</td>
-          <td style="padding:8px 5px; color:var(--ink);">you run it</td>
-        </tr>
-      </table>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : decision signals (step build) */
+  /* 1 : the core knobs (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Decision signals</div>
+    <div class="eyebrow reveal">The core knobs</div>
+    <h2 class="reveal" style="font-size:24px">Three settings drive every run</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what each one does.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Epochs</b>How many full passes over the training data. Too few underfits; too many overfits and wastes compute. It is the main dial on how long the model learns.</p></div>
+      <div class="pill" data-step="2"><p><b>Batch size</b>How many records per gradient update. Larger batches train faster per epoch and stabilize gradients but need more memory and can generalize slightly worse; smaller batches are noisier but can find better minima.</p></div>
+      <div class="pill" data-step="3"><p><b>Learning rate</b>How big each weight update is. Too high diverges or oscillates; too low crawls and can stall. It is the single most sensitive hyperparameter.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : early stopping */
+  { html: `
+    <div class="eyebrow reveal">Knowing when to stop</div>
+    <h2 class="reveal">Early stopping does two jobs</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Early stopping watches a validation metric and <strong>halts training when it stops improving</strong> for a set patience, keeping the best checkpoint.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Prevents overfitting</b>It stops before the model starts memorizing the training set, so validation performance does not degrade (more in Chapter 30).</p></div>
+      <div class="pill"><p><b>Saves time and money</b>No epochs are spent after the model has converged.</p></div>
+      <div class="pill"><p><b>In practice</b>Set a patience (epochs without improvement) and monitor the validation metric; SageMaker Automatic Model Tuning can also stop unpromising training jobs early (Chapter 29).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : distributed training */
+  { html: `
+    <div class="eyebrow reveal">Scaling out · distributed training</div>
+    <h2 class="reveal">Two ways to split the work</h2>
+    <p class="lead reveal" style="margin-bottom:16px">When one GPU is not enough, SageMaker spreads training across many. The right split depends on <strong>whether the data or the model is the bottleneck</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Data parallelism</b>Each GPU holds a full copy of the model and trains on a different slice of the batch, then gradients are synchronized. Use it when the model fits on one GPU but the dataset is large. The SageMaker distributed data parallelism library (SMDDP) optimizes this.</p></div>
+      <div class="pill"><p><b>Model parallelism</b>The model itself is partitioned across GPUs because it is too big to fit on one. Use it for very large models (large transformers). The SageMaker model parallelism library (SMP) handles the partitioning and pipelining.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : cost and time levers */
+  { html: `
+    <div class="eyebrow reveal">More time and cost levers</div>
+    <h2 class="reveal">Cheaper and faster runs</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Beyond splitting the work, several features cut training time or bill.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Managed Spot Training</b>Uses spare EC2 capacity for up to about 90% savings. Spot can be interrupted, so pair it with checkpointing to resume.</p></div>
+      <div class="pill"><p><b>Checkpointing</b>Periodically saves training state to Amazon S3 so a spot interruption or failure resumes instead of restarting.</p></div>
+      <div class="pill"><p><b>Warm pools and right-sizing</b>Keep provisioned instances warm to skip startup between jobs, and match instance type and count to the job (GPU for deep learning, more instances for data-parallel scale).</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : symptom to lever (step build) */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Symptom to lever</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Ship a cited Q&amp;A bot over our S3 docs fast", "no team to run vector infra"</b>Bedrock Knowledge Bases.</p></div>
-      <div class="pill" data-step="2"><p><b>"Need custom multi-step retrieval and our own vector store", "unusual sources"</b>A customer-managed custom stack.</p></div>
-      <div class="pill" data-step="3"><p><b>"Answers miss exact product codes" or "returns loosely related passages"</b>Not a pattern switch: add hybrid search, and add a reranker.</p></div>
+      <div class="pill" data-step="1"><p><b>"Validation loss rises while training loss keeps falling"</b>Fewer epochs, or turn on early stopping.</p></div>
+      <div class="pill" data-step="2"><p><b>"Training is too slow and the dataset is huge, but the model fits one GPU"</b>Data-parallel distributed training (SMDDP).</p></div>
+      <div class="pill" data-step="3"><p><b>"The model is too large to fit on a single GPU"</b>Model-parallel distributed training (SMP).</p></div>
+      <div class="pill" data-step="4"><p><b>"Cut training cost and the job can tolerate interruption"</b>Managed Spot Training with checkpointing.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : quiz 1 */
+  /* 6 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A team must launch an internal assistant that answers policy questions from documents in S3 and cites its sources. They want it in production quickly and have no one to operate a vector database. Which approach fits best?</h2>
+    <h2 class="reveal" style="font-size:22px">A deep learning job trains on a 4 TB image dataset. The model fits comfortably on a single GPU, but a full run takes days and the team needs it faster. What is the most appropriate change?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Fine-tune a foundation model on the policy documents</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Amazon Bedrock Knowledge Bases with RetrieveAndGenerate over the S3 documents</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>A custom RAG stack on self-managed OpenSearch with bespoke orchestration</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Continued pre-training on the policy corpus</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Model-parallel training to split the network across GPUs</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Data-parallel distributed training across multiple GPUs and instances</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Reduce the number of epochs to one</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a smaller CPU instance</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Cited answers over changing documents, needed fast, with nobody to run infrastructure, is the managed Knowledge Bases case: it handles ingestion, chunking, the vector store, and citations out of the box. Fine-tuning (A) is the tempting distractor, but it bakes knowledge into weights without citations, and every policy edit would require retraining rather than a re-sync.</div>` },
+    <div class="feedback"><b>Correct.</b> The model fits on one GPU but the dataset is huge, which is the data-parallel case: replicate the model and split the data across many GPUs to shorten wall-clock time. Model parallelism (A) is the tempting distractor, but it is for models too large to fit on a single GPU, which is not the bottleneck here.</div>` },
 
-  /* 8 : quiz 2 */
+  /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">An existing RAG assistant returns passages that are topically related but frequently miss the exact part numbers and error codes users type, so answers are often wrong. Retrieval currently uses pure semantic search. What is the best fix?</h2>
+    <h2 class="reveal" style="font-size:22px">A team wants to cut the cost of long, non-urgent training jobs by up to about 90%, and the jobs can tolerate being interrupted and resumed. What combination should they use?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Switch from a managed Knowledge Base to a custom stack</button>
-      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune the generation model on more examples</button>
-      <button class="choice" data-correct="true"><span class="key">C</span>Use hybrid search and add a reranker so exact terms are matched and the best passages rise to the top</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the generation model's temperature</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>On-demand instances with a larger batch size</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Model parallelism across two instances</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Managed Spot Training with checkpointing to Amazon S3</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Warm pools with on-demand pricing</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Missing exact codes is a retrieval-quality problem: pure semantic search overlooks literal tokens, so hybrid search adds keyword matching and a reranker reorders candidates by true relevance. Switching patterns (A) is the tempting distractor, but the architecture is not the issue, the retrieval levers are, and both patterns expose the same levers.</div>` },
+    <div class="feedback"><b>Correct.</b> Managed Spot Training delivers the large savings on interruptible jobs, and checkpointing to S3 lets an interrupted job resume rather than restart, so no progress is lost. Warm pools (D) is the tempting distractor, but it only removes instance startup latency between jobs and keeps on-demand pricing, so it does not deliver the cost cut spot does.</div>` },
 
-  /* 9 : done */
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Pattern and levers chosen</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Pick how much to manage; then tune retrieval, where most RAG quality is won.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Run under control</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Tune the knobs, stop at the right time, and spread the work to fit time and budget.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Managed KB</b>Fast, cited, AWS runs the pipeline.</p></div>
-      <div class="pill"><p><b>Custom stack</b>Full control for bespoke retrieval and storage.</p></div>
-      <div class="pill"><p><b>Retrieval levers</b>Embedding model, chunk size, hybrid search, reranking, topK, metadata filters.</p></div>
+      <div class="pill"><p><b>Knobs</b>Epochs, batch size, learning rate shape how and how long the model learns.</p></div>
+      <div class="pill"><p><b>Early stopping</b>Halts at convergence: less overfitting, less wasted compute.</p></div>
+      <div class="pill"><p><b>Distribute</b>Data parallel for big data, model parallel for big models.</p></div>
+      <div class="pill"><p><b>Spot and checkpoint</b>Deep savings on interruptible jobs that resume cleanly.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
