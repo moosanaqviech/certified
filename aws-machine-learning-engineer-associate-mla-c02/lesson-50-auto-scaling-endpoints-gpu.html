@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Deploying Agents: Tasks, Tool Integration, and Communication Protocols · MLA-C02</title>
+<title>Auto Scaling: Endpoint Metrics and GPU Workloads · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-45-deploying-agents.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-50-auto-scaling-endpoints-gpu.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,10 +53,10 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #170d06;            /* page background */
-    --bg-tint: #351a0a;       /* ambient glow tint behind the card */
-    --accent: #ea580c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(234,88,12,0.12);  /* correct-answer fill */
+    --bg: #160f05;            /* page background */
+    --bg-tint: #33240a;       /* ambient glow tint behind the card */
+    --accent: #d97706;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(217,119,6,0.12);  /* correct-answer fill */
     --accent-ink: #fff7ed;    /* text on top of the accent key chip */
   }
 
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-46-on-demand-vs-provisioned.html",
+  next:      "lesson-51-bedrock-knowledge-bases.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,32 +225,31 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m45think { animation: m45think 4.5s ease-in-out infinite; }
-      .m45tool { opacity: 0; animation: m45tool 4.5s ease-in-out infinite; }
-      .m45t2 { animation-delay: 0.4s; } .m45t3 { animation-delay: 0.8s; }
-      .m45loop { stroke-dasharray: 4 4; animation: m45loop 3s linear infinite; }
-      @keyframes m45think { 0%, 100% { opacity: 0.6; } 40%, 60% { opacity: 1; } }
-      @keyframes m45tool { 0%, 20% { opacity: 0; transform: scale(0.85); } 38%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
-      @keyframes m45loop { to { stroke-dashoffset: -16; } }
-      @media (prefers-reduced-motion: reduce) { .m45think { animation: none; opacity: 1; } .m45tool { animation: none; opacity: 1; transform: scale(1); } .m45loop { animation: none; } }
+      .m50demand { stroke-dasharray: 300; stroke-dashoffset: 300; animation: m50demand 6s ease-in-out infinite; }
+      .m50inst { opacity: 0; animation: m50inst 6s ease-in-out infinite; }
+      .m50i2 { animation-delay: 1.4s; } .m50i3 { animation-delay: 2.2s; }
+      @keyframes m50demand { 0%, 8% { stroke-dashoffset: 300; } 70%, 100% { stroke-dashoffset: 0; } }
+      @keyframes m50inst { 0%, 12% { opacity: 0; transform: translateY(6px); } 30%, 100% { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { .m50demand { animation: none; stroke-dashoffset: 0; } .m50inst { animation: none; opacity: 1; transform: none; } }
     </style>
     <defs>
-      <radialGradient id="m45glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m50glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(234,88,12,0)"/>
+        <stop offset="1" style="stop-color:rgba(217,119,6,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m45glow)"/>
-    <g class="m45think"><circle cx="160" cy="70" r="26" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.8"/><text x="160" y="67" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">agent</text><text x="160" y="79" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">reason + act</text></g>
-    <path class="m45loop" d="M186 62 A 34 34 0 1 1 134 62" fill="none" stroke="var(--accent)" stroke-width="1.3" opacity="0.5"/>
-    <g font-family="Hanken Grotesk" font-size="7" font-weight="700" text-anchor="middle">
-      <g class="m45tool"><rect x="28" y="120" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="61" y="132" fill="var(--ink)">tool / API</text><text x="61" y="142" fill="var(--ink-faint)" font-weight="400" font-size="6.5">Lambda action</text></g>
-      <g class="m45tool m45t2"><rect x="127" y="124" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="160" y="136" fill="var(--ink)">knowledge</text><text x="160" y="146" fill="var(--ink-faint)" font-weight="400" font-size="6.5">RAG</text></g>
-      <g class="m45tool m45t3"><rect x="226" y="120" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="259" y="132" fill="var(--ink)">memory</text><text x="259" y="142" fill="var(--ink-faint)" font-weight="400" font-size="6.5">session state</text></g>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m50glow)"/>
+    <line x1="40" y1="128" x2="288" y2="128" stroke="var(--line)" stroke-width="1.4"/>
+    <line x1="40" y1="40" x2="40" y2="128" stroke="var(--line)" stroke-width="1.4"/>
+    <text x="30" y="52" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7" transform="rotate(-90 30 88)">demand</text>
+    <path class="m50demand" d="M44 116 C 90 112, 110 60, 160 54 C 210 48, 250 96, 284 100" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+    <g text-anchor="middle" font-family="Hanken Grotesk" font-size="7" font-weight="700" fill="var(--ink-soft)">
+      <g class="m50inst"><rect x="70" y="108" width="16" height="16" rx="3" fill="var(--surface-2)" stroke="var(--accent)"/></g>
+      <g class="m50inst m50i2"><rect x="150" y="108" width="16" height="16" rx="3" fill="var(--surface-2)" stroke="var(--accent)"/><rect x="150" y="90" width="16" height="16" rx="3" fill="var(--surface-2)" stroke="var(--accent)"/></g>
+      <g class="m50inst m50i3"><rect x="228" y="108" width="16" height="16" rx="3" fill="var(--surface-2)" stroke="var(--accent)"/></g>
     </g>
-    <g stroke="var(--accent)" stroke-width="1.2" fill="none" opacity="0.45"><path d="M150 92 L61 120"/><path d="M160 96 L160 124"/><path d="M170 92 L259 120"/></g>
-    <text x="160" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">reason, call tools, remember, repeat</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">DEPLOYING AGENTS</text>
+    <text x="160" y="152" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">add instances as load rises, remove as it falls</text>
+    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AUTO SCALING</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -266,70 +265,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.1 · Chapter 45</div>
-    <h1 class="reveal">Deploying agents</h1>
-    <p class="lead reveal">An agent is a foundation model that <strong>reasons about a task, calls tools to act, and remembers context</strong> across steps. Deploying one means wiring up its tasks, its tool and service integrations, and the protocols it speaks.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.2 · Chapter 50</div>
+    <h1 class="reveal">Auto scaling</h1>
+    <p class="lead reveal">A fixed instance count either wastes money at night or falls over at peak. SageMaker endpoint auto scaling <strong>adds and removes instances to track demand</strong>, and GPU workloads add their own wrinkles.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what an agent needs (step build) */
+  /* 1 : how it works (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">What a deployed agent needs</div>
-    <h2 class="reveal" style="font-size:24px">Reason, act, remember</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the three pieces beyond the model.</p>
+    <div class="eyebrow reveal">How endpoint auto scaling works</div>
+    <h2 class="reveal" style="font-size:24px">Register, track, bound</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the mechanism.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>A task and instructions</b>The FM plus instructions describing what the agent does. It generates a rationale for each step and decides what to do next.</p></div>
-      <div class="pill" data-step="2"><p><b>Tools to act</b>The agent cannot change the world by talking; it calls tools (functions, APIs) to look things up and take actions, then reads the result.</p></div>
-      <div class="pill" data-step="3"><p><b>Memory</b>Session state and conversation history so the agent keeps context across turns and multi-step tasks.</p></div>
+      <div class="pill" data-step="1"><p><b>Register a scalable target</b>Application Auto Scaling registers the endpoint's production variant as something it can scale.</p></div>
+      <div class="pill" data-step="2"><p><b>Track a metric to a target</b>A target-tracking policy watches a metric (for example invocations per instance) and adds or removes instances to hold it near a target value.</p></div>
+      <div class="pill" data-step="3"><p><b>Bound and cooldown</b>Minimum and maximum instance counts cap the range, and scale-in and scale-out cooldowns stop it from thrashing.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : Bedrock Agents tool integration */
+  /* 2 : metrics */
   { html: `
-    <div class="eyebrow reveal">Tool integration · action groups</div>
-    <h2 class="reveal">How an agent calls tools</h2>
-    <p class="lead reveal" style="margin-bottom:16px">On Amazon Bedrock, an agent's tools are defined as <strong>action groups</strong>: a schema tells the agent what it can call, and a handler does the work.</p>
+    <div class="eyebrow reveal">What to scale on</div>
+    <h2 class="reveal">The metrics that drive scaling</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Scaling is only as good as the signal you track.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>The schema</b>An OpenAPI schema or a function schema declares the operations and the parameters the agent must gather from the user.</p></div>
-      <div class="pill"><p><b>The handler</b>A Lambda function runs the action and returns the result, or the agent uses return of control to hand parameters back to your application to execute.</p></div>
-      <div class="pill"><p><b>The loop</b>The agent picks an action, invokes it, reads the observation, and reiterates until it can answer, tracked in a trace you can inspect.</p></div>
+      <div class="pill"><p><b>SageMakerVariantInvocationsPerInstance</b>The standard target-tracking metric: requests per instance per minute, a direct proxy for load per instance.</p></div>
+      <div class="pill"><p><b>Latency and utilization</b>ModelLatency and CPU or memory utilization can flag pressure that invocation counts miss.</p></div>
+      <div class="pill"><p><b>Custom metrics</b>Publish a custom CloudWatch metric (like queue depth or GPU utilization) and scale on it when the built-ins do not capture your bottleneck.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : knowledge, memory, runtime */
+  /* 3 : policy types */
   { html: `
-    <div class="eyebrow reveal">Knowledge, memory, and runtime</div>
-    <h2 class="reveal">Grounding and running at scale</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Beyond tools, agents ground answers in your data and need a place to run.</p>
+    <div class="eyebrow reveal">Policy types</div>
+    <h2 class="reveal">Three ways to decide capacity</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Match the policy to how predictable the load is.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Knowledge bases</b>Associate a Bedrock Knowledge Base so the agent can retrieve context (RAG, Chapter 25) to augment its responses.</p></div>
-      <div class="pill"><p><b>Session and memory</b>The runtime preserves conversation history across invocations, and can persist longer-term memory for a user.</p></div>
-      <div class="pill"><p><b>A managed runtime</b>Amazon Bedrock AgentCore provides a secure, serverless runtime for deploying and scaling agents, with managed memory, tool gateways, and identity.</p></div>
+      <div class="pill"><p><b>Target tracking</b>Hold a metric near a target; the simplest and most common, good for steady relationships between load and a metric.</p></div>
+      <div class="pill"><p><b>Step scaling</b>Add or remove a set amount when a metric crosses thresholds, for finer control over reaction size.</p></div>
+      <div class="pill"><p><b>Scheduled scaling</b>Change min and max on a schedule for known patterns, such as scaling up before a daily traffic peak.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : agent protocols */
+  /* 4 : GPU workloads */
   { html: `
-    <div class="eyebrow reveal">Agent protocols</div>
-    <h2 class="reveal">Standard ways to connect</h2>
-    <p class="lead reveal" style="margin-bottom:16px">As agents integrate more tools and other agents, open <strong>protocols standardize the plumbing</strong> so you do not hand-build every connection.</p>
+    <div class="eyebrow reveal">The AI wrinkle · GPU workloads</div>
+    <h2 class="reveal">Scaling GPUs is different</h2>
+    <p class="lead reveal" style="margin-bottom:16px">GPU-backed inference behaves unlike CPU endpoints, and the scaling setup has to account for it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model Context Protocol (MCP)</b>An open standard for connecting an agent to tools and data sources through a common interface, so any MCP-compatible tool server plugs in without custom glue.</p></div>
-      <div class="pill"><p><b>Agent-to-agent (A2A)</b>A protocol for agents to communicate and delegate to one another, enabling multi-agent systems where specialized agents collaborate.</p></div>
-      <div class="pill"><p><b>Why it matters</b>Protocols make tool and agent integrations portable and reusable instead of one-off, which is what lets agent systems scale.</p></div>
+      <div class="pill"><p><b>Scale on GPU utilization</b>Invocation count can be a poor proxy for a GPU model; publish and scale on GPU utilization as a custom metric.</p></div>
+      <div class="pill"><p><b>Provisioning is slow and costly</b>GPU instances take longer to start and cost far more, so scale-out lag is real and over-scaling is expensive.</p></div>
+      <div class="pill"><p><b>Keep a warm floor</b>Set a minimum capacity above zero so latency-sensitive traffic never waits for a cold GPU to spin up.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : configure the agent (step build) */
+  /* 5 : tuning tells (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Configuring for a task</div>
-    <h2 class="reveal" style="font-size:24px">Read the requirement for these tells</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each requirement selects.</p>
+    <div class="eyebrow reveal">Tuning tells</div>
+    <h2 class="reveal" style="font-size:24px">Read the symptom for the fix</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each symptom points to.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"The agent must look up orders and issue refunds"</b>An action group with a Lambda handler for those operations.</p></div>
-      <div class="pill" data-step="2"><p><b>"Answers must cite our policy documents"</b>Associate a knowledge base for retrieval.</p></div>
-      <div class="pill" data-step="3"><p><b>"Reuse existing tool servers and let specialized agents collaborate"</b>Standard protocols: MCP for tools, A2A between agents.</p></div>
+      <div class="pill" data-step="1"><p><b>"Latency spikes at the start of every traffic surge"</b>Scale-out is too slow: raise minimum capacity or tighten the target, especially on GPUs.</p></div>
+      <div class="pill" data-step="2"><p><b>"Instances flap up and down constantly"</b>Cooldowns too short: lengthen scale-in and scale-out cooldowns.</p></div>
+      <div class="pill" data-step="3"><p><b>"GPU is saturated but invocation count looks fine"</b>Wrong metric: scale on GPU utilization instead of invocations per instance.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -337,39 +336,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A support agent on Amazon Bedrock must be able to look up an order status and start a return by calling internal APIs. What is the right way to give it that ability?</h2>
+    <h2 class="reveal" style="font-size:22px">A CPU-backed real-time endpoint sees traffic that rises and falls through the day. The team wants it to add instances under load and remove them when quiet, holding a steady request load per instance. What is the simplest approach?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Put the full API responses in the agent's instructions</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Define an action group with a schema for the operations and a Lambda function to execute them</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Fine-tune the model on past API responses</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the model's context window</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>A fixed instance count set to the daily peak</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A target-tracking auto scaling policy on SageMakerVariantInvocationsPerInstance</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Manually resizing the endpoint each morning and evening</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Switching to batch transform</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Giving an agent the ability to take actions means defining an action group: a schema declares the operations and their parameters, and a Lambda function actually calls the internal APIs. Putting API responses in the instructions (A) is static text; it cannot look up a live order or trigger a return.</div>` },
+    <div class="feedback"><b>Correct.</b> Holding a steady per-instance request load while capacity follows demand is exactly target tracking on invocations per instance, the standard SageMaker scaling metric. A fixed count at peak (A) wastes money off-peak and still cannot absorb a surge above that peak.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">An organization wants its agent to connect to many internal and third-party tools through a common, reusable interface rather than building a custom integration for each one. Which approach addresses this?</h2>
+    <h2 class="reveal" style="font-size:22px">A GPU-backed model shows the GPU fully saturated and latency climbing, yet invocations per instance stay moderate, so the invocation-based scaling policy is not adding capacity. What should the team do?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Hard-code a bespoke Lambda for every single tool with no shared standard</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Adopt the Model Context Protocol (MCP) so any compatible tool server plugs in through one interface</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Store all tool documentation in a knowledge base</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Raise the agent's temperature to improve tool selection</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Lower the invocations-per-instance target further</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Publish GPU utilization as a custom metric and scale on it</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Disable auto scaling and hope traffic drops</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Move the endpoint to a smaller GPU instance</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A common, reusable interface for connecting agents to many tools is exactly what the Model Context Protocol standardizes: MCP-compatible tool servers plug in without one-off glue. Hard-coding a bespoke integration per tool (A) is the very problem a protocol removes, and it does not scale.</div>` },
+    <div class="feedback"><b>Correct.</b> When the GPU is the bottleneck but invocation counts look fine, the scaling signal is wrong: publish GPU utilization as a custom CloudWatch metric and scale on it. Lowering the invocations target (A) is guesswork on the wrong metric and will not track the real GPU pressure.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Agent deployed</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Wire the task, the tools, the knowledge and memory, and the protocols it speaks.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Capacity follows demand</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Track the right metric, bound the range, and treat GPUs with care.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Tools</b>Action groups with schemas and Lambda handlers, or return of control.</p></div>
-      <div class="pill"><p><b>Grounding and memory</b>Knowledge bases for RAG; session state; AgentCore runtime to scale.</p></div>
-      <div class="pill"><p><b>Protocols</b>MCP for tools, A2A between agents, for portable integrations.</p></div>
+      <div class="pill"><p><b>Mechanism</b>Register a target, track a metric, set min and max and cooldowns.</p></div>
+      <div class="pill"><p><b>Metrics</b>Invocations per instance, latency, or a custom metric.</p></div>
+      <div class="pill"><p><b>GPUs</b>Scale on GPU utilization, expect slow scale-out, keep a warm floor.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];

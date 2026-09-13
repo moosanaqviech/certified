@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Deploying Agents: Tasks, Tool Integration, and Communication Protocols · MLA-C02</title>
+<title>Containers for ML and AI Workloads: ECR, ECS, and EKS · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-45-deploying-agents.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-48-containers-for-ml-ai.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #170d06;            /* page background */
-    --bg-tint: #351a0a;       /* ambient glow tint behind the card */
-    --accent: #ea580c;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(234,88,12,0.12);  /* correct-answer fill */
-    --accent-ink: #fff7ed;    /* text on top of the accent key chip */
+    --bg: #17130a;            /* page background */
+    --bg-tint: #37290b;       /* ambient glow tint behind the card */
+    --accent: #fcd34d;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(252,211,77,0.12);  /* correct-answer fill */
+    --accent-ink: #17130a;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-46-on-demand-vs-provisioned.html",
+  next:      "lesson-49-programmatic-deployment-vpc.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,32 +225,37 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m45think { animation: m45think 4.5s ease-in-out infinite; }
-      .m45tool { opacity: 0; animation: m45tool 4.5s ease-in-out infinite; }
-      .m45t2 { animation-delay: 0.4s; } .m45t3 { animation-delay: 0.8s; }
-      .m45loop { stroke-dasharray: 4 4; animation: m45loop 3s linear infinite; }
-      @keyframes m45think { 0%, 100% { opacity: 0.6; } 40%, 60% { opacity: 1; } }
-      @keyframes m45tool { 0%, 20% { opacity: 0; transform: scale(0.85); } 38%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
-      @keyframes m45loop { to { stroke-dashoffset: -16; } }
-      @media (prefers-reduced-motion: reduce) { .m45think { animation: none; opacity: 1; } .m45tool { animation: none; opacity: 1; transform: scale(1); } .m45loop { animation: none; } }
+      .m48layer { opacity: 0; animation: m48layer 6s ease-in-out infinite; }
+      .m48l2 { animation-delay: 0.3s; } .m48l3 { animation-delay: 0.6s; } .m48l4 { animation-delay: 0.9s; }
+      .m48ship { opacity: 0; animation: m48ship 6s ease-in-out infinite; }
+      @keyframes m48layer { 0%, 6% { opacity: 0; transform: translateY(8px); } 20%, 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+      @keyframes m48ship { 0%, 55% { opacity: 0; } 70%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .m48layer, .m48ship { animation: none; opacity: 1; transform: none; } }
     </style>
     <defs>
-      <radialGradient id="m45glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m48glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(234,88,12,0)"/>
+        <stop offset="1" style="stop-color:rgba(252,211,77,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m45glow)"/>
-    <g class="m45think"><circle cx="160" cy="70" r="26" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.8"/><text x="160" y="67" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">agent</text><text x="160" y="79" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">reason + act</text></g>
-    <path class="m45loop" d="M186 62 A 34 34 0 1 1 134 62" fill="none" stroke="var(--accent)" stroke-width="1.3" opacity="0.5"/>
-    <g font-family="Hanken Grotesk" font-size="7" font-weight="700" text-anchor="middle">
-      <g class="m45tool"><rect x="28" y="120" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="61" y="132" fill="var(--ink)">tool / API</text><text x="61" y="142" fill="var(--ink-faint)" font-weight="400" font-size="6.5">Lambda action</text></g>
-      <g class="m45tool m45t2"><rect x="127" y="124" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="160" y="136" fill="var(--ink)">knowledge</text><text x="160" y="146" fill="var(--ink-faint)" font-weight="400" font-size="6.5">RAG</text></g>
-      <g class="m45tool m45t3"><rect x="226" y="120" width="66" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="259" y="132" fill="var(--ink)">memory</text><text x="259" y="142" fill="var(--ink-faint)" font-weight="400" font-size="6.5">session state</text></g>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m48glow)"/>
+    <g text-anchor="middle" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
+      <g class="m48layer m48l4"><rect x="40" y="44" width="120" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/><text x="100" y="58" fill="var(--ink-soft)">model + code</text></g>
+      <g class="m48layer m48l3"><rect x="40" y="66" width="120" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/><text x="100" y="80" fill="var(--ink-soft)">libraries</text></g>
+      <g class="m48layer m48l2"><rect x="40" y="88" width="120" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/><text x="100" y="102" fill="var(--ink-soft)">runtime</text></g>
+      <g class="m48layer"><rect x="40" y="110" width="120" height="20" rx="4" fill="var(--surface-2)" stroke="var(--accent)"/><text x="100" y="124" fill="var(--accent)">base image</text></g>
+      <text x="100" y="146" fill="var(--ink-faint)" font-weight="400" font-size="7">one container image</text>
     </g>
-    <g stroke="var(--accent)" stroke-width="1.2" fill="none" opacity="0.45"><path d="M150 92 L61 120"/><path d="M160 96 L160 124"/><path d="M170 92 L259 120"/></g>
-    <text x="160" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">reason, call tools, remember, repeat</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">DEPLOYING AGENTS</text>
+    <g class="m48ship" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" text-anchor="middle">
+      <path d="M164 88 L196 88" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#m48a)"/>
+      <rect x="200" y="52" width="88" height="24" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="244" y="67" fill="var(--ink)">ECR registry</text>
+      <rect x="200" y="84" width="42" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="221" y="99" fill="var(--ink-soft)">ECS</text>
+      <rect x="246" y="84" width="42" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="267" y="99" fill="var(--ink-soft)">EKS</text>
+      <text x="244" y="124" fill="var(--ink-faint)" font-weight="400" font-size="7">store, then run anywhere</text>
+    </g>
+    <defs><marker id="m48a" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="var(--accent)"/></marker></defs>
+    <text x="160" y="168" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">package once, run the same everywhere</text>
+    <text x="160" y="187" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">CONTAINERS FOR ML</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -266,70 +271,70 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.1 · Chapter 45</div>
-    <h1 class="reveal">Deploying agents</h1>
-    <p class="lead reveal">An agent is a foundation model that <strong>reasons about a task, calls tools to act, and remembers context</strong> across steps. Deploying one means wiring up its tasks, its tool and service integrations, and the protocols it speaks.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.2 · Chapter 48</div>
+    <h1 class="reveal">Containers for ML</h1>
+    <p class="lead reveal">ML depends on exact library versions, so containers are how you ship it reliably. <strong>Amazon ECR stores the images</strong>, and <strong>ECS or EKS runs them</strong>, whether for training jobs or custom inference.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : what an agent needs (step build) */
+  /* 1 : why containers (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">What a deployed agent needs</div>
-    <h2 class="reveal" style="font-size:24px">Reason, act, remember</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the three pieces beyond the model.</p>
+    <div class="eyebrow reveal">Why containers</div>
+    <h2 class="reveal" style="font-size:24px">Package the whole environment</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what a container gives an ML workload.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>A task and instructions</b>The FM plus instructions describing what the agent does. It generates a rationale for each step and decides what to do next.</p></div>
-      <div class="pill" data-step="2"><p><b>Tools to act</b>The agent cannot change the world by talking; it calls tools (functions, APIs) to look things up and take actions, then reads the result.</p></div>
-      <div class="pill" data-step="3"><p><b>Memory</b>Session state and conversation history so the agent keeps context across turns and multi-step tasks.</p></div>
+      <div class="pill" data-step="1"><p><b>Package</b>The model, code, libraries, and runtime bundle into one image, so the exact CUDA, framework, and dependency versions travel together.</p></div>
+      <div class="pill" data-step="2"><p><b>Isolate</b>Each workload's dependencies stay separate, so one job's library pins never break another.</p></div>
+      <div class="pill" data-step="3"><p><b>Reproduce</b>The same image runs identically on a laptop, a SageMaker job, ECS, or EKS, ending "works on my machine."</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : Bedrock Agents tool integration */
+  /* 2 : ECR */
   { html: `
-    <div class="eyebrow reveal">Tool integration · action groups</div>
-    <h2 class="reveal">How an agent calls tools</h2>
-    <p class="lead reveal" style="margin-bottom:16px">On Amazon Bedrock, an agent's tools are defined as <strong>action groups</strong>: a schema tells the agent what it can call, and a handler does the work.</p>
+    <div class="eyebrow reveal">Store · Amazon ECR</div>
+    <h2 class="reveal">The registry for your images</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Amazon Elastic Container Registry is a <strong>private, managed image registry</strong> that the rest of AWS pulls from.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>The schema</b>An OpenAPI schema or a function schema declares the operations and the parameters the agent must gather from the user.</p></div>
-      <div class="pill"><p><b>The handler</b>A Lambda function runs the action and returns the result, or the agent uses return of control to hand parameters back to your application to execute.</p></div>
-      <div class="pill"><p><b>The loop</b>The agent picks an action, invokes it, reads the observation, and reiterates until it can answer, tracked in a trace you can inspect.</p></div>
+      <div class="pill"><p><b>Store and pull</b>Push tagged images; SageMaker AI, ECS, EKS, and Lambda pull from ECR with IAM-controlled access.</p></div>
+      <div class="pill"><p><b>Security</b>Image scanning flags known vulnerabilities in your layers; immutable tags stop a tag from being silently overwritten.</p></div>
+      <div class="pill"><p><b>Housekeeping</b>Lifecycle policies expire old images so the registry does not grow without bound.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : knowledge, memory, runtime */
+  /* 3 : building an ML container */
   { html: `
-    <div class="eyebrow reveal">Knowledge, memory, and runtime</div>
-    <h2 class="reveal">Grounding and running at scale</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Beyond tools, agents ground answers in your data and need a place to run.</p>
+    <div class="eyebrow reveal">Build · an ML container</div>
+    <h2 class="reveal">From Dockerfile to a working image</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You build ML images from a <strong>Dockerfile</strong>, usually starting from an AWS-maintained base rather than from scratch.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Knowledge bases</b>Associate a Bedrock Knowledge Base so the agent can retrieve context (RAG, Chapter 25) to augment its responses.</p></div>
-      <div class="pill"><p><b>Session and memory</b>The runtime preserves conversation history across invocations, and can persist longer-term memory for a user.</p></div>
-      <div class="pill"><p><b>A managed runtime</b>Amazon Bedrock AgentCore provides a secure, serverless runtime for deploying and scaling agents, with managed memory, tool gateways, and identity.</p></div>
+      <div class="pill"><p><b>Base images</b>AWS Deep Learning Containers give you patched, optimized TensorFlow and PyTorch bases; extend them with your dependencies.</p></div>
+      <div class="pill"><p><b>The SageMaker contract</b>For a custom SageMaker container, follow the container contract (the /opt/ml paths and the train and serve entry points) so SageMaker can run it (Chapter 27's bring your own container).</p></div>
+      <div class="pill"><p><b>Then</b>Build, tag, and push the image to ECR, ready for a training job or an endpoint.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : agent protocols */
+  /* 4 : run and maintain */
   { html: `
-    <div class="eyebrow reveal">Agent protocols</div>
-    <h2 class="reveal">Standard ways to connect</h2>
-    <p class="lead reveal" style="margin-bottom:16px">As agents integrate more tools and other agents, open <strong>protocols standardize the plumbing</strong> so you do not hand-build every connection.</p>
+    <div class="eyebrow reveal">Run and maintain</div>
+    <h2 class="reveal">Where it runs, and keeping it healthy</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The same image runs on several targets, and it needs upkeep like any dependency.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Model Context Protocol (MCP)</b>An open standard for connecting an agent to tools and data sources through a common interface, so any MCP-compatible tool server plugs in without custom glue.</p></div>
-      <div class="pill"><p><b>Agent-to-agent (A2A)</b>A protocol for agents to communicate and delegate to one another, enabling multi-agent systems where specialized agents collaborate.</p></div>
-      <div class="pill"><p><b>Why it matters</b>Protocols make tool and agent integrations portable and reusable instead of one-off, which is what lets agent systems scale.</p></div>
+      <div class="pill"><p><b>ECS</b>AWS-native orchestration (on Fargate or EC2) for teams that want managed containers without Kubernetes.</p></div>
+      <div class="pill"><p><b>EKS</b>Managed Kubernetes for teams standardized on it or needing its ecosystem and portability (Chapter 41).</p></div>
+      <div class="pill"><p><b>Maintain</b>Rebuild and re-scan images when dependencies or base images get security patches, and use clear version tags so deployments are traceable.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 5 : configure the agent (step build) */
+  /* 5 : lifecycle (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Configuring for a task</div>
-    <h2 class="reveal" style="font-size:24px">Read the requirement for these tells</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each requirement selects.</p>
+    <div class="eyebrow reveal">The image lifecycle</div>
+    <h2 class="reveal" style="font-size:24px">Read the need for these tells</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each need selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"The agent must look up orders and issue refunds"</b>An action group with a Lambda handler for those operations.</p></div>
-      <div class="pill" data-step="2"><p><b>"Answers must cite our policy documents"</b>Associate a knowledge base for retrieval.</p></div>
-      <div class="pill" data-step="3"><p><b>"Reuse existing tool servers and let specialized agents collaborate"</b>Standard protocols: MCP for tools, A2A between agents.</p></div>
+      <div class="pill" data-step="1"><p><b>"Store our custom training and inference images privately"</b>Amazon ECR.</p></div>
+      <div class="pill" data-step="2"><p><b>"Detect vulnerabilities in image layers before deploy"</b>ECR image scanning.</p></div>
+      <div class="pill" data-step="3"><p><b>"Custom container SageMaker can run for training"</b>A Dockerfile that follows the SageMaker container contract, pushed to ECR.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -337,39 +342,39 @@ const cards = [
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A support agent on Amazon Bedrock must be able to look up an order status and start a return by calling internal APIs. What is the right way to give it that ability?</h2>
+    <h2 class="reveal" style="font-size:22px">A team builds custom training and inference images and needs a private, managed place to store them that SageMaker AI and ECS can pull from, with vulnerability scanning on each image. Which service is this?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Put the full API responses in the agent's instructions</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Define an action group with a schema for the operations and a Lambda function to execute them</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Fine-tune the model on past API responses</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase the model's context window</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Amazon S3</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Amazon ECR</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>AWS CodeArtifact</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Amazon EFS</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Giving an agent the ability to take actions means defining an action group: a schema declares the operations and their parameters, and a Lambda function actually calls the internal APIs. Putting API responses in the instructions (A) is static text; it cannot look up a live order or trigger a return.</div>` },
+    <div class="feedback"><b>Correct.</b> A private, managed container registry with image scanning that AWS services pull from is Amazon ECR. S3 (A) stores objects, not container images that services pull by tag, and it does not provide image vulnerability scanning or the registry semantics containers need.</div>` },
 
   /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">An organization wants its agent to connect to many internal and third-party tools through a common, reusable interface rather than building a custom integration for each one. Which approach addresses this?</h2>
+    <h2 class="reveal" style="font-size:22px">A team wants their custom training image to run as a SageMaker AI training job. What must the image do so SageMaker can execute it correctly?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Hard-code a bespoke Lambda for every single tool with no shared standard</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Adopt the Model Context Protocol (MCP) so any compatible tool server plugs in through one interface</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Store all tool documentation in a knowledge base</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Raise the agent's temperature to improve tool selection</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Expose a public HTTP port to the internet</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Follow the SageMaker container contract, including the expected /opt/ml paths and entry points</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Be smaller than 250 MB</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Be built only from a Windows base image</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A common, reusable interface for connecting agents to many tools is exactly what the Model Context Protocol standardizes: MCP-compatible tool servers plug in without one-off glue. Hard-coding a bespoke integration per tool (A) is the very problem a protocol removes, and it does not scale.</div>` },
+    <div class="feedback"><b>Correct.</b> A bring-your-own container must follow the SageMaker container contract, reading data and writing model output at the expected /opt/ml paths and exposing the train and serve entry points, so SageMaker can invoke it. A public internet port (A) is neither required nor desirable; SageMaker runs the container within its managed environment.</div>` },
 
   /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Agent deployed</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Wire the task, the tools, the knowledge and memory, and the protocols it speaks.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Containerized</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Package once, store in ECR, run on ECS or EKS, and keep images patched.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Tools</b>Action groups with schemas and Lambda handlers, or return of control.</p></div>
-      <div class="pill"><p><b>Grounding and memory</b>Knowledge bases for RAG; session state; AgentCore runtime to scale.</p></div>
-      <div class="pill"><p><b>Protocols</b>MCP for tools, A2A between agents, for portable integrations.</p></div>
+      <div class="pill"><p><b>ECR</b>Private registry with scanning and lifecycle policies.</p></div>
+      <div class="pill"><p><b>Build</b>Dockerfile from a DL Containers base; SageMaker contract for BYOC.</p></div>
+      <div class="pill"><p><b>Run</b>ECS or EKS; rebuild and re-scan on patches.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
