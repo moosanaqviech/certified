@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage · MLA-C02</title>
+<title>Troubleshooting Security and AI Risks · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-69-ai-cost-patterns.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-74-troubleshooting-security-ai-risks.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #1a0c10;            /* page background */
-    --bg-tint: #3a1822;       /* ambient glow tint behind the card */
-    --accent: #fda4af;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(253,164,175,0.12);  /* correct-answer fill */
-    --accent-ink: #1a0c10;    /* text on top of the accent key chip */
+    --bg: #0d0f14;            /* page background */
+    --bg-tint: #222633;       /* ambient glow tint behind the card */
+    --accent: #8a93a8;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(138,147,168,0.12);  /* correct-answer fill */
+    --accent-ink: #0d0f14;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,7 +217,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-70-securing-cicd-pipelines.html",
+  next:      "lesson-75-bedrock-api-keys-vs-iam.html",
   nextLabel: "Next chapter"
 };
 
@@ -225,37 +225,33 @@ const NAV = {
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m69row { opacity: 0; animation: m69row 6s ease-in-out infinite; }
-      .m69r2 { animation-delay: 0.4s; } .m69r3 { animation-delay: 0.8s; }
-      .m69step { opacity: 0; animation: m69step 6s ease-in-out infinite; }
-      .m69s2 { animation-delay: 0.2s; } .m69s3 { animation-delay: 0.4s; } .m69s4 { animation-delay: 0.6s; }
-      @keyframes m69row { 0%, 6% { opacity: 0; transform: translateX(-6px); } 22%, 92% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; } }
-      @keyframes m69step { 0%, 8% { opacity: 0; } 24%, 92% { opacity: 1; } 100% { opacity: 0; } }
-      @media (prefers-reduced-motion: reduce) { .m69row { animation: none; opacity: 1; transform: none; } .m69step { animation: none; opacity: 1; } }
+      .m74step { opacity: 0; animation: m74step 6.5s ease-in-out infinite; }
+      .m74s2 { animation-delay: 0.5s; } .m74s3 { animation-delay: 1s; } .m74s4 { animation-delay: 1.5s; }
+      .m74risk { opacity: 0; animation: m74risk 6.5s ease-in-out infinite; }
+      @keyframes m74step { 0%, 4% { opacity: 0; } 20%, 90% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes m74risk { 0%, 42% { opacity: 0; } 56%, 88% { opacity: 1; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .m74step, .m74risk { animation: none; opacity: 1; } }
     </style>
     <defs>
-      <radialGradient id="m69glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m74glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(253,164,175,0)"/>
+        <stop offset="1" style="stop-color:rgba(138,147,168,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m69glow)"/>
-    <g font-family="Hanken Grotesk" font-size="7.5" font-weight="700">
-      <g class="m69row"><rect x="24" y="46" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="62" fill="var(--ink-soft)">agent: many calls</text>
-        <g fill="var(--accent)"><circle class="m69step" cx="120" cy="59" r="3"/><circle class="m69step m69s2" cx="132" cy="59" r="3"/><circle class="m69step m69s3" cx="144" cy="59" r="3"/><circle class="m69step m69s4" cx="156" cy="59" r="3"/></g>
-      </g>
-      <g class="m69row m69r2"><rect x="24" y="78" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="32" y="94" fill="var(--ink-soft)">embeddings: compute</text><text x="166" y="94" text-anchor="end" fill="var(--accent)" font-size="7">index + query</text></g>
-      <g class="m69row m69r3"><rect x="24" y="110" width="150" height="26" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/><text x="32" y="126" fill="var(--ink)">vectors: storage</text><text x="166" y="126" text-anchor="end" fill="var(--accent)" font-size="7">count x dims</text></g>
+    <ellipse cx="160" cy="94" rx="152" ry="80" fill="url(#m74glow)"/>
+    <g font-family="Hanken Grotesk" font-size="7" font-weight="700">
+      <g class="m74step"><rect x="28" y="46" width="150" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="35" y="58" fill="var(--ink-soft)">AccessDenied on s3:GetObject</text></g>
+      <g class="m74step m74s2"><rect x="40" y="70" width="150" height="16" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="47" y="81" fill="var(--ink-soft)" font-size="6.5">check the role policy</text></g>
+      <g class="m74step m74s3"><rect x="52" y="92" width="150" height="16" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="59" y="103" fill="var(--ink-soft)" font-size="6.5">check the bucket policy + KMS</text></g>
+      <g class="m74step m74s4"><rect x="64" y="114" width="150" height="16" rx="5" fill="var(--surface-2)" stroke="var(--accent)"/><text x="71" y="125" fill="var(--ink)" font-size="6.5">CloudTrail shows the denied call</text></g>
     </g>
-    <g transform="translate(200,58)">
-      <path d="M0 70 L0 6 M0 70 L64 70" stroke="var(--line)" stroke-width="1.4" fill="none"/>
-      <rect x="10" y="46" width="14" height="24" rx="2" fill="var(--accent)" opacity="0.55" class="m69step"/>
-      <rect x="30" y="30" width="14" height="40" rx="2" fill="var(--accent)" opacity="0.8" class="m69step m69s2"/>
-      <rect x="50" y="14" width="14" height="56" rx="2" fill="var(--accent)" class="m69step m69s3"/>
-      <text x="32" y="84" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">scale drives cost</text>
+    <g class="m74risk" transform="translate(232,52)">
+      <path d="M28 0 L54 46 L2 46 Z" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>
+      <text x="28" y="34" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="18" font-weight="700">!</text>
+      <text x="28" y="60" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6">AI risks</text>
     </g>
-    <text x="160" y="158" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">AI has cost patterns beyond the model call</text>
-    <text x="160" y="186" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">AI COST PATTERNS</text>
+    <text x="160" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Trace access failures, and mitigate model-specific risks</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">TROUBLESHOOTING SECURITY</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -271,110 +267,97 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.2 · Chapter 69</div>
-    <h1 class="reveal">AI cost patterns</h1>
-    <p class="lead reveal">Token cost (Chapter 68) is only part of an AI system's bill. <strong>Agents multiply calls, embeddings cost compute, and vectors cost storage.</strong> Each is an AI-specific pattern worth watching and controlling.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Module 4.3 · Chapter 74</div>
+    <h1 class="reveal">Troubleshooting security and AI risks</h1>
+    <p class="lead reveal">Two jobs sit on top of the controls: <strong>debugging why access broke</strong> (usually an IAM or network mismatch) and <strong>mitigating risks unique to ML and AI systems</strong>, from prompt injection to data leakage.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : three patterns (step build) */
+  /* 1 : the two jobs (step build) */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Two security jobs</div>
+    <h2 class="reveal" style="font-size:24px">Debug access, mitigate AI risk</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through what "operating securely" means day to day.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Debug security failures</b>An AccessDenied, a timeout to S3, a call that will not reach Bedrock: usually a policy, a network path, or a KMS grant is missing. Read the error and trace the layers.</p></div>
+      <div class="pill" data-step="2"><p><b>Mitigate AI-specific risks</b>Beyond infrastructure, generative AI adds its own attack surface: prompt injection, sensitive-data leakage, and harmful output. These need model-layer safeguards.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : debugging access (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Three AI cost patterns</div>
-    <h2 class="reveal" style="font-size:24px">Beyond a single model call</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through the costs a GenAI system adds.</p>
+    <div class="eyebrow reveal">Debugging AccessDenied</div>
+    <h2 class="reveal" style="font-size:24px">Trace the layers in order</h2>
+    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through where an ML access failure usually hides.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>Agent consumption</b>One agent task is many model calls plus tool and retrieval calls, so cost per task is a multiple of a single inference.</p></div>
-      <div class="pill" data-step="2"><p><b>Embedding compute</b>Turning documents and queries into vectors costs compute, once to index the corpus and again on every query.</p></div>
-      <div class="pill" data-step="3"><p><b>Vector storage</b>Storing and searching the vectors costs money that scales with how many vectors you keep and how large each one is.</p></div>
+      <div class="pill" data-step="1"><p><b>1. Identity policy</b>Does the execution role actually allow the action on that resource? A too-narrow least-privilege policy is the most common cause.</p></div>
+      <div class="pill" data-step="2"><p><b>2. Resource policy and KMS</b>Does the S3 bucket policy allow this role, and does the role have kms:Decrypt on the key that encrypts the object? An error decrypting reads as access denied.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Network path</b>If it is a timeout, not a deny, suspect the network: a missing VPC endpoint, a security group blocking the port, or no route to the service.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 2 : agent consumption */
+  /* 3 : tools for the trace */
   { html: `
-    <div class="eyebrow reveal">Agent consumption</div>
-    <h2 class="reveal">Many calls per task</h2>
-    <p class="lead reveal" style="margin-bottom:16px">An agent reasons, retrieves, and calls tools in a loop, so <strong>a single user request can trigger many billed model calls</strong>.</p>
+    <div class="eyebrow reveal">Tools for the trace</div>
+    <h2 class="reveal">Where the evidence lives</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You rarely have to guess: the platform records the failing call and can simulate the policy.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>The multiplier</b>Cost per task equals tokens per call times the number of steps; a chatty or looping agent is expensive even at a low per-call price.</p></div>
-      <div class="pill"><p><b>Watch for loops</b>An agent that fails to converge keeps calling tools and the model, running up cost with no result (Chapter 63).</p></div>
-      <div class="pill"><p><b>Monitor and cap</b>Track tokens and steps per task with CloudWatch generative AI observability, and cap maximum steps to bound runaway cost.</p></div>
+      <div class="pill"><p><b>CloudTrail</b>Shows the exact denied API call, the identity, and often the reason, so you can confirm which action and resource were blocked (Chapter 72).</p></div>
+      <div class="pill"><p><b>IAM policy simulator and Access Analyzer</b>Test whether a role's policies allow an action before deploying, and find over-broad or unused grants.</p></div>
+      <div class="pill"><p><b>VPC and endpoint checks</b>For timeouts, verify the VPC endpoint exists and the security group and route table allow the path (Chapter 73).</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 3 : embedding compute */
+  /* 4 : mitigating AI risks */
   { html: `
-    <div class="eyebrow reveal">Embedding compute</div>
-    <h2 class="reveal">Index once, embed every query</h2>
-    <p class="lead reveal" style="margin-bottom:16px">RAG has two embedding costs, and refreshes add more.</p>
+    <div class="eyebrow reveal">Mitigating AI risks</div>
+    <h2 class="reveal">The generative attack surface</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Generative AI introduces risks a firewall cannot see. Address them at the model and application layer.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Indexing</b>Embedding a large corpus is a one-time (per refresh) compute cost that scales with the number of chunks.</p></div>
-      <div class="pill"><p><b>Per query</b>Every retrieval embeds the query, a small but constant per-request cost at scale.</p></div>
-      <div class="pill"><p><b>Refresh cost</b>Re-embedding on every knowledge base sync adds up; incremental sync (Chapter 59) re-embeds only what changed, avoiding a full re-index each time.</p></div>
+      <div class="pill"><p><b>Prompt injection</b>Untrusted input tries to override instructions or exfiltrate data. Mitigate with input and output filtering, and Bedrock Guardrails (Chapter 76).</p></div>
+      <div class="pill"><p><b>Sensitive-data leakage</b>The model may surface PII from context or training data. Redact PII on the way in and filter it on the way out.</p></div>
+      <div class="pill"><p><b>Harmful or hallucinated output</b>Apply content filters, contextual grounding checks, and human review for high-stakes responses.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 4 : vector storage */
-  { html: `
-    <div class="eyebrow reveal">Vector storage</div>
-    <h2 class="reveal">Cost scales with count and dimensions</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The vector store bills for holding and searching the embeddings.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>What drives it</b>The number of vectors times the dimensions per vector, plus the compute the store uses to index and search (for example OpenSearch Serverless OCUs).</p></div>
-      <div class="pill"><p><b>Reduce dimensions</b>A smaller embedding dimension, or binary vectors (Titan Text Embeddings V2 supports both), cuts storage and search cost with modest accuracy trade-offs.</p></div>
-      <div class="pill"><p><b>Prune</b>Remove stale or duplicate documents so you are not paying to store and search vectors nobody retrieves.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : match (step build) */
-  { steps: 3,
-    html: `
-    <div class="eyebrow reveal">Match the pattern</div>
-    <h2 class="reveal" style="font-size:24px">Read the cost driver for the fix</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each driver calls for.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Agent cost per task keeps climbing"</b>Track tokens and steps per task and cap maximum steps; fix loops.</p></div>
-      <div class="pill" data-step="2"><p><b>"Every knowledge base refresh re-embeds everything"</b>Switch to incremental sync so only changed chunks are re-embedded.</p></div>
-      <div class="pill" data-step="3"><p><b>"Vector store cost grows with the index"</b>Reduce embedding dimensions (or use binary vectors) and prune stale vectors.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : quiz 1 */
+  /* 5 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A multi-step agent's cost per completed task is far higher than a single model call, and occasionally a task's cost balloons with no answer produced. What is the most likely cause and control?</h2>
+    <h2 class="reveal" style="font-size:22px">A SageMaker training job fails with AccessDenied reading objects from an S3 bucket. The execution role's policy clearly allows s3:GetObject on that bucket. What is the most likely next thing to check?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Vector storage growth; reduce embedding dimensions</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Many model and tool calls per task, sometimes looping; monitor tokens and steps per task and cap maximum steps</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Batch inference discount not applied</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>The embedding model is too small</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Whether the model is overfitting</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Whether the objects are KMS-encrypted and the role is missing kms:Decrypt on that key (and the bucket policy allows the role)</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Whether the training instance type is large enough</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Whether the endpoint has auto scaling enabled</button>
     </div>
-    <div class="feedback"><b>Correct.</b> An agent multiplies cost across its steps, and a non-converging loop runs up calls with no result; monitoring tokens and steps per task and capping maximum steps bounds it. Vector storage (A) is a different pattern and would not explain a per-task cost spike that produces no answer.</div>` },
+    <div class="feedback"><b>Correct.</b> When the identity policy already allows the action, an AccessDenied on encrypted objects usually means the role lacks kms:Decrypt on the encryption key, or the bucket's resource policy does not allow the role. Overfitting (A) and instance size (C) are unrelated to an access-control error.</div>` },
 
-  /* 7 : quiz 2 */
+  /* 6 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">A RAG system's vector store bill grows steadily as more documents are indexed, and search cost is becoming significant. Which change most directly reduces vector storage and search cost?</h2>
+    <h2 class="reveal" style="font-size:22px">A customer-facing chatbot built on a foundation model must be protected against users who paste text attempting to override its instructions and coax it into revealing other customers' personal data. Which mitigation is most appropriate?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Send longer prompts to the generation model</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Use a smaller embedding dimension (or binary vectors) and prune stale documents</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Switch the generation model to a flagship</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Increase topK at retrieval time</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Increase the endpoint's instance size</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Add a security group rule restricting inbound ports</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Apply input/output filtering and Bedrock Guardrails to block prompt injection and redact sensitive data</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Enable CloudTrail logging on the endpoint</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Vector cost scales with the number of vectors times their dimensions, so reducing dimensions (or using binary vectors) and pruning stale documents directly cuts storage and search cost. Increasing topK (D) returns more vectors per query and adds cost rather than reducing it.</div>` },
+    <div class="feedback"><b>Correct.</b> Prompt injection and data leakage are model-layer risks, addressed by filtering inputs and outputs and applying guardrails that block manipulation and redact PII. A security group (B) controls network access, and CloudTrail (D) records calls after the fact; neither stops a malicious prompt from manipulating the model.</div>` },
 
-  /* 8 : done */
+  /* 7 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">AI costs mapped</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Watch the patterns token pricing misses: agent calls, embedding compute, and vector storage.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Failures traced, risks contained</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Debug access by layer, and mitigate the risks a foundation model adds.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Agents</b>Many calls per task; monitor tokens and steps, cap steps, fix loops.</p></div>
-      <div class="pill"><p><b>Embeddings</b>Index once and per query; incremental sync over full re-index.</p></div>
-      <div class="pill"><p><b>Vectors</b>Count times dimensions; reduce dimensions and prune.</p></div>
+      <div class="pill"><p><b>Debug in order</b>Identity policy, then resource policy and KMS, then the network path; a deny is IAM or KMS, a timeout is network.</p></div>
+      <div class="pill"><p><b>Use the evidence</b>CloudTrail for the failing call, the policy simulator and Access Analyzer for permissions, endpoint checks for timeouts.</p></div>
+      <div class="pill"><p><b>Mitigate AI risk</b>Filter inputs and outputs and apply guardrails against prompt injection, data leakage, and harmful output.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
