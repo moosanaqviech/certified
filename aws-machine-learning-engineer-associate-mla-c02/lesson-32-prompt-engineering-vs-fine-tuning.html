@@ -30,12 +30,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <!-- engine: v2 -->
 <!-- ==== EDIT: lesson title ==== -->
-<title>Overfitting, Underfitting, and Catastrophic Forgetting · MLA-C02</title>
+<title>Prompt Engineering vs Fine-Tuning for AI Customization · MLA-C02</title>
 <!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
      .html extension: Netlify serves this page at both /course/file.html and
      /course/file, and this tag is what tells Google the two are one page.
      Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
-<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-30-overfitting-underfitting-forgetting.html">
+<link rel="canonical" href="https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/lesson-32-prompt-engineering-vs-fine-tuning.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,11 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     --body: "Hanken Grotesk", system-ui, sans-serif;
 
     /* ===== PALETTE — the only CSS you edit per lesson ===== */
-    --bg: #0e0a1a;            /* page background */
-    --bg-tint: #1d1536;       /* ambient glow tint behind the card */
-    --accent: #a78bfa;        /* topic color: quiz-correct border, feedback heading */
-    --accent-glow: rgba(167,139,250,0.12);  /* correct-answer fill */
-    --accent-ink: #0e0a1a;    /* text on top of the accent key chip */
+    --bg: #0b0d1f;            /* page background */
+    --bg-tint: #16193a;       /* ambient glow tint behind the card */
+    --accent: #6366f1;        /* topic color: quiz-correct border, feedback heading */
+    --accent-glow: rgba(99,102,241,0.12);  /* correct-answer fill */
+    --accent-ink: #eef2ff;    /* text on top of the accent key chip */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -217,51 +217,56 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 
 const NAV = {
   catalog:   "index.html",
-  next:      "lesson-31-ensembles.html",
-  nextLabel: "Next chapter"
+  next:      null,
+  nextLabel: null
 };
 
 /* ----------  ART  ---------- */
 const A = {
   cover: `<svg viewBox="0 0 320 200">
     <style>
-      .m30fit { stroke-dasharray: 240; stroke-dashoffset: 240; animation: m30fit 5.5s ease-in-out infinite; }
-      .m30dot { opacity: 0; animation: m30dot 5.5s ease-in-out infinite; }
-      .m30lbl { opacity: 0; animation: m30lbl 5.5s ease-in-out infinite; }
-      @keyframes m30fit { 0%, 10% { stroke-dashoffset: 240; } 55%, 100% { stroke-dashoffset: 0; } }
-      @keyframes m30dot { 0%, 6% { opacity: 0; } 18%, 100% { opacity: 1; } }
-      @keyframes m30lbl { 0%, 60% { opacity: 0; } 74%, 100% { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .m30fit { animation: none; stroke-dashoffset: 0; } .m30dot, .m30lbl { animation: none; opacity: 1; } }
+      .m32type { animation: m32type 5.5s ease-in-out infinite; }
+      .m32cur { animation: m32cur 1s steps(1) infinite; }
+      .m32w { transform-origin: center; animation: m32w 5.5s ease-in-out infinite; }
+      @keyframes m32type { 0%, 100% { opacity: 0.55; } 30%, 70% { opacity: 1; } }
+      @keyframes m32cur { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+      @keyframes m32w { 0%, 40% { fill: var(--surface-2); } 60%, 100% { fill: var(--accent); } }
+      @media (prefers-reduced-motion: reduce) { .m32type { animation: none; opacity: 1; } .m32cur { animation: none; opacity: 1; } .m32w { animation: none; fill: var(--accent); } }
     </style>
     <defs>
-      <radialGradient id="m30glow" cx="0.5" cy="0.4" r="0.65">
+      <radialGradient id="m32glow" cx="0.5" cy="0.4" r="0.65">
         <stop offset="0" style="stop-color:var(--accent-glow)"/>
-        <stop offset="1" style="stop-color:rgba(167,139,250,0)"/>
+        <stop offset="1" style="stop-color:rgba(99,102,241,0)"/>
       </radialGradient>
     </defs>
-    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m30glow)"/>
-    <g font-family="Hanken Grotesk" font-size="8" font-weight="700" text-anchor="middle">
-      <g>
-        <rect x="16" y="44" width="88" height="72" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-        <line class="m30fit" x1="26" y1="100" x2="94" y2="60" stroke="var(--accent)" stroke-width="2.5"/>
-        <circle class="m30dot" cx="34" cy="92" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="52" cy="70" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="70" cy="88" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="86" cy="66" r="2.5" fill="var(--ink-soft)"/>
-        <text class="m30lbl" x="60" y="130" fill="var(--ink-soft)">underfit</text>
-      </g>
-      <g>
-        <rect x="116" y="44" width="88" height="72" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
-        <path class="m30fit" d="M126 98 Q 150 62 160 78 T 194 62" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-        <circle class="m30dot" cx="134" cy="92" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="152" cy="70" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="170" cy="82" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="188" cy="64" r="2.5" fill="var(--ink-soft)"/>
-        <text class="m30lbl" x="160" y="130" fill="var(--accent)">good fit</text>
-      </g>
-      <g>
-        <rect x="216" y="44" width="88" height="72" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
-        <path class="m30fit" d="M226 96 L 236 66 L 248 96 L 262 62 L 276 96 L 292 60" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
-        <circle class="m30dot" cx="236" cy="66" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="262" cy="62" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="292" cy="60" r="2.5" fill="var(--ink-soft)"/><circle class="m30dot" cx="248" cy="96" r="2.5" fill="var(--ink-soft)"/>
-        <text class="m30lbl" x="260" y="130" fill="var(--ink-soft)">overfit</text>
-      </g>
+    <ellipse cx="160" cy="96" rx="150" ry="82" fill="url(#m32glow)"/>
+    <text x="90" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">prompt</text>
+    <g transform="translate(24,50)" font-family="ui-monospace, Menlo, monospace" font-size="7.5">
+      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text class="m32type" x="10" y="18" fill="var(--ink-soft)">You are a support</text>
+      <text class="m32type" x="10" y="32" fill="var(--ink-soft)">agent. Answer in</text>
+      <text class="m32type" x="10" y="46" fill="var(--ink-soft)">JSON. Example:</text>
+      <text class="m32type" x="10" y="60" fill="var(--ink-faint)">{"reply": "..."}<tspan class="m32cur" fill="var(--accent)">|</tspan></text>
+      <text x="10" y="76" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">no training</text>
     </g>
-    <text x="160" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">too simple, just right, or memorized</text>
-    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">FIT AND FORGETTING</text>
+    <text x="230" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">fine-tune</text>
+    <g transform="translate(164,50)">
+      <rect x="0" y="0" width="132" height="86" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="66" y="18" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">labeled pairs to weights</text>
+      <g>
+        <rect x="18" y="30" width="12" height="12" rx="2" class="m32w"/>
+        <rect x="36" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.3s"/>
+        <rect x="54" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.6s"/>
+        <rect x="72" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.9s"/>
+        <rect x="90" y="30" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.2s"/>
+        <rect x="36" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.45s"/>
+        <rect x="54" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:0.75s"/>
+        <rect x="72" y="48" width="12" height="12" rx="2" class="m32w" style="animation-delay:1.05s"/>
+      </g>
+      <text x="66" y="78" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7" font-weight="700">baked in</text>
+    </g>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">change the input, or change the model</text>
+    <text x="160" y="184" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">PROMPT OR FINE-TUNE</text>
   </svg>`,
 
   done: `<svg viewBox="0 0 84 84">
@@ -277,123 +282,136 @@ const cards = [
   { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
     html: `
     <div class="spacer" style="flex:0.3"></div>
-    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 30</div>
-    <h1 class="reveal">Fit and forgetting</h1>
-    <p class="lead reveal">A model can learn too little, learn too much, or, when you fine-tune it, forget what it already knew. This chapter reads the <strong>train and validation gap</strong> to diagnose fit, and covers the fine-tuning trap of <strong>catastrophic forgetting</strong>.</p>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 32</div>
+    <h1 class="reveal">Prompt or fine-tune</h1>
+    <p class="lead reveal">To make a foundation model do your task, you can change what you send it or change the model itself. Prompt engineering and fine-tuning trade <strong>speed and cost against consistency and control</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
-  /* 1 : diagnosis (step build) */
+  /* 1 : shared ground */
+  { html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal">Two levers on the same model</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Both aim to get task-specific behavior from a pre-trained FM, and neither adds fresh knowledge the way RAG does (Chapter 25). The difference is <strong>when and where the change happens</strong>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Prompt engineering</b>Shapes behavior at inference time through instructions, examples, and formatting in the request. The model's weights never change.</p></div>
+      <div class="pill"><p><b>Fine-tuning</b>Changes the model's weights ahead of time by training on labeled examples (Chapter 24), so the behavior is built into the model.</p></div>
+      <div class="pill"><p><b>The rule of thumb</b>Try prompt engineering first; fine-tune only when prompting cannot meet the need at the cost you can accept.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2 : prompt engineering */
+  { html: `
+    <div class="eyebrow reveal">Option 1 · Prompt engineering</div>
+    <h2 class="reveal">Change the input, not the model</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You craft the request: clear instructions, a system prompt, a few worked examples (few-shot), and step-by-step guidance. <strong>Fast and cheap to iterate</strong>, nothing to train.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Strengths</b>No training, no labeled dataset, no hosting infrastructure. Change behavior in minutes, and switch models freely.</p></div>
+      <div class="pill"><p><b>Costs</b>Examples and instructions consume context window and add per-request token cost; very consistent formatting at scale can be hard; behavior is bounded by the base model.</p></div>
+      <div class="pill"><p><b>Pick it when</b>You are exploring, volume is modest, requirements change often, or a good prompt already gets you there.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3 : fine-tuning */
+  { html: `
+    <div class="eyebrow reveal">Option 2 · Fine-tuning</div>
+    <h2 class="reveal">Bake the behavior into weights</h2>
+    <p class="lead reveal" style="margin-bottom:16px">You train the model on labeled examples so the task behavior, format, and tone become part of it. <strong>Consistent and compact at inference</strong>, but a real project to build.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Strengths</b>Reliable behavior with shorter prompts (the examples move into the weights), which lowers per-request tokens at high volume and improves consistency.</p></div>
+      <div class="pill"><p><b>Costs</b>Needs a labeled dataset, training time and cost, and Provisioned Throughput to host the custom model; updating means retraining, and over-narrow tuning risks forgetting (Chapter 30).</p></div>
+      <div class="pill"><p><b>Pick it when</b>Prompting cannot hit the consistency or format you need, prompts have grown long and expensive, and volume justifies the investment.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4 : table */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">Two levers, five axes</h2>
+    <div class="reveal" style="overflow-x:auto;margin-top:6px">
+      <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 5px; color:var(--ink-faint); font-weight:600;"></td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Prompt engineering</td>
+          <td style="padding:8px 5px; color:var(--accent); font-weight:700;">Fine-tuning</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 5px; color:var(--ink-soft);">Upfront effort</td>
+          <td style="padding:8px 5px; color:var(--ink);">minutes</td>
+          <td style="padding:8px 5px; color:var(--ink);">a training project</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 5px; color:var(--ink-soft);">Data needed</td>
+          <td style="padding:8px 5px; color:var(--ink);">none to a few examples</td>
+          <td style="padding:8px 5px; color:var(--ink);">labeled dataset</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 5px; color:var(--ink-soft);">Per-request cost</td>
+          <td style="padding:8px 5px; color:var(--ink);">higher (long prompts)</td>
+          <td style="padding:8px 5px; color:var(--ink);">lower (short prompts)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 5px; color:var(--ink-soft);">Consistency</td>
+          <td style="padding:8px 5px; color:var(--ink);">good, can vary</td>
+          <td style="padding:8px 5px; color:var(--ink);">strongest</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 5px; color:var(--ink-soft);">To change it</td>
+          <td style="padding:8px 5px; color:var(--ink);">edit the prompt</td>
+          <td style="padding:8px 5px; color:var(--ink);">retrain</td>
+        </tr>
+      </table>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 5 : decision signals (step build) */
   { steps: 3,
     html: `
-    <div class="eyebrow reveal">Diagnosis · bias and variance</div>
-    <h2 class="reveal" style="font-size:24px">The gap tells you which problem</h2>
-    <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap through how training and validation scores reveal the fault.</p>
-    <div class="pills">
-      <div class="pill" data-step="1"><p><b>Underfitting (high bias)</b>Poor on both training and validation. The model is too simple to capture the pattern.</p></div>
-      <div class="pill" data-step="2"><p><b>Overfitting (high variance)</b>Great on training, much worse on validation. The model memorized the training data instead of generalizing.</p></div>
-      <div class="pill" data-step="3"><p><b>Good fit</b>Strong on both, with a small gap. The goal is the balance point between too simple and too memorized.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 2 : underfitting */
-  { html: `
-    <div class="eyebrow reveal">Underfitting</div>
-    <h2 class="reveal">The model is too simple</h2>
-    <p class="lead reveal" style="margin-bottom:16px">When both scores are low, the model lacks the capacity or information to learn the signal. <strong>Give it more to work with.</strong></p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Add capacity</b>A more complex model or more layers, or a more powerful algorithm.</p></div>
-      <div class="pill"><p><b>Add or improve features</b>Better feature engineering (Chapters 8 and 9) so the signal is present in the inputs.</p></div>
-      <div class="pill"><p><b>Train longer, regularize less</b>More epochs, and reduce regularization that is holding the model back.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 3 : overfitting */
-  { html: `
-    <div class="eyebrow reveal">Overfitting</div>
-    <h2 class="reveal">The model memorized</h2>
-    <p class="lead reveal" style="margin-bottom:16px">A big train-to-validation gap means the model fit noise. The fixes push it back toward generalizing, collectively called <strong>regularization</strong>.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>L1 and L2 regularization</b>Penalize large weights. L2 (ridge) shrinks weights smoothly; L1 (lasso) drives some to zero, effectively selecting features.</p></div>
-      <div class="pill"><p><b>Dropout</b>Randomly disables neurons during training so the network cannot rely on any single path (neural networks).</p></div>
-      <div class="pill"><p><b>Early stopping and more data</b>Stop before memorization sets in (Chapter 28); add training data or augment it; and reduce model complexity.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 4 : catastrophic forgetting */
-  { html: `
-    <div class="eyebrow reveal">Catastrophic forgetting</div>
-    <h2 class="reveal">Fine-tuning can erase prior skill</h2>
-    <p class="lead reveal" style="margin-bottom:16px">When you fine-tune a pre-trained model on a narrow task, aggressive training can <strong>overwrite the general abilities it started with</strong>, so it gets better at the new task but worse at everything else.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Why it happens</b>Large weight updates on a small, narrow dataset pull the model away from the broad knowledge encoded during pre-training.</p></div>
-      <div class="pill"><p><b>How it shows up</b>The fine-tuned model aces the new task in testing but regresses on general prompts or tasks it used to handle.</p></div>
-      <div class="pill"><p><b>Why it matters here</b>It is the specific overfitting risk of fine-tuning FMs (Chapter 24), not just classic train-set memorization.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 5 : mitigating forgetting */
-  { html: `
-    <div class="eyebrow reveal">Guarding against forgetting</div>
-    <h2 class="reveal">Fine-tune gently</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The mitigations keep the base knowledge intact while learning the new task.</p>
-    <div class="pills reveal">
-      <div class="pill"><p><b>Smaller updates</b>A lower learning rate and fewer epochs so weights move less far from the pre-trained starting point.</p></div>
-      <div class="pill"><p><b>Parameter-efficient fine-tuning</b>Methods like LoRA freeze the base weights and train small added adapters, so the original model is preserved.</p></div>
-      <div class="pill"><p><b>Mix in general data</b>Blend some general or original-distribution examples with the task data so the model keeps its broad ability.</p></div>
-    </div>
-    <div class="spacer"></div>` },
-
-  /* 6 : diagnose and fix (step build) */
-  { steps: 4,
-    html: `
-    <div class="eyebrow reveal">Diagnose and fix</div>
+    <div class="eyebrow reveal">Decision signals</div>
     <h2 class="reveal" style="font-size:24px">Read the scenario for these tells</h2>
     <p class="lead reveal" style="margin-bottom:12px;font-size:15px">Tap to reveal what each tell selects.</p>
     <div class="pills">
-      <div class="pill" data-step="1"><p><b>"Low accuracy on both training and validation"</b>Underfitting: add capacity, features, or training time.</p></div>
-      <div class="pill" data-step="2"><p><b>"99% on training, 70% on validation"</b>Overfitting: regularization, dropout, early stopping, more data.</p></div>
-      <div class="pill" data-step="3"><p><b>"Fine-tuned model great at the new task but worse at general prompts"</b>Catastrophic forgetting: lower learning rate, LoRA, mix in general data.</p></div>
-      <div class="pill" data-step="4"><p><b>"Heavy L2 and dropout, now scores are low everywhere"</b>Over-regularized into underfitting: dial the regularization back.</p></div>
+      <div class="pill" data-step="1"><p><b>"Prototype fast", "no labeled data", "requirements still changing", "modest volume"</b>Prompt engineering.</p></div>
+      <div class="pill" data-step="2"><p><b>"Output format must be exact every time", "prompts are long and expensive at high volume", "we have thousands of labeled examples"</b>Fine-tuning.</p></div>
+      <div class="pill" data-step="3"><p><b>"A carefully written prompt already meets the need"</b>Stay with prompt engineering; do not fine-tune for its own sake.</p></div>
     </div>
     <div class="spacer"></div>` },
 
-  /* 7 : quiz 1 */
+  /* 6 : quiz 1 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 1</div>
-    <h2 class="reveal" style="font-size:22px">A classifier reaches 98% accuracy on the training set but only 74% on the validation set. Which change is most likely to help?</h2>
+    <h2 class="reveal" style="font-size:22px">A team is prototyping a feature that drafts marketing copy in the company voice. They have no labeled dataset, the requirements are still shifting weekly, and volume is low. What should they do first?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Add more layers to increase model capacity</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Apply regularization such as L2 or dropout, and consider early stopping</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Train for many more epochs</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Remove input features to simplify the data</button>
+      <button class="choice" data-correct="true"><span class="key">A</span>Prompt engineering: a strong system prompt with a few example outputs</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Fine-tune a foundation model on the company's past copy</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Continued pre-training on the marketing archive</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Train a custom model from scratch</button>
     </div>
-    <div class="feedback"><b>Correct.</b> A large train-to-validation gap is the classic overfitting signature, so regularization (L2, dropout) and early stopping push the model back toward generalizing. Adding capacity (A) is the tempting distractor, but more layers increase variance and would make overfitting worse, not better.</div>` },
+    <div class="feedback"><b>Correct.</b> No labeled data, shifting requirements, and low volume are the prompt-engineering profile: iterate a prompt in minutes and change it freely as the requirements move. Fine-tuning (B) is the tempting distractor, but it needs a labeled dataset and a training investment that would be wasted while requirements are still changing weekly.</div>` },
 
-  /* 8 : quiz 2 */
+  /* 7 : quiz 2 */
   { quiz: true,
     html: `
     <div class="eyebrow reveal">Quick check 2</div>
-    <h2 class="reveal" style="font-size:22px">After fine-tuning a foundation model on a small set of legal-summary examples, the model summarizes contracts well but now performs noticeably worse on the general questions it used to answer. What is happening, and what is the best mitigation?</h2>
+    <h2 class="reveal" style="font-size:22px">A production service classifies documents and must return a strict JSON schema every single time. The current prompt includes many examples, making each call long and costly at millions of requests per day, and it still occasionally breaks format. The team has thousands of labeled examples. What is the better approach?</h2>
     <div class="choices reveal">
-      <button class="choice" data-correct="false"><span class="key">A</span>Underfitting: train for many more epochs at a higher learning rate</button>
-      <button class="choice" data-correct="true"><span class="key">B</span>Catastrophic forgetting: use a lower learning rate, parameter-efficient fine-tuning, and mix in general data</button>
-      <button class="choice" data-correct="false"><span class="key">C</span>Data leakage: remove the validation set overlap</button>
-      <button class="choice" data-correct="false"><span class="key">D</span>Overfitting to the validation set: increase the batch size</button>
+      <button class="choice" data-correct="false"><span class="key">A</span>Add even more examples to the prompt</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Raise the model's temperature for variety</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Fine-tune the model on the labeled examples so the format is built in and prompts get short</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>Switch to a larger flagship model with the same long prompt</button>
     </div>
-    <div class="feedback"><b>Correct.</b> Gaining the new task while losing prior general ability is catastrophic forgetting, and the fixes keep the base knowledge intact: smaller updates (lower learning rate, fewer epochs), LoRA-style parameter-efficient fine-tuning, and blending in general examples. Training harder at a higher learning rate (A) is the tempting distractor, but it would push the weights even further from the pre-trained knowledge and deepen the forgetting.</div>` },
+    <div class="feedback"><b>Correct.</b> A strict format that must hold every time, long expensive prompts at massive volume, and a labeled dataset on hand is the fine-tuning case: the behavior moves into the weights, prompts shrink, per-call cost drops, and consistency improves. Adding more examples (A) is the tempting distractor, but it makes each call even longer and costlier while still not guaranteeing the format.</div>` },
 
-  /* 9 : done */
+  /* 8 : done */
   { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
     html: `
     <div class="spacer" style="flex:0.4"></div>
     <div class="done-badge reveal">${A.done}</div>
-    <h2 class="reveal" style="text-align:center;font-size:27px">Fit diagnosed</h2>
-    <p class="lead reveal" style="text-align:center;margin-bottom:20px">The train-validation gap names the fault; the fix follows from it.</p>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Lever chosen</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Start with the prompt; fine-tune when consistency, format, or per-call cost at scale demand it.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>Underfit</b>Low on both: more capacity, features, or training.</p></div>
-      <div class="pill"><p><b>Overfit</b>Big gap: regularization, dropout, early stopping, more data.</p></div>
-      <div class="pill"><p><b>Forgetting</b>Fine-tuning erases prior skill: gentle updates, LoRA, mixed data.</p></div>
+      <div class="pill"><p><b>Prompt engineering</b>Fast, cheap, no data or training; bounded by the base model.</p></div>
+      <div class="pill"><p><b>Fine-tuning</b>Consistent behavior in the weights, short prompts, lower per-call cost; needs data and training.</p></div>
     </div>
     <div class="spacer"></div>` }
 ];
