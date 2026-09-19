@@ -239,6 +239,16 @@ Netlify static hosting; pushing to main deploys. Do not add build steps,
 bundlers, or shared JS imports: every lesson and exam must work as a
 standalone file opened locally.
 
+Analytics: every page carries two tags in `<head>`, above the `ENGINE`
+marker: Google Analytics 4 (`gtag.js`, measurement id `G-GBFP6K89Q6`) and
+the Cloudflare Web Analytics beacon (before `</head>`). Both live in all four
+`.claude/` page templates (`lesson-template.html`, `lesson-template-v2.html`,
+`test-template.html`, `readiness-template.html`) and in `blog/POST_TEMPLATE.html`,
+so pages authored from a template inherit them with no manual step. Keep both
+tags in the templates: dropping either silently un-instruments every page
+authored afterward. Google Search Console is verified site-wide by the
+root-level `googleef9aef6f3bc362a7.html` file, so no per-page tag is needed.
+
 Do not redirect the old Netlify subdomain to the apex domain. The
 `alreadycertified.netlify.app` subdomain must resolve on its own and must
 never be forwarded to `certify.courses`, so `_redirects` and `netlify.toml`
