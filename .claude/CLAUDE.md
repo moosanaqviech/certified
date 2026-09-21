@@ -78,10 +78,14 @@ per cert slug (`practice/databricks-de-associate.html`, served at
 and readiness payloads at runtime (never edits them) and keeps progress in
 localStorage under `certify.practice.<cert-slug>`. The course home links to
 it through the Learn / Practice toggle; the hub's Learn segment links back to
-the course home. DE Associate and DE Professional have hubs; the Associate
-hub's Full mock mode runs the course's sealed `mock-exam-NN.html` files as
-timed 90-minute sessions, and the Professional hub shows Full mock as coming
-soon until its sealed mocks ship.
+the course home. DE Associate, DE Professional and ML Associate have hubs.
+The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
+files as timed 90-minute sessions; the Professional hub shows Full mock as
+coming soon until its sealed mocks ship; the ML Associate hub uses the two
+existing full mocks (`ml-practice-exam-04` and `05`, one question per
+objective, their own scenarios) as its mock pool and drills from exams 01 to
+03, so its drills cannot reach section 4 (Model Deployment) until a section 4
+drill pool is authored (the readiness check and the mocks do cover it).
 
 ## Brand mark and icons
 
