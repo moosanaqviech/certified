@@ -55,6 +55,9 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- In-app signal: the mobile app opens pages with ?app=1. Remembered for the
+     WebView session so in-page navigation keeps the site chrome hidden. -->
+<script>(function(){try{var q=/[?&]app=1(?:&|$)/.test(location.search);if(q)sessionStorage.setItem("cc_app","1");if(q||sessionStorage.getItem("cc_app")==="1")document.documentElement.classList.add("in-app");}catch(e){}})();</script>
 <style>
   :root{
     --bg:#0b0d12; --surface:#161a22; --surface-2:#1d2230; --ink:#f3f0ea;
@@ -87,6 +90,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   /* ---------- shared course header: identical on the Learn and Practice faces ---------- */
   .wrap{max-width:1040px;margin:0 auto;padding-inline:24px;}
   .topbar{position:sticky;top:0;z-index:20;background:rgba(13,15,19,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .in-app .topbar{display:none;}
   .topbar-in{display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px;}
   .mark{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:.2px;color:var(--ink);text-decoration:none;white-space:nowrap;}
   .mark-ic{width:26px;height:26px;flex:none;display:block;}
@@ -592,8 +596,21 @@ function renderPaywallBanner(){
   if(b) b.addEventListener("click", openCheckout);
 }
 
-function isDone(id){ return store.get("done:"+id) === "1"; }
-function setDone(id,v){ store.set("done:"+id, v?"1":"0"); }
+/* Completion is keyed per course. Every course numbers its chapters from 1
+   and localStorage is shared across the whole site, so a bare "done:<id>" key
+   would tick the same chapter number in every course at once. */
+const DONE_NS = "done:databricks-de-associate:";
+function isDone(id){ return store.get(DONE_NS+id) === "1"; }
+function setDone(id,v){ store.set(DONE_NS+id, v?"1":"0"); }
+/* One-time migration of the pre-namespace "done:<id>" keys. They belonged to
+   this course, the only one that existed when the scheme was introduced; the
+   other courses start clean rather than inherit marks that were never theirs. */
+(function(){ try{
+  const flag = "done:migrated:" + DONE_NS.slice(5,-1);
+  if(store.get(flag)) return;
+  UNITS.forEach(u=>u.lessons.forEach(l=>{ if(store.get("done:"+l.id)==="1") store.set(DONE_NS+l.id,"1"); }));
+  store.set(flag,"1");
+}catch(e){} })();
 
 /* ---------- recall-check state ----------
    Lessons are frozen v1 files and do not record their inline recall checks,

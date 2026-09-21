@@ -73,6 +73,7 @@ The old knobs (question count, timed or review, domain split) live here, collaps
 - Wrap every read and write in try/catch; the page must render correctly (cold-start state) when storage is empty, blocked, or throws.
 - Store per-domain attempt counts and correct counts, not just a percentage, so mastery can be recomputed and later sessions weight in properly.
 - The Capacitor shell has its own storage origin from the web, so a user on both will see independent progress. Accepted for the first release.
+- Inside the Capacitor shell the page is opened with `?app=1`. The hub, like every course home, carries the `<head>` detector that sets `in-app` on `<html>` and hides `.topbar`; keep both when authoring a new hub.
 
 ## Question pools and integrity (locked rules)
 - Mock questions are independent from unit exam pools. Never reuse.
