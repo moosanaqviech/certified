@@ -71,6 +71,15 @@ each course). Each course lives in its own top-level folder and has its own
   exams use the `mla-c01-practice-exam-NN.html` and
   `mla-c02-practice-exam-NN.html` prefixes.
 
+Practice hubs (the course-level Practice face, spec in
+`.claude/practice-hub-spec.md`) live in the root `practice/` folder, one file
+per cert slug (`practice/databricks-de-associate.html`, served at
+`/practice/databricks-de-associate`). A hub reads its course's existing exam
+and readiness payloads at runtime (never edits them) and keeps progress in
+localStorage under `certify.practice.<cert-slug>`. The course home links to
+it through the Learn / Practice toggle; the hub's Learn segment links back to
+the course home. Only DE Associate has a hub so far.
+
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
 `blog/` folder regardless of which course they're about; do not move them
@@ -97,6 +106,7 @@ that same form:
 | course home | `/<course>/` | `<course>/`, never `<course>/index.html` |
 | blog post | `/blog/<slug>` | `<slug>` from `blog/`, `blog/<slug>` from root |
 | readiness quiz | `/ready/<slug>` | `ready/<slug>`, no `.html` |
+| practice hub | `/practice/<slug>` | `practice/<slug>`, no `.html` |
 | lesson or exam | `/<course>/<file>.html` | keeps `.html` |
 | legal page | `/legal/<file>.html` | keeps `.html` |
 

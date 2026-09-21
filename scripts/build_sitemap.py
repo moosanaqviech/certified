@@ -18,9 +18,10 @@ What gets included, and the two rules that are easy to get wrong:
    excluded by construction. A new content folder has to be added to this
    script before its pages ship.
 
-URL forms follow what each page already declares: blog posts and readiness
-quizzes are served at clean extensionless URLs (matching their canonical
-tags), lessons and exams keep .html, and a course home is its bare folder.
+URL forms follow what each page already declares: blog posts, readiness
+quizzes and practice hubs are served at clean extensionless URLs (matching
+their canonical tags), lessons and exams keep .html, and a course home is its
+bare folder.
 """
 
 import argparse
@@ -134,6 +135,13 @@ def collect():
     for name in sorted(os.listdir("ready")):
         if name.endswith(".html"):
             yield f"{BASE}/ready/{name[:-5]}", f"ready/{name}", "quiz"
+
+    # Practice hubs (one per cert, see .claude/practice-hub-spec.md). Free
+    # course-level pages served extensionless, like the readiness quizzes.
+    if os.path.isdir("practice"):
+        for name in sorted(os.listdir("practice")):
+            if name.endswith(".html"):
+                yield f"{BASE}/practice/{name[:-5]}", f"practice/{name}", "quiz"
 
     for name in sorted(os.listdir("legal")):
         if name.endswith(".html"):

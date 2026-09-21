@@ -24,6 +24,7 @@ The site's URL conventions (these mirror scripts/build_sitemap.py):
     <dir>/index.html    ->  /<dir>/
     blog/<slug>.html    ->  /blog/<slug>          (extensionless)
     ready/<slug>.html   ->  /ready/<slug>         (extensionless)
+    practice/<slug>.html -> /practice/<slug>      (extensionless)
     <course>/<page>.html -> /<course>/<page>.html (keeps .html)
     legal/<page>.html   ->  /legal/<page>.html    (keeps .html)
 
@@ -48,7 +49,7 @@ SKIP_FILES = {"googleef9aef6f3bc362a7.html", "blog/POST_TEMPLATE.html",
 # Served but deliberately kept out of the index with <meta name="robots">.
 NOINDEX_DIRS = {"unlock"}
 
-CLEAN_DIRS = {"blog", "ready"}  # published extensionless
+CLEAN_DIRS = {"blog", "ready", "practice"}  # published extensionless
 
 CANON_RE = re.compile(r'<link rel="canonical"[^>]*href="([^"]*)"')
 HREF_RE = re.compile(r'href="([^"]*)"')
