@@ -86,13 +86,16 @@ Events, and the Purchase/Lead pairs show as **deduplicated** in Meta.
 - **Consent: minimal.** Tags load globally, matching existing behaviour. This
   is a known GDPR/UK exposure to revisit (a consent gate for EU/UK visitors)
   if paid traffic from those regions grows. No consent banner was added.
-- **Capacitor / app double-fire: flagged, web-only for now.** The mobile app
-  is a separate repo not present here, and `app.html` is only a store-badge
-  landing page. There is no signal today to tell app WebView sessions from web.
-  The fired events route through an `isApp()` stub (currently always `false`)
-  so app sessions can be suppressed or tagged once the mobile project supplies
-  a signal (custom UA token, query param, or an injected JS flag). Until then,
-  if the WebView loads the remote site, its pixel/GA hits count as web.
+- **Capacitor / app sessions: signalled by `?app=1`.** The mobile app is a
+  separate repo not present here, and `app.html` is only a store-badge
+  landing page. The app opens every page with `?app=1` appended; the page
+  remembers that in `sessionStorage` (`cc_app`) so in-page navigation inside
+  the WebView keeps the flag without re-appending it. `isApp()` in the
+  readiness quizzes reads the flag, so the Lead pixel and GA lead events are
+  suppressed inside the app. Course homes and practice hubs read the same
+  flag in a small `<head>` script that adds `in-app` to `<html>`, which hides
+  the site top bar (`.in-app .topbar{display:none}`). Page-view hits from
+  the WebView still count as web.
 
 ## Frozen engine note
 
