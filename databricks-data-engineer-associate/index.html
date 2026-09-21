@@ -287,7 +287,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   <div class="course-row">
     <div>
       <h1>Databricks Certified Data Engineer Associate</h1>
-      <p class="subline"><span class="code-pill">Associate</span><span class="dot">·</span><span>7 units, 35 chapters</span><span class="dot">·</span><span>224 scenario questions</span></p>
+      <p class="subline"><span class="code-pill">Associate</span><span class="dot">·</span><span>7 units, 35 chapters</span><span class="dot">·</span><span>314 scenario questions</span></p>
     </div>
     <div class="stat" aria-live="polite">
       <p class="lab">Progress</p>
@@ -533,6 +533,14 @@ const UNITS = [
   ], test:{ t:"Final Exam · Units 1-7", file:"practice-exam-07.html" }},
 ];
 
+/* Sealed full-length mocks (45 questions, 90 minutes, sampled by section
+   weight). A separate pool from the unit tests above; the Practice hub's
+   Full mock mode runs the same files. Paid, like Units 2 to 7. */
+const MOCKS = [
+  { n:1, file:"mock-exam-01.html" },
+  { n:2, file:"mock-exam-02.html" },
+];
+
 const TOTAL = UNITS.reduce((s,u)=>s+u.lessons.length,0);
 
 /* ---------- paywall (Unit 1 free, Units 2-7 paid) ---------- */
@@ -679,6 +687,35 @@ function render(){
       renderPaywallBanner();
     }
   });
+
+  // Full-length mock exams: one section after the units, locked with the paid units.
+  const mocks = document.createElement("div");
+  mocks.className = "unit"; mocks.id = "mocks";
+  mocks.innerHTML = `<div class="unit-head">
+      <span class="unit-num">★</span>
+      <span class="unit-title">Full-length mock exams</span>
+      <span class="unit-count">${MOCKS.length} exams</span>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.55;padding:2px 4px 8px;margin:0;">Each mock is 45 questions in 90 minutes, sampled across all seven sections at the exam's weights, from a sealed pool that never overlaps the unit tests. Sit them cold, exam conditions.</p>`;
+  MOCKS.forEach(m=>{
+    const row = document.createElement(LOCKED ? "div" : "a");
+    row.className = "unit-test" + (LOCKED ? " locked" : "");
+    if(!LOCKED){ row.href = m.file; }
+    row.innerHTML = `
+      <div class="ut-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M6 2h12M6 22h12M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="ut-body">
+        <div class="ut-kicker">Sealed mock · Exam ${m.n}</div>
+        <div class="ut-title">45 questions · 90 minutes · all seven sections</div>
+      </div>
+      ${LOCKED
+        ? `<span class="ut-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg></span>`
+        : `<span class="ut-arrow">→</span>`}`;
+    if(LOCKED){ row.addEventListener("click", openCheckout); }
+    mocks.appendChild(row);
+  });
+  root.appendChild(mocks);
 
   renderBridge();
 

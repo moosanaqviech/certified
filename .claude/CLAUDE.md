@@ -78,7 +78,8 @@ per cert slug (`practice/databricks-de-associate.html`, served at
 and readiness payloads at runtime (never edits them) and keeps progress in
 localStorage under `certify.practice.<cert-slug>`. The course home links to
 it through the Learn / Practice toggle; the hub's Learn segment links back to
-the course home. Only DE Associate has a hub so far.
+the course home. Only DE Associate has a hub so far; its Full mock mode runs
+the course's sealed `mock-exam-NN.html` files as timed 90-minute sessions.
 
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
@@ -237,6 +238,12 @@ starting at 01, per that course's curriculum index). Practice exams:
 Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate,
 `ml-practice-exam-NN.html` for ML Associate, `genai-practice-exam-NN.html`
 for Generative AI Engineer Associate.
+Sealed full-length mocks use `mock-exam-NN.html` (DE Associate has 01 and
+02: 45 questions, 90 minutes, sampled across the sections at the official
+weights, generated from the frozen test template). Their questions are a
+sealed pool: never reuse them in unit exams and never draw them into the
+Practice hub's drills; the hub's Full mock mode is the only thing that reads
+them besides the exam page itself.
 
 ## Revisions
 
