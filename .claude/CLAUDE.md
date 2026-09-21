@@ -81,6 +81,24 @@ it through the Learn / Practice toggle; the hub's Learn segment links back to
 the course home. Only DE Associate has a hub so far; its Full mock mode runs
 the course's sealed `mock-exam-NN.html` files as timed 90-minute sessions.
 
+## Brand mark and icons
+
+The brand mark is the app icon's serif C (Fraunces) in lavender with a flat
+gold check (`#d9a441`, the same gold as every action). Sources and outputs
+live in `assets/`: `logo-mark.svg` (glyph only, used inline in every header
+and in the site footer next to the wordmark), `icon.svg` (rounded tile, the
+SVG favicon), the PNG favicons, `apple-touch-icon.png`, the manifest icons,
+`og-image.png` (the default share image, 1200 by 630), and
+`app-icon-1024.png` (full-bleed square for the store listings, so the app
+icon can be updated to the gold check). Root-level `favicon.ico` and
+`site.webmanifest` complete the set. Every page and all five page templates
+carry the same head block (SVG and PNG favicon, apple-touch-icon, manifest,
+theme-color) plus `og:image` wherever `og:title` exists, so pages authored
+from a template inherit them. `scripts/build_brand_assets.py` regenerates
+everything from the font (one-off tooling: fontTools, the variable Fraunces
+package, Playwright, Pillow); the committed SVGs are the source of truth and
+nothing on the site depends on the script.
+
 Blog posts and comparison/guide pages (the SEO content, e.g.
 `databricks-data-engineer-associate-certification-guide.html`) live in the
 `blog/` folder regardless of which course they're about; do not move them
