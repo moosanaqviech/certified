@@ -29,7 +29,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Practice Hub · Databricks Data Engineer Associate</title>
-<meta name="description" content="Practice for the Databricks Certified Data Engineer Associate exam: five-question quick drills, domain focus sessions, and a 12-question readiness check that tracks your mastery across the seven exam sections. Original scenario questions written from the official exam guide and docs.">
+<meta name="description" content="Practice for the Databricks Certified Data Engineer Associate exam: five-question quick drills, domain focus sessions, a 12-question readiness check, and two sealed 45-question timed mocks, with mastery tracked across the seven exam sections. Original scenario questions written from the official exam guide and docs.">
 <link rel="canonical" href="https://certify.courses/practice/databricks-de-associate">
 <meta name="robots" content="index,follow,max-image-preview:large">
 
@@ -301,7 +301,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
       <p class="subline">
         <span class="code-pill">Associate</span>
         <span class="dot">·</span><span>7 units, 35 chapters</span>
-        <span class="dot">·</span><span><span id="bankCount">224</span> scenario questions</span>
+        <span class="dot">·</span><span><span id="bankCount">314</span> scenario questions</span>
       </p>
     </div>
     <div class="readiness" aria-live="polite">
@@ -347,12 +347,17 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
         <p>Twelve-question diagnostic sampled across all seven sections by exam weight. Updates every bar.</p>
         <span class="len">12 questions · ~15 min</span>
       </button>
-      <div class="mode soon" id="mode-mock" aria-disabled="true">
+      <button class="mode" id="mode-mock" data-mode="mock" aria-expanded="false" aria-controls="mockPicker">
         <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2h12M6 22h12M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h3>Full mock <span class="tag soon">Coming soon</span></h3>
-        <p>Forty-five questions in ninety minutes, exam conditions, from a sealed pool that never overlaps the drills. Sit it cold.</p>
+        <h3>Full mock <span class="tag members" id="mockTag" hidden>Members</span></h3>
+        <p>Forty-five questions in ninety minutes, exam conditions, from a sealed pool that never overlaps the drills. Two mocks. Sit them cold.</p>
         <span class="len">45 questions · 90 min · timed</span>
-      </div>
+      </button>
+    </div>
+
+    <div class="picker" id="mockPicker" hidden>
+      <div class="ph"><span><b>Pick a mock.</b> Forty-five questions, a ninety-minute timer, no feedback until the end. Every section updates your bars.</span><button class="btn-link" id="mockPickerClose">Close</button></div>
+      <div id="mockRows"></div>
     </div>
 
     <div class="picker" id="picker" hidden>
@@ -446,7 +451,11 @@ const SOURCES = [
   { id:"e05", kind:"exam",  free:false, unit:5, url: COURSE_DIR + "practice-exam-05.html" },
   { id:"e06", kind:"exam",  free:false, unit:6, url: COURSE_DIR + "practice-exam-06.html" },
   { id:"e07", kind:"exam",  free:false, unit:7, url: COURSE_DIR + "practice-exam-07.html" },
-  { id:"ready", kind:"ready", free:true, unit:1, url: "../ready/" + SLUG + ".html" }
+  { id:"ready", kind:"ready", free:true, unit:1, url: "../ready/" + SLUG + ".html" },
+  /* Sealed mocks: 45 questions each, sampled by section weight. They are a
+     separate pool from the unit exams and are never drawn into drills. */
+  { id:"m01", kind:"mock", free:false, unit:1, url: COURSE_DIR + "mock-exam-01.html", label:"Full Mock 1" },
+  { id:"m02", kind:"mock", free:false, unit:1, url: COURSE_DIR + "mock-exam-02.html", label:"Full Mock 2" }
 ];
 
 /* ---------- paywall state (same cookie contract as the course home) ---------- */
@@ -545,6 +554,10 @@ const anyError  = () => SOURCES.some(s => SRC_STATUS[s.id] === "error");
 const allFailed = () => SOURCES.every(s => SRC_STATUS[s.id] && SRC_STATUS[s.id] !== "ok");
 const examPool  = () => POOL.filter(q => q.kind === "exam");
 const readyPool = () => POOL.filter(q => q.kind === "ready");
+const MOCKS     = SOURCES.filter(s => s.kind === "mock");
+const mockPool  = id => POOL.filter(q => q.kind === "mock" && q.src === id);
+const mockLocked = id => SRC_STATUS[id] === "locked";
+const lastMock  = id => { const runs = STATE.sessions.filter(x => x.mode === "mock" && x.mock === id); return runs.length ? runs[runs.length - 1] : null; };
 const availFor  = n => examPool().filter(q => q.unit === n).length;
 /* A section with no loaded exam questions while paid sources are locked is a
    paywalled section, not an empty one. */
@@ -674,6 +687,23 @@ function renderPicker(){
   }));
 }
 
+function renderMockPicker(){
+  const rows = $("mockRows");
+  const ready = poolReady && (POOL.length || allFailed());
+  const anyMockLocked = MOCKS.some(m => mockLocked(m.id));
+  const tag = $("mockTag"); if (tag) tag.hidden = !(ready && anyMockLocked);
+  rows.innerHTML = MOCKS.map(m => {
+    const n = mockPool(m.id).length, lk = ready && mockLocked(m.id), last = lastMock(m.id);
+    const right = !ready ? `<span>Loading…</span>`
+      : lk ? `<span>Members</span>${lockIcon()}`
+      : `<span>${last ? `last <span class="m">${Math.round(last.c / last.n * 100)}%</span>` : "not sat yet"}</span><span>${n} q · 90 min</span>`;
+    return `<button class="prow ${lk ? "locked" : ""}" data-mock="${m.id}" ${!ready || (!lk && n === 0) ? "disabled" : ""}>
+      <span class="pn">${m.label}<span class="pw">sealed pool</span></span>
+      <span class="pa">${right}</span></button>`;
+  }).join("");
+  rows.querySelectorAll(".prow").forEach(b => b.addEventListener("click", () => startMock(b.dataset.mock)));
+}
+
 function renderNotice(){
   const el = $("notice");
   if (!poolReady || (!POOL.length && !allFailed())) { el.innerHTML = ""; return; }
@@ -682,7 +712,7 @@ function renderNotice(){
     return;
   }
   if (anyLocked()) {
-    el.innerHTML = `<div class="notice"><span><b>Unit 1 questions and the readiness check are open.</b> Unlock the course for all seven sections in Quick drill and Domain focus, plus every lesson and timed exam.</span>
+    el.innerHTML = `<div class="notice"><span><b>Unit 1 questions and the readiness check are open.</b> Unlock the course for all seven sections in Quick drill and Domain focus, both sealed mocks, and every lesson and timed exam.</span>
       <button class="btn btn-gold" id="noticeUnlock">Get full access</button><a href="/unlock/">Already purchased?</a></div>`;
     $("noticeUnlock").addEventListener("click", openCheckout);
     return;
@@ -702,7 +732,7 @@ function renderCustomDomains(){
   });
 }
 
-function renderAll(){ renderHeader(); renderReco(); renderBars(); renderPicker(); renderNotice(); renderCustomDomains(); }
+function renderAll(){ renderHeader(); renderReco(); renderBars(); renderPicker(); renderMockPicker(); renderNotice(); renderCustomDomains(); }
 
 const clock = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const lockIcon = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>`;
@@ -728,6 +758,14 @@ async function startReady(){
   const qs = shuffle(readyPool().slice());
   runSession({ mode: "ready", label: "Readiness check", qs, explainNow: false, timed: false });
 }
+async function startMock(id){
+  await loadPool();
+  const m = MOCKS.find(x => x.id === id);
+  if (!m) return;
+  if (mockLocked(id)) { openCheckout(); return; }
+  const qs = shuffle(mockPool(id).slice());
+  runSession({ mode: "mock", mock: id, label: m.label, qs, explainNow: false, timed: true });
+}
 async function startCustom(){
   await loadPool();
   const k = parseInt($("cCount").value, 10) || 10;
@@ -752,7 +790,7 @@ function runSession(cfg){
     return;
   }
   if (S && S.tick) clearInterval(S.tick);
-  S = { mode: cfg.mode, label: cfg.label, qs: cfg.qs, i: 0, explainNow: cfg.explainNow, timed: !!cfg.timed,
+  S = { mode: cfg.mode, mock: cfg.mock || null, label: cfg.label, qs: cfg.qs, i: 0, explainNow: cfg.explainNow, timed: !!cfg.timed,
         answers: cfg.qs.map(() => []), revealed: cfg.qs.map(() => false), unit: cfg.unit,
         left: cfg.timed ? cfg.qs.length * SEC_PER_Q : 0, tick: null, done: false, started: Date.now() };
   $("hub").hidden = true; $("session").hidden = false;
@@ -854,7 +892,7 @@ function finish(){
   /* keep the seen log bounded: newest 400 entries */
   const ids = Object.keys(STATE.seen);
   if (ids.length > 400) ids.sort((a, b) => (STATE.seen[a].t || 0) - (STATE.seen[b].t || 0)).slice(0, ids.length - 400).forEach(id => { delete STATE.seen[id]; });
-  STATE.sessions.push({ t: now, mode: S.mode, n: S.qs.length, c: correct, byUnit });
+  STATE.sessions.push({ t: now, mode: S.mode, mock: S.mock || undefined, n: S.qs.length, c: correct, byUnit });
   if (STATE.sessions.length > 30) STATE.sessions = STATE.sessions.slice(-30);
   STATE.lastMode = S.mode;
   saveState();
@@ -882,7 +920,7 @@ function renderSummary(correct, byUnit, before){
       <div class="fb"><b>Why:</b> ${q.explain}</div>
     </div>`;
   }).join("");
-  const mode = S.mode, unit = S.unit, explainNow = S.explainNow, timed = S.timed, n = total;
+  const mode = S.mode, unit = S.unit, explainNow = S.explainNow, timed = S.timed, n = total, mockId = S.mock;
   $("runner").innerHTML = `
     <div class="summary">
       <p class="run-eyebrow">${S.label} · complete</p>
@@ -899,6 +937,7 @@ function renderSummary(correct, byUnit, before){
   $("backBtn").addEventListener("click", () => { S = null; $("session").hidden = true; $("hub").hidden = false; renderAll(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   $("againBtn").addEventListener("click", () => {
     if (mode === "ready") startReady();
+    else if (mode === "mock") startMock(mockId);
     else if (mode === "quick") startQuick();
     else if (mode === "custom") { const qs = unit ? sample(examPool().filter(q => q.unit === unit), n) : sampleWeighted(n); runSession({ mode, label: S ? S.label : "Custom session", qs, explainNow, timed, unit }); }
     else startDomain(unit, { n, mode, label: mode === "reco" ? "Recommended · " + DOM(unit).short : undefined });
@@ -912,6 +951,14 @@ $("mode-quick").addEventListener("click", () => startQuick());
 $("mode-ready").addEventListener("click", () => startReady());
 $("mode-domain").addEventListener("click", () => togglePicker());
 $("pickerClose").addEventListener("click", () => togglePicker(false));
+$("mode-mock").addEventListener("click", () => toggleMockPicker());
+$("mockPickerClose").addEventListener("click", () => toggleMockPicker(false));
+function toggleMockPicker(force){
+  const p = $("mockPicker"), open = typeof force === "boolean" ? force : p.hidden;
+  p.hidden = !open;
+  $("mode-mock").setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) { renderMockPicker(); p.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+}
 $("customStart").addEventListener("click", () => startCustom());
 function togglePicker(force){
   const p = $("picker"), open = typeof force === "boolean" ? force : p.hidden;
@@ -931,6 +978,8 @@ loadPool();
   else if (mode === "ready") startReady();
   else if (mode === "domain" && n >= 1 && n <= 7) startDomain(n);
   else if (mode === "domain") { togglePicker(true); }
+  else if (mode === "mock" && (params.get("mock") === "1" || params.get("mock") === "2")) startMock("m0" + params.get("mock"));
+  else if (mode === "mock") { toggleMockPicker(true); }
   else if (mode === "custom") { $("custom").open = true; $("custom").scrollIntoView(); }
 })();
 
