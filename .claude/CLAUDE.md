@@ -91,6 +91,26 @@ DEA-C01 hub drills from all five `aws-practice-exam-NN.html` files (the
 readiness quiz tags questions `d1` to `d4` by domain) and shows Full mock as
 coming soon until sealed 65-question, 130-minute mocks ship.
 
+## Author identity and trust pages
+
+The author is visible site-wide. `assets/author-card.js` renders the shared
+author partial (photo `assets/moosa.jpg`, name, title line, link to `/about`)
+into any element carrying `data-author-card` (`data-variant="byline"` for the
+smaller blog form); the site has no include mechanism, so this JS block is the
+partial. The Person entity (`https://certify.courses/about#moosa`, sameAs
+LinkedIn and both store listings) is the `author` on every blog Article and
+every course-home Course schema, and the paid course homes also carry a
+Product/Offer with that course's own price. Root-level trust pages are served
+extensionless (see `CLEAN_ROOT` in `scripts/check_seo.py`): `/about` (first
+person allowed), `/how-lessons-are-made` (process page, errata, and the
+Netlify "report-question" form that the practice hubs deep-link with
+`?course=&q=&text=`), and `/pricing` (per-course table plus FAQ; never a
+single sitewide price, use "from $9.99" where a summary is needed).
+`/practice/` lists the hubs. Nav everywhere is Courses, Practice, How it's
+made, Blog, About; the structured footer is generated from one template and
+must stay identical across the pages that carry it. Lessons, exams, blog post
+bodies and course marketing copy stay third person.
+
 ## Brand mark and icons
 
 The brand mark is the app icon's serif C (Fraunces) in lavender with a flat
