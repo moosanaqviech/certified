@@ -140,10 +140,12 @@ or linking to a non-canonical form, and runs in CI as `guard-seo`.
 
 The iOS and Android app is a Capacitor WebView that loads the live site, so
 pages render exactly as on the web. The app appends `?app=1` to every URL it
-opens. Course homes and practice hubs carry a small `<head>` script that
+opens. The root catalog, course homes and practice hubs carry a small
+`<head>` script that
 reads that flag, remembers it in `sessionStorage` under `cc_app` for the rest
 of the WebView session, and adds `in-app` to `<html>`; their CSS hides the
-site top bar with `.in-app .topbar{display:none}`. The readiness quizzes'
+site top bar with `.in-app .topbar{display:none}` (the catalog hides its
+`.site-header` the same way). The readiness quizzes'
 `isApp()` reads the same flag to suppress lead events inside the app. A new
 course home or hub must carry both the detector and the hide rule (copy them
 from an existing course index.html). Lessons and exams are frozen engines and
