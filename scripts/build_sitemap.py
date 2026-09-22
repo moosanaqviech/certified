@@ -113,6 +113,12 @@ def collect():
     # /get.html is a noindex redirect stub and is deliberately kept out.
     yield f"{BASE}/app.html", "app.html", "page"
 
+    # Root-level trust pages, served extensionless (mirrors CLEAN_ROOT in
+    # scripts/check_seo.py).
+    for name in ("about", "how-lessons-are-made", "pricing"):
+        if os.path.exists(f"{name}.html"):
+            yield f"{BASE}/{name}", f"{name}.html", "page"
+
     yield f"{BASE}/blog/", "blog/index.html", "index"
     for name in sorted(os.listdir("blog")):
         if not name.endswith(".html") or name == "index.html":
@@ -139,8 +145,10 @@ def collect():
     # Practice hubs (one per cert, see .claude/practice-hub-spec.md). Free
     # course-level pages served extensionless, like the readiness quizzes.
     if os.path.isdir("practice"):
+        if os.path.exists("practice/index.html"):
+            yield f"{BASE}/practice/", "practice/index.html", "index"
         for name in sorted(os.listdir("practice")):
-            if name.endswith(".html"):
+            if name.endswith(".html") and name != "index.html":
                 yield f"{BASE}/practice/{name[:-5]}", f"practice/{name}", "quiz"
 
     for name in sorted(os.listdir("legal")):

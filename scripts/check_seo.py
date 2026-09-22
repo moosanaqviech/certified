@@ -22,6 +22,7 @@ The site's URL conventions (these mirror scripts/build_sitemap.py):
 
     index.html          ->  /
     <dir>/index.html    ->  /<dir>/
+    about.html etc.     ->  /about                (extensionless, see CLEAN_ROOT)
     blog/<slug>.html    ->  /blog/<slug>          (extensionless)
     ready/<slug>.html   ->  /ready/<slug>         (extensionless)
     practice/<slug>.html -> /practice/<slug>      (extensionless)
@@ -50,6 +51,8 @@ SKIP_FILES = {"googleef9aef6f3bc362a7.html", "blog/POST_TEMPLATE.html",
 NOINDEX_DIRS = {"unlock"}
 
 CLEAN_DIRS = {"blog", "ready", "practice"}  # published extensionless
+# Root-level trust pages, also published extensionless (/about, /pricing, ...).
+CLEAN_ROOT = {"about.html", "pricing.html", "how-lessons-are-made.html"}
 
 CANON_RE = re.compile(r'<link rel="canonical"[^>]*href="([^"]*)"')
 HREF_RE = re.compile(r'href="([^"]*)"')
@@ -75,6 +78,8 @@ def canonical_for(rel):
         return f"{BASE}/" + "".join(f"{p}/" for p in parts[:-1])
     if parts[0] in CLEAN_DIRS and len(parts) > 1:
         return f"{BASE}/{'/'.join(parts[:-1])}/{parts[-1][:-5]}"
+    if len(parts) == 1 and rel in CLEAN_ROOT:
+        return f"{BASE}/{rel[:-5]}"
     return f"{BASE}/{rel}"
 
 
