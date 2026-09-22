@@ -105,6 +105,12 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     .recall{display:none;}
   }
 
+  /* ---------- bridge nudge into Practice ---------- */
+  .bridge{margin:26px 4px 0;font-size:13px;color:var(--ink-soft);background:#0d0f13;border:1px dashed rgba(255,255,255,0.16);border-radius:12px;padding:13px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .bridge svg{flex:none;color:var(--gold);}
+  .bridge a{color:var(--gold);text-decoration:none;font-weight:600;white-space:nowrap;}
+  .bridge a:hover{text-decoration:underline;}
+
   /* ---------- unit ---------- */
   .unit{margin-top:30px;}
   .unit-head{display:flex;align-items:baseline;gap:12px;padding:0 4px 12px;border-bottom:1px solid var(--line);margin-bottom:6px;}
@@ -257,14 +263,14 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   </div>
   <div class="toggle" role="tablist" aria-label="Course view">
     <span role="tab" aria-selected="true" aria-current="page">Learn</span>
-    <span role="tab" aria-selected="false" aria-disabled="true">Practice <small>soon</small></span>
+    <a role="tab" aria-selected="false" href="../practice/aws-dea-c01">Practice</a>
   </div>
 </div></header>
 
 <div class="app">
 
   <div id="units"></div>
-
+  <div class="bridge" id="bridge"></div>
 
 </div>
 
@@ -482,6 +488,14 @@ function nextChapter(){
   for(const u of UNITS){ for(const l of u.lessons){ if(l.file && !isDone(l.id)) return {u,l}; } }
   return null;
 }
+function renderBridge(){
+  const el = document.getElementById("bridge");
+  if(!el) return;
+  const nx = nextChapter();
+  const u = nx ? nx.u : UNITS[UNITS.length-1];
+  el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    <span>Finished a recall check? Take that momentum into <a href="../practice/aws-dea-c01?mode=domain&amp;domain=${u.n}">Domain focus: ${u.title} ›</a></span>`;
+}
 function recallChip(id, done){
   if(done) return `<span class="recall done">Recall check done</span>`;
   const nx = nextChapter();
@@ -539,6 +553,8 @@ function render(){
     }
     root.appendChild(sec);
   });
+
+  renderBridge();
 
   // wire the "mark complete" checkboxes without triggering the link
   root.querySelectorAll(".check").forEach(btn=>{
