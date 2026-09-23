@@ -78,8 +78,9 @@ per cert slug (`practice/databricks-de-associate.html`, served at
 and readiness payloads at runtime (never edits them) and keeps progress in
 localStorage under `certify.practice.<cert-slug>`. The course home links to
 it through the Learn / Practice toggle; the hub's Learn segment links back to
-the course home. DE Associate, DE Professional, ML Associate and AWS DEA-C01
-(`practice/aws-dea-c01.html`) have hubs.
+the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
+(`practice/aws-dea-c01.html`) and GenAI Engineer Associate
+(`practice/databricks-genai-associate.html`) have hubs.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub shows Full mock as
 coming soon until its sealed mocks ship; the ML Associate hub uses the two
@@ -89,7 +90,14 @@ objective, their own scenarios) as its mock pool and drills from exams 01 to
 drill pool is authored (the readiness check and the mocks do cover it). The
 DEA-C01 hub drills from all five `aws-practice-exam-NN.html` files (the
 readiness quiz tags questions `d1` to `d4` by domain) and shows Full mock as
-coming soon until sealed 65-question, 130-minute mocks ship.
+coming soon until sealed 65-question, 130-minute mocks ship. The GenAI
+Engineer Associate hub drills from the four section exams
+(`genai-practice-exam-01` to `04`, tagged to a section by each question's
+`Q# · Ch NN` header), uses the three full mocks (`05` to `07`, 45 questions,
+90 minutes) as its mock pool, and, having no `/ready` diagnostic, runs its
+Readiness check as a weighted 12-question draw from the section exams. Its
+bar weights are derived from objective counts (the guide publishes none), so
+they read "% of objectives", never "% of exam".
 
 ## Author identity and trust pages
 
