@@ -106,6 +106,22 @@ person allowed), `/how-lessons-are-made` (process page, errata, and the
 Netlify "report-question" form that the practice hubs deep-link with
 `?course=&q=&text=`), and `/pricing` (per-course table plus FAQ; never a
 single sitewide price, use "from $9.99" where a summary is needed).
+
+Question reports: the `report-question` form is a Netlify Form, so every
+submission is stored in the Netlify dashboard (Forms, report-question) and
+also emailed to the owner by `netlify/functions/submission-created.mjs`.
+Netlify runs a function with that exact name after each verified form
+submission, so the filename is the trigger: never rename it and never give it
+a `config.path`. It sends through the Resend HTTP API with plain `fetch` (no
+dependency), ignores forms other than `report-question`, and sets the
+reporter's email as Reply-To when one was left. It reads three Netlify env
+vars: `RESEND_API_KEY` (secret), `REPORT_EMAIL_TO` (the owner's inbox,
+comma-separated allowed) and `REPORT_EMAIL_FROM` (a sender on a
+Resend-verified domain; if unset it falls back to Resend's onboarding sender,
+which only delivers to the Resend account owner). With the key or recipient
+unset it no-ops and the dashboard copy still exists. If a new form is added,
+keep it out of this function or branch on `form_name`. Delivery failures show
+in the Netlify function logs for `submission-created`.
 `/practice/` lists the hubs. Nav everywhere is Courses, Practice, How it's
 made, Blog, About; the structured footer is generated from one template and
 must stay identical across the pages that carry it. Lessons, exams, blog post
