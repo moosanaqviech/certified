@@ -91,11 +91,12 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | AWS Machine Learning Engineer Associate exam cost, format and question types | "what's on the MLA-C01 exam" | Yes | blog/mla-c01-exam-cost-format-question-types.html |
 | 5 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | Yes | blog/sagemaker-mla-c01-exam.html |
 | 6 | Study plan and prep time for the updated AWS Machine Learning Engineer Associate exam (MLA-C02: beta, new GenAI and FM scope, 28/24/24/24 weights) | "MLA-C02 study plan" / "how long to prepare for MLA-C02" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate-mla-c02.html |
-| 7 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | No | |
+| 7 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | Yes | blog/aws-ai-practitioner-vs-machine-learning-engineer-associate.html |
 | 8 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | No | |
 | 9 | Complete AWS Machine Learning Engineer Associate (MLA-C02) certification guide (pillar) | "aws machine learning engineer associate mla-c02 certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c02-certification-guide.html |
 | 10 | MLA-C02 exam guide breakdown: domains and weighting | "MLA-C02 exam domains" | Yes | blog/mla-c02-exam-guide-domains-weighting.html |
 | 11 | AWS Machine Learning Engineer Associate exam cost, format and question types (MLA-C02) | "what's on the MLA-C02 exam" | Yes | blog/mla-c02-exam-cost-format-question-types.html |
+| 12 | MLA-C01 vs MLA-C02: what changes on 29 Sep 2026 and which version to take | "mla-c01 vs mla-c02" / "mla-c02 changes" | Yes | blog/mla-c01-vs-mla-c02.html |
 
 ## Databricks Machine Learning Associate
 
@@ -106,8 +107,8 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the Databricks Machine Learning Associate exam | "databricks ml associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-machine-learning-associate.html |
 | 4 | MLflow for the Databricks Machine Learning Associate exam explained | "mlflow databricks ml associate exam" | Yes | blog/mlflow-databricks-machine-learning-associate-exam.html |
 | 5 | AutoML and Feature Store on Databricks explained | "databricks automl feature store" | Yes | blog/databricks-automl-feature-store-explained.html |
-| 6 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | No | |
-| 7 | Databricks ML Associate vs AWS Machine Learning Engineer Associate: how they compare | "databricks vs aws machine learning certification" | No | |
+| 6 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | Yes | blog/databricks-ml-associate-vs-data-engineer-associate.html |
+| 7 | Databricks ML Associate vs AWS Machine Learning Engineer Associate: how they compare | "databricks vs aws machine learning certification" | Yes | blog/databricks-ml-associate-vs-aws-machine-learning-engineer-associate.html |
 
 ## AWS Certified Cloud Practitioner (CLF-C02)
 
@@ -131,7 +132,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | Yes | blog/aif-c01-exam-cost-format-question-types.html |
 | 5 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | Yes | blog/amazon-bedrock-generative-ai-aif-c01-exam.html |
 | 6 | AWS AI Practitioner vs Cloud Practitioner (CLF-C02): which foundational cert first | "aws ai practitioner vs cloud practitioner" | No | |
-| 7 | AWS AI Practitioner vs Machine Learning Engineer Associate: foundational vs associate | "aif-c01 vs mla-c01" | No | |
+| 7 | AWS AI Practitioner vs Machine Learning Engineer Associate: foundational vs associate | "aif-c01 vs mla-c01" | Yes | blog/aws-ai-practitioner-vs-machine-learning-engineer-associate.html |
 
 ## Microsoft Azure Fundamentals (AZ-900)
 
@@ -142,7 +143,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the Azure Fundamentals exam | "az-900 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-azure-fundamentals-az-900.html |
 | 4 | Core Azure services to know for the AZ-900 exam | "azure services for az-900 exam" | Yes | blog/core-azure-services-az-900-exam.html |
 | 5 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | No | |
-| 6 | AZ-900 vs AWS Cloud Practitioner: which cloud fundamentals cert to take | "az-900 vs aws cloud practitioner" | No | |
+| 6 | AZ-900 vs AWS Cloud Practitioner: which cloud fundamentals cert to take | "az-900 vs aws cloud practitioner" | Yes | blog/az-900-vs-aws-cloud-practitioner.html |
 | 7 | Is Azure Fundamentals worth it in 2026 | "is az-900 worth it" | No | |
 
 ---
