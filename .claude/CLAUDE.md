@@ -23,6 +23,12 @@ chapters across 6 units are live and cover all 56 objectives, and all seven
 genai-practice-exam-NN.html exams (01-07) are live. Exams map to objectives
 and SAMPLE them: the real exam is 45 scored questions against 56 objectives,
 so one full mock cannot cover them all).
+Next up: AWS Certified AI Practitioner (AIF-C01) (see
+curriculum-index-aws-aif-c01.md and cert-config-aws-aif-c01.md; the index is
+DRAFT, transcribed from the official exam guide PDF version 1.1 dated 30 Apr
+2026, 58 chapters across 5 units covering all 69 objectives, awaiting lock. No
+lessons yet; they go in `aws-ai-practitioner/` with the
+`aif-practice-exam-NN.html` exam prefix).
 
 ## Site structure
 
