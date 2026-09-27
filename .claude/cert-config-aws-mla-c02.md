@@ -45,7 +45,7 @@ official MLA-C02 exam guide at docs.aws.amazon.com).
     Lessons: lesson-NN-name.html, numbered 01-76 per the curriculum index.
     Practice exams: mla-c02-practice-exam-NN.html (slug prefix, per the
       convention that only the first course keeps the bare
-      practice-exam-NN.html; the sibling MLA-C01 course uses mla-c01-).
+      practice-exam-NN.html; the retired MLA-C01 course used mla-c01-).
     All files live in aws-machine-learning-engineer-associate-mla-c02/.
 
 ## Terminology rules

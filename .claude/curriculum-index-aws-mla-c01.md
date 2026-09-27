@@ -1,6 +1,9 @@
 # Curriculum index: AWS Certified Machine Learning Engineer Associate (MLA-C01)
 
-Status: DRAFT (not yet locked). Confirm placement before authoring lessons.
+Status: RETIRED (27 Sep 2026). MLA-C01 had its last English sitting on 28 Sep 2026 and no
+lesson was ever authored, so the course was withdrawn: its folder is deleted, its catalog,
+pricing and footer rows are gone, and `/aws-machine-learning-engineer-associate-mla-c01/*`
+301s to the MLA-C02 course in `_redirects`. Kept for the record only; do not author from it.
 Source: Mirrors the MLA-C01 exam guide as published at docs.aws.amazon.com (in use until September 28, 2026).
 Exam guide: https://docs.aws.amazon.com/aws-certification/latest/machine-learning-engineer-associate-01/machine-learning-engineer-associate-01.html
 

@@ -45,17 +45,13 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-generative-ai-engineer-associate/` folder as they're authored
   (see curriculum-index-databricks-genai-associate.md). Exam files use the
   `genai-practice-exam-NN.html` prefix.
-- AWS Machine Learning Engineer Associate has two courses, one per exam
-  version, each with its own folder and course index page:
-  `aws-machine-learning-engineer-associate-mla-c01/` (MLA-C01, offered in
-  English until 28 Sep 2026, see curriculum-index-aws-mla-c01.md) and
-  `aws-machine-learning-engineer-associate-mla-c02/` (MLA-C02, delivery
-  from 29 Sep 2026, see curriculum-index-aws-mla-c02.md). Both indexes are
-  DRAFT (chapter placement derived from the official exam guides, not yet
-  locked). The MLA-C02 index has a third level between unit and chapter:
-  each unit is split into modules that mirror the exam guide's task
-  statements (Module 1.1 is Task Statement 1.1), the course index.html
-  nests `modules:[...]` inside each unit, and cover eyebrows read
+- AWS Machine Learning Engineer Associate (MLA-C02, delivery from 29 Sep
+  2026) lives in `aws-machine-learning-engineer-associate-mla-c02/` (see
+  curriculum-index-aws-mla-c02.md, DRAFT: chapter placement derived from the
+  official exam guide, not yet locked). The index has a third level between
+  unit and chapter: each unit is split into modules that mirror the exam
+  guide's task statements (Module 1.1 is Task Statement 1.1), the course
+  index.html nests `modules:[...]` inside each unit, and cover eyebrows read
   "Unit N · Module N.M · Chapter NN". MLA-C02 is COMPLETE: all 76 chapters
   across Units 1 to 4 are live (Unit 1 chapters 01 to 20, Unit 2 chapters
   21 to 39, Unit 3 chapters 40 to 59, Unit 4 chapters 60 to 76), and each
@@ -66,10 +62,14 @@ each course). Each course lives in its own top-level folder and has its own
   mock exams" section of the course index). The course and its exams are now
   content-complete (see cert-config-aws-mla-c02.md for the badge,
   terminology, and palette registry). The last chapter of the course (76)
-  carries `next` pointing at the Unit 4 practice exam. MLA-C01 has no lessons yet;
-  its chapters are listed as "Coming soon" with `file:null`. The practice
-  exams use the `mla-c01-practice-exam-NN.html` and
-  `mla-c02-practice-exam-NN.html` prefixes.
+  carries `next` pointing at the Unit 4 practice exam. The practice exams
+  use the `mla-c02-practice-exam-NN.html` prefix.
+  The previous exam version, MLA-C01, was RETIRED on 27 Sep 2026 (last
+  English sitting 28 Sep 2026, no lesson ever authored): its folder is
+  deleted and `/aws-machine-learning-engineer-associate-mla-c01/*` 301s to
+  the MLA-C02 course in `_redirects`. curriculum-index-aws-mla-c01.md is
+  kept for the record only. The MLA-C01 blog posts stay (they are exam
+  content, and the vs-MLA-C02 post explains the switch).
 
 Practice hubs (the course-level Practice face, spec in
 `.claude/practice-hub-spec.md`) live in the root `practice/` folder, one file
