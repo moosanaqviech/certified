@@ -549,12 +549,16 @@ cannot cover every objective.
     5 to 7 require full coverage and are a sealed pool, never drawn into the
     Practice hub's drills.
 
-    ENGINE CONFLICT, same decision as the GenAI Engineer Associate course:
-    the real exam has multiple-response, ordering and matching items, and
-    our engine is single-best-answer with 4 options (a CLAUDE.md hard rule).
-    Recommendation: keep single-answer and say plainly on the course home
-    that the real exam adds those formats, matching what the GenAI course
-    does.
+    ENGINE COVERAGE: the exam engine already supports single-answer and
+    multiple-response questions (an array `correct` switches a question to
+    multi-select; see test-authoring-guide.md section 4, and the DEA-C01 and
+    MLA-C02 exams already use it). Use multi-response items where the
+    concept genuinely needs two answers, within the validator's roughly
+    one-quarter share. The engine does NOT support the guide's ordering and
+    matching formats. Decision on record: ship AIF-C01 on the current engine
+    and say on the course home that the real exam also has ordering and
+    matching items; adding those two formats is a product-wide engine
+    change, sized separately.
 
 ===============================================================================
 Terminology rules (see cert-config-aws-aif-c01.md for the full list)
