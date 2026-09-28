@@ -39,8 +39,8 @@ Note on a prior error: this index previously named Section 2 "ML Workflows" and
 claimed 45 scored questions and a 70% pass bar. All three were wrong, inherited
 from third-party reproductions that blended guide editions. Corrected here.
 
-Structure: 4 units mirroring the 4 official sections. 30 chapters are authored
-and live; the gap chapters listed at the end are outstanding. Trade-off lessons
+Structure: 4 units mirroring the 4 official sections. All 38 chapters are
+authored and live, including the gap chapters 31 to 38. Trade-off lessons
 are flagged (TO). Chapters marked (OFF) are supporting material that no official
 objective covers: keep them, but never let them displace an objective.
 
