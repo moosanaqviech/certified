@@ -16,7 +16,18 @@ placed at the end of Units 1, 2, 2 and 4 respectively, so play order inside a
 unit is not strictly numeric. The five `aws-practice-exam-NN.html` exams carry
 one question per chapter in scope, 14/25/33/40/40. Sealed full-length mocks
 are not yet authored.)
-In progress: Databricks Machine Learning Associate (see
+In progress: Databricks Data Analyst Associate (see
+curriculum-index-databricks-data-analyst-associate.md and
+cert-config-databricks-data-analyst-associate.md; the index is LOCKED,
+verified against the official 30 Oct 2025 exam guide PDF on 28 Sep 2026: 9
+units, 43 chapters, one per objective. Chapters 01 to 10 (Units 1 to 3) and
+Practice Exam 1 (da-practice-exam-01, Units 1 to 3) are live; chapters 11 to
+43 are listed "Coming soon" with file:null, and Practice Exams 2 to 4 plus
+the three full mocks (05 to 07) are still to author. The course launched
+free and has no practice hub or readiness quiz yet; the course home's
+Practice tab reads "soon". Exam guide names come first, with the 2026 docs
+renames mentioned once each, see the cert config), and
+Databricks Machine Learning Associate (see
 curriculum-index-databricks-ml-associate.md and
 cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
 the official 1 Mar 2025 exam guide PDF. All 30 authored lessons are live and
@@ -56,6 +67,12 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-generative-ai-engineer-associate/` folder as they're authored
   (see curriculum-index-databricks-genai-associate.md). Exam files use the
   `genai-practice-exam-NN.html` prefix.
+- Databricks Data Analyst Associate lessons/exams go in a sibling
+  `databricks-data-analyst-associate/` folder as they're authored (see
+  curriculum-index-databricks-data-analyst-associate.md). Exam files use
+  the `da-practice-exam-NN.html` prefix. Lessons are built on the v2
+  template (NAV, step builds, animated covers); the course home lists every
+  chapter and shows unauthored ones as "Coming soon".
 - AWS Machine Learning Engineer Associate (MLA-C02, delivery from 29 Sep
   2026) lives in `aws-machine-learning-engineer-associate-mla-c02/` (see
   curriculum-index-aws-mla-c02.md, DRAFT: chapter placement derived from the
@@ -337,7 +354,8 @@ starting at 01, per that course's curriculum index). Practice exams:
 `practice-exam-NN.html` for Associate, `pro-practice-exam-NN.html` for
 Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate,
 `ml-practice-exam-NN.html` for ML Associate, `genai-practice-exam-NN.html`
-for Generative AI Engineer Associate.
+for Generative AI Engineer Associate, `da-practice-exam-NN.html` for Data
+Analyst Associate.
 Sealed full-length mocks use `mock-exam-NN.html` (DE Associate has 01 and
 02: 45 questions, 90 minutes, sampled across the sections at the official
 weights, generated from the frozen test template). Their questions are a

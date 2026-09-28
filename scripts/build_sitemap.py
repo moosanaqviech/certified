@@ -63,6 +63,7 @@ OPEN_COURSES = [
     "aws-machine-learning-engineer-associate-mla-c02",
     "databricks-machine-learning-associate",
     "databricks-generative-ai-engineer-associate",
+    "databricks-data-analyst-associate",
 ]
 
 COURSES = OPEN_COURSES + list(FREE_STEMS)
