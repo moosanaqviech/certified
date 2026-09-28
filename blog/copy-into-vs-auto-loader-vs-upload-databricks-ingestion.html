@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COPY INTO vs Auto Loader vs UI Upload: The Five Ways Data Gets Into Databricks</title>
+<meta name="description" content="COPY INTO for a bounded set of files, Auto Loader as a streaming table for files that keep arriving, UI upload for a one-off, Lakeflow Connect for SaaS, Delta Sharing for data you do not own.">
+<link rel="canonical" href="https://certify.courses/blog/copy-into-vs-auto-loader-vs-upload-databricks-ingestion">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="COPY INTO vs Auto Loader vs UI Upload: The Five Ways Data Gets Into Databricks">
+<meta property="og:description" content="COPY INTO for a bounded set of files, Auto Loader as a streaming table for files that keep arriving, UI upload for a one-off, Lakeflow Connect for SaaS, Delta Sharing for data you do not own.">
+<meta property="og:url" content="https://certify.courses/blog/copy-into-vs-auto-loader-vs-upload-databricks-ingestion">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  .tiers{display:grid;gap:12px;grid-template-columns:1fr;margin:6px 0;}
+  @media(min-width:600px){.tiers{grid-template-columns:repeat(3,1fr);}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 18px;text-align:center;}
+  .tier.mid{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .tier b{display:block;font-family:var(--display);font-size:30px;font-weight:600;color:var(--gold);line-height:1;margin-bottom:6px;}
+  .tier .who{font-size:13.5px;color:var(--ink-soft);}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:8px;}
+  .plan .wk{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .plan .wk:last-child{border-bottom:none;}
+  .plan .wk .lbl{flex:0 0 76px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--gold);padding-top:1px;}
+  .plan .wk .desc{font-size:15px;color:var(--ink-soft);}
+  .plan .wk .desc b{color:var(--ink);font-weight:600;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-data-analyst-associate-certification-guide">Data Analyst Guide</a><span>&rsaquo;</span>
+    <span>Ingestion paths</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Data Analyst &middot; Trade-off</div>
+    <h1>COPY INTO vs Auto Loader vs UI Upload: The Five Ways Data Gets Into Databricks</h1>
+    <p class="lede">Data gets into Databricks by one of five paths: the <strong>UI upload</strong> for a one-off file, <strong>COPY INTO</strong> for a bounded set of files you may reload, <strong>Auto Loader</strong> as a streaming table for files that keep arriving, <strong>Lakeflow Connect</strong> for SaaS applications and databases, and <strong>Delta Sharing</strong> or Marketplace for data another organization maintains. Two questions pick the path: who owns the data, and does it arrive once or keep arriving.</p>
+    <p class="updated">Last updated September 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+    <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">If the data is yours and arrives once, upload it or COPY INTO it. If it is yours and keeps arriving, Auto Loader behind a streaming table. If it lives in an application or database, a Lakeflow Connect managed connector. If someone else maintains it, share it with Delta Sharing or install it from Marketplace, and never copy what another organization keeps current.</p>
+  </section>
+
+  <section id="files">
+    <h2>Your own files: upload, COPY INTO, Auto Loader</h2>
+    <h3>UI upload</h3>
+    <p>The Create or modify table dialog takes a file from your machine, infers a schema you can override in the preview (turn that zip code back into a string before it loses its leading zeros), and creates a managed Delta table in the catalog and schema you pick. It can also append to an existing table. It is the right path exactly once per file: a spreadsheet from a manager, a reference list, a sample to explore.</p>
+    <h3>COPY INTO</h3>
+    <p><code>COPY INTO finance.bronze.prices FROM 's3://vendor/prices/' FILEFORMAT = PARQUET</code> loads the files at a path into an existing Delta table and, crucially, is <strong>idempotent</strong>: files it has already loaded are skipped, so re-running after a failure is safe, and a specific file can be forced to reload. It is the fit for a bounded set, a few thousand files at most, that arrives on a cadence you control: the quarterly drop, the monthly extract.</p>
+    <h3>Auto Loader as a streaming table</h3>
+    <p><code>CREATE STREAMING TABLE bronze.events AS SELECT * FROM STREAM read_files('s3://bucket/events/')</code> is Auto Loader from Databricks SQL. It discovers new files as they land, processes each one exactly once, evolves the schema when new columns appear, and scales to millions of files without listing the folder every time. It is the path for data that keeps arriving: clickstream, sensor drops, an application that writes a file every few minutes. The same feature runs inside Lakeflow Spark Declarative Pipelines for engineering teams.</p>
+  </section>
+
+  <section id="others">
+    <h2>Someone else's data: Lakeflow Connect, Delta Sharing, Marketplace</h2>
+    <h3>Lakeflow Connect</h3>
+    <p>Managed connectors for SaaS applications and databases: point-and-click pipelines that pull from the source's API or change feed on a schedule and write streaming tables, with the credentials held in a Unity Catalog connection. Partner Connect provisions Fivetran and other ingestion partners the same way. Writing your own API code against the Files API and SDKs is the last resort when no connector exists.</p>
+    <h3>Delta Sharing</h3>
+    <p>A provider creates a share, adds tables, and grants a recipient. Databricks-to-Databricks recipients mount the share as a read-only catalog with no tokens to manage; open-protocol recipients get a credential file and read through Spark, pandas or a BI connector. Nothing is copied: the provider's changes appear in place, and access ends when the share is revoked. The 2026 documentation calls the feature OpenSharing; the exam guide says Delta Sharing.</p>
+    <h3>Marketplace</h3>
+    <p>Delta Sharing with a storefront. Find the listing, get access, name the catalog, query. The provider keeps the data current, which is why the monthly CSV download from a vendor's website is the wrong answer whenever a Marketplace listing exists.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>Signal in the scenario</th><th class="col-h">Path</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><th>"A manager sends a spreadsheet"</th><td class="col-h">UI upload</td><td>One file, once, schema fixed in the preview</td></tr>
+        <tr><th>"A few thousand files, reload occasionally"</th><td class="col-h">COPY INTO</td><td>Idempotent, bounded, easy to force a reload</td></tr>
+        <tr><th>"New files every few minutes, millions over time"</th><td class="col-h">Auto Loader (streaming table)</td><td>Incremental, exactly once, schema evolution</td></tr>
+        <tr><th>"It lives in Salesforce" or "in our Postgres"</th><td class="col-h">Lakeflow Connect</td><td>A managed connector beats an API you call yourself</td></tr>
+        <tr><th>"A partner keeps their tables current for us"</th><td class="col-h">Delta Sharing</td><td>Never copy what someone else maintains</td></tr>
+        <tr><th>"We want the census data"</th><td class="col-h">Marketplace</td><td>A listing, not a pipeline</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation on ingestion, COPY INTO, Auto Loader, streaming tables in Databricks SQL, Lakeflow Connect and OpenSharing.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> Databricks' own guidance is to start with the most managed layer that fits: a connector before a pipeline, a pipeline before hand-written code. When two options both work, the exam wants the one that copies less and needs less babysitting.</p></div>
+    <p>The common distractors are COPY INTO offered for a folder that never stops growing (it works, but Auto Loader is cheaper and incremental), a streaming table offered for a one-off spreadsheet, and any answer that downloads or re-exports data a share would have delivered in place. Federation is not on this list on purpose: it queries a remote database without ingesting it, which is a different question.</p>
+  </section>
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between COPY INTO and Auto Loader in Databricks?</summary><div class="fa"><p>COPY INTO loads a bounded set of files from a path into a Delta table and skips files it has already loaded, so it is idempotent and easy to re-run. Auto Loader, used as a streaming table, discovers and processes new files incrementally as they arrive and scales to millions of files with schema evolution.</p></div></details>
+      <details><summary>When should I use the Databricks UI to upload a file?</summary><div class="fa"><p>For a one-off file such as a spreadsheet from a colleague. The upload dialog infers the schema, lets you override column types before the table is created, and can append to an existing table, but it is a manual path, not a pipeline.</p></div></details>
+      <details><summary>How do I get data from Salesforce or a database into Databricks?</summary><div class="fa"><p>Use a Lakeflow Connect managed connector, which pulls from the source on a schedule into streaming tables with credentials held in a Unity Catalog connection. Partner Connect provisions third-party ingestion tools the same way, and custom API code is the last resort.</p></div></details>
+      <details><summary>Should I copy a partner’s data into Databricks or share it?</summary><div class="fa"><p>Share it. Delta Sharing (called OpenSharing in the 2026 docs) mounts the provider’s tables as a read-only catalog with no copy, so their updates appear in place and access ends when the share is revoked. Marketplace is the same mechanism for published data products.</p></div></details>
+    </div>
+  </section>
+
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>The five ingestion paths are a trade-off chapter in the Data Analyst Associate course, followed by a chapter on the UI upload itself.</p>
+    <a href="../databricks-data-analyst-associate/lesson-09-five-ways-in.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-data-analyst-associate-certification-guide">The complete Databricks Data Analyst Associate certification guide &rarr;</a>
+    <a href="streaming-tables-vs-materialized-views-databricks-sql">Streaming tables vs materialized views in Databricks SQL &rarr;</a>
+    <a href="managed-vs-external-tables-unity-catalog">Managed vs external tables in Unity Catalog &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"COPY INTO vs Auto Loader vs UI Upload: The Five Ways Data Gets Into Databricks","description":"COPY INTO for a bounded set of files, Auto Loader as a streaming table for files that keep arriving, UI upload for a one-off, Lakeflow Connect for SaaS, Delta Sharing for data you do not own.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-09-28","dateModified":"2026-09-28","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/copy-into-vs-auto-loader-vs-upload-databricks-ingestion"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between COPY INTO and Auto Loader in Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "COPY INTO loads a bounded set of files from a path into a Delta table and skips files it has already loaded, so it is idempotent and easy to re-run. Auto Loader, used as a streaming table, discovers and processes new files incrementally as they arrive and scales to millions of files with schema evolution."}},
+{"@type": "Question", "name": "When should I use the Databricks UI to upload a file?", "acceptedAnswer": {"@type": "Answer", "text": "For a one-off file such as a spreadsheet from a colleague. The upload dialog infers the schema, lets you override column types before the table is created, and can append to an existing table, but it is a manual path, not a pipeline."}},
+{"@type": "Question", "name": "How do I get data from Salesforce or a database into Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "Use a Lakeflow Connect managed connector, which pulls from the source on a schedule into streaming tables with credentials held in a Unity Catalog connection. Partner Connect provisions third-party ingestion tools the same way, and custom API code is the last resort."}},
+{"@type": "Question", "name": "Should I copy a partner’s data into Databricks or share it?", "acceptedAnswer": {"@type": "Answer", "text": "Share it. Delta Sharing (called OpenSharing in the 2026 docs) mounts the provider’s tables as a read-only catalog with no copy, so their updates appear in place and access ends when the share is revoked. Marketplace is the same mechanism for published data products."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
