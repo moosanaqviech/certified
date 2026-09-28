@@ -20,13 +20,17 @@ In progress: Databricks Data Analyst Associate (see
 curriculum-index-databricks-data-analyst-associate.md and
 cert-config-databricks-data-analyst-associate.md; the index is LOCKED,
 verified against the official 30 Oct 2025 exam guide PDF on 28 Sep 2026: 9
-units, 43 chapters, one per objective. Chapters 01 to 10 (Units 1 to 3) and
-Practice Exam 1 (da-practice-exam-01, Units 1 to 3) are live; chapters 11 to
-43 are listed "Coming soon" with file:null, and Practice Exams 2 to 4 plus
-the three full mocks (05 to 07) are still to author. The course launched
-free and has no practice hub or readiness quiz yet; the course home's
-Practice tab reads "soon". Exam guide names come first, with the 2026 docs
-renames mentioned once each, see the cert config), and
+units, 43 chapters, one per objective. All 43 chapters and the four section
+exams (da-practice-exam-01 for Units 1 to 3, 02 for Unit 4, 03 for Units 5
+and 6, 04 for Units 7 to 9; 43 questions in all) are live, as are the three
+full mocks (da-practice-exam-05 to 07: 45 questions, 90 minutes, one per
+chapter plus two extra Unit 4 items, new scenarios each, listed in the
+course home's "Full-length mock exams" section; 178 questions in all). The
+mocks are a sealed pool: never reuse their questions in the section exams
+and never draw them into drills. The course launched free, has no
+readiness quiz, and has a practice hub at practice/databricks-da-associate
+(see the practice hubs paragraph below). Exam guide names come first, with
+the 2026 docs renames mentioned once each, see the cert config), and
 Databricks Machine Learning Associate (see
 curriculum-index-databricks-ml-associate.md and
 cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
@@ -107,8 +111,9 @@ and readiness payloads at runtime (never edits them) and keeps progress in
 localStorage under `certify.practice.<cert-slug>`. The course home links to
 it through the Learn / Practice toggle; the hub's Learn segment links back to
 the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
-(`practice/aws-dea-c01.html`) and GenAI Engineer Associate
-(`practice/databricks-genai-associate.html`) have hubs.
+(`practice/aws-dea-c01.html`), GenAI Engineer Associate
+(`practice/databricks-genai-associate.html`) and Data Analyst Associate
+(`practice/databricks-da-associate.html`) have hubs.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub shows Full mock as
 coming soon until its sealed mocks ship; the ML Associate hub uses the two
@@ -127,7 +132,12 @@ Engineer Associate hub drills from the four section exams
 90 minutes) as its mock pool, and, having no `/ready` diagnostic, runs its
 Readiness check as a weighted 12-question draw from the section exams. Its
 bar weights are derived from objective counts (the guide publishes none), so
-they read "% of objectives", never "% of exam".
+they read "% of objectives", never "% of exam". The Data Analyst Associate
+hub is a clone of the GenAI hub with the same mechanics: drills from the four
+section exams (`da-practice-exam-01` to `04`, tagged by each question's
+`Ch NN` header), the three full mocks (`05` to `07`) as its mock pool, a
+weighted 12-question Readiness check drawn from the section exams, and nine
+bars weighted by objective count (the guide publishes no weights).
 
 ## Author identity and trust pages
 
