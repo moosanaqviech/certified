@@ -16,7 +16,7 @@ placed at the end of Units 1, 2, 2 and 4 respectively, so play order inside a
 unit is not strictly numeric. The five `aws-practice-exam-NN.html` exams carry
 one question per chapter in scope, 14/25/33/40/40. Sealed full-length mocks
 are not yet authored.)
-In progress: Databricks Data Analyst Associate (see
+Complete: Databricks Data Analyst Associate (see
 curriculum-index-databricks-data-analyst-associate.md and
 cert-config-databricks-data-analyst-associate.md; the index is LOCKED,
 verified against the official 30 Oct 2025 exam guide PDF on 28 Sep 2026: 9
@@ -30,15 +30,22 @@ mocks are a sealed pool: never reuse their questions in the section exams
 and never draw them into drills. The course launched free, has no
 readiness quiz, and has a practice hub at practice/databricks-da-associate
 (see the practice hubs paragraph below). Exam guide names come first, with
-the 2026 docs renames mentioned once each, see the cert config), and
-Databricks Machine Learning Associate (see
+the 2026 docs renames mentioned once each, see the cert config. Its blog
+cluster is complete: eight posts listed in the Data Analyst Associate block
+of blog/CONTENT_PLAN.md.)
+Complete: Databricks Machine Learning Associate (see
 curriculum-index-databricks-ml-associate.md and
 cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
-the official 1 Mar 2025 exam guide PDF. All 30 authored lessons are live and
-cover 38 of the guide's 48 objectives; 8 gap lessons (numbered from 31) and
-the practice exams using the ml-practice-exam-NN.html prefix are the
-remaining work. Exams map to objectives, not chapters: the real exam is 48
-scored questions against 48 objectives).
+the official 1 Mar 2025 exam guide PDF. All 38 chapters are live and cover
+all 48 objectives: chapters 01 to 30 are the original syllabus and 31 to 38
+are the gap chapters, placed inside Units 1 to 3 by objective, so play order
+inside a unit is not strictly numeric. Five ml-practice-exam-NN.html exams
+are live: 01 to 03 are cumulative section exams (Section 1; Sections 1 and
+2; Sections 1 to 3, with 18, 27 and 42 questions, one per objective) and 04
+and 05 are full mocks (48 questions, 90 minutes, one per objective, their own
+scenarios; 195 questions in all). Exams map to objectives, not chapters: the
+real exam is 48 scored questions against 48 objectives. The course is free
+and has a practice hub at practice/databricks-ml-associate.)
 Complete: Databricks Generative AI Engineer Associate (see
 curriculum-index-databricks-genai-associate.md and
 cert-config-databricks-genai-associate.md; the index is LOCKED, re-verified
