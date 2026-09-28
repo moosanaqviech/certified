@@ -63,13 +63,13 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete Databricks Data Analyst Associate certification guide (pillar) | "databricks data analyst associate certification guide" | Yes | blog/databricks-data-analyst-associate-certification-guide.html |
-| 2 | Data Analyst Associate exam guide breakdown: the nine sections and their objectives | "databricks data analyst associate exam sections" | No | |
+| 2 | Data Analyst Associate exam guide breakdown: the nine sections and their objectives | "databricks data analyst associate exam sections" | Yes | blog/databricks-data-analyst-associate-exam-sections-objectives.html |
 | 3 | Study plan and prep time for the Databricks Data Analyst Associate exam | "databricks data analyst associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-data-analyst-associate.html |
 | 4 | Managed vs external tables in Unity Catalog (trade-off, chapter 03) | "managed vs external tables databricks" | Yes | blog/managed-vs-external-tables-unity-catalog.html |
 | 5 | Streaming tables vs materialized views in Databricks SQL (trade-off, chapter 14) | "streaming table vs materialized view databricks" | Yes | blog/streaming-tables-vs-materialized-views-databricks-sql.html |
 | 6 | Star schema vs snowflake vs data vault on the lakehouse (trade-off, chapter 39) | "star schema vs snowflake vs data vault databricks" | Yes | blog/star-schema-vs-snowflake-vs-data-vault-lakehouse.html |
-| 7 | COPY INTO vs Auto Loader vs UI upload: the five ways data gets into Databricks (trade-off, chapter 09) | "copy into vs auto loader" | No | |
-| 8 | Genie spaces for the Data Analyst exam: components, trusted assets, benchmarks and the 2026 Genie Agent rename | "databricks genie space exam" | No | |
+| 7 | COPY INTO vs Auto Loader vs UI upload: the five ways data gets into Databricks (trade-off, chapter 09) | "copy into vs auto loader" | Yes | blog/copy-into-vs-auto-loader-vs-upload-databricks-ingestion.html |
+| 8 | Genie spaces for the Data Analyst exam: components, trusted assets, benchmarks and the 2026 Genie Agent rename | "databricks genie space exam" | Yes | blog/genie-spaces-databricks-data-analyst-exam.html |
 
 ## Databricks Generative AI Engineer Associate
 
