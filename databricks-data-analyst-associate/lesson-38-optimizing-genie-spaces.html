@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Optimizing Genie Spaces · Databricks Data Analyst Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-data-analyst-associate/lesson-38-optimizing-genie-spaces.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #150a1c;            /* page background */
+    --bg-tint: #2a1438;       /* ambient glow tint behind the card */
+    --accent: #e879f9;        /* topic color: Unit 7 Genie spaces, fuchsia (AI conversation) */
+    --accent-glow: rgba(232,121,249,0.12);  /* correct-answer fill */
+    --accent-ink: #150a1c;    /* text on top of the accent key chip */
+    --deep: #a21caf;          /* deep end of the cover gradient */
+    --warm: #fbbf24;          /* amber, the contrast color */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+/* ============================================================
+   Unit 7 · Chapter 38 · Optimizing Genie Spaces
+   Objective: optimize AI/BI Genie spaces by tracking user questions,
+   response accuracy, and feedback; updating instructions and trusted
+   assets based on stakeholder input; validating accuracy with
+   benchmarks; refreshing Unity Catalog metadata. The improvement loop,
+   the Monitor tab, user feedback, benchmarks and how they score, acting
+   on what you find, keeping Unity Catalog metadata current, and the
+   common failure causes. Closes Unit 7, but Practice Exam 4 covers
+   Units 7 to 9, so NAV points at chapter 39.
+   Sources: docs.databricks.com/aws/en/genie-agents/monitor,
+   /genie-agents/talk-to-genie, /genie-agents/tune-quality,
+   /genie-agents/best-practices, /genie-agents/troubleshooting.
+   Cover animates (a loop of monitor, feedback, update, benchmark, with
+   the accuracy needle rising); step builds on cards 1 and 4.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-39-star-snowflake-data-vault.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c38r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(232,121,249,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(232,121,249,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c38node { animation: c38node 8s ease-in-out infinite; }
+      .c38n2 { animation-delay: 2s; } .c38n3 { animation-delay: 4s; } .c38n4 { animation-delay: 6s; }
+      @keyframes c38node { 0%, 2% { opacity: 0.45; } 8%, 20% { opacity: 1; } 28%, 100% { opacity: 0.45; } }
+      .c38ring { stroke-dasharray: 8 6; animation: c38ring 8s linear infinite; }
+      @keyframes c38ring { to { stroke-dashoffset: -112; } }
+      .c38needle { animation: c38needle 8s ease-in-out infinite; transform-origin: 262px 150px; }
+      @keyframes c38needle { 0%, 6% { transform: rotate(-70deg); } 88%, 100% { transform: rotate(50deg); } }
+      @media (prefers-reduced-motion: reduce) { .c38node, .c38ring, .c38needle { animation: none; opacity: 1; } .c38needle { transform: rotate(50deg); } }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="74" fill="url(#c38r)"/>
+    <circle class="c38ring" cx="110" cy="100" r="58" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+    <g font-family="Hanken Grotesk" font-size="8.5" font-weight="700" text-anchor="middle">
+      <g class="c38node"><rect x="76" y="26" width="68" height="22" rx="6" fill="var(--accent)"/><text x="110" y="41" fill="var(--accent-ink)">Monitor</text></g>
+      <g class="c38node c38n2"><rect x="146" y="89" width="68" height="22" rx="6" fill="var(--accent)"/><text x="180" y="104" fill="var(--accent-ink)">Feedback</text></g>
+      <g class="c38node c38n3"><rect x="76" y="152" width="68" height="22" rx="6" fill="var(--accent)"/><text x="110" y="167" fill="var(--accent-ink)">Update</text></g>
+      <g class="c38node c38n4"><rect x="6" y="89" width="68" height="22" rx="6" fill="var(--accent)"/><text x="40" y="104" fill="var(--accent-ink)">Benchmark</text></g>
+    </g>
+    <path d="M212 150 A 50 50 0 0 1 312 150" fill="none" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M262 150 L 262 108" class="c38needle" stroke="var(--warm)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="262" cy="150" r="4" fill="var(--warm)"/>
+    <text x="262" y="172" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">benchmark accuracy</text>
+    <text x="160" y="192" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Curating a space is iterative. Start small, then loop.</text>
+  </svg>`,
+
+  loop: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g data-step="1">
+        <rect x="8" y="18" width="70" height="52" rx="8" fill="rgba(232,121,249,0.12)" stroke="var(--accent)"/>
+        <text x="43" y="38" fill="var(--accent)" font-size="8.5" font-weight="700">Start small</text>
+        <text x="43" y="51" fill="var(--ink)" font-size="7">few tables, minimal</text>
+        <text x="43" y="61" fill="var(--ink)" font-size="7">instructions, test it</text>
+      </g>
+      <g data-step="2">
+        <path d="M78 44 H 86" stroke="var(--accent)" stroke-width="1.4"/>
+        <rect x="86" y="18" width="70" height="52" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="121" y="38" fill="var(--accent)" font-size="8.5" font-weight="700">Watch</text>
+        <text x="121" y="51" fill="var(--ink)" font-size="7">Monitor tab: questions,</text>
+        <text x="121" y="61" fill="var(--ink)" font-size="7">ratings, review requests</text>
+      </g>
+      <g data-step="3">
+        <path d="M156 44 H 164" stroke="var(--accent)" stroke-width="1.4"/>
+        <rect x="164" y="18" width="70" height="52" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="199" y="38" fill="var(--accent)" font-size="8.5" font-weight="700">Add context</text>
+        <text x="199" y="51" fill="var(--ink)" font-size="7">examples, expressions,</text>
+        <text x="199" y="61" fill="var(--ink)" font-size="7">joins, trusted assets</text>
+      </g>
+      <g data-step="4">
+        <path d="M234 44 H 242" stroke="var(--accent)" stroke-width="1.4"/>
+        <rect x="242" y="18" width="70" height="52" rx="8" fill="var(--surface-2)" stroke="var(--warm)"/>
+        <text x="277" y="38" fill="var(--warm)" font-size="8.5" font-weight="700">Measure</text>
+        <text x="277" y="51" fill="var(--ink)" font-size="7">run the benchmarks,</text>
+        <text x="277" y="61" fill="var(--ink)" font-size="7">then back to Watch</text>
+        <path d="M277 70 V 96 H 43 V 70" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="160" y="112" fill="var(--ink-faint)" font-size="8">Genie never learns from feedback by itself; the editor closes the loop</text>
+      </g>
+    </g>
+  </svg>`,
+
+  bench: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk">
+      <g data-step="1">
+        <rect x="14" y="8" width="292" height="28" rx="7" fill="rgba(232,121,249,0.12)" stroke="var(--accent)"/>
+        <text x="24" y="20" fill="var(--accent)" font-size="8.5" font-weight="700">Question</text>
+        <text x="24" y="31" fill="var(--ink)" font-size="7.6">"What was net revenue by region in Q2?"</text>
+      </g>
+      <g data-step="2">
+        <rect x="14" y="42" width="292" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="24" y="54" fill="var(--accent)" font-size="8.5" font-weight="700">SQL answer (optional but needed for auto-scoring)</text>
+        <text x="24" y="65" fill="var(--ink)" font-size="7.6" font-family="ui-monospace, Menlo, monospace">SELECT region, sum(net_revenue) ... WHERE quarter = '2026-Q2'</text>
+      </g>
+      <g data-step="3">
+        <rect x="14" y="76" width="292" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="24" y="88" fill="var(--accent)" font-size="8.5" font-weight="700">Run benchmarks</text>
+        <text x="24" y="99" fill="var(--ink)" font-size="7.6">each question runs as a new conversation; keeps running if you leave the page</text>
+      </g>
+      <g data-step="4">
+        <rect x="14" y="110" width="292" height="16" rx="5" fill="var(--surface-2)" stroke="var(--warm)"/>
+        <text x="160" y="121" text-anchor="middle" fill="var(--warm)" font-size="8" font-weight="700">Good · Bad · Manual review needed, and one accuracy number for the set</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 - cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 7 · Chapter 38</div>
+    <h1 class="reveal">Optimizing Genie spaces</h1>
+    <p class="lead reveal">A space is never finished. Users ask things you did not anticipate, and the model gets some of them wrong. This chapter is the loop that turns questions, feedback and benchmarks into better instructions and trusted assets.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 - the loop, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The loop</div>
+    <h2 class="reveal" style="font-size:24px">Start small, watch, add, measure</h2>
+    <div class="art reveal">${A.loop}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Databricks describes curation as iterative: think of Genie as a new analyst joining the company who needs clear context. Tap through the cycle.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Start as small as possible</strong>: minimal instructions and a limited set of questions to answer. Be the space's first user and examine the SQL it generates.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Watch</strong> real questions, ratings and review requests on the Monitor tab once stakeholders start using it.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Add context</strong> where answers went wrong: SQL expressions for business terms, example queries for complex questions, join relationships, trusted assets for the questions that must be right, text last.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Measure</strong> with benchmarks so a change that fixes one question does not break five others, then go back to watching.</p>
+    </div>` },
+
+  /* 2 - Monitor tab */
+  { html: `
+    <div class="eyebrow reveal">Tracking questions</div>
+    <h2 class="reveal">The Monitor tab</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Who sees it</b>CAN MANAGE users. It lists questions and responses, filterable by time, rating, user or status, and opens the full chat thread behind any question.</p></div>
+      <div class="pill"><p><b>Conversations</b>Managers can read a business user's whole conversation when it is Reviewable by space managers (the default); Private conversations hide the detail. Every query is attributed to the user who asked.</p></div>
+      <div class="pill"><p><b>The weekly digest</b>Message volume, active users and thumbs up and down at a glance, plus Analyze Agent Usage, which has Genie Code read six months of questions and feedback and report recurring issues with suggested context improvements.</p></div>
+      <div class="pill"><p><b>Audit</b>Audit logs also record feedback and review requests, so a governance team can monitor spaces without opening each one.</p></div>
+    </div>` },
+
+  /* 3 - feedback */
+  { html: `
+    <div class="eyebrow reveal">Response accuracy and feedback</div>
+    <h2 class="reveal">What users can tell you</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Is this correct?</b>Every response asks. Yes is a thumbs up. Fix it lets the user choose reasons and either regenerate or just report. Request review flags the response for an editor, with an optional comment.</p></div>
+      <div class="pill"><p><b>Feedback is a signal, not training</b>It is visible to CAN MANAGE users, and Genie does not automatically learn or change its behavior in response. The editor reviews the exchange, comments, and confirms or corrects it.</p></div>
+      <div class="pill"><p><b>Set expectations</b>Tell early users their job is to help refine the space, to upvote and downvote, and to pass on the context they keep re-explaining in chat so it becomes an instruction.</p></div>
+      <div class="pill"><p><b>Suggested improvements</b>From upvoted answers and Unity Catalog metadata, Genie proposes new SQL expressions and join relationships for the editor to accept or reject.</p></div>
+    </div>` },
+
+  /* 4 - benchmarks, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Validating accuracy</div>
+    <h2 class="reveal" style="font-size:24px">Benchmarks</h2>
+    <div class="art reveal">${A.bench}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A benchmark is a set of test questions used to evaluate and measure response accuracy, up to 500 per space. Tap to build one.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Write the question</strong> the way users ask it. A reviewed question from the Monitor tab can be added as a benchmark directly.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Give the SQL answer</strong> (write it or Generate SQL) and an evaluation note. Only questions with an example SQL statement can be scored automatically.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Run</strong> all or a selection; CAN EDIT is enough. Each question runs as a new conversation, and you pick chat or agent mode at run time.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Read the score</strong>: Good, Bad or Manual review needed per question and one accuracy number across the set. Benchmarks are evaluation only; Genie never uses them as context.</p>
+    </div>` },
+
+  /* 5 - scoring */
+  { html: `
+    <div class="eyebrow reveal">How a benchmark scores</div>
+    <h2 class="reveal">Good, bad, or look yourself</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Good</b>The generated SQL matches exactly, or the result sets match, or the same data comes back in a different order, or numbers round to the same four significant digits. Up to 5,000 rows of each result are compared.</p></div>
+      <div class="pill"><p><b>Bad</b>An empty result, an error, extra columns, or a single-cell result that differs.</p></div>
+      <div class="pill"><p><b>Manual review needed</b>No SQL answer was supplied or Genie cannot assess correctness. In agent mode an LLM judge grades against the evaluation note instead of comparing SQL.</p></div>
+      <div class="pill"><p><b>Shelf life</b>Evaluation details stay for one week; the generated and example SQL remain after that. Re-run after every meaningful change to instructions or datasets.</p></div>
+    </div>` },
+
+  /* 6 - acting on what you learn */
+  { html: `
+    <div class="eyebrow reveal">Updating the space</div>
+    <h2 class="reveal">Symptom to fix</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Jargon misread</b>"Fiscal year" or "active customer" interpreted literally: add a SQL expression (measure or filter) with synonyms, or a general instruction if it truly applies to every question.</p></div>
+      <div class="pill"><p><b>Wrong join or wrong column</b>Define the join relationship, hide irrelevant or overlapping columns, or replace the tables with a pre-joined view.</p></div>
+      <div class="pill"><p><b>Wrong filter value</b>"California" versus "CA": entity matching supplies distinct values; a trusted asset with a typed parameter removes the guess entirely.</p></div>
+      <div class="pill"><p><b>Right most of the time</b>Promote the reviewed question to an example SQL query, and if it must be exact, to a trusted asset. Then add it to the benchmark so it stays right.</p></div>
+    </div>` },
+
+  /* 7 - refreshing Unity Catalog metadata */
+  { html: `
+    <div class="eyebrow reveal">Refreshing metadata</div>
+    <h2 class="reveal">Fix it at the source</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Unity Catalog first</b>The space's default table and column descriptions are the Unity Catalog comments, and quality descriptions there are critical for accuracy. A comment fixed in Unity Catalog helps every space, dashboard and analyst; a knowledge store override helps one space.</p></div>
+      <div class="pill"><p><b>Keys become joins</b>Primary and foreign keys declared in the schema are saved as join relationships automatically, so declaring them (chapter 40) is part of Genie hygiene.</p></div>
+      <div class="pill"><p><b>Scoped edits</b>Knowledge store changes never write back to Unity Catalog. Decide deliberately which fixes belong upstream and which are space-specific.</p></div>
+      <div class="pill"><p><b>When data changes</b>New columns, renamed tables or a replaced view mean re-checking descriptions, hidden columns and example SQL, then re-running the benchmarks.</p></div>
+    </div>` },
+
+  /* 8 - quiz */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Stakeholders have been marking a space's answers with Fix it for two weeks, and nothing has improved. The space owner assumed the feedback would be applied automatically. What is the accurate correction?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Genie does not learn from feedback on its own; a CAN MANAGE user must review the flagged exchanges on the Monitor tab and update instructions, expressions or trusted assets, then run benchmarks</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Feedback only takes effect after the space's benchmarks are run, since benchmark runs retrain the model on the rated answers</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The users need CAN EDIT, because feedback from CAN VIEW users is discarded</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Feedback is visible to managers and is a signal for curation, but Genie does not automatically change its behavior in response to it; the editor closes the loop. The benchmark option is the tempting one because benchmarks do measure accuracy, but they are evaluation only and Genie never uses benchmark questions or SQL as context. CAN VIEW users can provide feedback; that is one of the abilities the level grants.</div>` },
+
+  /* 9 - done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 38 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">That closes Unit 7. Units 8 and 9 follow, and Practice Exam 4 covers all three after chapter 43.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Track</b>Monitor tab (CAN MANAGE): questions, ratings, review requests, conversations, the weekly digest.</p></div>
+      <div class="pill"><p><b>Validate</b>Benchmarks with SQL answers, scored Good, Bad or Manual review; evaluation only, never context.</p></div>
+      <div class="pill"><p><b>Update</b>Expressions, joins, examples and trusted assets from stakeholder input; fix descriptions and keys in Unity Catalog so every consumer benefits.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

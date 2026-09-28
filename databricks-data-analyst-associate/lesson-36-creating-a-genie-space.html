@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Creating a Genie Space · Databricks Data Analyst Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-data-analyst-associate/lesson-36-creating-a-genie-space.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #150a1c;            /* page background */
+    --bg-tint: #2a1438;       /* ambient glow tint behind the card */
+    --accent: #e879f9;        /* topic color: Unit 7 Genie spaces, fuchsia (AI conversation) */
+    --accent-glow: rgba(232,121,249,0.12);  /* correct-answer fill */
+    --accent-ink: #150a1c;    /* text on top of the accent key chip */
+    --deep: #a21caf;          /* deep end of the cover gradient */
+    --warm: #fbbf24;          /* amber, the contrast color */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+/* ============================================================
+   Unit 7 · Chapter 36 · Creating a Genie Space
+   Objective: create Genie spaces by defining reasonable sample questions
+   and domain-specific instructions, choosing SQL warehouses, curating
+   Unity Catalog datasets (tables, views...), and vetting queries as
+   Trusted Assets. Prerequisites, the creation steps, choosing the
+   warehouse and datasets (50 limit, aim for five), sample questions,
+   general text instructions, example SQL with parameters, SQL
+   functions, trusted assets, the knowledge store, limits, and testing
+   as the first user. Eleven cards, so two quiz cards.
+   Sources: docs.databricks.com/aws/en/genie-agents/set-up,
+   /genie-agents/tune-quality, /genie-agents/best-practices.
+   Cover animates (the space fills with datasets, instructions and a
+   verified badge); step builds on cards 2 and 5.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-37-sharing-genie-spaces.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c36r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(232,121,249,0.22)"/>
+        <stop offset="1" style="stop-color:rgba(232,121,249,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c36in { animation: c36in 9s ease-in-out infinite; opacity: 0; }
+      .c36i1 { animation-delay: 0s; } .c36i2 { animation-delay: 1.2s; } .c36i3 { animation-delay: 2.4s; } .c36i4 { animation-delay: 3.6s; }
+      @keyframes c36in { 0% { opacity: 0; transform: translateX(-14px); } 10%, 82% { opacity: 1; transform: translateX(0); } 92%, 100% { opacity: 0; transform: translateX(-14px); } }
+      .c36chk { animation: c36chk 9s ease-in-out infinite; opacity: 0; transform-origin: 262px 62px; }
+      @keyframes c36chk { 0%, 52% { opacity: 0; transform: scale(0.4); } 60%, 82% { opacity: 1; transform: scale(1); } 92%, 100% { opacity: 0; transform: scale(0.4); } }
+      @media (prefers-reduced-motion: reduce) { .c36in, .c36chk { animation: none; opacity: 1; transform: none; } }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="74" fill="url(#c36r)"/>
+    <rect x="96" y="28" width="196" height="146" rx="14" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="194" y="48" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10.5" font-weight="700">Sales Q&amp;A space</text>
+    <g font-family="Hanken Grotesk" font-size="8.5" fill="var(--ink)">
+      <g class="c36in c36i1"><rect x="110" y="60" width="130" height="20" rx="5" fill="rgba(232,121,249,0.12)" stroke="var(--accent)" stroke-width="0.8"/><text x="118" y="73">gold.sales, gold.dim_region</text></g>
+      <g class="c36in c36i2"><rect x="110" y="86" width="130" height="20" rx="5" fill="rgba(232,121,249,0.12)" stroke="var(--accent)" stroke-width="0.8"/><text x="118" y="99">"Fiscal year starts in Feb"</text></g>
+      <g class="c36in c36i3"><rect x="110" y="112" width="130" height="20" rx="5" fill="rgba(232,121,249,0.12)" stroke="var(--accent)" stroke-width="0.8"/><text x="118" y="125" font-family="ui-monospace, Menlo, monospace" font-size="7.5">revenue by :region</text></g>
+      <g class="c36in c36i4"><rect x="110" y="138" width="130" height="20" rx="5" fill="rgba(232,121,249,0.12)" stroke="var(--accent)" stroke-width="0.8"/><text x="118" y="151">serverless warehouse</text></g>
+    </g>
+    <g class="c36chk">
+      <circle cx="262" cy="62" r="16" fill="var(--warm)"/>
+      <path d="M254 62 l6 6 l11 -12" fill="none" stroke="var(--accent-ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="262" y="94" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">trusted</text>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="8.5" fill="var(--ink-faint)">
+      <text x="14" y="70">datasets</text><text x="14" y="96">instructions</text><text x="14" y="122">example SQL</text><text x="14" y="148">compute</text>
+    </g>
+    <text x="160" y="192" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Start small, add context, verify the answers that matter.</text>
+  </svg>`,
+
+  steps: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g data-step="1">
+        <circle cx="44" cy="40" r="18" fill="rgba(232,121,249,0.12)" stroke="var(--accent)"/><text x="44" y="44" fill="var(--accent)" font-size="10" font-weight="700">1</text>
+        <text x="44" y="72" fill="var(--ink)" font-size="8" font-weight="700">New space</text><text x="44" y="84" fill="var(--ink-faint)" font-size="7">saved to your folder</text>
+      </g>
+      <g data-step="2">
+        <path d="M62 40 H 98" stroke="var(--accent)" stroke-width="1.4"/>
+        <circle cx="116" cy="40" r="18" fill="var(--surface-2)" stroke="var(--accent)"/><text x="116" y="44" fill="var(--accent)" font-size="10" font-weight="700">2</text>
+        <text x="116" y="72" fill="var(--ink)" font-size="8" font-weight="700">Pick datasets</text><text x="116" y="84" fill="var(--ink-faint)" font-size="7">up to 50, aim for 5</text>
+      </g>
+      <g data-step="3">
+        <path d="M134 40 H 170" stroke="var(--accent)" stroke-width="1.4"/>
+        <circle cx="188" cy="40" r="18" fill="var(--surface-2)" stroke="var(--accent)"/><text x="188" y="44" fill="var(--accent)" font-size="10" font-weight="700">3</text>
+        <text x="188" y="72" fill="var(--ink)" font-size="8" font-weight="700">Pick warehouse</text><text x="188" y="84" fill="var(--ink-faint)" font-size="7">pro or serverless</text>
+      </g>
+      <g data-step="4">
+        <path d="M206 40 H 242" stroke="var(--accent)" stroke-width="1.4"/>
+        <circle cx="260" cy="40" r="18" fill="var(--surface-2)" stroke="var(--warm)"/><text x="260" y="44" fill="var(--warm)" font-size="10" font-weight="700">4</text>
+        <text x="260" y="72" fill="var(--ink)" font-size="8" font-weight="700">Configure</text><text x="260" y="84" fill="var(--ink-faint)" font-size="7">questions, text, SQL</text>
+        <text x="160" y="112" fill="var(--ink-faint)" font-size="8">then be the first user and test before sharing</text>
+      </g>
+    </g>
+  </svg>`,
+
+  ex: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk">
+      <g data-step="1">
+        <rect x="14" y="10" width="292" height="32" rx="7" fill="rgba(232,121,249,0.12)" stroke="var(--accent)"/>
+        <text x="24" y="24" fill="var(--accent)" font-size="8.5" font-weight="700">Title = the way users phrase it</text>
+        <text x="24" y="36" fill="var(--ink)" font-size="7.8">"What is revenue by region for a quarter?"</text>
+      </g>
+      <g data-step="2">
+        <rect x="14" y="50" width="292" height="32" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="24" y="64" fill="var(--accent)" font-size="8.5" font-weight="700">SQL with a typed parameter</text>
+        <text x="24" y="76" fill="var(--ink)" font-size="7.8" font-family="ui-monospace, Menlo, monospace">SELECT region, sum(revenue) FROM gold.sales WHERE quarter = :quarter GROUP BY region</text>
+      </g>
+      <g data-step="3">
+        <rect x="14" y="90" width="292" height="32" rx="7" fill="var(--surface-2)" stroke="var(--warm)"/>
+        <text x="24" y="104" fill="var(--warm)" font-size="8.5" font-weight="700">Matched exactly = verified answer</text>
+        <text x="24" y="116" fill="var(--ink)" font-size="7.8">the user can edit the parameter value and rerun; otherwise Genie learns from it</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0 - cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 7 · Chapter 36</div>
+    <h1 class="reveal">Creating a Genie space</h1>
+    <p class="lead reveal">A good space is a small, well-described set of datasets, a warehouse to run on, and just enough context for the questions its audience will ask. This chapter walks the setup in the order the exam objective lists it.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1 - prerequisites */
+  { html: `
+    <div class="eyebrow reveal">Before you start</div>
+    <h2 class="reveal">What the creator needs</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Entitlement</b>The Databricks SQL workspace entitlement.</p></div>
+      <div class="pill"><p><b>Compute</b>CAN USE on at least one pro or serverless SQL warehouse. Databricks recommends serverless for performance.</p></div>
+      <div class="pill"><p><b>Data</b>SELECT on every table, view or metric view the space will include. Genie cannot show what its author cannot read.</p></div>
+      <div class="pill"><p><b>On the space</b>The creator gets CAN MANAGE automatically; configuring an existing space needs at least CAN EDIT.</p></div>
+    </div>` },
+
+  /* 2 - steps, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The steps</div>
+    <h2 class="reveal" style="font-size:24px">Four steps to a first space</h2>
+    <div class="art reveal">${A.steps}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Creation is short; curation is the long part. Tap through the setup.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Genie in the sidebar, then New.</strong> The space is saved in your user folder by default and inherits that folder's permissions.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Choose data sources.</strong> Tables, views and metric views from Unity Catalog, up to 50 per space. Best practice is five or fewer, pre-joined into views or metric views where tables relate.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Choose the warehouse.</strong> Saving the selection embeds your compute credentials in the space for all its users. If the last author leaves the workspace, another CAN EDIT user must reselect it.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Configure.</strong> Sample questions, text instructions, example SQL, functions and the knowledge store live under the Configure button. Genie Code can read your data and suggest descriptions and example queries to accept or edit.</p>
+    </div>` },
+
+  /* 3 - datasets */
+  { html: `
+    <div class="eyebrow reveal">Curating datasets</div>
+    <h2 class="reveal">Fewer, cleaner, described</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Only what the questions need</b>The more focused the selection, the better the answers. Every extra table adds columns the model must filter through.</p></div>
+      <div class="pill"><p><b>Pre-join</b>Related tables become a view or a metric view before they enter the space; it keeps the count down, removes ambiguous column names and fixes the join logic once.</p></div>
+      <div class="pill"><p><b>Descriptions matter most</b>Quality table and column descriptions in Unity Catalog are critical for accuracy. The space shows the Unity Catalog description by default and lets you override it for the space only.</p></div>
+      <div class="pill"><p><b>Hide the noise</b>The eye icon removes a column from the space's context without touching the data or its Unity Catalog permissions.</p></div>
+    </div>` },
+
+  /* 4 - sample questions and text instructions */
+  { html: `
+    <div class="eyebrow reveal">Questions and text</div>
+    <h2 class="reveal">Sample questions, general instructions</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Sample questions</b>Optional examples shown on the chat landing page so users see what the space can answer. Provide enough and only yours appear; otherwise Genie fills the page with generated ones.</p></div>
+      <div class="pill"><p><b>General instructions</b>Plain text applied to every question: the fiscal year starts in February, "customers" means active accounts, prefer the metric view. Small and well organized.</p></div>
+      <div class="pill"><p><b>Global only</b>Guidance that applies to a subset of questions belongs in an example query or a function, not in text. Text instructions are the last resort, and the only instruction type that shapes summaries.</p></div>
+      <div class="pill"><p><b>Consistency</b>Too many instructions reduce effectiveness in long conversations, and conflicting ones are worse than none.</p></div>
+    </div>` },
+
+  /* 5 - example SQL with parameters, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Example SQL</div>
+    <h2 class="reveal" style="font-size:24px">Reference answers, parameterized</h2>
+    <div class="art reveal">${A.ex}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Example SQL queries help Genie generate correct SQL for common questions. Tap to build one.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Title it</strong> with the most typical phrasing of the user's question, since that is what Genie matches against.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Parameterize</strong> with <span class="mono">:name</span> and a type: String (default), Date, Date and Time, Decimal or Integer. A value of the wrong type is treated as the wrong type and can give inaccurate results.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Use it two ways</strong>: when a question matches, Genie returns the query as a verified answer the user can re-run with a new value; otherwise it learns from the example to handle similar questions.</p>
+    </div>` },
+
+  /* 6 - functions and trusted assets */
+  { html: `
+    <div class="eyebrow reveal">Trusted assets</div>
+    <h2 class="reveal">Vetting queries and functions</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Definition</b>Trusted assets are example SQL queries and SQL functions that provide verified answers to questions you anticipate: parameterized example queries plus Unity Catalog SQL functions.</p></div>
+      <div class="pill"><p><b>SQL functions</b>Register a scalar function (one value) or a table-valued function (rows) in Unity Catalog and add it to the space. Genie cannot see or change the SQL inside, so the logic is exactly what you wrote, and users need EXECUTE on it.</p></div>
+      <div class="pill"><p><b>Why it matters</b>For the questions that must be right (the revenue definition, the churn rule) a trusted asset removes generation from the loop. The user still sees the SQL and the parameters.</p></div>
+      <div class="pill"><p><b>Who</b>Users with at least CAN EDIT add or remove trusted assets.</p></div>
+    </div>` },
+
+  /* 7 - quiz 1: trusted asset */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A space's users keep asking for "net revenue by quarter", and finance insists the figure use their exact definition every time. What should the author add?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>A general text instruction describing how net revenue is calculated, so every question inherits it</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>A parameterized example SQL query (or a Unity Catalog SQL function) implementing the finance definition, added as a trusted asset</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Three more tables so Genie has the raw ledger to derive the number from</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A verified definition that must be applied exactly is what trusted assets exist for: the matched query or function returns a verified answer with the logic the author wrote, not a fresh generation. The text instruction is the tempting choice, but text is global context and the last resort; it steers generation rather than guaranteeing it. Adding tables widens the context and makes accuracy worse.</div>` },
+
+  /* 8 - knowledge store */
+  { html: `
+    <div class="eyebrow reveal">The knowledge store</div>
+    <h2 class="reveal">Semantics scoped to the space</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Synonyms</b>Business terms and keywords that map user language to column names: "turnover" to revenue, "SKU" to product_code.</p></div>
+      <div class="pill"><p><b>Join relationships</b>Left table, right table, condition and cardinality. Primary and foreign keys declared in the schema are saved as joins automatically (chapter 40 is why you declared them).</p></div>
+      <div class="pill"><p><b>SQL expressions</b>Filters, measures and fields with a name, code, synonyms and instructions: the reusable business terms Genie should prefer over inventing its own.</p></div>
+      <div class="pill"><p><b>Prompt matching</b>Format assistance and entity matching give Genie representative and distinct values for eligible string columns, so "California" and "CA" resolve; disabled on tables with row filters, and masked columns are excluded.</p></div>
+    </div>` },
+
+  /* 9 - quiz 2: precedence */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A new space answers most questions well but mis-joins orders to customers about a third of the time, and the tables have no declared keys. What is the best-practice fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Add a general instruction saying "always join orders to customers on customer_id"</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Raise the warehouse size so retries succeed more often</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Define the join relationship in the knowledge store (or pre-join the tables into a view), and declare the keys in Unity Catalog so future spaces inherit them</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Join logic belongs in the knowledge store's join relationships or in a pre-joined view, the two places Databricks lists for this exact failure; declared primary and foreign keys are picked up as joins automatically. The text instruction is tempting because it is quick, but text is for global context and should be the last resort. Warehouse size affects speed, never which columns are joined.</div>` },
+
+  /* 10 - done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 36 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Limits worth remembering: 50 datasets, 100 instructions (each example query, each function and the whole text block count as one) and 200 knowledge store snippets per space. Next: sharing the space.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Setup</b>New, datasets (aim for five, pre-joined), a pro or serverless warehouse (credentials embedded), then configure.</p></div>
+      <div class="pill"><p><b>Precedence</b>SQL expressions for business terms, example queries for complex questions, text instructions last.</p></div>
+      <div class="pill"><p><b>Trusted assets</b>Parameterized example queries and Unity Catalog functions give verified answers for the questions that must be right.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

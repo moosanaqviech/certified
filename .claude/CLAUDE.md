@@ -20,12 +20,11 @@ In progress: Databricks Data Analyst Associate (see
 curriculum-index-databricks-data-analyst-associate.md and
 cert-config-databricks-data-analyst-associate.md; the index is LOCKED,
 verified against the official 30 Oct 2025 exam guide PDF on 28 Sep 2026: 9
-units, 43 chapters, one per objective. Chapters 01 to 34 (Units 1 to 6) and
-Practice Exams 1 to 3 (da-practice-exam-01 for Units 1 to 3,
-da-practice-exam-02 for Unit 4, da-practice-exam-03 for Units 5 and 6) are
-live; chapters 35 to 43 (Units 7 to 9) are listed "Coming soon" with
-file:null, and Practice Exam 4 plus the three full mocks (05 to 07) are
-still to author. The course launched
+units, 43 chapters, one per objective. All 43 chapters and the four section
+exams (da-practice-exam-01 for Units 1 to 3, 02 for Unit 4, 03 for Units 5
+and 6, 04 for Units 7 to 9; 43 questions in all) are live. The three
+full mocks (05 to 07, 45 questions, 90 minutes) are still to author, so the
+course home's Mocks fact reads "coming". The course launched
 free and has no practice hub or readiness quiz yet; the course home's
 Practice tab reads "soon". Exam guide names come first, with the 2026 docs
 renames mentioned once each, see the cert config), and
