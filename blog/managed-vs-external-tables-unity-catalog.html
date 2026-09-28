@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Managed vs External Tables in Unity Catalog: Which to Create, and What DROP Does to Each</title>
+<meta name="description" content="Managed tables let Unity Catalog own the files and are the Databricks recommendation; external tables keep data at a path you control. What DROP, VACUUM and the exam expect.">
+<link rel="canonical" href="https://certify.courses/blog/managed-vs-external-tables-unity-catalog">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Managed vs External Tables in Unity Catalog: Which to Create, and What DROP Does to Each">
+<meta property="og:description" content="Managed tables let Unity Catalog own the files and are the Databricks recommendation; external tables keep data at a path you control. What DROP, VACUUM and the exam expect.">
+<meta property="og:url" content="https://certify.courses/blog/managed-vs-external-tables-unity-catalog">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  .tiers{display:grid;gap:12px;grid-template-columns:1fr;margin:6px 0;}
+  @media(min-width:600px){.tiers{grid-template-columns:repeat(3,1fr);}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 18px;text-align:center;}
+  .tier.mid{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .tier b{display:block;font-family:var(--display);font-size:30px;font-weight:600;color:var(--gold);line-height:1;margin-bottom:6px;}
+  .tier .who{font-size:13.5px;color:var(--ink-soft);}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:8px;}
+  .plan .wk{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .plan .wk:last-child{border-bottom:none;}
+  .plan .wk .lbl{flex:0 0 76px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--gold);padding-top:1px;}
+  .plan .wk .desc{font-size:15px;color:var(--ink-soft);}
+  .plan .wk .desc b{color:var(--ink);font-weight:600;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-data-analyst-associate-certification-guide">Data Analyst Guide</a><span>&rsaquo;</span>
+    <span>Managed vs external tables</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Data Analyst &middot; Trade-off</div>
+    <h1>Managed vs External Tables in Unity Catalog: Which to Create, and What DROP Does to Each</h1>
+    <p class="lede">A <strong>managed table</strong> is one where Unity Catalog chooses the storage location and controls the file lifecycle; an <strong>external table</strong> is one you register against a cloud path you own. Databricks recommends managed tables for almost everything, and the difference the exam tests is what happens when you <code>DROP</code> one.</p>
+    <p class="updated">Last updated September 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+    <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">Create a managed table unless another system owns the files or the data must live at a fixed path. Dropping a managed table deletes its data files (after a short retention window that allows an undrop); dropping an external table removes only the catalog entry and leaves the files where they were. Managed tables also get the automatic optimizations Databricks reserves for storage it controls.</p>
+  </section>
+
+  <section id="managed">
+    <h2>What a managed table gives you</h2>
+    <p>With a managed table you write <code>CREATE TABLE finance.gold.sales (...)</code> or <code>CREATE TABLE ... AS SELECT</code> with no <code>LOCATION</code> clause, and Unity Catalog puts the files in the managed storage configured for the schema, catalog or metastore. Databricks documents why this is the recommendation: managed tables and volumes let you take full advantage of Unity Catalog governance and performance features, including <strong>auto compaction</strong>, <strong>auto optimize</strong>, <strong>faster metadata reads</strong> and <strong>intelligent file size optimization</strong>.</p>
+    <p>Because the catalog owns the lifecycle, the security story is simple too: nobody can read the files around the table's grants, and when the table is dropped the data goes with it. For a customer dataset that a compliance team expects to disappear on deletion, that is the property you want.</p>
+  </section>
+
+  <section id="external">
+    <h2>When an external table is right</h2>
+    <p>An external table is created with <code>LOCATION 's3://bucket/path/'</code> (or the equivalent on Azure or GCP) against an external location an administrator has already registered. The data stays where it is. Databricks lists the cases: data that other systems write or read directly, data that must remain at a known path, and migrations where the files already exist. The table gives you governance over an asset you do not fully own.</p>
+    <p>Two rules travel with it. Never register the same external table in more than one metastore, because two catalogs writing the same files corrupts both. And treat <code>VACUUM</code> with care: it deletes files no longer referenced by the current version, so any other tool reading that path, and any old version you wanted to time travel to, loses them.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Managed table</th><th>External table</th></tr></thead>
+      <tbody>
+        <tr><th>Who picks the location</th><td class="col-h">Unity Catalog, in managed storage</td><td>You, with a LOCATION clause</td></tr>
+        <tr><th>DROP TABLE</th><td class="col-h">Deletes the data files (undrop possible for a short window)</td><td>Removes the metadata only; files stay at the path</td></tr>
+        <tr><th>Automatic optimizations</th><td class="col-h">Yes: compaction, file sizing, faster metadata</td><td>Not all of them</td></tr>
+        <tr><th>Other systems reading the files</th><td class="col-h">Not by design</td><td>Yes, that is often the point</td></tr>
+        <tr><th>Databricks guidance</th><td class="col-h">Recommended default</td><td>When the path or another owner requires it</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation page on managed versus external tables and volumes, and the Unity Catalog best practices page.</p>
+  </section>
+
+  <section id="check">
+    <h2>How to tell which one you have</h2>
+    <p><code>DESCRIBE EXTENDED table_name</code> reports <code>Type: MANAGED</code> or <code>Type: EXTERNAL</code> and, for external tables, the location. In Catalog Explorer the Details tab shows the same. Check before you drop anything you did not create: an external table that "looks like a scratch copy" may be the registered view of a bucket a nightly job depends on.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> If a scenario says a table was dropped and a downstream job reading the same cloud path kept working, it was external. If it says the files must be deleted when the table is, or asks for automatic optimization, the answer is managed. If it asks which to create with no special constraint, managed is the recommendation.</p></div>
+    <p>The distractors are usually the two beliefs that the retention window makes managed data readable by other jobs after a drop (it does not; the files are not addressable outside the table) and that external tables cannot be optimized (they can; they just miss some of the automatic features).</p>
+  </section>
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between a managed and an external table in Unity Catalog?</summary><div class="fa"><p>A managed table stores its data in storage Unity Catalog controls, so the catalog manages the file location and lifecycle. An external table is registered against a cloud storage path you specify, and the files remain yours to manage.</p></div></details>
+      <details><summary>What happens when you drop a managed table in Databricks?</summary><div class="fa"><p>Unity Catalog deletes the underlying data files, after a short retention window during which the table can be undropped. Dropping an external table removes only the catalog metadata and leaves the files in place.</p></div></details>
+      <details><summary>Should I use managed or external tables in Databricks?</summary><div class="fa"><p>Databricks recommends managed tables because they get the full set of Unity Catalog governance and performance features, including automatic compaction and file sizing. Use an external table only when another system owns the data or it must stay at a fixed path.</p></div></details>
+      <details><summary>Can you convert an external table to a managed table?</summary><div class="fa"><p>Not in place. Create a managed table from the external one with CREATE TABLE AS SELECT or a deep clone, repoint consumers to it, then drop the external table, which leaves the original files untouched.</p></div></details>
+    </div>
+  </section>
+
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Managed versus external tables is a trade-off chapter in the Data Analyst Associate course, with the DROP behaviour, the decision signals and the questions the exam builds around them.</p>
+    <a href="../databricks-data-analyst-associate/lesson-03-managed-vs-external-tables.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-data-analyst-associate-certification-guide">The complete Databricks Data Analyst Associate certification guide &rarr;</a>
+    <a href="streaming-tables-vs-materialized-views-databricks-sql">Streaming tables vs materialized views in Databricks SQL &rarr;</a>
+    <a href="liquid-clustering-vs-partitioning-z-order">Liquid Clustering vs partitioning and Z-Order &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Managed vs External Tables in Unity Catalog: Which to Create, and What DROP Does to Each","description":"Managed tables let Unity Catalog own the files and are the Databricks recommendation; external tables keep data at a path you control. What DROP, VACUUM and the exam expect.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-09-28","dateModified":"2026-09-28","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/managed-vs-external-tables-unity-catalog"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between a managed and an external table in Unity Catalog?", "acceptedAnswer": {"@type": "Answer", "text": "A managed table stores its data in storage Unity Catalog controls, so the catalog manages the file location and lifecycle. An external table is registered against a cloud storage path you specify, and the files remain yours to manage."}},
+{"@type": "Question", "name": "What happens when you drop a managed table in Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "Unity Catalog deletes the underlying data files, after a short retention window during which the table can be undropped. Dropping an external table removes only the catalog metadata and leaves the files in place."}},
+{"@type": "Question", "name": "Should I use managed or external tables in Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "Databricks recommends managed tables because they get the full set of Unity Catalog governance and performance features, including automatic compaction and file sizing. Use an external table only when another system owns the data or it must stay at a fixed path."}},
+{"@type": "Question", "name": "Can you convert an external table to a managed table?", "acceptedAnswer": {"@type": "Answer", "text": "Not in place. Create a managed table from the external one with CREATE TABLE AS SELECT or a deep clone, repoint consumers to it, then drop the external table, which leaves the original files untouched."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

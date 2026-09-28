@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Streaming Tables vs Materialized Views in Databricks SQL: When Each Is the Right Object</title>
+<meta name="description" content="A streaming table ingests new files or events incrementally; a materialized view stores a precomputed query result and refreshes it. How to pick, with the syntax and the exam signals.">
+<link rel="canonical" href="https://certify.courses/blog/streaming-tables-vs-materialized-views-databricks-sql">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Streaming Tables vs Materialized Views in Databricks SQL: When Each Is the Right Object">
+<meta property="og:description" content="A streaming table ingests new files or events incrementally; a materialized view stores a precomputed query result and refreshes it. How to pick, with the syntax and the exam signals.">
+<meta property="og:url" content="https://certify.courses/blog/streaming-tables-vs-materialized-views-databricks-sql">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  .tiers{display:grid;gap:12px;grid-template-columns:1fr;margin:6px 0;}
+  @media(min-width:600px){.tiers{grid-template-columns:repeat(3,1fr);}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 18px;text-align:center;}
+  .tier.mid{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .tier b{display:block;font-family:var(--display);font-size:30px;font-weight:600;color:var(--gold);line-height:1;margin-bottom:6px;}
+  .tier .who{font-size:13.5px;color:var(--ink-soft);}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:8px;}
+  .plan .wk{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .plan .wk:last-child{border-bottom:none;}
+  .plan .wk .lbl{flex:0 0 76px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--gold);padding-top:1px;}
+  .plan .wk .desc{font-size:15px;color:var(--ink-soft);}
+  .plan .wk .desc b{color:var(--ink);font-weight:600;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-data-analyst-associate-certification-guide">Data Analyst Guide</a><span>&rsaquo;</span>
+    <span>Streaming tables vs materialized views</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Data Analyst &middot; Trade-off</div>
+    <h1>Streaming Tables vs Materialized Views in Databricks SQL: When Each Is the Right Object</h1>
+    <p class="lede">A <strong>streaming table</strong> is a Delta table that ingests from a streaming source incrementally, processing each new file or record once and appending it. A <strong>materialized view</strong> stores the result of a query and refreshes it, incrementally where possible, so readers get precomputed results. In Databricks SQL both are created with one statement and run on serverless compute; the choice is ingestion versus aggregation.</p>
+    <p class="updated">Last updated September 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+    <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">Use a streaming table to bring data in: files landing in cloud storage, a message stream, anything append-only that keeps arriving. Use a materialized view to serve a result: a daily summary, a pre-joined dashboard dataset, an expensive aggregate you do not want recomputed on every open. Streaming tables feed materialized views; the two are rarely alternatives to each other.</p>
+  </section>
+
+  <section id="st">
+    <h2>Streaming tables: incremental ingestion</h2>
+    <p>The canonical form uses Auto Loader through <code>read_files</code>:</p>
+    <p><code>CREATE STREAMING TABLE bronze.events AS SELECT * FROM STREAM read_files('s3://bucket/events/', format =&gt; 'json');</code></p>
+    <p>Each file in the folder is processed once. New files are picked up on the next refresh and appended; old files are never re-read. That is what makes ingestion cheap at scale, and it is also the behaviour to remember when someone replaces a file in place: the corrected file is not reprocessed, because the table has already seen that path. A full refresh or a downstream fix is needed.</p>
+    <p>Streaming tables are refreshed with <code>REFRESH STREAMING TABLE</code> or on a schedule set at creation, and they run on serverless pipelines under the hood, which is one reason the serverless SQL warehouse is the recommended warehouse type.</p>
+  </section>
+
+  <section id="mv">
+    <h2>Materialized views: precomputed results</h2>
+    <p><code>CREATE MATERIALIZED VIEW gold.daily_revenue AS SELECT order_date, region, sum(amount) AS revenue FROM silver.orders GROUP BY order_date, region;</code></p>
+    <p>The result is stored. A dashboard reading the view never runs the aggregation; it reads the rows. Refreshing recomputes the result, incrementally when the query's shape allows it and in full otherwise, and can be scheduled with <code>SCHEDULE</code> at creation or triggered with <code>REFRESH MATERIALIZED VIEW</code>. Between refreshes the data is as old as the last refresh, which is the trade: speed for freshness.</p>
+    <p>A materialized view is not a regular view. A regular view stores only the query and recomputes it on every read; a dynamic view does the same with per-user logic inside. If the question is about stored results, it is a materialized view; if it is about per-user filtering, it is a dynamic view.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Streaming table</th><th>Materialized view</th></tr></thead>
+      <tbody>
+        <tr><th>Job</th><td class="col-h">Ingest new data incrementally</td><td>Serve a precomputed query result</td></tr>
+        <tr><th>Source</th><td class="col-h">A stream: read_files, Auto Loader, Kafka</td><td>Any query over tables and views</td></tr>
+        <tr><th>On refresh</th><td class="col-h">Appends only the new files or records</td><td>Recomputes the result, incrementally where possible</td></tr>
+        <tr><th>Replaced source file</th><td class="col-h">Not reprocessed</td><td>Reflected on the next refresh</td></tr>
+        <tr><th>Typical layer</th><td class="col-h">Bronze, sometimes silver</td><td>Gold, dashboard datasets</td></tr>
+        <tr><th>Compute</th><td class="col-h">Serverless pipelines, created from Databricks SQL</td><td>Serverless pipelines, created from Databricks SQL</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation pages on streaming tables and materialized views in Databricks SQL.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "New files keep landing" or "process each file once" points at a streaming table. "Fast dashboard", "precomputed", "does not recompute on every open" points at a materialized view. "Each user sees only their rows" is neither; that is a dynamic view.</p></div>
+    <p>The usual distractor swaps the two: a materialized view offered for file ingestion, or a streaming table offered for a summary. A materialized view cannot consume a stream incrementally, and a streaming table does not hold an aggregate. The other distractor is a plain view "refreshed by a scheduled query", which stores nothing and therefore recomputes everything on every read.</p>
+  </section>
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between a streaming table and a materialized view in Databricks?</summary><div class="fa"><p>A streaming table ingests data incrementally from a streaming source, appending each new file or record once. A materialized view stores the result of a query and refreshes it, so readers get precomputed results instead of rerunning the query.</p></div></details>
+      <details><summary>When should I use a materialized view in Databricks SQL?</summary><div class="fa"><p>When a query is expensive and read often, such as a daily aggregate behind a dashboard. The result is stored and refreshed on a schedule, so each open reads rows rather than recomputing the aggregation.</p></div></details>
+      <details><summary>Does a streaming table reprocess a file that was replaced?</summary><div class="fa"><p>No. A streaming table processes each source file once, so a file replaced in place with the same name is not read again. Correcting the data needs a full refresh of the table or a fix downstream.</p></div></details>
+      <details><summary>Can I create streaming tables and materialized views on any SQL warehouse?</summary><div class="fa"><p>You create them from Databricks SQL, and they run on serverless compute (serverless pipelines) rather than on the warehouse itself, which is one of the reasons Databricks recommends serverless SQL warehouses.</p></div></details>
+    </div>
+  </section>
+
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Streaming tables versus materialized views is a trade-off chapter in the Data Analyst Associate course, with the syntax, the refresh behaviour and the questions the exam builds around them.</p>
+    <a href="../databricks-data-analyst-associate/lesson-14-streaming-tables-vs-materialized-views.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-data-analyst-associate-certification-guide">The complete Databricks Data Analyst Associate certification guide &rarr;</a>
+    <a href="managed-vs-external-tables-unity-catalog">Managed vs external tables in Unity Catalog &rarr;</a>
+    <a href="lakeflow-declarative-pipelines-vs-delta-live-tables">Lakeflow Spark Declarative Pipelines and the Delta Live Tables rename &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Streaming Tables vs Materialized Views in Databricks SQL: When Each Is the Right Object","description":"A streaming table ingests new files or events incrementally; a materialized view stores a precomputed query result and refreshes it. How to pick, with the syntax and the exam signals.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-09-28","dateModified":"2026-09-28","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/streaming-tables-vs-materialized-views-databricks-sql"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between a streaming table and a materialized view in Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "A streaming table ingests data incrementally from a streaming source, appending each new file or record once. A materialized view stores the result of a query and refreshes it, so readers get precomputed results instead of rerunning the query."}},
+{"@type": "Question", "name": "When should I use a materialized view in Databricks SQL?", "acceptedAnswer": {"@type": "Answer", "text": "When a query is expensive and read often, such as a daily aggregate behind a dashboard. The result is stored and refreshed on a schedule, so each open reads rows rather than recomputing the aggregation."}},
+{"@type": "Question", "name": "Does a streaming table reprocess a file that was replaced?", "acceptedAnswer": {"@type": "Answer", "text": "No. A streaming table processes each source file once, so a file replaced in place with the same name is not read again. Correcting the data needs a full refresh of the table or a fix downstream."}},
+{"@type": "Question", "name": "Can I create streaming tables and materialized views on any SQL warehouse?", "acceptedAnswer": {"@type": "Answer", "text": "You create them from Databricks SQL, and they run on serverless compute (serverless pipelines) rather than on the warehouse itself, which is one of the reasons Databricks recommends serverless SQL warehouses."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

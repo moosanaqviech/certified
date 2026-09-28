@@ -58,6 +58,19 @@ Note on the Filename column: published posts are `.html` files in the
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | Yes | blog/how-long-to-prepare-databricks-data-engineer-professional.html |
 | 5 | How to tell if you are ready for the Databricks DE Professional exam (readiness quiz support) | "am I ready for the databricks professional exam" | Yes | blog/am-i-ready-databricks-data-engineer-professional-exam.html |
 
+## Databricks Data Analyst Associate
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Data Analyst Associate certification guide (pillar) | "databricks data analyst associate certification guide" | Yes | blog/databricks-data-analyst-associate-certification-guide.html |
+| 2 | Data Analyst Associate exam guide breakdown: the nine sections and their objectives | "databricks data analyst associate exam sections" | No | |
+| 3 | Study plan and prep time for the Databricks Data Analyst Associate exam | "databricks data analyst associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-data-analyst-associate.html |
+| 4 | Managed vs external tables in Unity Catalog (trade-off, chapter 03) | "managed vs external tables databricks" | Yes | blog/managed-vs-external-tables-unity-catalog.html |
+| 5 | Streaming tables vs materialized views in Databricks SQL (trade-off, chapter 14) | "streaming table vs materialized view databricks" | Yes | blog/streaming-tables-vs-materialized-views-databricks-sql.html |
+| 6 | Star schema vs snowflake vs data vault on the lakehouse (trade-off, chapter 39) | "star schema vs snowflake vs data vault databricks" | Yes | blog/star-schema-vs-snowflake-vs-data-vault-lakehouse.html |
+| 7 | COPY INTO vs Auto Loader vs UI upload: the five ways data gets into Databricks (trade-off, chapter 09) | "copy into vs auto loader" | No | |
+| 8 | Genie spaces for the Data Analyst exam: components, trusted assets, benchmarks and the 2026 Genie Agent rename | "databricks genie space exam" | No | |
+
 ## Databricks Generative AI Engineer Associate
 
 | Priority | Topic | Search Intent | Published | Filename |
