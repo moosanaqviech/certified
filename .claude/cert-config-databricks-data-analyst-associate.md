@@ -64,6 +64,10 @@ docs (Delta Live Tables, DLT, Workflows, SQL endpoint, Data Explorer).
         pages. Exam term: Data Intelligence Platform (Ch 01).
       Data Intelligence Engine / DatabricksIQ -> the docs page is now "AI
         assistive features". Exam term: Data Intelligence Engine (Ch 01).
+      Databricks Assistant -> "Genie Code" (11 Mar 2026; runs only in Agent
+        mode since Jun 2026; the /settings and /rename commands were
+        removed May 2026). Exam term: Databricks Assistant (Ch 11).
+      Salesforce Data Cloud -> "Salesforce Data 360" (a federation source).
 
     Pipelines: say "Lakeflow Spark Declarative Pipelines", never "Delta Live
       Tables" or "DLT". The Oct 2025 exam guide text still says "DeltaLive
