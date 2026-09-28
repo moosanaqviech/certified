@@ -227,7 +227,13 @@ generated file. Never edit the `<style>` block of the test template.
   `--accent-glow` at ~0.12 alpha, `--accent-ink`), and the payload between
   the `LESSON PAYLOAD - BEGIN / END` markers (the `NAV` block, the `A` SVG
   object, and the `cards` array). Also set the `<title>`. Extra named palette colors are
-  allowed when SVGs in `A` reference them.
+  allowed when SVGs in `A` reference them. The shell CSS ends with a
+  `@media (min-width: 900px)` block (present in both lesson templates and
+  every shipped lesson) that widens the phone column to 860px, lets art grow
+  to 640px (capped by viewport height) and steps the type up one size, so
+  SVG labels drawn at phone size stay legible on a desktop. It is part of the
+  shell, never per-lesson: change it in the templates and re-apply the same
+  block to every lesson so all of them keep rendering identically.
 - **Exams** (`test-template.html`): copy template, replace only the payload
   between the `EXAM PAYLOAD - BEGIN / END` markers (`E` config + `QUESTIONS`
   array). Exams keep the gold palette; no per-exam palettes.
