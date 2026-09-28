@@ -163,8 +163,8 @@ const E = {
   name: "Practice Exam 2",
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
-  coverage: "Covers chapters 1-22: Unit 1 (ingestion and transformation) and Unit 2 (data store management).",
-  minutes: 44,
+  coverage: "Covers Units 1-2: chapters 1-22 and 37-39, ingestion and transformation plus data store management.",
+  minutes: 50,
   pass: 72
 };
 
@@ -456,6 +456,45 @@ const QUESTIONS = [
     ],
     correct:1,
     explain:`ALL distribution replicates a small table to every node, so any join against it is local and nothing moves over the network; the price is storing it N times and slower writes. A DISTKEY is the tempting answer, but it colocates rows on one join column only and does not replicate, so the dimension still moves when it is joined on anything else.`
+  },
+
+  /* Ch 37 - Integrating LLMs with Amazon Bedrock */
+  {
+    q:`A team wants a Lambda function to summarize each support call transcript as it lands in S3 and store the summary as a new column beside the raw text. They plan to try models from two different providers over the next quarter. Which design keeps the function stable across that change?`,
+    opts:[
+      "Call InvokeModel with each provider's native request body and keep two code paths",
+      "Store the summary in place of the raw transcript to save space, and call InvokeModel",
+      "Use the Converse API with the modelId as a configuration value, and keep the raw transcript alongside the summary",
+      "Use Amazon Kendra to generate the summaries so no model call is needed"
+    ],
+    correct:2,
+    explain:`Converse takes one message format for every supported chat model, so switching providers is a configuration change rather than a rewrite; keeping the raw record lets a later model reprocess it. InvokeModel is the tempting answer because it also works with every model, but its request body is model-specific, which is exactly the churn the team wants to avoid. Kendra is enterprise search, it does not summarize records.`
+  },
+
+  /* Ch 38 - Vector data stores: HNSW vs IVF */
+  {
+    q:`A recommendation service stores product embeddings in Aurora PostgreSQL with pgvector. New products are inserted continuously, the index must be created before any data is loaded, and recall is the top priority. Which index type should the engineer create?`,
+    opts:[
+      "IVFFlat with a high number of lists",
+      "IVFFlat with probes set equal to lists",
+      "No index, relying on exact sequential scans",
+      "HNSW, which needs no training step and gives the best recall at low latency"
+    ],
+    correct:3,
+    explain:`HNSW builds a navigable graph with no clustering step, so it can be created on an empty table and keeps accepting inserts, and it delivers the best recall and query speed. IVFFlat is the tempting lighter option, but it must cluster existing data before the index exists, which the scenario rules out. Exact scans are perfectly accurate but scale linearly with table size.`
+  },
+
+  /* Ch 39 - SageMaker Unified Studio and SageMaker Catalog */
+  {
+    q:`A company runs SageMaker Unified Studio with one domain. The marketing team must be able to create its own projects and approve access requests for its assets without involving the central platform team, while finance keeps separate control of its own. What structure delivers this?`,
+    opts:[
+      "Create a domain unit per team under the domain and assign each team's leads as domain unit owners with project-creation and ownership policies",
+      "Create a separate domain per team and duplicate the business glossary in each",
+      "Add every team member as a domain administrator so they can approve requests",
+      "Register each team's tables in a separate Glue Data Catalog database"
+    ],
+    correct:0,
+    explain:`Domain units nest under a domain to mirror the organization, and their owners hold delegated authority through policies such as who may create projects; asset approvals then sit with the owning project. Separate domains is the tempting answer but it fragments discovery and duplicates governance. Domain administrator is far more than delegated ownership, and Glue databases are technical metadata, not a governance boundary.`
   }
 
 ];

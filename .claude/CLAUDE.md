@@ -4,10 +4,19 @@ Mobile-first static site of interactive lessons and timed practice exams,
 deployed on Netlify. Live courses: Databricks DE Associate (complete) and
 Databricks DE Professional (complete, see curriculum-index-de-professional.md
 for unit/chapter placement and eyebrow labels).
-In progress: AWS Data Engineer Associate (DEA-C01) (see
+Complete: AWS Data Engineer Associate (DEA-C01) (see
 curriculum-index-aws-dea-c01.md, the authoritative source for unit/chapter
-placement; it is marked Draft until re-checked against the official exam
-guide PDF) and Databricks Machine Learning Associate (see
+placement; the index is LOCKED against exam guide version 1.1 (12 Dec 2025),
+verified 27 Sep 2026 from the official PDF. All 40 chapters are live:
+chapters 1 to 36 are the original syllabus and chapters 37 to 40 are the gap
+chapters that cover the eight skills version 1.1 added (Bedrock LLM calls in
+a pipeline, vector stores and HNSW vs IVF, SageMaker Unified Studio and
+SageMaker Catalog, data sharing patterns); they keep their numbers and are
+placed at the end of Units 1, 2, 2 and 4 respectively, so play order inside a
+unit is not strictly numeric. The five `aws-practice-exam-NN.html` exams carry
+one question per chapter in scope, 14/25/33/40/40. Sealed full-length mocks
+are not yet authored.)
+In progress: Databricks Machine Learning Associate (see
 curriculum-index-databricks-ml-associate.md and
 cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
 the official 1 Mar 2025 exam guide PDF. All 30 authored lessons are live and
@@ -34,9 +43,11 @@ each course). Each course lives in its own top-level folder and has its own
   live Associate course.
 - `databricks-data-engineer-professional/` - lessons + practice exams for the
   live Professional course.
-- AWS Data Engineer Associate (DEA-C01) lessons/exams go in a sibling
-  `aws-data-engineer-associate/` folder as they're authored (see
-  curriculum-index-aws-dea-c01.md).
+- AWS Data Engineer Associate (DEA-C01) lessons/exams live in a sibling
+  `aws-data-engineer-associate/` folder (see curriculum-index-aws-dea-c01.md).
+  Chapters 1 to 36 were built on the v1 lesson template (no `NAV` block,
+  no step builds); chapters 37 to 40 are v2. A new or rewritten DEA lesson
+  uses v2.
 - Databricks Machine Learning Associate lessons/exams go in a sibling
   `databricks-machine-learning-associate/` folder as they're authored (see
   curriculum-index-databricks-ml-associate.md). Exam files use the
@@ -45,17 +56,13 @@ each course). Each course lives in its own top-level folder and has its own
   `databricks-generative-ai-engineer-associate/` folder as they're authored
   (see curriculum-index-databricks-genai-associate.md). Exam files use the
   `genai-practice-exam-NN.html` prefix.
-- AWS Machine Learning Engineer Associate has two courses, one per exam
-  version, each with its own folder and course index page:
-  `aws-machine-learning-engineer-associate-mla-c01/` (MLA-C01, offered in
-  English until 28 Sep 2026, see curriculum-index-aws-mla-c01.md) and
-  `aws-machine-learning-engineer-associate-mla-c02/` (MLA-C02, delivery
-  from 29 Sep 2026, see curriculum-index-aws-mla-c02.md). Both indexes are
-  DRAFT (chapter placement derived from the official exam guides, not yet
-  locked). The MLA-C02 index has a third level between unit and chapter:
-  each unit is split into modules that mirror the exam guide's task
-  statements (Module 1.1 is Task Statement 1.1), the course index.html
-  nests `modules:[...]` inside each unit, and cover eyebrows read
+- AWS Machine Learning Engineer Associate (MLA-C02, delivery from 29 Sep
+  2026) lives in `aws-machine-learning-engineer-associate-mla-c02/` (see
+  curriculum-index-aws-mla-c02.md, DRAFT: chapter placement derived from the
+  official exam guide, not yet locked). The index has a third level between
+  unit and chapter: each unit is split into modules that mirror the exam
+  guide's task statements (Module 1.1 is Task Statement 1.1), the course
+  index.html nests `modules:[...]` inside each unit, and cover eyebrows read
   "Unit N · Module N.M · Chapter NN". MLA-C02 is COMPLETE: all 76 chapters
   across Units 1 to 4 are live (Unit 1 chapters 01 to 20, Unit 2 chapters
   21 to 39, Unit 3 chapters 40 to 59, Unit 4 chapters 60 to 76), and each
@@ -66,10 +73,14 @@ each course). Each course lives in its own top-level folder and has its own
   mock exams" section of the course index). The course and its exams are now
   content-complete (see cert-config-aws-mla-c02.md for the badge,
   terminology, and palette registry). The last chapter of the course (76)
-  carries `next` pointing at the Unit 4 practice exam. MLA-C01 has no lessons yet;
-  its chapters are listed as "Coming soon" with `file:null`. The practice
-  exams use the `mla-c01-practice-exam-NN.html` and
-  `mla-c02-practice-exam-NN.html` prefixes.
+  carries `next` pointing at the Unit 4 practice exam. The practice exams
+  use the `mla-c02-practice-exam-NN.html` prefix.
+  The previous exam version, MLA-C01, was RETIRED on 27 Sep 2026 (last
+  English sitting 28 Sep 2026, no lesson ever authored): its folder is
+  deleted and `/aws-machine-learning-engineer-associate-mla-c01/*` 301s to
+  the MLA-C02 course in `_redirects`. curriculum-index-aws-mla-c01.md is
+  kept for the record only. The MLA-C01 blog posts stay (they are exam
+  content, and the vs-MLA-C02 post explains the switch).
 
 Practice hubs (the course-level Practice face, spec in
 `.claude/practice-hub-spec.md`) live in the root `practice/` folder, one file
@@ -89,8 +100,10 @@ objective, their own scenarios) as its mock pool and drills from exams 01 to
 03, so its drills cannot reach section 4 (Model Deployment) until a section 4
 drill pool is authored (the readiness check and the mocks do cover it). The
 DEA-C01 hub drills from all five `aws-practice-exam-NN.html` files (the
-readiness quiz tags questions `d1` to `d4` by domain) and shows Full mock as
-coming soon until sealed 65-question, 130-minute mocks ship. The GenAI
+readiness quiz tags questions `d1` to `d4` by domain; the hub's `DOMAINS`
+table maps chapter ranges to domains, and the gap chapters 37 to 40 are
+listed there as second ranges) and shows Full mock as coming soon until
+sealed 65-question, 130-minute mocks ship. The GenAI
 Engineer Associate hub drills from the four section exams
 (`genai-practice-exam-01` to `04`, tagged to a section by each question's
 `Q# · Ch NN` header), uses the three full mocks (`05` to `07`, 45 questions,

@@ -163,8 +163,8 @@ const E = {
   name: "Practice Exam 3",
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
-  coverage: "Covers chapters 1-30: Unit 1 (ingestion and transformation), Unit 2 (data stores), and Unit 3 (operations and support).",
-  minutes: 60,
+  coverage: "Covers Units 1-3: chapters 1-30 and 37-39, ingestion and transformation, data stores, and operations and support.",
+  minutes: 66,
   pass: 72
 };
 
@@ -562,6 +562,45 @@ const QUESTIONS = [
     ],
     correct:0,
     explain:`One task doing all the work while the rest idle is the signature of skew, where a single key concentrates the rows in one partition. Adding workers is the tempting fix, but a single skewed partition still lands on one executor, so the long task stays long; the key itself has to be spread.`
+  },
+
+  /* Ch 37 - Integrating LLMs with Amazon Bedrock */
+  {
+    q:`A Step Functions workflow must classify a backlog of 900,000 archived contracts stored in S3 into one of twelve categories, then load the results into Redshift. A prototype that invoked the model synchronously from a Map state was throttled and would take days. What should replace it?`,
+    opts:[
+      "Increase the Map state's maximum concurrency and retry on throttling errors",
+      "Write the prompts to S3 as JSONL, start a Bedrock batch inference job, and let an EventBridge job-state event trigger the load step",
+      "Convert the contracts to Parquet so the model can read them faster",
+      "Use Amazon Bedrock Guardrails to classify the documents without a model call"
+    ],
+    correct:1,
+    explain:`A one-off bulk workload over data already in S3 is the batch inference case: one asynchronous job, results written back to S3 with a manifest, and job state changes published to EventBridge so the workflow continues without polling. More concurrency is the tempting fix but it only reaches the same requests-per-minute throttle faster. Guardrails filter and mask content around a model call; they do not classify documents.`
+  },
+
+  /* Ch 38 - Vector data stores: HNSW vs IVF */
+  {
+    q:`A knowledge base of internal documents is queried by a chat application that must also filter by full-text keywords in the same request, at sub-10 millisecond latency and high query throughput. Which vector store fits best?`,
+    opts:[
+      "Amazon S3 Vectors, because it is the lowest-cost store for vectors",
+      "Amazon MemoryDB, because it is the only store with an HNSW index",
+      "Amazon DynamoDB with a global secondary index on the embedding column",
+      "Amazon OpenSearch Service, which combines k-NN vector search with full-text search at high throughput"
+    ],
+    correct:3,
+    explain:`OpenSearch is the store that carries text search and vector search side by side with HNSW k-NN indexes, and AWS positions it for high-throughput, low-latency query workloads. S3 Vectors is the tempting cost answer, but it is meant for infrequent queries. MemoryDB is fast but is not the only HNSW store and does not add full-text search, and DynamoDB has no vector index.`
+  },
+
+  /* Ch 39 - SageMaker Unified Studio and SageMaker Catalog */
+  {
+    q:`After a Glue crawler updates a table's schema, analysts searching SageMaker Catalog still see the old column list and description. The producer confirmed the change is visible in the Glue Data Catalog. What must happen for the business catalog to show it?`,
+    opts:[
+      "Nothing: the business catalog reads the Glue Data Catalog live at query time",
+      "Run the project's data source again to refresh the inventory, then republish the asset so the new version is discoverable",
+      "Delete the asset and ask analysts to re-subscribe after the crawler runs",
+      "Enable ML Lineage Tracking on the table so schema versions propagate"
+    ],
+    correct:1,
+    explain:`The business catalog imports technical metadata through data source runs and only the latest published version of an asset is discoverable, so a schema change needs a fresh run and a republish. "It reads live" is the tempting assumption, but SageMaker Catalog is a curated layer on top of the technical catalog, not a view of it. Deleting the asset would break existing subscriptions, and ML Lineage Tracking is about model workflows.`
   }
 
 ];

@@ -163,8 +163,8 @@ const E = {
   name: "Practice Exam 4",
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
-  coverage: "Full coverage, all 36 chapters: Units 1-4, weighted like the real DEA-C01 exam.",
-  minutes: 72,
+  coverage: "Full coverage, all 40 chapters: Units 1-4, weighted like the real DEA-C01 exam.",
+  minutes: 80,
   pass: 72
 };
 
@@ -641,6 +641,58 @@ const QUESTIONS = [
     ],
     correct:1,
     explain:`Residency is a preventive control: an SCP denying actions outside the approved Region stops the data from being created elsewhere in the first place. Macie is the tempting choice because it is the privacy service, but discovery is detective and reports a violation that has already happened, and tags document intent without enforcing anything.`
+  },
+
+  /* Ch 37 - Integrating LLMs with Amazon Bedrock */
+  {
+    q:`A data pipeline must remove customer names and account numbers from free-text notes before they are written to a shared analytics bucket, while a separate step asks a Bedrock model to summarize each note. The compliance team wants the masking enforced consistently on every model interaction. What should the engineer use?`,
+    opts:[
+      "Apply an Amazon Bedrock guardrail with sensitive-information filters to the model calls, and use ApplyGuardrail where content is processed without a model call",
+      "Ask the model in the prompt to leave out any personal details",
+      "Run Amazon Macie on the analytics bucket after the notes are written",
+      "Encrypt the notes with a customer managed KMS key so the names are unreadable"
+    ],
+    correct:0,
+    explain:`Guardrails are the configurable safeguard on Bedrock: sensitive-information filters block or mask PII on every invocation, and ApplyGuardrail applies the same policy standalone. Prompting the model is the tempting shortcut but it is probabilistic and unenforced. Macie finds PII after it has already landed, and encryption protects data at rest without removing the identifiers from the text.`
+  },
+
+  /* Ch 38 - Vector data stores: HNSW vs IVF */
+  {
+    q:`A team is building retrieval for a document assistant. They want ingestion from an S3 prefix to chunk documents, generate embeddings, and keep the vector index in sync as files change, with minimal custom code, and they already run Aurora PostgreSQL. Which approach fits?`,
+    opts:[
+      "Write a Glue job that calls an embedding model per chunk and upserts rows into an OpenSearch domain on a schedule",
+      "Load the documents into Amazon Kendra and export its index to Aurora",
+      "Store the raw documents in S3 Tables and let Athena compute similarity in SQL",
+      "Create an Amazon Bedrock knowledge base with the S3 prefix as its data source and Aurora PostgreSQL with pgvector as the vector store, then run incremental syncs"
+    ],
+    correct:3,
+    explain:`A knowledge base runs the parse, chunk, embed and index loop for you and its syncs are incremental, only touching added, modified or deleted documents; Aurora with pgvector is one of its supported stores. The custom Glue job is the tempting answer because it would work, but it is exactly the code the team wants to avoid maintaining. Kendra is a search service with no export path to a vector table, and Athena has no vector index.`
+  },
+
+  /* Ch 39 - SageMaker Unified Studio and SageMaker Catalog */
+  {
+    q:`A data quality incident corrupted a Redshift reporting table and the team must find every downstream dashboard dataset and upstream Glue job involved, at column level, before deciding what to rerun. Which tool answers this fastest?`,
+    opts:[
+      "Query CloudTrail Lake for every API call that referenced the table name",
+      "Open the asset's lineage graph in SageMaker Catalog, which captures OpenLineage-compatible dataset and job-run nodes at column level",
+      "Use SageMaker ML Lineage Tracking, which records every artifact in the workflow",
+      "Run a Glue crawler on the Redshift database to rebuild the dependency map"
+    ],
+    correct:1,
+    explain:`Impact analysis and root cause are the stated jobs of SageMaker Catalog lineage: a versioned graph of dataset and job nodes with column-level edges, fed automatically by Redshift query history and Glue sources. ML Lineage Tracking is the tempting near-miss, but it records model workflow artifacts in SageMaker AI, not warehouse tables. CloudTrail records API calls, not data flow, and a crawler only rediscovers schemas.`
+  },
+
+  /* Ch 40 - Data sharing patterns */
+  {
+    q:`A producer account has granted Lake Formation SELECT permissions on a curated database to a consumer account outside its organization. Analysts in the consumer account can see the shared database in the Glue Data Catalog but Athena queries fail to find the tables. What is missing?`,
+    opts:[
+      "S3 Replication of the producer's bucket into the consumer account",
+      "A second Lake Formation grant from the producer, this time with column-level permissions",
+      "The consumer's data lake administrator must accept the AWS RAM invitation, re-grant to local principals, and create a resource link that Athena can query",
+      "A Redshift datashare, since Athena cannot query cross-account Lake Formation resources"
+    ],
+    correct:2,
+    explain:`Cross-account Lake Formation sharing runs through AWS RAM: outside the organization the invitation must be accepted, the receiving data lake admin re-grants to local users, and Athena and Redshift Spectrum can only include shared resources through a resource link in the local catalog. Replication is the tempting answer but it creates a copy the scenario never asked for. Column-level grants change what is visible, not whether Athena can address the table, and Athena queries shared Lake Formation resources without any datashare.`
   }
 
 ];

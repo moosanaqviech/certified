@@ -163,8 +163,8 @@ const E = {
   name: "Practice Exam 5",
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
-  coverage: "Full coverage, all 36 chapters: Units 1-4, a second pass with entirely new scenarios.",
-  minutes: 72,
+  coverage: "Full coverage, all 40 chapters: Units 1-4, a second pass with entirely new scenarios.",
+  minutes: 80,
   pass: 72
 };
 
@@ -641,6 +641,58 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`Retention is enforced where the data lives, so one policy becomes a lifecycle rule, a scheduled deletion, and a TTL attribute, each automatic in its own store. Documenting the rule and reviewing it periodically is the tempting governance-only answer, but a policy nothing enforces is exactly what an auditor's sampling will find has quietly failed.`
+  },
+
+  /* Ch 37 - Integrating LLMs with Amazon Bedrock */
+  {
+    q:`A nightly job must extract the invoice number, total and due date from 3 million scanned PDF invoices and load the fields into a warehouse. The team has no experience writing prompts and wants structured output with minimal custom parsing. Which Bedrock capability fits best?`,
+    opts:[
+      "Amazon Bedrock Guardrails with a custom regex for each field",
+      "Amazon Bedrock Knowledge Bases with the invoices as a data source",
+      "Amazon Bedrock Data Automation to classify and extract fields from the documents into structured output",
+      "The Converse API called once per page from a Lambda function"
+    ],
+    correct:2,
+    explain:`Data Automation exists for exactly this: turning documents, images, audio and video into structured fields with classification and extraction built in, without a hand-written prompt per document type. Per-page Converse calls is the tempting general answer, but it means writing and parsing prompts at a volume that also invites throttling. Guardrails filter content, and a knowledge base indexes documents for retrieval rather than extracting fields into a table.`
+  },
+
+  /* Ch 38 - Vector data stores: HNSW vs IVF */
+  {
+    q:`A fraud team stores 8 million transaction embeddings in Aurora PostgreSQL. The set is rebuilt from a full snapshot every night, instance memory is at its limit, and a slightly lower recall is acceptable if the nightly index build finishes quickly. Which pgvector index should they use?`,
+    opts:[
+      "IVFFlat, created after each nightly load, with probes tuned to the accepted recall",
+      "HNSW with a large ef_construction so recall stays maximal",
+      "HNSW created before the load so inserts stream into the graph",
+      "A GIN index on the embedding column"
+    ],
+    correct:0,
+    explain:`A static corpus loaded before indexing, a memory ceiling, a fast build and tolerance for lower recall are the IVF signals; IVFFlat clusters the loaded vectors into lists and probes trade recall for speed. HNSW is the tempting default and the better index in general, but it is slower to build and larger in memory, the two constraints this scenario names. A GIN index is for text and array containment, not vector similarity.`
+  },
+
+  /* Ch 39 - SageMaker Unified Studio and SageMaker Catalog */
+  {
+    q:`A business analyst who does not write code needs to clean and standardize a messy customer file every week: trim whitespace, split a full-name column, and flag rows with missing emails, then hand the cleaned output to an engineer's Glue pipeline. Which tool should the engineer point the analyst to?`,
+    opts:[
+      "Athena for Apache Spark notebooks in a Spark-enabled workgroup",
+      "AWS Glue DataBrew, saving the steps as a recipe and scheduling a recipe job that writes to S3",
+      "The Amazon Bedrock Converse API with a prompt describing the cleanup",
+      "A Visual ETL flow in SageMaker Unified Studio that generates PySpark"
+    ],
+    correct:1,
+    explain:`DataBrew is the no-code preparation tool: ready-made transformations captured as a reusable recipe, run as a scheduled job with output to S3 that any pipeline can pick up. Visual ETL is the tempting alternative because it is also visual, but it is aimed at engineers building Spark flows and produces PySpark. Spark notebooks require code, and an LLM call is a probabilistic transform with no place in a deterministic weekly cleanup.`
+  },
+
+  /* Ch 40 - Data sharing patterns */
+  {
+    q:`A company is adopting a data mesh. Domain teams will own their datasets, publish them for other teams to find, and approve access themselves, while a central governance group keeps audit history and permission policies. Which combination of AWS services implements the publish, discover and approve loop?`,
+    opts:[
+      "Cross-account S3 bucket policies maintained by the central group for every dataset",
+      "A single shared Redshift cluster where every domain loads its data",
+      "Nightly S3 Replication from each domain account into a central lake account",
+      "SageMaker Catalog for publishing and subscriptions, with Lake Formation issuing the grants on approval and separate producer, consumer and governance accounts"
+    ],
+    correct:3,
+    explain:`The data mesh pattern in AWS guidance is domain ownership plus a central catalog under federated governance: producers publish data products to SageMaker Catalog, consumers subscribe through projects, owners approve, and Lake Formation grants are created on approval, with producer, consumer and governance layers typically in separate accounts. Central bucket policies is the tempting control-minded answer, but it puts approvals back in the central team and gives no discovery. A shared cluster or nightly replication both centralize copies instead of sharing owned data in place.`
   }
 
 ];

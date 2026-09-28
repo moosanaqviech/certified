@@ -163,8 +163,8 @@ const E = {
   name: "Practice Exam 1",
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
-  coverage: "Covers chapters 1-13: Unit 1, Data Ingestion and Transformation (34% of DEA-C01).",
-  minutes: 26,
+  coverage: "Covers Unit 1, Data Ingestion and Transformation (34% of DEA-C01): chapters 1-13 and 37.",
+  minutes: 28,
   pass: 72
 };
 
@@ -339,6 +339,19 @@ const QUESTIONS = [
     ],
     correct:[0,1],
     explain:`For a poll-based Kinesis source, throughput is governed by the event source mapping: a larger batch size moves more records per invocation, and a parallelization factor above 1 lifts the one-invocation-per-shard ceiling. Provisioned concurrency is the tempting pick, but it removes cold-start latency and does nothing for how fast records are pulled off shards. A longer timeout only lets a slow invocation run longer; less memory makes it slower still.`
+  },
+
+  /* Ch 37 - Integrating LLMs with Amazon Bedrock */
+  {
+    q:`A Glue job enriches 2,000 new product reviews per hour with a sentiment label by calling an Amazon Bedrock model per record. The job runs under a role that only has Glue and S3 permissions and fails on the first invocation with an access denied error. What is the minimal fix?`,
+    opts:[
+      "Grant the Glue job role bedrock:InvokeModel on the model being called",
+      "Attach AdministratorAccess to the Glue job role so all future service calls succeed",
+      "Switch the job to Bedrock batch inference, which does not require IAM permissions",
+      "Move the call into a Lambda function, since Glue jobs cannot call Bedrock"
+    ],
+    correct:0,
+    explain:`A model invocation is an ordinary IAM-authorized API call, so the job role needs bedrock:InvokeModel (and the streaming variant if used) on that model, nothing more. Batch inference is the tempting alternative but it is for large asynchronous backlogs, not a small hourly stream, and it needs a job role with permissions too. Glue ships boto3, so it calls Bedrock exactly as Lambda would.`
   }
 
 ];
