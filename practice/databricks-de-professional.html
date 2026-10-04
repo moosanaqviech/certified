@@ -729,7 +729,7 @@ function renderMockPicker(){
     const n = mockPool(m.id).length, lk = ready && mockLocked(m.id), last = lastMock(m.id);
     const right = !ready ? `<span>Loading…</span>`
       : lk ? `<span>Members</span>${lockIcon()}`
-      : `<span>${last ? `last <span class="m">${Math.round(last.c / last.n * 100)}%</span>` : "not sat yet"}</span><span>${n} q · 90 min</span>`;
+      : `<span>${last ? `last <span class="m">${Math.round(last.c / last.n * 100)}%</span>` : "not sat yet"}</span><span>${n} q · ${m.minutes} min</span>`;
     return `<button class="prow ${lk ? "locked" : ""}" data-mock="${m.id}" ${!ready || (!lk && n === 0) ? "disabled" : ""}>
       <span class="pn">${m.label}<span class="pw">sealed pool</span></span>
       <span class="pa">${right}</span></button>`;
@@ -827,7 +827,7 @@ function runSession(cfg){
   if (S && S.tick) clearInterval(S.tick);
   S = { mode: cfg.mode, mock: cfg.mock || null, label: cfg.label, qs: cfg.qs, i: 0, explainNow: cfg.explainNow, timed: !!cfg.timed,
         answers: cfg.qs.map(() => []), revealed: cfg.qs.map(() => false), unit: cfg.unit,
-        left: cfg.timed ? cfg.qs.length * SEC_PER_Q : 0, tick: null, done: false, started: Date.now() };
+        left: cfg.timed ? (cfg.minutes ? cfg.minutes * 60 : cfg.qs.length * SEC_PER_Q) : 0, tick: null, done: false, started: Date.now() };
   $("hub").hidden = true; $("session").hidden = false;
   if (S.timed) S.tick = setInterval(() => { S.left--; const t = $("runTimer"); if (t) { t.textContent = fmt(S.left); if (S.left <= 120) t.classList.add("warn"); } if (S.left <= 0) finish(); }, 1000);
   track("practice_session_start", { mode: S.mode, questions: S.qs.length });
