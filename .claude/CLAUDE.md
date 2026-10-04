@@ -27,7 +27,8 @@ full mocks (da-practice-exam-05 to 07: 45 questions, 90 minutes, one per
 chapter plus two extra Unit 4 items, new scenarios each, listed in the
 course home's "Full-length mock exams" section; 178 questions in all). The
 mocks are a sealed pool: never reuse their questions in the section exams
-and never draw them into drills. The course launched free, has no
+and never draw them into drills. The course launched free, is now paid
+(Units 1 to 3 free through their practice exam, $9.99 unlock), has no
 readiness quiz, and has a practice hub at practice/databricks-da-associate
 (see the practice hubs paragraph below). Exam guide names come first, with
 the 2026 docs renames mentioned once each, see the cert config. Its blog
@@ -44,8 +45,9 @@ are live: 01 to 03 are cumulative section exams (Section 1; Sections 1 and
 2; Sections 1 to 3, with 18, 27 and 42 questions, one per objective) and 04
 and 05 are full mocks (48 questions, 90 minutes, one per objective, their own
 scenarios; 195 questions in all). Exams map to objectives, not chapters: the
-real exam is 48 scored questions against 48 objectives. The course is free
-and has a practice hub at practice/databricks-ml-associate.)
+real exam is 48 scored questions against 48 objectives. The course is paid
+(Unit 1 free, $9.99 unlock) and has a practice hub at
+practice/databricks-ml-associate.)
 Complete: Databricks Generative AI Engineer Associate (see
 curriculum-index-databricks-genai-associate.md and
 cert-config-databricks-genai-associate.md; the index is LOCKED, re-verified

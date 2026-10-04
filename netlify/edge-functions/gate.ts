@@ -1,8 +1,8 @@
 // Freemium gate for every paid course on the site.
 //
 // Runs on every request but only acts on PAID course pages. Each course frees
-// its Unit 1 (plus the course home, the blog, and everything else); the rest is
-// gated. Behaviour is driven by env vars so the same commit can be free on one
+// its first unit (or the first units up to its first practice exam) plus the
+// course home, the blog, and everything else; the rest is gated. Behaviour is driven by env vars so the same commit can be free on one
 // Netlify site and gated on another:
 //   GATING_ENABLED=true  -> enforce the paywall on paid pages
 //   NOINDEX_SITE=true    -> stamp X-Robots-Tag: noindex on all responses
@@ -28,6 +28,8 @@ interface Course {
   home: string;
   blurb: string;
   free: Set<string>; // stems (filename without .html) that stay free
+  price: string;     // display price on the 402 page (the real charge is the Stripe Price)
+  was: string;       // struck anchor price shown beside it
 }
 
 const COURSES: Course[] = [
@@ -37,6 +39,7 @@ const COURSES: Course[] = [
     title: "Databricks DE Associate",
     home: "/databricks-data-engineer-associate/",
     blurb: "Unit 1 is free. Get lifetime access to Units 2 to 7: every lesson and all timed practice exams, one payment.",
+    price: "$9.99", was: "$30",
     free: new Set<string>([
       "", "index",
       "lesson-01-lakehouse",
@@ -52,6 +55,7 @@ const COURSES: Course[] = [
     title: "Databricks DE Professional",
     home: "/databricks-data-engineer-professional/",
     blurb: "Unit 1 is free. Get lifetime access to Units 2 to 10: every lesson and all timed practice exams, one payment.",
+    price: "$14.99", was: "$45",
     free: new Set<string>([
       "", "index",
       "lesson-01-dabs-project-structure",
@@ -67,11 +71,144 @@ const COURSES: Course[] = [
       "pro-practice-exam-01",
     ]),
   },
+  {
+    id: "ml-assoc",
+    prefix: "/databricks-machine-learning-associate/",
+    title: "Databricks ML Associate",
+    home: "/databricks-machine-learning-associate/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 4: every lesson, all timed practice exams and both full mocks, one payment.",
+    price: "$9.99", was: "$30",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-databricks-ml-workspace",
+      "lesson-02-databricks-runtime-ml",
+      "lesson-03-automl",
+      "lesson-04-reading-automl-output",
+      "lesson-05-unity-catalog-for-ml",
+      "lesson-06-feature-engineering-unity-catalog",
+      "lesson-07-online-vs-offline-feature-tables",
+      "lesson-08-mlflow-tracking",
+      "lesson-09-mlflow-models",
+      "lesson-10-mlflow-model-registry-unity-catalog",
+      "lesson-11-best-run-mlflow-client-api",
+      "lesson-31-mlops-strategy",
+      "lesson-32-promoting-code-vs-models",
+      "ml-practice-exam-01",
+    ]),
+  },
+  {
+    id: "genai-assoc",
+    prefix: "/databricks-generative-ai-engineer-associate/",
+    title: "Databricks GenAI Engineer Associate",
+    home: "/databricks-generative-ai-engineer-associate/",
+    blurb: "Units 1 and 2 are free. Get lifetime access to Units 3 to 6: every lesson, all timed practice exams and all three full mocks, one payment.",
+    price: "$9.99", was: "$30",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-databricks-genai-stack",
+      "lesson-02-business-goal-to-pipeline-spec",
+      "lesson-03-choosing-the-model-task",
+      "lesson-04-prompts-specific-format",
+      "lesson-05-chain-components",
+      "lesson-06-tools-for-multi-stage-reasoning",
+      "lesson-07-agent-bricks",
+      "lesson-08-sourcing-documents",
+      "lesson-09-extracting-content",
+      "lesson-10-filtering-extraneous-content",
+      "lesson-11-chunking-strategy",
+      "lesson-12-advanced-chunking-retrieval",
+      "lesson-13-chunks-to-delta-tables",
+      "lesson-14-measuring-retrieval",
+      "lesson-15-re-ranking",
+      "genai-practice-exam-01",
+    ]),
+  },
+  {
+    id: "da-assoc",
+    prefix: "/databricks-data-analyst-associate/",
+    title: "Databricks Data Analyst Associate",
+    home: "/databricks-data-analyst-associate/",
+    blurb: "Units 1 to 3 are free. Get lifetime access to Units 4 to 9: every lesson, all timed practice exams and all three full mocks, one payment.",
+    price: "$9.99", was: "$30",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-data-intelligence-platform",
+      "lesson-02-catalog-explorer-objects",
+      "lesson-03-managed-vs-external-tables",
+      "lesson-04-certified-tables-lineage-access",
+      "lesson-05-databricks-marketplace",
+      "lesson-06-certified-datasets",
+      "lesson-07-tags-and-lineage",
+      "lesson-08-cleaning-data-in-sql",
+      "lesson-09-five-ways-in",
+      "lesson-10-upload-a-file",
+      "da-practice-exam-01",
+    ]),
+  },
+  {
+    id: "aws-dea",
+    prefix: "/aws-data-engineer-associate/",
+    title: "AWS Data Engineer Associate",
+    home: "/aws-data-engineer-associate/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 4: every lesson and all timed practice exams, one payment.",
+    price: "$9.99", was: "$30",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-streaming-vs-batch-ingestion",
+      "lesson-02-kinesis-data-streams",
+      "lesson-03-kinesis-data-streams-vs-msk",
+      "lesson-04-amazon-data-firehose",
+      "lesson-05-managed-service-apache-flink",
+      "lesson-06-batch-ingestion-sources",
+      "lesson-07-aws-glue-for-etl",
+      "lesson-08-aws-glue-vs-emr",
+      "lesson-09-transforming-data-in-redshift",
+      "lesson-10-step-functions-vs-mwaa",
+      "lesson-11-event-driven-eventbridge",
+      "lesson-12-iac-and-cicd",
+      "lesson-13-lambda-for-data-processing",
+      "lesson-37-llms-in-data-processing-bedrock",
+      "aws-practice-exam-01",
+    ]),
+  },
+  {
+    id: "aws-mla-c02",
+    prefix: "/aws-machine-learning-engineer-associate-mla-c02/",
+    title: "AWS ML Engineer Associate (MLA-C02)",
+    home: "/aws-machine-learning-engineer-associate-mla-c02/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 4: every lesson, all timed practice exams and all three full mocks, one payment.",
+    price: "$14.99", was: "$45",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-data-formats",
+      "lesson-02-storage-decisions",
+      "lesson-03-streaming-ingestion-transformation",
+      "lesson-04-merging-sources-troubleshooting",
+      "lesson-05-vector-databases",
+      "lesson-06-ingesting-multimodal-data",
+      "lesson-07-sagemaker-feature-store",
+      "lesson-08-feature-engineering",
+      "lesson-09-encoding-features",
+      "lesson-10-transformation-tools",
+      "lesson-11-embedding-models",
+      "lesson-12-text-pre-processing",
+      "lesson-13-preparing-documents-for-rag",
+      "lesson-14-masking-redaction-anonymization",
+      "lesson-15-preparing-data-for-fm-customization",
+      "lesson-16-cleaning-data",
+      "lesson-17-data-quality-validation",
+      "lesson-18-labeling-annotation",
+      "lesson-19-bias-metrics-class-imbalance",
+      "lesson-20-validating-ai-training-data",
+      "mla-c02-practice-exam-01",
+    ]),
+  },
 ];
-
-// Display price (front-end anchor only; the real charge is the Stripe Price).
-const PRICE_REGULAR = "$30";
-const PRICE_NOW = "$9.99";
 
 function stemOf(path: string): string {
   let p = path;
@@ -238,7 +375,7 @@ function paywallHtml(course: Course): string {
     <div class="kicker">Members only</div>
     <h1>Unlock the full ${course.title} course</h1>
     <p>${course.blurb}</p>
-    <div class="price"><span class="now">${PRICE_NOW}</span><span class="was">${PRICE_REGULAR}</span></div>
+    <div class="price"><span class="now">${course.price}</span><span class="was">${course.was}</span></div>
     <div class="oneoff">One-time payment. Lifetime access.</div>
     <button class="cta" id="buy">Get full access</button>
     <div class="err" id="err"></div>
