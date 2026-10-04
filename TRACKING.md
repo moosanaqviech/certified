@@ -54,7 +54,8 @@ Events, and the Purchase/Lead pairs show as **deduplicated** in Meta.
 ### GA4 (DebugView)
 1. Open the site with the GA Debug extension on, or append `?debug_mode=1`.
 2. GA4 -> Admin -> DebugView.
-3. Complete a test purchase -> expect a `purchase` event with `value: 9.99`,
+3. Complete a test purchase -> expect a `purchase` event with the course's
+   price as `value` (9.99 or 14.99, read from the Stripe session),
    `currency: USD`, `transaction_id: pur_<session>`.
 4. Submit an email on a `/ready/<slug>` result -> expect `generate_lead` with
    `cert` and `quiz_slug`.

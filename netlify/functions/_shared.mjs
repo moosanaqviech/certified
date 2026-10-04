@@ -40,7 +40,31 @@ export const COURSES = {
     title: "Databricks DE Professional",
     priceId: "STRIPE_PRICE_ID_PROFESSIONAL",
   },
-   
+  "ml-assoc": {
+    folder: "databricks-machine-learning-associate",
+    title: "Databricks ML Associate",
+    priceId: "STRIPE_PRICE_ML_ASSOC",
+  },
+  "genai-assoc": {
+    folder: "databricks-generative-ai-engineer-associate",
+    title: "Databricks GenAI Engineer Associate",
+    priceId: "STRIPE_PRICE_GENAI_ASSOC",
+  },
+  "da-assoc": {
+    folder: "databricks-data-analyst-associate",
+    title: "Databricks Data Analyst Associate",
+    priceId: "STRIPE_PRICE_DA_ASSOC",
+  },
+  "aws-dea": {
+    folder: "aws-data-engineer-associate",
+    title: "AWS Data Engineer Associate",
+    priceId: "STRIPE_PRICE_AWS_DEA",
+  },
+  "aws-mla-c02": {
+    folder: "aws-machine-learning-engineer-associate-mla-c02",
+    title: "AWS ML Engineer Associate (MLA-C02)",
+    priceId: "STRIPE_PRICE_AWS_MLA_C02",
+  },
 };
 
 export function isCourse(id) {

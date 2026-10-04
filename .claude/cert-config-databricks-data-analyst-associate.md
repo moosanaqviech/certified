@@ -31,10 +31,10 @@ placement).
     Code language: SQL throughout. Python appears only where the guide names
       a notebook feature (data profile, visualizations) and never as the
       primary skill.
-    Price on this site: launched free and open (no gating), like the ML and
-      GenAI courses. A paid tier (from $9.99, per the pricing page rule) needs
-      a Stripe product and the unlock wiring first; that is a product
-      decision, not something a lesson author sets.
+    Price on this site: $9.99 one-time unlock (course id da-assoc). Units 1
+      to 3 are free through da-practice-exam-01; Units 4 to 9 and the three
+      mocks are gated by netlify/edge-functions/gate.ts. The Stripe Price id
+      lives in the STRIPE_PRICE_DA_ASSOC env var on Netlify.
 
 ## File naming
 

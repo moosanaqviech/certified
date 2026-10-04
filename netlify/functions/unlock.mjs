@@ -41,8 +41,13 @@ export default async (req) => {
       const buyerId = s.customer || s.id;
       const { rec, code } = await grantCourse(buyerId, courseId, "stripe", secret);
       const { headers, token } = unlockedHeaders(rec.courses, secret);
+      // Amount and currency actually collected, so the client Purchase event
+      // matches the server-side one (the courses carry different prices).
+      const cents = s.amount_total ?? s.amount_subtotal;
+      const amount = typeof cents === "number" ? cents / 100 : undefined;
+      const currency = (s.currency || "usd").toUpperCase();
       return new Response(
-        JSON.stringify({ ok: true, code, token, courses: rec.courses, home: homeFor(courseId) }),
+        JSON.stringify({ ok: true, code, token, courses: rec.courses, course: courseId, amount, currency, home: homeFor(courseId) }),
         { status: 200, headers },
       );
     }
