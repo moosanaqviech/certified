@@ -323,7 +323,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
       <p class="subline">
         <span class="code-pill">Professional</span>
         <span class="dot">·</span><span>10 units, 37 chapters</span>
-        <span class="dot">·</span><span><span id="bankCount">440</span> scenario questions</span>
+        <span class="dot">·</span><span><span id="bankCount">558</span> scenario questions</span>
       </p>
     </div>
     <div class="readiness" aria-live="polite">
@@ -369,12 +369,17 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
         <p>Twelve-question diagnostic sampled across the ten sections by exam weight. Updates the bars it touches.</p>
         <span class="len">12 questions · ~15 min</span>
       </button>
-      <div class="mode soon" id="mode-mock" aria-disabled="true">
+      <button class="mode" id="mode-mock" data-mode="mock" aria-expanded="false" aria-controls="mockPicker">
         <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2h12M6 22h12M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h3>Full mock <span class="tag soon">Coming soon</span></h3>
-        <p>Fifty-nine questions in two hours, exam conditions, from a sealed pool that never overlaps the drills. Sit it cold.</p>
+        <h3>Full mock <span class="tag members" id="mockTag" hidden>Members</span></h3>
+        <p>Fifty-nine questions in two hours, shaped like the real exam across all ten sections at the official weights, from a sealed pool that never overlaps the drills. Two mocks. Sit them cold.</p>
         <span class="len">59 questions · 120 min · timed</span>
-      </div>
+      </button>
+    </div>
+
+    <div class="picker" id="mockPicker" hidden>
+      <div class="ph"><span><b>Pick a mock.</b> Fifty-nine questions across all ten sections, a two-hour timer, no feedback until the end. Every section updates your bars.</span><button class="btn-link" id="mockPickerClose">Close</button></div>
+      <div id="mockRows"></div>
     </div>
 
     <div class="picker" id="picker" hidden>
@@ -478,8 +483,11 @@ const SOURCES = [
   { id:"e08", kind:"exam",  free:false, unit:8,  url: COURSE_DIR + "pro-practice-exam-08.html" },
   { id:"e09", kind:"exam",  free:false, unit:9,  url: COURSE_DIR + "pro-practice-exam-09.html" },
   { id:"e10", kind:"exam",  free:false, unit:10, url: COURSE_DIR + "pro-practice-exam-10.html" },
-  { id:"ready", kind:"ready", free:true, unit:1, url: "../ready/" + SLUG + ".html" }
-  /* Sealed mocks (mock-exam-NN.html, kind:"mock") are added here when they ship. */
+  { id:"ready", kind:"ready", free:true, unit:1, url: "../ready/" + SLUG + ".html" },
+  /* Sealed full-length mocks: 59 questions, 120 minutes, sampled at the
+     official section weights, their own scenarios. Paid, like Units 2 to 10. */
+  { id:"m01", kind:"mock", free:false, unit:1, url: COURSE_DIR + "mock-exam-01.html", label:"Full Mock 1", minutes:120 },
+  { id:"m02", kind:"mock", free:false, unit:1, url: COURSE_DIR + "mock-exam-02.html", label:"Full Mock 2", minutes:120 }
 ];
 
 /* ---------- paywall state (same cookie contract as the course home) ---------- */
@@ -791,7 +799,7 @@ async function startMock(id){
   if (!m) return;
   if (mockLocked(id)) { openCheckout(); return; }
   const qs = shuffle(mockPool(id).slice());
-  runSession({ mode: "mock", mock: id, label: m.label, qs, explainNow: false, timed: true });
+  runSession({ mode: "mock", mock: id, label: m.label, qs, explainNow: false, timed: true, minutes: m.minutes });
 }
 async function startCustom(){
   await loadPool();

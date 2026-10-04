@@ -99,6 +99,10 @@ Practice exam plan
         Units 1-8 (31 chapters, 62 min)
         Full coverage, Units 1-10 (37 chapters, 74 min)
         Full coverage, second pass with new scenarios (37 chapters, 74 min)
+    Sealed full-length mocks: mock-exam-01 and mock-exam-02 (59 questions, 120
+    minutes, sampled at the ten official section weights, every chapter covered,
+    new scenarios). They are the Practice hub's Full mock pool and are never
+    drawn into drills or reused in the unit exams.
 
 Terminology rules (November 2025 syllabus)
 

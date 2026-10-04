@@ -14,8 +14,11 @@ a pipeline, vector stores and HNSW vs IVF, SageMaker Unified Studio and
 SageMaker Catalog, data sharing patterns); they keep their numbers and are
 placed at the end of Units 1, 2, 2 and 4 respectively, so play order inside a
 unit is not strictly numeric. The five `aws-practice-exam-NN.html` exams carry
-one question per chapter in scope, 14/25/33/40/40. Sealed full-length mocks
-are not yet authored.)
+one question per chapter in scope, 14/25/33/40/40. Two sealed full-length
+mocks (`mock-exam-01` and `02`: 65 questions, 130 minutes, five select-two
+items each, sampled at the 34/26/22/18 domain weights, their own scenarios)
+are listed in the course home's "Full-length mock exams" section and are the
+hub's Full mock pool.)
 Complete: Databricks Data Analyst Associate (see
 curriculum-index-databricks-data-analyst-associate.md and
 cert-config-databricks-data-analyst-associate.md; the index is LOCKED,
@@ -125,8 +128,9 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/databricks-da-associate.html`) and AWS MLA-C02
 (`practice/aws-mla-c02.html`) have hubs, so every live course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
-files as timed 90-minute sessions; the Professional hub shows Full mock as
-coming soon until its sealed mocks ship; the ML Associate hub uses the two
+files as timed 90-minute sessions; the Professional hub runs its two sealed
+mocks (`mock-exam-01` and `02`: 59 questions, 120 minutes, sampled at the ten
+section weights) the same way; the ML Associate hub uses the two
 existing full mocks (`ml-practice-exam-04` and `05`, one question per
 objective, their own scenarios) as its mock pool and drills from exams 01 to
 03, so its drills cannot reach section 4 (Model Deployment) until a section 4
@@ -134,8 +138,8 @@ drill pool is authored (the readiness check and the mocks do cover it). The
 DEA-C01 hub drills from all five `aws-practice-exam-NN.html` files (the
 readiness quiz tags questions `d1` to `d4` by domain; the hub's `DOMAINS`
 table maps chapter ranges to domains, and the gap chapters 37 to 40 are
-listed there as second ranges) and shows Full mock as coming soon until
-sealed 65-question, 130-minute mocks ship. The GenAI
+listed there as second ranges) and runs the course's two sealed 65-question,
+130-minute mocks as its Full mock pool. The GenAI
 Engineer Associate hub drills from the four section exams
 (`genai-practice-exam-01` to `04`, tagged to a section by each question's
 `Q# · Ch NN` header), uses the three full mocks (`05` to `07`, 45 questions,
@@ -390,8 +394,10 @@ Professional, `aws-practice-exam-NN.html` for AWS Data Engineer Associate,
 for Generative AI Engineer Associate, `da-practice-exam-NN.html` for Data
 Analyst Associate.
 Sealed full-length mocks use `mock-exam-NN.html` (DE Associate has 01 and
-02: 45 questions, 90 minutes, sampled across the sections at the official
-weights, generated from the frozen test template). Their questions are a
+02: 45 questions, 90 minutes; DE Professional has 01 and 02: 59 questions,
+120 minutes; DEA-C01 has 01 and 02: 65 questions, 130 minutes; each sampled
+across the sections at the official weights and generated from the frozen
+test template). Their questions are a
 sealed pool: never reuse them in unit exams and never draw them into the
 Practice hub's drills; the hub's Full mock mode is the only thing that reads
 them besides the exam page itself.
