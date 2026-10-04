@@ -119,8 +119,9 @@ localStorage under `certify.practice.<cert-slug>`. The course home links to
 it through the Learn / Practice toggle; the hub's Learn segment links back to
 the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/aws-dea-c01.html`), GenAI Engineer Associate
-(`practice/databricks-genai-associate.html`) and Data Analyst Associate
-(`practice/databricks-da-associate.html`) have hubs.
+(`practice/databricks-genai-associate.html`), Data Analyst Associate
+(`practice/databricks-da-associate.html`) and AWS MLA-C02
+(`practice/aws-mla-c02.html`) have hubs, so every live course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub shows Full mock as
 coming soon until its sealed mocks ship; the ML Associate hub uses the two
@@ -144,7 +145,14 @@ hub is a clone of the GenAI hub with the same mechanics: drills from the four
 section exams (`da-practice-exam-01` to `04`, tagged by each question's
 `Ch NN` header), the three full mocks (`05` to `07`) as its mock pool, a
 weighted 12-question Readiness check drawn from the section exams, and nine
-bars weighted by objective count (the guide publishes no weights).
+bars weighted by objective count (the guide publishes no weights). The MLA-C02
+hub is the same clone in the AWS cerulean palette: it drills from the four
+unit exams (`mla-c02-practice-exam-01` to `04`, one unit per domain, tagged
+by each question's `Ch NN` header against the chapter ranges 1-20, 21-39,
+40-59, 60-76), uses the three full mocks (`05` to `07`, 65 questions, 130
+minutes) as its mock pool, runs a weighted 12-question Readiness check from
+the unit exams, and its four bars carry the official 28/24/24/24 weights, so
+they read "% of exam". Its pass target is 72, matching the course's exams.
 
 ## Author identity and trust pages
 
