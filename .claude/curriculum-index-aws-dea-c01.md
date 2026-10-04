@@ -179,9 +179,10 @@ Practice exam plan
         Exam 3: Units 1-3 (33 chapters: 1-30, 37-39; 66 min)
         Exam 4: Full coverage, Units 1-4 (40 chapters; 80 min)
         Exam 5: Full coverage, second pass with new scenarios (40 chapters; 80 min)
-    Sealed full-length mocks (65 questions, 130 minutes, sampled at the official
-    weights) are not yet authored; the Practice hub shows Full mock as coming soon
-    until they ship.
+    Sealed full-length mocks: mock-exam-01 and mock-exam-02 (65 questions, 130
+    minutes, five select-two items each, sampled at the official 34/26/22/18
+    weights, every chapter covered, new scenarios). They are the Practice hub's
+    Full mock pool and are never drawn into drills or reused in the unit exams.
 
 Terminology rules (must match published blog content)
 
