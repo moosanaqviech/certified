@@ -108,6 +108,9 @@ engine parity:
 1. `submitEmail` extended to fire the deduped `Lead` (pixel + GA4 + server
    CAPI) and to send `slug`, `cert`, `event_id`, and `fbp`/`fbc`.
 2. The capture form label made cert-specific via `R.cert`.
+3. The result screen's "Each links straight into the free course" sub-line
+   now reads "into the course", since every course carries an unlock
+   (Oct 2026; applied to the template and every live quiz).
 
 `EMAIL_ENDPOINT` was set to `/api/subscribe` in the live files only; the
 template keeps the empty reference stub. `scripts/validate.py` still passes on
