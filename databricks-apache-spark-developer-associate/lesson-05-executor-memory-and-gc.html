@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Executor Memory and Garbage Collection · Databricks Spark Developer Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-05-executor-memory-and-gc.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0c0906;            /* page background */
+    --bg-tint: #2a160a;       /* ambient glow tint behind the card */
+    --accent: #ff6f1f;        /* Spark ember: the Unit 1 architecture accent */
+    --accent-glow: rgba(255,111,31,0.12);  /* correct-answer fill */
+    --accent-ink: #0c0906;    /* text on top of the accent key chip */
+    --deep: #b4480f;          /* deep end of the heap gradient */
+    --cool: #7dd3fc;          /* storage memory and the GC sweep, contrast to execution */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 05 · Executor Memory and Garbage Collection
+   Objective 1.3, third part: describe the architecture of Apache Spark
+   including garbage collection (and the memory model that explains it).
+   Concept lesson: the executor heap laid out region by region, why the
+   unified region is borrowed rather than split, what the JVM collector is
+   doing when a task stalls, how GC pressure shows up in the Spark UI, the
+   levers that relieve it, and the driver-side version of the same problem
+   (collect and toPandas).
+   Sources (verified 5 Oct 2026):
+     spark.apache.org/docs/latest/tuning.html (Memory Management Overview:
+       execution vs storage, unified region, eviction threshold,
+       spark.memory.fraction default 0.6 of heap minus 300 MiB,
+       spark.memory.storageFraction default 0.5, the 40% for user data
+       structures and internal metadata, "cache fewer objects", GC cost
+       proportional to object count)
+     spark.apache.org/docs/latest/configuration.html (spark.executor.memory,
+       spark.executor.memoryOverhead, spark.memory.offHeap.enabled,
+       spark.memory.offHeap.size, spark.executor.pyspark.memory, container
+       total as their sum)
+     spark.apache.org/docs/latest/web-ui.html (Executors tab: GC time as
+       total JVM garbage collection time, on-heap and off-heap storage
+       memory columns)
+     docs.databricks.com/aws/en/optimizations/spark-ui-guide/
+       long-spark-stage-page (spill: execution memory running low)
+     docs.databricks.com/aws/en/optimizations/spark-ui-guide/jobs-timeline
+       (failed jobs and removed executors shown red)
+     docs.databricks.com/aws/en/pandas/pyspark-pandas-conversion (toPandas
+       collects every record to the driver; small subsets only)
+     kb.databricks.com/jobs/driver-unavailable and
+       kb.databricks.com/scala/job-fails-with-executorlostfailure-due-to-
+       out-of-memory-error (driver OOM from collect and toPandas, frequent
+       full GC, ExecutorLostFailure; the host was unreachable from the
+       authoring sandbox, so these came from search snippets of the pages)
+   Cover animates (the heap bar fills with objects, a GC sweep clears it);
+   step builds on card 1 (memory layout) and card 5 (the levers).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-06-execution-hierarchy.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="c05g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:var(--deep)"/>
+        <stop offset="1" style="stop-color:var(--accent)"/>
+      </linearGradient>
+      <radialGradient id="c05r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(255,111,31,0.20)"/>
+        <stop offset="1" style="stop-color:rgba(255,111,31,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c05fill { stroke-dasharray: 200; stroke-dashoffset: 170; animation: c05heap 8s ease-in-out infinite; }
+      .c05sweep { opacity: 0; animation: c05broom 8s linear infinite; }
+      .c05gc { opacity: 0; animation: c05gclabel 8s linear infinite; }
+      .c05run { opacity: 1; animation: c05runlabel 8s linear infinite; }
+      .c05obj { opacity: 0; animation: c05objs 8s linear infinite; }
+      .c05obj.o2 { animation-delay: 0.6s; } .c05obj.o3 { animation-delay: 1.2s; } .c05obj.o4 { animation-delay: 1.8s; } .c05obj.o5 { animation-delay: 2.4s; } .c05obj.o6 { animation-delay: 3.0s; }
+      @keyframes c05heap { 0% { stroke-dashoffset: 170; } 55% { stroke-dashoffset: 16; } 62% { stroke-dashoffset: 16; } 80% { stroke-dashoffset: 170; } 100% { stroke-dashoffset: 170; } }
+      @keyframes c05broom { 0%, 60% { transform: translateX(0px); opacity: 0; } 62% { transform: translateX(0px); opacity: 1; } 80% { transform: translateX(200px); opacity: 1; } 82%, 100% { transform: translateX(200px); opacity: 0; } }
+      @keyframes c05gclabel { 0%, 60% { opacity: 0; } 63%, 79% { opacity: 1; } 82%, 100% { opacity: 0; } }
+      @keyframes c05runlabel { 0%, 58% { opacity: 1; } 62%, 80% { opacity: 0.2; } 84%, 100% { opacity: 1; } }
+      @keyframes c05objs { 0%, 8% { opacity: 0; } 14%, 60% { opacity: 1; } 66%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c05fill, .c05sweep, .c05gc, .c05run, .c05obj { animation: none; }
+        .c05fill { stroke-dashoffset: 60; } .c05sweep { opacity: 1; transform: translateX(120px); } .c05gc { opacity: 1; } .c05obj { opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="72" fill="url(#c05r)"/>
+    <rect x="34" y="34" width="252" height="132" rx="14" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="48" y="54" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">EXECUTOR (JVM)</text>
+    <text x="272" y="54" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">heap</text>
+    <line x1="60" y1="100" x2="260" y2="100" stroke="var(--surface)" stroke-width="24" stroke-linecap="round"/>
+    <line x1="60" y1="100" x2="260" y2="100" stroke="var(--line)" stroke-width="26" stroke-linecap="round" fill="none"/>
+    <line class="c05fill" x1="60" y1="100" x2="260" y2="100" stroke="url(#c05g)" stroke-width="24" stroke-linecap="round"/>
+    <g class="c05obj"><circle cx="86" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05obj o2"><circle cx="114" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05obj o3"><circle cx="142" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05obj o4"><circle cx="170" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05obj o5"><circle cx="198" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05obj o6"><circle cx="226" cy="100" r="4" fill="var(--bg)"/></g>
+    <g class="c05sweep">
+      <rect x="54" y="80" width="12" height="40" rx="4" fill="var(--cool)"/>
+      <rect x="52" y="78" width="16" height="44" rx="6" fill="none" stroke="var(--cool)" stroke-opacity="0.5"/>
+    </g>
+    <g class="c05run">
+      <circle cx="68" cy="138" r="3.5" fill="var(--accent)"/>
+      <text x="78" y="141.5" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">tasks allocate objects</text>
+    </g>
+    <g class="c05gc">
+      <circle cx="176" cy="138" r="3.5" fill="var(--cool)"/>
+      <text x="186" y="141.5" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">GC pause: tasks wait</text>
+    </g>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">The heap fills, the collector sweeps, and every task on the executor waits.</text>
+  </svg>`,
+
+  layout: `<svg viewBox="0 0 320 180">
+    <text x="20" y="22" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">JVM HEAP: spark.executor.memory</text>
+    <rect x="20" y="34" width="280" height="54" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <g data-step="1">
+      <rect x="24" y="38" width="26" height="46" rx="7" fill="var(--ink-faint)" fill-opacity="0.55"/>
+      <text x="37" y="104" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">reserved</text>
+      <text x="37" y="115" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">300 MiB</text>
+    </g>
+    <g data-step="2">
+      <rect x="54" y="38" width="94" height="46" rx="7" fill="var(--surface)" stroke="var(--ink-faint)" stroke-dasharray="3 3"/>
+      <text x="101" y="58" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">user memory</text>
+      <text x="101" y="70" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">your objects, metadata</text>
+      <text x="101" y="104" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">1 - fraction</text>
+      <text x="101" y="115" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">0.4 by default</text>
+    </g>
+    <g data-step="3">
+      <rect x="152" y="38" width="144" height="46" rx="7" fill="rgba(255,111,31,0.14)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="224" y="58" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">unified memory</text>
+      <text x="224" y="70" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">execution + storage</text>
+      <text x="224" y="104" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">spark.memory.fraction</text>
+      <text x="224" y="115" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">0.6 of (heap - 300 MiB)</text>
+    </g>
+    <g data-step="4">
+      <rect x="152" y="130" width="72" height="34" rx="7" fill="rgba(255,111,31,0.18)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="188" y="144" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">execution</text>
+      <text x="188" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">shuffles, joins, sorts</text>
+      <rect x="224" y="130" width="72" height="34" rx="7" fill="rgba(125,211,252,0.14)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="260" y="144" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">storage</text>
+      <text x="260" y="156" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">cached blocks</text>
+      <line x1="224" y1="88" x2="224" y2="128" stroke="var(--ink-faint)" stroke-dasharray="2 3"/>
+      <text x="224" y="176" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">spark.memory.storageFraction, 0.5 by default</text>
+    </g>
+  </svg>`,
+
+  borrow: `<svg viewBox="0 0 320 150">
+    <style>
+      .c05ex { stroke-dasharray: 158; stroke-dashoffset: 70; animation: c05push 7s ease-in-out infinite; }
+      .c05st { stroke-dasharray: 132; stroke-dashoffset: 0; animation: c05yield 7s ease-in-out infinite; }
+      .c05lbl { animation: c05evict 7s linear infinite; opacity: 0; }
+      @keyframes c05push { 0%, 20% { stroke-dashoffset: 70; } 50%, 70% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 70; } }
+      @keyframes c05yield { 0%, 20% { stroke-dashoffset: 0; } 50%, 70% { stroke-dashoffset: 70; } 100% { stroke-dashoffset: 0; } }
+      @keyframes c05evict { 0%, 22% { opacity: 0; } 30%, 68% { opacity: 1; } 76%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .c05ex, .c05st, .c05lbl { animation: none; } .c05ex { stroke-dashoffset: 0; } .c05st { stroke-dashoffset: 70; } .c05lbl { opacity: 1; } }
+    </style>
+    <text x="40" y="24" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">UNIFIED REGION</text>
+    <rect x="40" y="34" width="240" height="44" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <line class="c05ex" x1="60" y1="56" x2="218" y2="56" stroke="rgba(255,111,31,0.34)" stroke-width="32"/>
+    <line class="c05st" x1="280" y1="56" x2="148" y2="56" stroke="rgba(125,211,252,0.22)" stroke-width="32"/>
+    <rect x="218" y="40" width="62" height="32" rx="6" fill="none" stroke="var(--cool)" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <text x="64" y="60" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">execution</text>
+    <text x="276" y="60" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">storage</text>
+    <text x="249" y="92" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">protected by storageFraction</text>
+    <text x="249" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">cached blocks here are never evicted</text>
+    <g class="c05lbl">
+      <text x="110" y="92" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">a join needs room</text>
+      <text x="110" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">cached blocks outside R are evicted</text>
+    </g>
+    <text x="160" y="135" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Execution can evict storage down to the protected part. Storage never evicts execution.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 05</div>
+    <h1 class="reveal">Executor memory and garbage collection</h1>
+    <p class="lead reveal">An executor is a JVM with one heap. Spark divides that heap into regions, lends them to each other, and leans on the JVM's garbage collector to keep it clean. When the collector cannot keep up, tasks stall, executors die, and the Spark UI shows you where.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the memory layout, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The layout</div>
+    <h2 class="reveal" style="font-size:24px">One heap, three regions</h2>
+    <div class="art reveal">${A.layout}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px"><code>spark.executor.memory</code> sets the size of the executor's JVM heap. Tap to carve it up.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Spark first sets aside <strong>300 MiB of reserved memory</strong> for its own internal objects. It is fixed and never shared out.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Of what remains, the part outside <code>spark.memory.fraction</code> (40% by default) is <strong>user memory</strong>: your data structures, Spark's internal metadata, and a safety margin against unusually large records.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>spark.memory.fraction</code> (default 0.6) is the <strong>unified memory</strong> region Spark manages itself, shared by execution and storage.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><code>spark.memory.storageFraction</code> (default 0.5) marks how much of that region is <strong>storage</strong> that execution may not take back. <strong>Execution memory</strong> is for shuffles, joins, sorts and aggregations; storage memory holds cached blocks.</p>
+    </div>` },
+
+  /* 2: unified means borrowed */
+  { html: `
+    <div class="eyebrow reveal">Unified memory</div>
+    <h2 class="reveal" style="font-size:26px">Unified means borrowed, not split</h2>
+    <div class="art reveal">${A.borrow}</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Either side can take the whole pool</b>When nothing is cached, execution can use all of the unified region; when no task is running, storage can fill it with cached blocks.</p></div>
+      <div class="pill"><p><b>Execution evicts storage, down to a floor</b>A shuffle or join that needs room evicts cached blocks, but only until storage falls to the share <code>spark.memory.storageFraction</code> protects. Inside that part, cached blocks are never evicted.</p></div>
+      <div class="pill"><p><b>Storage never evicts execution</b>A running task keeps its buffers. If execution memory still runs out, the task <strong>spills</strong> to disk (the stage page in the Spark UI reports spill), which is slow but not fatal.</p></div>
+    </div>` },
+
+  /* 3: the heap and the collector */
+  { html: `
+    <div class="eyebrow reveal">Garbage collection</div>
+    <h2 class="reveal" style="font-size:26px">The JVM cleans up after every task</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Executors are JVM processes even when the code is Python: DataFrame operations run as JVM objects on the executor, and only Python UDFs run in separate Python worker processes.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What GC is</b>Tasks create objects (rows, buffers, hash maps) and drop them. <strong>Garbage collection (GC)</strong> is the JVM reclaiming objects nothing references any more. While a collection runs, the tasks on that executor pause.</p></div>
+      <div class="pill"><p><b>Why it hurts Spark</b>The cost of a collection is proportional to the <strong>number</strong> of live objects, not their bytes. Many small objects, long-lived cached data and a nearly full heap mean long, frequent pauses.</p></div>
+      <div class="pill"><p><b>On-heap versus off-heap</b>Everything above is <strong>on-heap</strong> and is what GC scans. Spark can also keep execution and storage data <strong>off-heap</strong>, outside the JVM heap, when <code>spark.memory.offHeap.enabled</code> is true and <code>spark.memory.offHeap.size</code> is set; the collector never touches it. <code>spark.executor.memoryOverhead</code> covers native and JVM overhead, and the container an executor needs is the sum of heap, overhead, off-heap size and <code>spark.executor.pyspark.memory</code>.</p></div>
+    </div>` },
+
+  /* 4: symptoms */
+  { html: `
+    <div class="eyebrow reveal">Symptoms</div>
+    <h2 class="reveal" style="font-size:26px">What GC pressure looks like</h2>
+    <p class="lead reveal" style="margin-bottom:16px">The Spark UI measures the collector for you. Three signs, from mild to fatal.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>GC time is a big share of task time</b>The <strong>Executors tab</strong> lists each executor's task time with its total JVM GC time. A task page shows the same per task. When GC is a large fraction of the time a task takes, the executor is spending its life cleaning up instead of computing.</p></div>
+      <div class="pill"><p><b>Executors lost</b>An executor stuck in repeated full collections stops answering, the driver treats it as dead, and the job reports <code>ExecutorLostFailure</code>. The Jobs timeline shows the removed executors in red and the stage's tasks re-run elsewhere.</p></div>
+      <div class="pill"><p><b>OutOfMemoryError</b>When even a full collection frees nothing, the JVM throws <code>java.lang.OutOfMemoryError</code> and the executor exits. The same error on the driver takes the whole application down.</p></div>
+    </div>` },
+
+  /* 5: the levers, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The levers</div>
+    <h2 class="reveal" style="font-size:24px">Relieving the pressure</h2>
+    <p class="lead reveal" style="margin-bottom:14px;font-size:15px">Every fix either puts fewer objects on the heap or gives the heap more room. Tap through, cheapest first.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1. Cache less, unpersist sooner</b>Cached blocks are long-lived objects the collector must keep checking. Call <code>unpersist()</code> when a DataFrame is no longer reused. The Spark tuning guide's rule: it is better to cache fewer objects than to slow down task execution.</p></div>
+      <div class="pill" data-step="2"><p><b>2. More partitions, smaller tasks</b>Each task holds its partition's working set in memory. <code>repartition()</code> to a higher count, or a larger <code>spark.sql.shuffle.partitions</code>, means each task allocates less at once.</p></div>
+      <div class="pill" data-step="3"><p><b>3. Size the memory</b>Lower <code>spark.memory.fraction</code> when cached data crowds out your own objects, or raise <code>spark.executor.memory</code> and use fewer, larger executors (or move hot data off-heap). This is the lever that costs money, so it comes last.</p></div>
+      <div class="pill" data-step="4"><p><b>4. Keep the driver out of it</b>The driver is a JVM too, and one call can fill it in a single step. That is the next card.</p></div>
+    </div>` },
+
+  /* 6: driver-side OOM */
+  { html: `
+    <div class="eyebrow reveal">The driver</div>
+    <h2 class="reveal" style="font-size:26px">collect() and toPandas() land on one machine</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Executors scale out; the driver does not. <code>collect()</code> brings every row of a DataFrame into the driver process, and <code>toPandas()</code> does the same before building a pandas DataFrame, even with Arrow enabled. A driver that cannot hold the result spends its time in full collections, stops answering, and is reported as unavailable, or dies with an OutOfMemoryError.</p>
+    <div class="codeblock reveal"><span class="cm"># both pull the whole DataFrame into the driver JVM</span>
+rows = big_df.<span class="al">collect()</span>
+pdf  = big_df.<span class="al">toPandas()</span>
+<span class="cm"># keep the result small, or keep it distributed</span>
+pdf  = big_df.groupBy(<span class="st">"region"</span>).count().limit(<span class="st">100</span>).toPandas()
+big_df.write.mode(<span class="st">"overwrite"</span>).format(<span class="st">"delta"</span>).save(path)</div>
+    <p class="lead reveal" style="margin-top:14px;font-size:14.5px">Aggregate or <code>limit()</code> before collecting, write large results to a table instead of returning them, and treat a bigger driver node as the fix of last resort. <code>spark.driver.maxResultSize</code> caps how much a single action may send back, so a cap error is the same symptom caught early.</p>` },
+
+  /* 7: quiz, symptom to lever */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A nightly job has slowed down. The Executors tab shows GC time close to half of task time on every executor, the notebook caches six intermediate DataFrames and never releases them, and two executors were lost overnight. What should the developer do first?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Change the caches to MEMORY_ONLY so Spark stops spilling cached blocks to disk</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Unpersist the DataFrames that are not reused and raise the partition count so each task holds less in memory</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Double the executor count so the lost executors are replaced faster</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> High GC share plus lost executors means the heap is crowded with live objects; cached blocks that are never released are exactly that. Dropping them and shrinking each task's working set removes objects, which is the cheapest lever. Option A is tempting because it mentions memory, but MEMORY_ONLY keeps more on the heap, not less, and makes GC worse. More executors (C) leaves every heap just as crowded; the failures simply move.</div>` },
+
+  /* 8: quiz, execution versus storage */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A cached DataFrame fills most of an executor's unified memory. A later stage runs a large sort-merge join that needs execution memory. With default settings, what happens?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>The join evicts cached blocks until storage is down to the share that spark.memory.storageFraction protects, then spills if it still needs more</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Cached blocks are never evicted, so the join fails with an OutOfMemoryError</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>The cached blocks evict the join's buffers, so the join restarts once the cache is unpersisted</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Unified memory lets execution borrow from storage: cached blocks are evicted down to the protected storageFraction floor, and beyond that execution spills to disk rather than failing. Option B describes the protected part only, not the whole region; blocks above the floor are evictable. Option C has the rule backwards: storage can never evict execution, because a running task's buffers cannot be taken away.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 05 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can draw an executor's heap, explain who borrows from whom, and read a GC-heavy job in the Spark UI.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Layout</b>Reserved 300 MiB, user memory, then the unified region (<code>spark.memory.fraction</code>, 0.6) split by <code>spark.memory.storageFraction</code> (0.5) into execution and storage.</p></div>
+      <div class="pill"><p><b>Borrowing</b>Execution evicts storage down to the protected floor and spills past it; storage never evicts execution.</p></div>
+      <div class="pill"><p><b>GC</b>The JVM pauses tasks to reclaim unreferenced objects; cost scales with object count. Read GC time in the Executors tab, then cache less, add partitions, resize, and never collect() a big DataFrame to the driver.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
