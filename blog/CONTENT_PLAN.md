@@ -76,10 +76,10 @@ Note on the Filename column: published posts are `.html` files in the
 | Priority | Topic | Search Intent | Published | Filename |
 |---|---|---|---|---|
 | 1 | Complete Databricks Generative AI Engineer Associate certification guide (pillar) | "databricks generative ai engineer associate certification guide" | Yes | blog/databricks-generative-ai-engineer-associate-certification-guide.html |
-| 2 | Databricks Generative AI Engineer Associate exam cost, format and question types | "what's on the databricks generative ai engineer exam" | No | |
+| 2 | Databricks Generative AI Engineer Associate exam cost, format and question types | "what's on the databricks generative ai engineer exam" | Yes | blog/databricks-generative-ai-engineer-associate-exam-cost-format-question-types.html |
 | 3 | Study plan and prep time for the Databricks Generative AI Engineer Associate exam | "databricks genai engineer study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-generative-ai-engineer-associate.html |
-| 4 | Mosaic AI Vector Search and RAG for the GenAI Engineer exam explained | "mosaic ai vector search rag exam" | No | |
-| 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | No | |
+| 4 | Mosaic AI Vector Search and RAG for the GenAI Engineer exam explained | "mosaic ai vector search rag exam" | Yes | blog/mosaic-ai-vector-search-rag-genai-engineer-exam.html |
+| 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | Yes | blog/mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
@@ -105,7 +105,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 5 | Amazon SageMaker for the MLA-C01 exam: what you actually need to know | "sagemaker for MLA-C01 exam" | Yes | blog/sagemaker-mla-c01-exam.html |
 | 6 | Study plan and prep time for the updated AWS Machine Learning Engineer Associate exam (MLA-C02: beta, new GenAI and FM scope, 28/24/24/24 weights) | "MLA-C02 study plan" / "how long to prepare for MLA-C02" | Yes | blog/how-long-to-prepare-aws-machine-learning-engineer-associate-mla-c02.html |
 | 7 | MLA-C01 vs AWS AI Practitioner (AIF-C01): which AWS ML cert to take | "aws ai practitioner vs machine learning engineer" | Yes | blog/aws-ai-practitioner-vs-machine-learning-engineer-associate.html |
-| 8 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | No | |
+| 8 | Is the AWS Machine Learning Engineer Associate certification worth it in 2026 | "is aws machine learning engineer cert worth it" | Yes | blog/is-aws-machine-learning-engineer-associate-worth-it-2026.html |
 | 9 | Complete AWS Machine Learning Engineer Associate (MLA-C02) certification guide (pillar) | "aws machine learning engineer associate mla-c02 certification guide" | Yes | blog/aws-machine-learning-engineer-associate-mla-c02-certification-guide.html |
 | 10 | MLA-C02 exam guide breakdown: domains and weighting | "MLA-C02 exam domains" | Yes | blog/mla-c02-exam-guide-domains-weighting.html |
 | 11 | AWS Machine Learning Engineer Associate exam cost, format and question types (MLA-C02) | "what's on the MLA-C02 exam" | Yes | blog/mla-c02-exam-cost-format-question-types.html |
@@ -132,8 +132,8 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the AWS Cloud Practitioner exam | "cloud practitioner study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-cloud-practitioner.html |
 | 4 | Core AWS services to know for the CLF-C02 exam | "aws services for cloud practitioner exam" | Yes | blog/core-aws-services-clf-c02-exam.html |
 | 5 | AWS pricing and billing concepts for the Cloud Practitioner exam | "aws pricing billing cloud practitioner" | Yes | blog/aws-pricing-billing-cloud-practitioner-exam.html |
-| 6 | AWS Cloud Practitioner vs AI Practitioner (AIF-C01): which foundational cert first | "aws cloud practitioner vs ai practitioner" | No | |
-| 7 | Is the AWS Cloud Practitioner certification worth it as a first cert in 2026 | "is aws cloud practitioner worth it" | No | |
+| 6 | AWS Cloud Practitioner vs AI Practitioner (AIF-C01): which foundational cert first | "aws cloud practitioner vs ai practitioner" | Yes | blog/aws-cloud-practitioner-vs-ai-practitioner-which-first.html |
+| 7 | Is the AWS Cloud Practitioner certification worth it as a first cert in 2026 | "is aws cloud practitioner worth it" | Yes | blog/is-aws-cloud-practitioner-worth-it-first-cert-2026.html |
 
 ## AWS Certified AI Practitioner (AIF-C01)
 
@@ -144,7 +144,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the AWS AI Practitioner exam | "AIF-C01 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-ai-practitioner.html |
 | 4 | AWS AI Practitioner exam cost, format and question types | "what's on the AWS ai practitioner exam" | Yes | blog/aif-c01-exam-cost-format-question-types.html |
 | 5 | Generative AI and Amazon Bedrock concepts for the AIF-C01 exam | "amazon bedrock generative ai exam" | Yes | blog/amazon-bedrock-generative-ai-aif-c01-exam.html |
-| 6 | AWS AI Practitioner vs Cloud Practitioner (CLF-C02): which foundational cert first | "aws ai practitioner vs cloud practitioner" | No | |
+| 6 | AWS AI Practitioner vs Cloud Practitioner (CLF-C02): which foundational cert first | "aws ai practitioner vs cloud practitioner" | Yes | blog/aws-cloud-practitioner-vs-ai-practitioner-which-first.html |
 | 7 | AWS AI Practitioner vs Machine Learning Engineer Associate: foundational vs associate | "aif-c01 vs mla-c01" | Yes | blog/aws-ai-practitioner-vs-machine-learning-engineer-associate.html |
 
 ## Microsoft Azure Fundamentals (AZ-900)
@@ -155,9 +155,9 @@ Note on the Filename column: published posts are `.html` files in the
 | 2 | Azure Fundamentals exam cost, format and question types | "what's on the AZ-900 exam" | Yes | blog/azure-fundamentals-az-900-exam-cost-format.html |
 | 3 | Study plan and prep time for the Azure Fundamentals exam | "az-900 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-azure-fundamentals-az-900.html |
 | 4 | Core Azure services to know for the AZ-900 exam | "azure services for az-900 exam" | Yes | blog/core-azure-services-az-900-exam.html |
-| 5 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | No | |
+| 5 | Azure pricing, SLAs and governance concepts for the AZ-900 exam | "azure pricing sla governance az-900" | Yes | blog/azure-pricing-sla-governance-az-900-exam.html |
 | 6 | AZ-900 vs AWS Cloud Practitioner: which cloud fundamentals cert to take | "az-900 vs aws cloud practitioner" | Yes | blog/az-900-vs-aws-cloud-practitioner.html |
-| 7 | Is Azure Fundamentals worth it in 2026 | "is az-900 worth it" | No | |
+| 7 | Is Azure Fundamentals worth it in 2026 | "is az-900 worth it" | Yes | blog/is-azure-fundamentals-az-900-worth-it-2026.html |
 
 ---
 
