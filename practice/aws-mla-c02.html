@@ -366,7 +366,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
       <button class="mode" id="mode-ready" data-mode="ready">
         <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11l3 3 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <h3>Readiness check</h3>
-        <p>Twelve-question diagnostic sampled across all four domains by exam weight. Updates every bar.</p>
+        <p>The course's twelve-question readiness quiz, spread across all four domains. Untimed, explanations at the end. Updates every bar.</p>
         <span class="len">12 questions · ~15 min</span>
       </button>
       <button class="mode" id="mode-mock" data-mode="mock" aria-expanded="false" aria-controls="mockPicker">
@@ -465,10 +465,12 @@ const unitOf = ch => { for (const d of DOMAINS) { for (const r of d.ch) { if (ch
    to 04 are the per-unit exams (one unit per domain, one question per chapter)
    and feed the drills; exams 05 to 07 are the three full-length mocks (65
    questions, 130 minutes, sampled at the official 28/24/24/24 weighting, their
-   own scenarios) and serve as the mock pool. The course has no separate
-   readiness diagnostic, so the Readiness check is a weighted twelve-question
-   draw from the unit exams with the explanations held to the end. */
+   own scenarios) and serve as the mock pool. The Readiness check runs the
+   course's free readiness quiz (ready/aws-mla-c02: twelve questions, headers
+   tagged by chapter so each lands on its domain), falling back to a weighted
+   draw from the unit exams only if the quiz fails to load. */
 const SOURCES = [
+  { id:"ready", kind:"ready", free:true, unit:1, url: "../ready/" + SLUG + ".html" },
   { id:"e01", kind:"exam",  free:true, unit:1, url: COURSE_DIR + "mla-c02-practice-exam-01.html" },
   { id:"e02", kind:"exam",  free:false, unit:2, url: COURSE_DIR + "mla-c02-practice-exam-02.html" },
   { id:"e03", kind:"exam",  free:false, unit:3, url: COURSE_DIR + "mla-c02-practice-exam-03.html" },
@@ -580,6 +582,7 @@ const anyLocked = () => SOURCES.some(s => SRC_STATUS[s.id] === "locked");
 const anyError  = () => SOURCES.some(s => SRC_STATUS[s.id] === "error");
 const allFailed = () => SOURCES.every(s => SRC_STATUS[s.id] && SRC_STATUS[s.id] !== "ok");
 const examPool  = () => POOL.filter(q => q.kind === "exam");
+const readyPool = () => POOL.filter(q => q.kind === "ready");
 const MOCKS     = SOURCES.filter(s => s.kind === "mock");
 const mockPool  = id => POOL.filter(q => q.kind === "mock" && q.src === id);
 const mockLocked = id => SRC_STATUS[id] === "locked";
@@ -786,7 +789,10 @@ async function startDomain(n, opt){
 }
 async function startReady(){
   await loadPool();
-  const qs = sampleWeighted(12);
+  /* The course's readiness quiz is the diagnostic; the weighted exam draw is
+     only the fallback when that file did not load. */
+  const rp = readyPool();
+  const qs = rp.length ? shuffle(rp.slice()) : sampleWeighted(12);
   runSession({ mode: "ready", label: "Readiness check", qs, explainNow: false, timed: false });
 }
 async function startMock(id){

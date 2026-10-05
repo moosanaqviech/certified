@@ -102,13 +102,13 @@ Events, and the Purchase/Lead pairs show as **deduplicated** in Meta.
 
 The readiness template is a frozen engine (like the lesson/exam engines). Two
 edits were unavoidable and were applied identically to
-`.claude/readiness-template.html` and all four `ready/*.html` files to keep
+`.claude/readiness-template.html` and every `ready/*.html` file to keep
 engine parity:
 
 1. `submitEmail` extended to fire the deduped `Lead` (pixel + GA4 + server
    CAPI) and to send `slug`, `cert`, `event_id`, and `fbp`/`fbc`.
 2. The capture form label made cert-specific via `R.cert`.
 
-`EMAIL_ENDPOINT` was set to `/api/subscribe` in the four live files only; the
+`EMAIL_ENDPOINT` was set to `/api/subscribe` in the live files only; the
 template keeps the empty reference stub. `scripts/validate.py` still passes on
-all four quizzes.
+all live quizzes.

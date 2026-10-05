@@ -31,8 +31,9 @@ chapter plus two extra Unit 4 items, new scenarios each, listed in the
 course home's "Full-length mock exams" section; 178 questions in all). The
 mocks are a sealed pool: never reuse their questions in the section exams
 and never draw them into drills. The course launched free, is now paid
-(Units 1 to 3 free through their practice exam, $9.99 unlock), has no
-readiness quiz, and has a practice hub at practice/databricks-da-associate
+(Units 1 to 3 free through their practice exam, $9.99 unlock), has a
+readiness quiz at ready/databricks-da-associate (five readout clusters over
+the nine sections), and has a practice hub at practice/databricks-da-associate
 (see the practice hubs paragraph below). Exam guide names come first, with
 the 2026 docs renames mentioned once each, see the cert config. Its blog
 cluster is complete: eight posts listed in the Data Analyst Associate block
@@ -143,21 +144,25 @@ listed there as second ranges) and runs the course's two sealed 65-question,
 Engineer Associate hub drills from the four section exams
 (`genai-practice-exam-01` to `04`, tagged to a section by each question's
 `Q# · Ch NN` header), uses the three full mocks (`05` to `07`, 45 questions,
-90 minutes) as its mock pool, and, having no `/ready` diagnostic, runs its
-Readiness check as a weighted 12-question draw from the section exams. Its
+90 minutes) as its mock pool, and runs the course's readiness quiz
+(`ready/databricks-genai-associate`, six sections) as its Readiness check,
+falling back to a weighted 12-question draw from the section exams only if
+the quiz fails to load. Its
 bar weights are derived from objective counts (the guide publishes none), so
 they read "% of objectives", never "% of exam". The Data Analyst Associate
 hub is a clone of the GenAI hub with the same mechanics: drills from the four
 section exams (`da-practice-exam-01` to `04`, tagged by each question's
-`Ch NN` header), the three full mocks (`05` to `07`) as its mock pool, a
-weighted 12-question Readiness check drawn from the section exams, and nine
+`Ch NN` header), the three full mocks (`05` to `07`) as its mock pool, the
+course's readiness quiz (`ready/databricks-da-associate`) as its Readiness
+check with the exam draw as fallback, and nine
 bars weighted by objective count (the guide publishes no weights). The MLA-C02
 hub is the same clone in the AWS cerulean palette: it drills from the four
 unit exams (`mla-c02-practice-exam-01` to `04`, one unit per domain, tagged
 by each question's `Ch NN` header against the chapter ranges 1-20, 21-39,
 40-59, 60-76), uses the three full mocks (`05` to `07`, 65 questions, 130
-minutes) as its mock pool, runs a weighted 12-question Readiness check from
-the unit exams, and its four bars carry the official 28/24/24/24 weights, so
+minutes) as its mock pool, runs the course's readiness quiz
+(`ready/aws-mla-c02`) as its Readiness check with the exam draw as fallback,
+and its four bars carry the official 28/24/24/24 weights, so
 they read "% of exam". Its pass target is 72, matching the course's exams.
 
 ## Author identity and trust pages
