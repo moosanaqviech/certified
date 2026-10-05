@@ -59,6 +59,17 @@ chapters across 6 units are live and cover all 56 objectives, and all seven
 genai-practice-exam-NN.html exams (01-07) are live. Exams map to objectives
 and SAMPLE them: the real exam is 45 scored questions against 56 objectives,
 so one full mock cannot cover them all).
+In progress: Databricks Certified Associate Developer for Apache Spark (see
+curriculum-index-databricks-spark-developer-associate.md and
+cert-config-databricks-spark-developer-associate.md; the index is LOCKED,
+verified against the official 30 Oct 2025 exam guide PDF on 5 Oct 2026: 7
+units mirroring the seven weighted sections (20/20/30/10/10/5/5, official),
+40 chapters, one per objective with bundled objectives split. 45 single-answer
+questions, 90 minutes, Python only, no select-two items. No lesson, exam,
+course folder, hub or catalog entry exists yet; the course folder will be
+`databricks-apache-spark-developer-associate/` and exams use the
+`spark-practice-exam-NN.html` prefix, 01 to 03 section exams and 04 to 06
+full mocks sampled at the official weights).
 
 ## Site structure
 
