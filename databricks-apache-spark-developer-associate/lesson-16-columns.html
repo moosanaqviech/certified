@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Columns: select, withColumn, withColumnRenamed, drop · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-16-columns.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* mint: the Unit 3 DataFrame API accent (building) */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --cool: #7dd3fc;          /* renamed columns (withColumnRenamed) */
+    --warm: #f87171;          /* dropped columns (drop) */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 16 · Columns: select, withColumn, withColumnRenamed, drop
+   Objective 3.1, column side: manipulate columns and table structures by
+   adding, dropping and renaming columns (rows, split and explode are
+   Chapter 17). Mirrors official sample question 3 (replace division with a
+   new column named state, rename mName to managerName): withColumn takes a
+   string name then a Column, drop removes the old column, withColumnRenamed
+   takes the existing name first. Distractors taught: reversed rename
+   arguments, withColumn(col(...), name), a columns= dict, lit() as a name.
+   Concept lesson with code cards: the four verbs, select with strings,
+   col() and expr() plus alias(), withColumn (add, same name replaces,
+   withColumns for several), renaming (argument order, withColumnsRenamed,
+   no-op on a missing name), drop, lit() and cast(), the sample-question
+   chain assembled one call at a time, two quizzes, recap.
+   Sources (docs.databricks.com/aws/en/pyspark/reference/...):
+   classes/dataframe/select (str, Column or list, '*', alias example);
+   classes/dataframe/withColumn (colName str, col Column, replaces an
+   existing column of the same name, the note that calling it multiple
+   times, for instance in loops, generates big plans and even a
+   StackOverflowException, use select with multiple columns);
+   classes/dataframe/withColumns (dict of name to Column, adds or replaces);
+   classes/dataframe/withColumnRenamed (existing, new; no-op when the
+   schema lacks the name); classes/dataframe/withColumnsRenamed (dict of
+   existing to new, no-op for missing names); classes/dataframe/drop
+   (*cols, names or Column objects, no-op for missing names);
+   functions/col, functions/lit (Column of literal value), functions/expr
+   (parses an expression string into a Column; length(name) example);
+   classes/column/cast (DataType or DDL string) and classes/column/alias.
+   ANSI default in Spark 4.0 (malformed string cast raises
+   CAST_INVALID_INPUT): docs.databricks.com/sql/language-manual/
+   sql-ref-ansi-compliance.
+   Cover animates (a state column slides in, mName becomes managerName,
+   division fades out, each with its method chip lit). Step builds on
+   card 3 (withColumn adds, replaces, then withColumns) and card 6 (the
+   sample-question chain, one call per tap, swap captions).
+   Code blocks carry an inline white-space:pre-wrap so their line breaks
+   render (the shell .codeblock rule does not preserve newlines).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-17-rows-filter-split-explode.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c16r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c16in { animation: c16slide 9s cubic-bezier(0.4,0,0.2,1) infinite; }
+      @keyframes c16slide {
+        0%, 12% { opacity: 0; transform: translateX(26px); }
+        26%, 90% { opacity: 1; transform: translateX(0px); }
+        96%, 100% { opacity: 0; transform: translateX(0px); }
+      }
+      .c16old { animation: c16fadeold 9s ease-in-out infinite; }
+      @keyframes c16fadeold { 0%, 34% { opacity: 1; } 42%, 92% { opacity: 0; } 98%, 100% { opacity: 1; } }
+      .c16new { animation: c16fadenew 9s ease-in-out infinite; }
+      @keyframes c16fadenew { 0%, 34% { opacity: 0; } 42%, 92% { opacity: 1; } 98%, 100% { opacity: 0; } }
+      .c16div { animation: c16drop 9s ease-in-out infinite; }
+      @keyframes c16drop { 0%, 52% { opacity: 1; } 64%, 92% { opacity: 0.12; } 98%, 100% { opacity: 1; } }
+      .c16gone { animation: c16ghost 9s ease-in-out infinite; }
+      @keyframes c16ghost { 0%, 54% { opacity: 0; } 64%, 92% { opacity: 1; } 98%, 100% { opacity: 0; } }
+      .c16k1 { animation: c16chip1 9s ease-in-out infinite; }
+      .c16k2 { animation: c16chip2 9s ease-in-out infinite; }
+      .c16k3 { animation: c16chip3 9s ease-in-out infinite; }
+      @keyframes c16chip1 { 0%, 8% { opacity: 0.3; } 14%, 30% { opacity: 1; } 36%, 100% { opacity: 0.3; } }
+      @keyframes c16chip2 { 0%, 30% { opacity: 0.3; } 36%, 48% { opacity: 1; } 54%, 100% { opacity: 0.3; } }
+      @keyframes c16chip3 { 0%, 50% { opacity: 0.3; } 56%, 70% { opacity: 1; } 76%, 100% { opacity: 0.3; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c16in { animation: none; opacity: 1; transform: none; }
+        .c16old { animation: none; opacity: 0; }
+        .c16new { animation: none; opacity: 1; }
+        .c16div { animation: none; opacity: 0.12; }
+        .c16gone { animation: none; opacity: 1; }
+        .c16k1, .c16k2, .c16k3 { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="96" rx="155" ry="85" fill="url(#c16r)"/>
+    <g class="c16k1">
+      <rect x="14" y="10" width="92" height="20" rx="10" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="60" y="23.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">withColumn</text>
+    </g>
+    <g class="c16k2">
+      <rect x="112" y="10" width="112" height="20" rx="10" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="168" y="23.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">withColumnRenamed</text>
+    </g>
+    <g class="c16k3">
+      <rect x="230" y="10" width="76" height="20" rx="10" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="268" y="23.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">drop</text>
+    </g>
+    <rect x="14" y="44" width="68" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="48" y="58.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">storeId</text>
+    <rect x="14" y="68" width="68" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="90" width="68" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="112" width="68" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="48" y="81.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">1</text>
+    <text x="48" y="103.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">2</text>
+    <text x="48" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">3</text>
+    <g class="c16div">
+      <rect x="86" y="44" width="70" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="121" y="58.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">division</text>
+      <rect x="86" y="68" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="86" y="90" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="86" y="112" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="121" y="81.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">East</text>
+      <text x="121" y="103.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">West</text>
+      <text x="121" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">North</text>
+    </g>
+    <g class="c16gone">
+      <rect x="86" y="44" width="70" height="88" rx="6" fill="none" stroke="var(--warm)" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="121" y="91" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">dropped</text>
+    </g>
+    <rect x="160" y="44" width="70" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect class="c16new" x="160" y="44" width="70" height="22" rx="5" fill="rgba(125,211,252,0.12)" stroke="var(--cool)" stroke-width="1.2"/>
+    <text class="c16old" x="195" y="58.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">mName</text>
+    <text class="c16new" x="195" y="58.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">managerName</text>
+    <rect x="160" y="68" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="160" y="90" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="160" y="112" width="70" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="195" y="81.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Ana</text>
+    <text x="195" y="103.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Ravi</text>
+    <text x="195" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Mei</text>
+    <g class="c16in">
+      <rect x="234" y="44" width="72" height="22" rx="5" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="270" y="58.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">state</text>
+      <rect x="234" y="68" width="72" height="20" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="234" y="90" width="72" height="20" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="234" y="112" width="72" height="20" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <text x="270" y="81.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">East</text>
+      <text x="270" y="103.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">West</text>
+      <text x="270" y="125.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">North</text>
+    </g>
+    <text x="160" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Each call returns a new DataFrame.</text>
+    <text x="160" y="178" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9">The original is never changed, so the calls chain.</text>
+  </svg>`,
+
+  wc: `<svg viewBox="0 0 320 156">
+    <text x="8" y="16" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">DF: ITEM, PRICE, QTY</text>
+    <rect x="8" y="26" width="48" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="59" y="26" width="48" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="26" width="48" height="20" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="32" y="39.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">item</text>
+    <text x="83" y="39.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">price</text>
+    <text x="134" y="39.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">qty</text>
+    <rect x="8" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="59" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="8" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="59" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="32" y="60.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">pen</text>
+    <text x="83" y="60.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2.0</text>
+    <text x="134" y="60.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">3</text>
+    <text x="32" y="80.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">ink</text>
+    <text x="83" y="80.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">5.0</text>
+    <text x="134" y="80.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2</text>
+    <g data-step="1">
+      <rect x="161" y="26" width="48" height="20" rx="4" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="161" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="161" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <text x="185" y="39.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">total</text>
+      <text x="185" y="60.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">6.0</text>
+      <text x="185" y="80.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">10.0</text>
+      <text x="8" y="106" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">+ total: a new name, so a new column</text>
+    </g>
+    <g data-step="2">
+      <rect x="8" y="26" width="48" height="20" rx="4" fill="var(--bg-tint)" stroke="var(--cool)" stroke-width="1.2"/>
+      <rect x="8" y="48" width="48" height="18" rx="4" fill="var(--bg-tint)" stroke="var(--cool)" stroke-opacity="0.6"/>
+      <rect x="8" y="68" width="48" height="18" rx="4" fill="var(--bg-tint)" stroke="var(--cool)" stroke-opacity="0.6"/>
+      <text x="32" y="39.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">item</text>
+      <text x="32" y="60.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">PEN</text>
+      <text x="32" y="80.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">INK</text>
+      <text x="8" y="124" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">item: same name, replaced in place (no duplicate)</text>
+    </g>
+    <g data-step="3">
+      <rect x="212" y="26" width="48" height="20" rx="4" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="263" y="26" width="48" height="20" rx="4" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="212" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="263" y="48" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="212" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <rect x="263" y="68" width="48" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <text x="236" y="39.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">tax</text>
+      <text x="287" y="39.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">source</text>
+      <text x="236" y="60.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">0.6</text>
+      <text x="287" y="60.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">web</text>
+      <text x="236" y="80.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">1.0</text>
+      <text x="287" y="80.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">web</text>
+      <text x="8" y="142" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">+ tax, source: two columns from one withColumns call</text>
+    </g>
+  </svg>`,
+
+  chain: `<svg viewBox="0 0 320 186">
+    <text x="8" y="12" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">STORESDF</text>
+    <rect x="8" y="18" width="50" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="64" y="18" width="52" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="122" y="18" width="46" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="174" y="18" width="40" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="33" y="30.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">storeId</text>
+    <text x="90" y="30.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">division</text>
+    <text x="145" y="30.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">mName</text>
+    <text x="194" y="30.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">sales</text>
+    <g data-step="1">
+      <text x="8" y="58" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">.withColumn("state", col("division"))</text>
+      <rect x="8" y="64" width="50" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="64" y="64" width="52" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="122" y="64" width="46" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="174" y="64" width="40" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="220" y="64" width="44" height="18" rx="9" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="33" y="76.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">storeId</text>
+      <text x="90" y="76.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">division</text>
+      <text x="145" y="76.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">mName</text>
+      <text x="194" y="76.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">sales</text>
+      <text x="242" y="76.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">state</text>
+    </g>
+    <g data-step="2">
+      <text x="8" y="104" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">.drop("division")</text>
+      <rect x="8" y="110" width="50" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="64" y="110" width="52" height="18" rx="9" fill="none" stroke="var(--warm)" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <rect x="122" y="110" width="46" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="174" y="110" width="40" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="220" y="110" width="44" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="33" y="122.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">storeId</text>
+      <text x="90" y="122.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">division</text>
+      <path d="M70 119 L110 119" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="145" y="122.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">mName</text>
+      <text x="194" y="122.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">sales</text>
+      <text x="242" y="122.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">state</text>
+    </g>
+    <g data-step="3">
+      <text x="8" y="150" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">.withColumnRenamed("mName", "managerName")</text>
+      <rect x="8" y="156" width="50" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="64" y="156" width="72" height="18" rx="9" fill="rgba(125,211,252,0.14)" stroke="var(--cool)" stroke-width="1.2"/>
+      <rect x="142" y="156" width="40" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="188" y="156" width="44" height="18" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="33" y="168.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">storeId</text>
+      <text x="100" y="168.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">managerName</text>
+      <text x="162" y="168.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">sales</text>
+      <text x="210" y="168.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">state</text>
+      <rect x="246" y="156" width="66" height="18" rx="9" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="279" y="168.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">result</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 16</div>
+    <h1 class="reveal">Shaping columns</h1>
+    <p class="lead reveal">Adding, replacing, renaming and dropping columns is most of everyday DataFrame work in Apache Spark, and the exam tests the exact argument order of each method. This chapter covers <code>select</code>, <code>withColumn</code>, <code>withColumnRenamed</code> and <code>drop</code>.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the four verbs */
+  { html: `
+    <div class="eyebrow reveal">The toolkit</div>
+    <h2 class="reveal">Four verbs, one rule</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Each method <strong>returns a new DataFrame</strong> and leaves the one it was called on unchanged. That is why column work in Spark reads as a chain of calls.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>select(*cols)</b>Pick and compute columns. The result holds exactly the columns listed.</p></div>
+      <div class="pill"><p><b>withColumn(name, col) and withColumns({...})</b>Add a column, or replace an existing one with the same name.</p></div>
+      <div class="pill"><p><b>withColumnRenamed(existing, new) and withColumnsRenamed({...})</b>Change a name; the values stay as they were.</p></div>
+      <div class="pill"><p><b>drop(*cols)</b>Remove one or several columns.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2: select */
+  { html: `
+    <div class="eyebrow reveal">select</div>
+    <h2 class="reveal" style="font-size:26px">Strings, col() and expr()</h2>
+    <div class="codeblock reveal" style="white-space:pre-wrap"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, expr
+df.select(<span class="st">"name"</span>, <span class="st">"age"</span>)              <span class="cm"># names</span>
+df.select(col(<span class="st">"age"</span>) + 1)             <span class="cm"># a Column</span>
+df.select(<span class="st">"*"</span>, expr(<span class="st">"length(name)"</span>))  <span class="cm"># SQL text</span>
+<span class="al">df.select(<span class="st">"name"</span>, (col(<span class="st">"age"</span>) + 10).alias(<span class="st">"age"</span>))</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Strings name columns</b>To compute, build a Column with <code>col("age")</code> (or <code>df.age</code>) and use operators, or hand SQL text to <code>expr()</code>, which parses it into a Column.</p></div>
+      <div class="pill"><p><b>alias() names the result</b>A computed column gets a generated name such as <code>length(name)</code>. <code>.alias("...")</code> sets your own.</p></div>
+      <div class="pill"><p><b>Only what is listed survives</b><code>select</code> returns exactly its arguments; <code>"*"</code> expands to every existing column.</p></div>
+    </div>` },
+
+  /* 3: withColumn, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">withColumn</div>
+    <h2 class="reveal" style="font-size:24px">A new name adds, the same name replaces</h2>
+    <div class="art reveal" style="min-height:0;margin-bottom:12px">${A.wc}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14px">The signature is <code>withColumn(colName, col)</code>: a string name, then a Column. Tap to apply three calls.</p>
+      <p class="lead" data-step="1" style="font-size:14px"><code>.withColumn("total", col("price") * col("qty"))</code>: <strong>total</strong> does not exist yet, so it is added.</p>
+      <p class="lead" data-step="2" style="font-size:14px"><code>.withColumn("item", upper(col("item")))</code>: <strong>item</strong> already exists, so it is replaced. No error, no second item column.</p>
+      <p class="lead" data-step="3" style="font-size:14px"><code>.withColumns({"tax": col("total") * 0.1, "source": lit("web")})</code> adds both at once. Each <code>withColumn</code> adds a projection, and the docs warn that many calls (a loop, say) build big plans, even a <code>StackOverflowException</code>: use <code>withColumns</code> or one <code>select</code>.</p>
+    </div>` },
+
+  /* 4: renaming */
+  { html: `
+    <div class="eyebrow reveal">withColumnRenamed</div>
+    <h2 class="reveal" style="font-size:26px">Existing name first, new name second</h2>
+    <div class="codeblock reveal" style="white-space:pre-wrap"><span class="al">df.withColumnRenamed(<span class="st">"mName"</span>, <span class="st">"managerName"</span>)</span>
+<span class="cm"># several at once: a dict of existing to new</span>
+df.withColumnsRenamed({<span class="st">"mName"</span>: <span class="st">"managerName"</span>,
+                       <span class="st">"div"</span>: <span class="st">"division"</span>})</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Reversed arguments fail silently</b>On a DataFrame with no <code>managerName</code> column, <code>withColumnRenamed("managerName", "mName")</code> is a <strong>no-op</strong>: no error, nothing renamed. Read it as "rename existing to new".</p></div>
+      <div class="pill"><p><b>Two strings, nothing else</b>The new name is a plain string, never <code>lit(...)</code> or <code>col(...)</code>. There is no <code>columns=</code> keyword (that is the pandas <code>rename</code> shape); the dict form is <code>withColumnsRenamed</code>.</p></div>
+      <div class="pill"><p><b>alias() renames inside select</b><code>select(col("mName").alias("managerName"))</code> also renames, but keeps only the columns listed.</p></div>
+    </div>` },
+
+  /* 5: drop, lit, cast */
+  { html: `
+    <div class="eyebrow reveal">drop, lit, cast</div>
+    <h2 class="reveal" style="font-size:26px">Remove, set a constant, change a type</h2>
+    <div class="codeblock reveal" style="white-space:pre-wrap"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, lit
+df.drop(<span class="st">"division"</span>)                  <span class="cm"># one column</span>
+df.drop(<span class="st">"division"</span>, <span class="st">"mName"</span>)         <span class="cm"># several</span>
+<span class="al">df.withColumn(<span class="st">"country"</span>, lit(<span class="st">"US"</span>))</span>
+df.withColumn(<span class="st">"sales"</span>, col(<span class="st">"sales"</span>).cast(<span class="st">"double"</span>))</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>drop</b>Takes one or more names (or Column objects), each as its own argument. A name that is not in the schema is a no-op, not an error.</p></div>
+      <div class="pill"><p><b>lit()</b>The second argument of <code>withColumn</code> must be a Column, so a constant goes through <code>lit()</code>, which creates a Column of that literal value on every row.</p></div>
+      <div class="pill"><p><b>cast()</b>Takes a type string such as <code>"double"</code> or a DataType such as <code>StringType()</code>. With ANSI mode on (the Spark 4.0 default), a malformed value such as <code>"abc"</code> cast to int raises <code>CAST_INVALID_INPUT</code> instead of returning null.</p></div>
+    </div>` },
+
+  /* 6: the sample-question chain, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Putting it together</div>
+    <h2 class="reveal" style="font-size:23px">Replace one column, rename another</h2>
+    <div class="art reveal" style="min-height:0;margin-bottom:12px">${A.chain}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">Task: in <code>storesDF</code>, replace <code>division</code> with a new column named <code>state</code>, and rename <code>mName</code> to <code>managerName</code>. Tap to add one call at a time.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>withColumn</strong> takes the name as a string and the values as a Column: <code>col("division")</code> copies division into <strong>state</strong>. Swapping the two arguments is a wrong answer.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>drop</strong> removes the old column. Add-then-drop is how "replace a column with a differently named one" is written.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>withColumnRenamed</strong> takes the existing name first. Every call returned a new DataFrame, so the whole thing is one chain: <code>storesDF.withColumn(...).drop(...).withColumnRenamed(...)</code>.</p>
+    </div>` },
+
+  /* 7: quiz, mirrors sample question 3 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">In <code>ordersDF</code>, the <code>region</code> column must be replaced by a new column named <code>territory</code> with the same values, and <code>cName</code> must be renamed to <code>customerName</code>. Which code block does both?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false" style="font-size:13px;overflow-wrap:anywhere"><span class="key">A</span><span>ordersDF.withColumn("territory", col("region")).drop("region").withColumnRenamed("customerName", "cName")</span></button>
+      <button class="choice" data-correct="true" style="font-size:13px;overflow-wrap:anywhere"><span class="key">B</span><span>ordersDF.withColumn("territory", col("region")).drop("region").withColumnRenamed("cName", "customerName")</span></button>
+      <button class="choice" data-correct="false" style="font-size:13px;overflow-wrap:anywhere"><span class="key">C</span><span>ordersDF.withColumn(col("region"), "territory").drop("region").withColumnRenamed("cName", "customerName")</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>withColumn</code> takes the new column's name as a string and its values as a Column, <code>drop</code> removes <code>region</code>, and <code>withColumnRenamed</code> takes the existing name first. Option A is the trap: its rename is reversed, and since <code>ordersDF</code> has no <code>customerName</code> column the call is a no-op, so <code>cName</code> quietly survives. Option C swaps the <code>withColumn</code> arguments: the first must be a string name, the second a Column.</div>` },
+
+  /* 8: quiz, withColumn on an existing name */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px"><code>payments</code> has columns <code>id</code> and <code>amount</code>, where amount is a string. An engineer runs <code>payments2 = payments.withColumn("amount", col("amount").cast("double"))</code>. What is true afterwards?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The call fails because amount already exists; it must be dropped or renamed first</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>payments2 has id, the original string amount, and a second amount column of type double</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>payments2 has id and amount, now a double; payments still has its string amount</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>withColumn</code> adds a column or replaces the existing column with the same name, so the string amount is swapped for the double one and there are still two columns. Option B is the tempting distractor: <code>withColumn</code> never creates a duplicate name. Option A is wrong because replacing is the documented behavior, not an error. And because the method returns a new DataFrame, <code>payments</code> itself is unchanged.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 16 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can add, replace, rename and drop columns, and spot a reversed or mistyped argument.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>select</b>Strings are names; <code>col()</code> and <code>expr()</code> build Columns; <code>alias()</code> names a computed one. Only listed columns survive.</p></div>
+      <div class="pill"><p><b>withColumn(name, Column)</b>A new name adds, an existing name replaces. <code>withColumns({...})</code> for several; a long loop of <code>withColumn</code> grows the plan. <code>lit()</code> for constants, <code>cast()</code> for types.</p></div>
+      <div class="pill"><p><b>withColumnRenamed(existing, new) and drop</b>Old name first. Both are no-ops on a name that is not there, so a reversed rename fails silently.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
