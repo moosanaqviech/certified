@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Python UDFs · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-25-python-udfs.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* Unit 3 mint: building with the DataFrame API; the JVM side here */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --warm: #fbbf24;          /* contrast color: the Python worker and the round-trip cost */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 25 · Python UDFs
+   Objective 3.8, stateless side: create and invoke user-defined functions
+   without stateful operators (the stateful side is Chapter 26). Mirrors
+   official sample question 9: a streaming validation job needs custom
+   string logic no built-in function offers and must stay stateless per
+   transaction so it scales horizontally; a UDF without stateful operators
+   fits when the logic does not rely on previous transactions or on state
+   kept between batches (running totals, windowed aggregations and session
+   tracking all need state).
+   Concept lesson: udf(f, returnType) and the @udf(returnType=...)
+   decorator, invoking in select and withColumn, the StringType default and
+   the silent-null trap, spark.udf.register for spark.sql (session scoped),
+   null handling inside the function, the JVM to Python round trip and the
+   opaque function the optimizer cannot look into, built-ins first
+   (upper(), trim(), lower()), Arrow-optimized Python UDFs (useArrow=True,
+   Spark 3.5+), Pandas UDFs as a one-line pointer (Chapter 40),
+   asNondeterministic, and when a UDF is still the right call.
+   Sources: docs.databricks.com/aws/en/udf/python (decorator form,
+   spark.udf.register(name, f, returnType=None), "The default return type
+   is StringType", no guaranteed evaluation order so handle nulls inside the
+   UDF); docs.databricks.com/aws/en/udf/ (UDFs for logic hard to express
+   with built-ins; Python UDFs are slower because data is serialized out of
+   the JVM to the Python interpreter; Pandas UDFs up to 100x faster);
+   docs.databricks.com/aws/en/pyspark/reference/functions/udf (f,
+   returnType "Defaults to StringType", DDL string or DataType, useArrow
+   and spark.sql.execution.pythonUDF.arrow.enabled, asNondeterministic);
+   docs.databricks.com/aws/en/udf/pandas (pandas_udf, Arrow, vectorized);
+   databricks.com/blog/arrow-optimized-python-udfs-apache-sparktm-35
+   (Arrow-optimized Python UDFs from Spark 3.5, pickled UDFs fall back to
+   NULL on a type mismatch). Return-type, null, register-scope and plan
+   behaviors (BatchEvalPython node, PushedFilters: [] for a UDF predicate,
+   upper() kept inside whole-stage codegen) were also checked by running
+   PySpark 4.0.1 locally.
+   Cover animates (rows leave the JVM executor, cross to a Python worker and
+   come back); step builds on card 1 (defining and invoking), card 4 (the
+   cost of the round trip) and card 5 (UDF versus upper()).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-26-stateful-operators-state-stores.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c25r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c25o { animation: c25out 3.6s linear infinite; }
+      .c25i { animation: c25in 3.6s linear infinite; }
+      .c25o.k2, .c25i.k2 { animation-delay: -1.2s; }
+      .c25o.k3, .c25i.k3 { animation-delay: -2.4s; }
+      @keyframes c25out {
+        0% { transform: translateX(0px); opacity: 0; }
+        12% { opacity: 1; }
+        86% { opacity: 1; }
+        100% { transform: translateX(70px); opacity: 0; }
+      }
+      @keyframes c25in {
+        0% { transform: translateX(0px); opacity: 0; }
+        12% { opacity: 1; }
+        86% { opacity: 1; }
+        100% { transform: translateX(-70px); opacity: 0; }
+      }
+      .c25f { animation: c25pulse 1.2s ease-in-out infinite; }
+      @keyframes c25pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+      .c25s { animation: c25scan 3.6s ease-in-out infinite; }
+      @keyframes c25scan { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c25o, .c25i, .c25f, .c25s { animation: none; opacity: 1; }
+        .c25o.k2 { transform: translateX(28px); } .c25o.k3 { transform: translateX(56px); }
+        .c25i.k2 { transform: translateX(-28px); } .c25i.k3 { transform: translateX(-56px); }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="82" fill="url(#c25r)"/>
+    <text x="160" y="16" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">ONE PYTHON UDF, EVERY ROW</text>
+    <rect x="14" y="30" width="104" height="134" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="66" y="48" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">JVM executor</text>
+    <text x="66" y="60" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">Spark rows live here</text>
+    <g class="c25s">
+      <rect x="28" y="70" width="76" height="10" rx="3" fill="rgba(110,231,183,0.16)" stroke="var(--accent)" stroke-width="0.6"/>
+      <rect x="28" y="86" width="76" height="10" rx="3" fill="rgba(110,231,183,0.16)" stroke="var(--accent)" stroke-width="0.6"/>
+      <rect x="28" y="102" width="76" height="10" rx="3" fill="rgba(110,231,183,0.16)" stroke="var(--accent)" stroke-width="0.6"/>
+      <rect x="28" y="118" width="76" height="10" rx="3" fill="rgba(110,231,183,0.16)" stroke="var(--accent)" stroke-width="0.6"/>
+    </g>
+    <text x="66" y="148" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">optimizer and codegen</text>
+    <rect x="202" y="30" width="104" height="134" rx="12" fill="var(--surface-2)" stroke="var(--warm)" stroke-width="1.2"/>
+    <text x="254" y="48" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="10" font-weight="700">Python worker</text>
+    <text x="254" y="60" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">one call per row</text>
+    <text x="216" y="84" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">def clean(s):</text>
+    <text x="224" y="97" fill="var(--ink-soft)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">return ...</text>
+    <circle class="c25f" cx="254" cy="124" r="13" fill="rgba(251,191,36,0.12)" stroke="var(--warm)" stroke-width="1.2"/>
+    <text x="254" y="128" text-anchor="middle" fill="var(--warm)" font-family="ui-monospace, Menlo, monospace" font-size="10" font-weight="700">f(x)</text>
+    <text x="254" y="154" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">opaque to Spark</text>
+    <text x="160" y="72" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">serialize out</text>
+    <path d="M120 84 L198 84" fill="none" stroke="var(--warm)" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M193 80 L199 84 L193 88" fill="none" stroke="var(--warm)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M122 120 L200 120" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M127 116 L121 120 L127 124" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="160" y="138" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">serialize back</text>
+    <rect class="c25o" x="120" y="79" width="14" height="10" rx="2" fill="var(--accent)"/>
+    <rect class="c25o k2" x="120" y="79" width="14" height="10" rx="2" fill="var(--accent)"/>
+    <rect class="c25o k3" x="120" y="79" width="14" height="10" rx="2" fill="var(--accent)"/>
+    <rect class="c25i" x="186" y="115" width="14" height="10" rx="2" fill="var(--warm)"/>
+    <rect class="c25i k2" x="186" y="115" width="14" height="10" rx="2" fill="var(--warm)"/>
+    <rect class="c25i k3" x="186" y="115" width="14" height="10" rx="2" fill="var(--warm)"/>
+    <text x="160" y="188" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Each row crosses to Python and back.</text>
+  </svg>`,
+
+  cost: `<svg viewBox="0 0 320 200">
+    <rect x="10" y="22" width="96" height="112" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.1"/>
+    <text x="58" y="38" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">JVM executor</text>
+    <rect x="22" y="50" width="72" height="18" rx="4" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="0.8"/>
+    <text x="58" y="62" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8">name='ann'</text>
+    <rect x="214" y="22" width="96" height="112" rx="10" fill="var(--surface-2)" stroke="var(--warm)" stroke-width="1.1"/>
+    <text x="262" y="38" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">Python worker</text>
+    <g data-step="1">
+      <path d="M96 59 L206 59" fill="none" stroke="var(--warm)" stroke-width="1.2" stroke-dasharray="3 2"/>
+      <path d="M201 55 L207 59 L201 63" fill="none" stroke="var(--warm)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="160" y="52" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">1 pickle, send</text>
+      <rect x="226" y="50" width="72" height="18" rx="4" fill="rgba(251,191,36,0.12)" stroke="var(--warm)" stroke-width="0.8"/>
+      <text x="262" y="62" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8">'ann'</text>
+    </g>
+    <g data-step="2">
+      <text x="262" y="86" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5">f('ann')</text>
+      <text x="262" y="99" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">2 run f, one row</text>
+    </g>
+    <g data-step="3">
+      <rect x="226" y="106" width="72" height="18" rx="4" fill="rgba(251,191,36,0.12)" stroke="var(--warm)" stroke-width="0.8"/>
+      <text x="262" y="118" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8">'ANN'</text>
+      <path d="M224 115 L104 115" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 2"/>
+      <path d="M109 111 L103 115 L109 119" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="160" y="108" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">3 pickle, return</text>
+      <rect x="22" y="106" width="72" height="18" rx="4" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="58" y="118" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8">'ANN'</text>
+    </g>
+    <g data-step="4">
+      <rect x="40" y="150" width="240" height="40" rx="10" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+      <circle cx="62" cy="170" r="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <path d="M53 179 L71 161" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/>
+      <text x="80" y="166" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">4 the optimizer cannot see inside f</text>
+      <text x="80" y="179" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">no filter pushdown, no codegen for f</text>
+      <path d="M262 136 L262 150" fill="none" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2 2"/>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 25</div>
+    <h1 class="reveal">Python UDFs</h1>
+    <p class="lead reveal">When no built-in function does the job, Apache Spark lets plain Python run on every row. This chapter covers how to define, invoke and register a Python UDF, what that round trip costs, and the stateless, per-row logic it is right for.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: defining and invoking, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Define it</div>
+    <h2 class="reveal" style="font-size:24px">A Python function, wrapped with udf()</h2>
+    <div class="codeblock reveal" style="margin-bottom:10px"><div>from pyspark.sql.functions <span class="kw">import</span> udf, col</div><div>from pyspark.sql.types <span class="kw">import</span> IntegerType</div><div data-step="1"><span class="kw">def</span> name_len(s):</div><div data-step="1" style="padding-left:22px"><span class="kw">return</span> len(s) <span class="kw">if</span> s <span class="kw">is not</span> None <span class="kw">else</span> None</div><div data-step="2"><span class="al">name_len_udf = udf(name_len, IntegerType())</span></div><div data-step="3">df.withColumn(<span class="st">"n"</span>, name_len_udf(col(<span class="st">"name"</span>)))</div></div>
+    <div class="codeblock" data-step="4" style="margin-bottom:10px"><div><span class="al">@udf(returnType=IntegerType())</span></div><div><span class="kw">def</span> name_len(s): ...   <span class="cm"># name_len is now the UDF</span></div></div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Two imports: <code>udf</code> from <code>pyspark.sql.functions</code> and a type from <code>pyspark.sql.types</code>. Tap to build the UDF.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Plain Python.</strong> A function that takes one value and returns one value. A SQL NULL arrives as <code>None</code>, so the function checks for it.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Wrap it.</strong> <code>udf(f, returnType)</code> returns a UDF. The type is a DataType (<code>IntegerType()</code>) or a DDL string (<code>"int"</code>).</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Invoke it like a column function</strong> in <code>withColumn</code> or <code>select</code>, passing a Column or a column name: <code>df.select(name_len_udf("name"))</code>.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Decorator form.</strong> <code>@udf(returnType=...)</code> on the <code>def</code> does the same in one step. A bare <code>@udf</code> works too, with the default type.</p>
+    </div>` },
+
+  /* 2: the return-type trap */
+  { html: `
+    <div class="eyebrow reveal">The default</div>
+    <h2 class="reveal" style="font-size:26px">No returnType means StringType</h2>
+    <p class="lead reveal" style="margin-bottom:12px">Leave the type out and the column is a <strong>string</strong>, whatever the Python returns. Declare a type that does not match the value and a classic (pickled) Python UDF returns <strong>NULL</strong>, without an error.</p>
+    <div class="codeblock reveal" style="margin-bottom:12px"><div>plus_one = udf(<span class="kw">lambda</span> x: x + 1)   <span class="cm"># no returnType</span></div><div><span class="al">df.select(plus_one(<span class="st">"age"</span>)).printSchema()</span>  <span class="cm"># string</span></div></div>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:7px 6px; color:var(--ink-faint); font-weight:600;">Declared</td>
+          <td style="padding:7px 6px; color:var(--ink-faint); font-weight:600;">Python returns</td>
+          <td style="padding:7px 6px; color:var(--accent); font-weight:700;">Column gets</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink-soft);">nothing (StringType)</td><td style="padding:7px 6px; color:var(--ink);">22</td><td style="padding:7px 6px; color:var(--ink);">"22", a string</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink-soft);">IntegerType()</td><td style="padding:7px 6px; color:var(--ink);">22</td><td style="padding:7px 6px; color:var(--ink);">22</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink-soft);">IntegerType()</td><td style="padding:7px 6px; color:var(--ink);">31.5 (a float)</td><td style="padding:7px 6px; color:var(--ink);">NULL</td></tr>
+        <tr><td style="padding:7px 6px; color:var(--ink-soft);">IntegerType()</td><td style="padding:7px 6px; color:var(--ink);">"22" (a str)</td><td style="padding:7px 6px; color:var(--ink);">NULL</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Always declare the type the function really returns. Arrow-optimized UDFs (card 6) follow Arrow's coercion rules instead, so the same mismatch can behave differently there.</p>` },
+
+  /* 3: register for SQL */
+  { html: `
+    <div class="eyebrow reveal">From SQL</div>
+    <h2 class="reveal" style="font-size:26px">spark.udf.register for spark.sql</h2>
+    <p class="lead reveal" style="margin-bottom:12px">A UDF made with <code>udf()</code> works in the DataFrame API only. To call it by name inside a SQL string, register it with the SparkSession.</p>
+    <div class="codeblock reveal" style="margin-bottom:12px"><div><span class="al">spark.udf.register(<span class="st">"name_len"</span>, name_len, IntegerType())</span></div><div>spark.sql(<span class="st">"SELECT name, name_len(name) AS n FROM people"</span>)</div></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Signature</b><code>spark.udf.register(name, f, returnType=None)</code>. With a plain function and no type, the default is StringType again. Pass an existing UDF instead and its declared type is kept.</p></div>
+      <div class="pill"><p><b>Session scoped</b>The name is a temporary function in this SparkSession; another session cannot resolve it. <code>register</code> also returns a UDF usable in the DataFrame API.</p></div>
+      <div class="pill"><p><b>Handle nulls inside</b>Spark SQL does not guarantee the order subexpressions run in, so <code>WHERE s IS NOT NULL AND name_len(s) &gt; 3</code> does not shield the UDF from <code>None</code>. Check for it in the function.</p></div>
+    </div>` },
+
+  /* 4: the cost, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Why it costs</div>
+    <h2 class="reveal" style="font-size:24px">The round trip, row by row</h2>
+    <div class="art reveal">${A.cost}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Rows live in the executor's JVM. The UDF lives in a separate Python process. Tap to follow one row.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Serialize out.</strong> The row's input values are pickled and sent from the JVM to a Python worker.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Run f.</strong> Python calls the function once for that row, then once for the next, and so on.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Serialize back.</strong> The result is pickled again and returned to the JVM. Every row pays both crossings.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Opaque to the optimizer.</strong> The plan shows a separate <code>BatchEvalPython</code> step. A filter on a UDF result cannot be pushed to the scan (<code>PushedFilters: []</code>), and the function body gets no code generation.</p>
+    </div>` },
+
+  /* 5: built-in first, before and after */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Built-in first</div>
+    <h2 class="reveal" style="font-size:24px">If pyspark.sql.functions has it, use it</h2>
+    <div class="codeblock" data-step="1" style="margin-bottom:10px"><div><span class="cm"># before: a Python UDF</span></div><div>to_up = udf(<span class="kw">lambda</span> s: s.upper() <span class="kw">if</span> s <span class="kw">else</span> None)</div><div>df.select(to_up(<span class="st">"name"</span>))  <span class="cm"># plan: BatchEvalPython</span></div></div>
+    <div class="codeblock" data-step="2" style="margin-bottom:10px"><div><span class="cm"># after: the built-in</span></div><div><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> upper</div><div><span class="al">df.select(upper(<span class="st">"name"</span>))</span>  <span class="cm"># plan: Project [upper(name)]</span></div></div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">The same result, two ways. Tap to compare.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Before.</strong> Every name crosses to Python and back just to be uppercased, and the optimizer treats the call as a black box.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>After.</strong> <code>upper()</code> runs inside the JVM as a Catalyst expression: no Python worker, no serialization, and it stays in whole-stage code generation. Databricks recommends built-ins for large and recurring workloads.</p>
+    </div>` },
+
+  /* 6: when a UDF is unavoidable */
+  { html: `
+    <div class="eyebrow reveal">Unavoidable?</div>
+    <h2 class="reveal" style="font-size:26px">Cheaper ways to run Python</h2>
+    <p class="lead reveal" style="margin-bottom:14px">When no built-in exists, the row-at-a-time pickled UDF is still the slowest choice. Two faster options, plus one flag.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Arrow-optimized Python UDF</b><code>udf(f, returnType, useArrow=True)</code>, or session-wide with <code>spark.sql.execution.pythonUDF.arrow.enabled</code>. Spark 3.5 and later. Same function, but Arrow replaces pickle for the transfer.</p></div>
+      <div class="pill"><p><b>Pandas UDF</b><code>@pandas_udf</code> works on whole pandas Series batches moved with Arrow: vectorized, and Databricks cites up to 100x faster than row-at-a-time Python UDFs. Chapter 40.</p></div>
+      <div class="pill"><p><b>asNondeterministic()</b>A UDF is treated as deterministic by default. For output that can change for the same input (a random number), use <code>my_udf.asNondeterministic()</code>.</p></div>
+    </div>` },
+
+  /* 7: when a UDF is right (sample Q9) */
+  { html: `
+    <div class="eyebrow reveal">The right call</div>
+    <h2 class="reveal" style="font-size:24px">Custom logic, stateless, one row at a time</h2>
+    <p class="lead reveal" style="margin-bottom:12px">A UDF without stateful operators fits when the output depends <strong>only on the current row</strong>. Nothing is carried between rows or micro-batches, so any executor can take any row and the job scales horizontally, in batch or Structured Streaming.</p>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 6px; color:var(--accent); font-weight:700;">Stateless UDF fits</td>
+          <td style="padding:8px 6px; color:var(--warm); font-weight:700;">Needs state (Chapter 26)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink);">Validate one transaction's reference with a custom check digit</td><td style="padding:8px 6px; color:var(--ink);">Running total of each customer's spend</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink);">Parse an in-house product code into parts</td><td style="padding:8px 6px; color:var(--ink);">Counts per 10-minute window</td></tr>
+        <tr><td style="padding:8px 6px; color:var(--ink);">Mask a field with company-specific rules</td><td style="padding:8px 6px; color:var(--ink);">Grouping events into user sessions</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Left column: no built-in does it and no history is needed. Right column: the answer depends on earlier rows, which is what state stores are for.</p>` },
+
+  /* 8: quiz, sample Q9 shape */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A Structured Streaming job checks each payment with an in-house string rule that no built-in function implements, and it must scale out across executors. When is a Python UDF without stateful operators the right tool?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>When each check must add the payment to a running total of the customer's spend so far</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>When the rule uses only the fields of the current payment and keeps nothing between micro-batches</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>When payments must be grouped into customer sessions that close after 30 minutes of inactivity</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A stateless UDF applies custom per-row logic that does not depend on earlier transactions, so every row can be checked anywhere, independently. A running total (A) is tempting because it also looks per payment, but each result depends on all earlier payments, which needs state carried across micro-batches. Sessions (C) and windowed aggregations need state for the same reason: Chapter 26's stateful operators.</div>` },
+
+  /* 9: quiz, replace a slow UDF with built-ins */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A nightly job over two billion rows spends most of its time in this UDF. What is the best fix?</h2>
+    <div class="codeblock reveal" style="margin-bottom:12px"><div>clean = udf(<span class="kw">lambda</span> s: s.strip().lower() <span class="kw">if</span> s <span class="kw">else</span> None)</div><div>df = df.withColumn(<span class="st">"email"</span>, clean(<span class="st">"email"</span>))</div></div>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Replace it with <code>lower(trim(col("email")))</code> from pyspark.sql.functions</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Register it with <code>spark.udf.register</code> and call it from <code>spark.sql</code> so it runs as SQL</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Add <code>returnType=StringType()</code> so Spark can skip type conversion</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>trim</code> and <code>lower</code> are built-ins, so the work stays in the JVM with no Python round trip and the optimizer can see it. Option B is the trap: a registered UDF is still the same Python function, pickled out to a Python worker and back for every row, whether it is called from SQL or the DataFrame API. Option C changes nothing, because StringType is already the default return type.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 25 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">You can define, invoke and register a Python UDF, and say when it is the right tool.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Define and invoke</b><code>udf(f, returnType)</code> or <code>@udf(returnType=...)</code>, used in <code>select</code> or <code>withColumn</code>. No type means StringType; a mismatched type gives NULL.</p></div>
+      <div class="pill"><p><b>SQL</b><code>spark.udf.register("name", f, returnType)</code> makes it callable in <code>spark.sql</code> for this session. Handle <code>None</code> inside the function.</p></div>
+      <div class="pill"><p><b>Cost</b>Each row is serialized to a Python worker and back, and the optimizer cannot see inside. Built-ins first, then a Pandas UDF or <code>useArrow=True</code>.</p></div>
+      <div class="pill"><p><b>Right call</b>Custom per-row logic with no built-in equivalent and no state between rows or batches. Running totals, windows and sessions need state (Chapter 26).</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

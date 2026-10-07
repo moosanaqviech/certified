@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Aggregations: groupBy, agg, approx_count_distinct and summary · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-19-aggregations.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* mint: the Unit 3 DataFrame API accent */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --cool: #7dd3fc;          /* second group color in the art */
+    --sun: #fcd34d;           /* third group color, NULL highlights */
+    --deep: #047857;          /* gradient end for the summary rows */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 19 · Aggregations: groupBy, agg, approx_count_distinct and summary
+   Objective 3.3: perform aggregate operations on DataFrames such as count,
+   approximate count distinct, and mean, summary. Mirrors official sample
+   question 10 (an hourly dashboard over 50 million records that accepts a
+   2 to 3 percent error on unique users: approx_count_distinct, because its
+   probabilistic HyperLogLog algorithm boosts performance; not because it is
+   more accurate, handles nulls better or stores compressed results).
+   Concept lesson: groupBy(...).agg(...) with several functions and aliases,
+   the GroupedData shortcuts, agg on the whole DataFrame, the three counts
+   (df.count() action, count(col) skips nulls, count("*")), exact
+   count_distinct versus approx_count_distinct(col, rsd), mean as an alias
+   of avg, describe() versus summary(), a function comparison table, two
+   quizzes. groupBy as a wide transformation is a one-line link to Ch 07.
+   Sources: docs.databricks.com/aws/en/pyspark/reference/classes/dataframe/
+   groupBy, agg, count, describe, summary; .../classes/groupeddata (agg, avg,
+   count, max, mean, min, sum; avg and mean are aliases); .../functions/
+   count, count_distinct, approx_count_distinct (rsd: maximum relative
+   standard deviation allowed, default 0.05; below 0.01 count_distinct is
+   more efficient), mean ("An alias of avg", nulls excluded);
+   docs.databricks.com/aws/en/sql/language-manual/functions/
+   approx_count_distinct (dense HyperLogLog++ algorithm, accurate within a
+   default 5%) and /count (count(*) includes NULL rows, count(expr) and
+   count(DISTINCT expr) skip NULLs); the Spark 4.0 PySpark reference for
+   countDistinct (an alias of count_distinct, count_distinct encouraged);
+   databricks.com/blog/apache-spark-3-apache-datasketches-new-sketch-based-
+   approximate-distinct-counting (for dashboards a small margin of error is
+   acceptable for much faster query times).
+   Cover animates (mixed rows sort into three groups, then each group
+   collapses into one summary row); step builds on card 1 (groupBy then
+   agg then the result), card 3 (the three counts) and card 4 (exact
+   versus approximate distinct).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-20-dates-and-timestamps.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c19r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.20)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+      <linearGradient id="c19g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:var(--deep)"/>
+        <stop offset="1" style="stop-color:var(--accent)"/>
+      </linearGradient>
+    </defs>
+    <style>
+      .c19row { animation: c19sort 8s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c19row.d2 { animation-delay: 0.15s; } .c19row.d3 { animation-delay: 0.3s; }
+      @keyframes c19sort {
+        0%, 14% { transform: translate(0px, 0px); opacity: 1; }
+        38%, 54% { transform: translate(150px, var(--dy)); opacity: 1; }
+        68% { transform: translate(150px, var(--cy)); opacity: 0; }
+        94% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c19sum { animation: c19show 8s ease-in-out infinite; }
+      @keyframes c19show { 0%, 60% { opacity: 0; } 70%, 88% { opacity: 1; } 95%, 100% { opacity: 0; } }
+      .c19tag { animation: c19pulse 8s ease-in-out infinite; }
+      @keyframes c19pulse { 0%, 20% { opacity: 0.35; } 30%, 50% { opacity: 1; } 62%, 100% { opacity: 0.35; } }
+      .c19tag2 { animation: c19pulse2 8s ease-in-out infinite; }
+      @keyframes c19pulse2 { 0%, 54% { opacity: 0.35; } 62%, 86% { opacity: 1; } 95%, 100% { opacity: 0.35; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c19row { animation: none; opacity: 1; transform: none; }
+        .c19sum { animation: none; opacity: 1; }
+        .c19tag, .c19tag2 { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="82" fill="url(#c19r)"/>
+    <text x="75" y="22" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">ROWS</text>
+    <text x="235" y="22" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">ONE ROW PER GROUP</text>
+    <rect x="180" y="34" width="110" height="122" rx="10" fill="none" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <g class="c19tag">
+      <rect x="114" y="74" width="62" height="18" rx="9" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="145" y="86" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">groupBy</text>
+    </g>
+    <g class="c19tag2">
+      <rect x="114" y="98" width="62" height="18" rx="9" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="145" y="110" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">agg</text>
+    </g>
+    <g class="c19row" style="--dy:-4px; --cy:12px">
+      <rect x="30" y="40" width="90" height="14" rx="4" fill="rgba(110,231,183,0.16)" stroke="var(--accent)"/>
+      <text x="40" y="50" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">US · 20</text>
+    </g>
+    <g class="c19row d2" style="--dy:34px; --cy:42px">
+      <rect x="30" y="62" width="90" height="14" rx="4" fill="rgba(125,211,252,0.16)" stroke="var(--cool)"/>
+      <text x="40" y="72" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">DE · 5</text>
+    </g>
+    <g class="c19row d3" style="--dy:-32px; --cy:-32px">
+      <rect x="30" y="84" width="90" height="14" rx="4" fill="rgba(110,231,183,0.16)" stroke="var(--accent)"/>
+      <text x="40" y="94" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">US · 7</text>
+    </g>
+    <g class="c19row" style="--dy:34px; --cy:34px">
+      <rect x="30" y="106" width="90" height="14" rx="4" fill="rgba(252,211,77,0.16)" stroke="var(--sun)"/>
+      <text x="40" y="116" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">FR · 9</text>
+    </g>
+    <g class="c19row d2" style="--dy:-16px; --cy:-24px">
+      <rect x="30" y="128" width="90" height="14" rx="4" fill="rgba(125,211,252,0.16)" stroke="var(--cool)"/>
+      <text x="40" y="138" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">DE · 3</text>
+    </g>
+    <g class="c19row d3" style="--dy:-82px; --cy:-98px">
+      <rect x="30" y="150" width="90" height="14" rx="4" fill="rgba(110,231,183,0.16)" stroke="var(--accent)"/>
+      <text x="40" y="160" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">US · 4</text>
+    </g>
+    <g class="c19sum">
+      <rect x="186" y="44" width="98" height="26" rx="7" fill="url(#c19g)"/>
+      <text x="235" y="61" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">US · 3 rows · 31</text>
+      <rect x="186" y="92" width="98" height="26" rx="7" fill="rgba(125,211,252,0.18)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="235" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">DE · 2 rows · 8</text>
+      <rect x="186" y="130" width="98" height="26" rx="7" fill="rgba(252,211,77,0.16)" stroke="var(--sun)" stroke-width="1.2"/>
+      <text x="235" y="147" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">FR · 1 row · 9</text>
+    </g>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Rows sort into groups, then each group collapses to one row.</text>
+  </svg>`,
+
+  groupagg: `<svg viewBox="0 0 320 200">
+    <text x="54" y="16" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">INPUT</text>
+    <rect x="12" y="26" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="12" y="48" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="12" y="70" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="12" y="92" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="12" y="114" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="12" y="136" width="84" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="22" y="38" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">US</text><text x="86" y="38" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">20</text>
+    <text x="22" y="60" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">DE</text><text x="86" y="60" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">5</text>
+    <text x="22" y="82" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">US</text><text x="86" y="82" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">7</text>
+    <text x="22" y="104" fill="var(--sun)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">FR</text><text x="86" y="104" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">9</text>
+    <text x="22" y="126" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">DE</text><text x="86" y="126" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">3</text>
+    <text x="22" y="148" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">US</text><text x="86" y="148" text-anchor="end" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">4</text>
+    <text x="54" y="170" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">country, amount</text>
+    <g data-step="1">
+      <text x="160" y="16" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">GROUPS</text>
+      <path d="M99 90 L113 90 M108 85 L114 90 L108 95" fill="none" stroke="var(--ink-faint)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="118" y="26" width="84" height="62" rx="6" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="128" y="42" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">US 20</text>
+      <text x="128" y="60" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">US 7</text>
+      <text x="128" y="78" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">US 4</text>
+      <rect x="118" y="96" width="84" height="44" rx="6" fill="rgba(125,211,252,0.10)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="128" y="112" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">DE 5</text>
+      <text x="128" y="130" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">DE 3</text>
+      <rect x="118" y="148" width="84" height="22" rx="6" fill="rgba(252,211,77,0.10)" stroke="var(--sun)" stroke-width="1.1"/>
+      <text x="128" y="163" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">FR 9</text>
+    </g>
+    <g data-step="2">
+      <path d="M204 57 L218 57 M204 118 L218 118 M204 159 L218 159" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-dasharray="3 2"/>
+      <rect x="8" y="178" width="304" height="18" rx="9" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="160" y="190" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8" font-weight="700">agg(count("*").alias("orders"), sum("amount").alias("revenue"))</text>
+    </g>
+    <g data-step="3">
+      <text x="266" y="16" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">RESULT</text>
+      <text x="234" y="38" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">country</text>
+      <text x="268" y="38" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">orders</text>
+      <text x="300" y="38" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">revenue</text>
+      <rect x="220" y="47" width="96" height="20" rx="5" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="234" y="60" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">US</text>
+      <text x="268" y="60" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">3</text>
+      <text x="300" y="60" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">31</text>
+      <rect x="220" y="108" width="96" height="20" rx="5" fill="rgba(125,211,252,0.14)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="234" y="121" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">DE</text>
+      <text x="268" y="121" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">2</text>
+      <text x="300" y="121" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">8</text>
+      <rect x="220" y="149" width="96" height="20" rx="5" fill="rgba(252,211,77,0.12)" stroke="var(--sun)" stroke-width="1.1"/>
+      <text x="234" y="162" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">FR</text>
+      <text x="268" y="162" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">1</text>
+      <text x="300" y="162" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">9</text>
+    </g>
+  </svg>`,
+
+  counts: `<svg viewBox="0 0 320 170">
+    <text x="16" y="14" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">customers (5 rows)</text>
+    <rect x="16" y="22" width="150" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="26" y="33" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">id</text>
+    <text x="60" y="33" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">email</text>
+    <text x="26" y="54" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">1</text><text x="60" y="54" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">ana@shop.io</text>
+    <text x="26" y="74" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2</text><text x="60" y="74" fill="var(--sun)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">NULL</text>
+    <text x="26" y="94" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">3</text><text x="60" y="94" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">raj@shop.io</text>
+    <text x="26" y="114" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">4</text><text x="60" y="114" fill="var(--sun)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">NULL</text>
+    <text x="26" y="134" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">5</text><text x="60" y="134" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">li@shop.io</text>
+    <path d="M16 140 L166 140" stroke="var(--line)"/>
+    <g data-step="1">
+      <rect x="184" y="24" width="124" height="34" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="194" y="38" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">df.count()</text>
+      <text x="194" y="51" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">action, a Python int</text>
+      <text x="298" y="47" text-anchor="end" fill="var(--ink)" font-family="Hanken Grotesk" font-size="15" font-weight="700">5</text>
+    </g>
+    <g data-step="2">
+      <rect x="184" y="66" width="124" height="34" rx="8" fill="rgba(252,211,77,0.10)" stroke="var(--sun)" stroke-width="1.1"/>
+      <text x="194" y="80" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">count("email")</text>
+      <text x="194" y="93" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">skips the 2 NULLs</text>
+      <text x="298" y="89" text-anchor="end" fill="var(--sun)" font-family="Hanken Grotesk" font-size="15" font-weight="700">3</text>
+    </g>
+    <g data-step="3">
+      <rect x="184" y="108" width="124" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="194" y="122" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">count("*")</text>
+      <text x="194" y="135" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">every row, NULLs too</text>
+      <text x="298" y="131" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="15" font-weight="700">5</text>
+    </g>
+  </svg>`,
+
+  distinct: `<svg viewBox="0 0 320 200">
+    <text x="80" y="14" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">EXACT: count_distinct</text>
+    <text x="240" y="14" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">APPROX: approx_count_distinct</text>
+    <path d="M160 44 L160 140" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <text x="160" y="36" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">50M rows of user_id</text>
+    <g data-step="1">
+      <rect x="18" y="44" width="124" height="96" rx="8" fill="rgba(125,211,252,0.08)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="28" y="60" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">u_1001  u_1002  u_1007</text>
+      <text x="28" y="74" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">u_1013  u_1020  u_1044</text>
+      <text x="28" y="88" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">u_1051  u_1068  u_1090</text>
+      <text x="28" y="102" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">u_1102  u_1131  u_1157</text>
+      <text x="28" y="116" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">... every distinct value</text>
+      <text x="80" y="132" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">grows with the number of users</text>
+    </g>
+    <g data-step="2">
+      <rect x="196" y="52" width="88" height="56" rx="8" fill="rgba(110,231,183,0.08)" stroke="var(--accent)" stroke-width="1.1"/>
+      <rect x="204" y="60" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.9"/><rect x="220" y="60" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.4"/><rect x="236" y="60" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.7"/><rect x="252" y="60" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.3"/><rect x="268" y="60" width="10" height="10" rx="2" fill="var(--accent)" opacity="0.8"/>
+      <rect x="204" y="74" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.5"/><rect x="220" y="74" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.9"/><rect x="236" y="74" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.3"/><rect x="252" y="74" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.6"/><rect x="268" y="74" width="10" height="10" rx="2" fill="var(--accent)" opacity="0.4"/>
+      <rect x="204" y="88" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.7"/><rect x="220" y="88" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.3"/><rect x="236" y="88" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.8"/><rect x="252" y="88" width="12" height="10" rx="2" fill="var(--accent)" opacity="0.5"/><rect x="268" y="88" width="10" height="10" rx="2" fill="var(--accent)" opacity="0.9"/>
+      <text x="240" y="122" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">HyperLogLog++ sketch</text>
+      <text x="240" y="134" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">compact, then estimated</text>
+    </g>
+    <g data-step="3">
+      <rect x="22" y="148" width="116" height="22" rx="11" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.1"/>
+      <text x="80" y="162" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">1,204,388 exactly</text>
+      <rect x="182" y="148" width="116" height="22" rx="11" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="240" y="162" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">about 1.2M, rsd 0.05</text>
+      <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Trade a bounded error for far less work.</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 19</div>
+    <h1 class="reveal">Aggregations</h1>
+    <p class="lead reveal">Counting, averaging and summarizing: <code>groupBy</code> and <code>agg</code>, three different things called count, the exact versus approximate distinct count the exam asks about, and the two one-call profiles, <code>describe()</code> and <code>summary()</code>.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: groupBy then agg, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The shape of every aggregation</div>
+    <h2 class="reveal" style="font-size:24px">Group the rows, then reduce each group</h2>
+    <div class="art reveal">${A.groupagg}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Six order rows, each with a country and an amount. Tap to aggregate them by country.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong><code>groupBy("country")</code></strong> returns a <code>GroupedData</code> object, not a DataFrame. Rows sharing a key are brought together, which is a shuffle: groupBy is a wide transformation (Chapter 07).</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong><code>.agg(...)</code></strong> takes one or more aggregate expressions from <code>pyspark.sql.functions</code>. <code>.alias()</code> names each output column.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">The result is a new <strong>DataFrame with one row per group</strong>: the key columns plus one column per aggregate.</p>
+    </div>` },
+
+  /* 2: agg forms */
+  { html: `
+    <div class="eyebrow reveal">In code</div>
+    <h2 class="reveal" style="font-size:26px">One agg, many aggregates</h2>
+    <div class="codeblock reveal" style="white-space:pre"><span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+<span class="al">df.groupBy("country").agg(</span>
+    F.count(<span class="st">"*"</span>).alias(<span class="st">"orders"</span>),
+    F.sum(<span class="st">"amount"</span>).alias(<span class="st">"revenue"</span>),
+    F.avg(<span class="st">"amount"</span>).alias(<span class="st">"avg_order"</span>),
+    F.max(<span class="st">"amount"</span>).alias(<span class="st">"top_order"</span>))</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>GroupedData shortcuts</b><code>.count()</code>, <code>.sum()</code>, <code>.avg()</code>, <code>.mean()</code>, <code>.min()</code>, <code>.max()</code> run one kind of aggregate, e.g. <code>df.groupBy("country").count()</code>. sum, avg, mean, min and max apply to numeric columns and give generated names like <code>max(amount)</code>.</p></div>
+      <div class="pill"><p><b>No groupBy at all</b><code>df.agg(F.max("amount"))</code> aggregates the whole DataFrame into one row. It is shorthand for <code>df.groupBy().agg(...)</code>. A dict also works: <code>df.agg({"amount": "max"})</code>.</p></div>
+    </div>` },
+
+  /* 3: the three counts, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Three things called count</div>
+    <h2 class="reveal" style="font-size:24px">Same table, different answers</h2>
+    <div class="art reveal" style="min-height:120px">${A.counts}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Five customers, two with no email. Tap through the three counts.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong><code>df.count()</code></strong> is a DataFrame method and an <strong>action</strong>: it runs a job and returns the number of rows as a Python int.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong><code>F.count("email")</code></strong> is an aggregate function used inside <code>select</code> or <code>agg</code>. It counts <strong>non-null values</strong> of that column, so the NULLs drop out.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong><code>F.count("*")</code></strong> counts every row, NULLs included, as an aggregate column. The <code>GroupedData.count()</code> shortcut likewise counts the records in each group.</p>
+    </div>` },
+
+  /* 4: exact versus approximate distinct, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Unique counts</div>
+    <h2 class="reveal" style="font-size:24px">Exact or approximate distinct</h2>
+    <div class="art reveal">${A.distinct}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">How many unique users are in 50 million activity rows? Two functions answer it differently.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong><code>count_distinct(col)</code></strong> (alias <code>countDistinct</code>) is exact. To never count a user twice it has to account for every distinct value, so the work grows with the number of users.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong><code>approx_count_distinct(col, rsd)</code></strong> uses the dense version of the probabilistic <strong>HyperLogLog++</strong> algorithm: it estimates the count from a compact sketch instead of the values themselves.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>rsd</code> is the maximum relative standard deviation allowed, <strong>0.05 by default</strong>. A bounded error buys faster queries; below an rsd of 0.01 the docs say <code>count_distinct</code> is the more efficient choice.</p>
+    </div>` },
+
+  /* 5: describe versus summary */
+  { html: `
+    <div class="eyebrow reveal">Profiling in one call</div>
+    <h2 class="reveal" style="font-size:26px">describe() versus summary()</h2>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm"># takes COLUMN names (default: all columns)</span>
+df.describe(<span class="st">"amount"</span>).show()  <span class="cm"># count mean stddev min max</span>
+<span class="cm"># takes STATISTIC names (default: all of them)</span>
+df.summary().show()  <span class="cm"># the five above + 25% 50% 75%</span>
+<span class="al">df.summary("count", "min", "90%", "max").show()</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>describe(*cols)</b>count, mean, stddev, min and max for the columns named, numeric and string. The docs point to summary for more statistics and control over which are computed.</p></div>
+      <div class="pill"><p><b>summary(*statistics)</b>With no arguments: count, mean, stddev, min, max and the 25%, 50% and 75% quartiles. Any percentile can be requested as a string like <code>"90%"</code>; percentiles are <strong>approximate</strong>.</p></div>
+      <div class="pill"><p><b>Both return a DataFrame</b>Meant for exploratory analysis: the docs make no promise that the result's schema stays the same across versions.</p></div>
+    </div>` },
+
+  /* 6: function comparison table */
+  { html: `
+    <div class="eyebrow reveal">Cheat sheet</div>
+    <h2 class="reveal" style="font-size:26px">Which aggregate does what</h2>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:7px 6px; color:var(--accent); font-weight:700;">Call</td>
+          <td style="padding:7px 6px; color:var(--accent); font-weight:700;">Returns</td>
+          <td style="padding:7px 6px; color:var(--accent); font-weight:700;">Watch for</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>df.count()</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Row count as a Python int</td><td style="padding:7px 6px; color:var(--ink-soft);">An action, runs a job</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>count("col")</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Non-null values of col</td><td style="padding:7px 6px; color:var(--ink-soft);">NULLs skipped</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>count("*")</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Every row</td><td style="padding:7px 6px; color:var(--ink-soft);">NULL rows included</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>count_distinct</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Exact unique count, one or more columns</td><td style="padding:7px 6px; color:var(--ink-soft);"><code>countDistinct</code> is an alias; NULLs not counted</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>approx_count_distinct</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Estimated unique count (HyperLogLog++)</td><td style="padding:7px 6px; color:var(--ink-soft);"><code>rsd</code> default 0.05</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 6px; color:var(--ink);"><code>avg</code> / <code>mean</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Average per group</td><td style="padding:7px 6px; color:var(--ink-soft);">Aliases of each other; NULLs excluded</td></tr>
+        <tr><td style="padding:7px 6px; color:var(--ink);"><code>sum</code> <code>min</code> <code>max</code></td><td style="padding:7px 6px; color:var(--ink-soft);">Total, smallest, largest</td><td style="padding:7px 6px; color:var(--ink-soft);">Name results with <code>.alias()</code></td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Every function here except <code>df.count()</code> builds a <strong>Column</strong> for <code>agg</code> or <code>select</code>; nothing runs until an action.</p>` },
+
+  /* 7: quiz, sample Q10 trade */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A dashboard counts unique visitors across 80 million click events every 15 minutes. The product owner wants it fast and accepts a 2 to 3 percent error. Why use <code>approx_count_distinct()</code> instead of <code>count_distinct()</code>?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>It returns a more accurate count than an exact distinct count on data this large</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>It estimates the count with the probabilistic HyperLogLog++ algorithm, trading a bounded error (set by rsd) for faster queries</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>It stores compressed results between refreshes so later runs reuse them</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> approx_count_distinct estimates from a HyperLogLog++ sketch instead of accounting for every distinct value, and <code>rsd</code> (default 0.05) bounds the error; something like <code>approx_count_distinct("visitor_id", 0.03)</code> fits this tolerance. Option A inverts the trade: count_distinct is the exact one, an estimate cannot beat the exact answer. Option C describes caching, which neither function does; each run computes its answer from the data.</div>` },
+
+  /* 8: quiz, count(col) skips nulls */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">On a customers DataFrame, <code>df.count()</code> returns 10,000 but <code>df.select(F.count("email")).first()[0]</code> returns 9,412. What explains the gap?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>588 rows repeat an email that already appeared, and count("email") counts each email once</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>An aggregate inside select runs on a sample of the partitions, while df.count() reads them all</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>588 rows have a NULL email: count("email") counts non-null values, while df.count() counts every row</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> count on a column skips NULLs; df.count() and count("*") count rows whatever they contain. Option A is the tempting one, but count is not distinct: duplicates are counted every time, and only count_distinct or approx_count_distinct collapse them. Option B is false: aggregates read every partition; sampling only happens when code asks for it.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 19 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can aggregate by group or over a whole DataFrame, pick the right count, and say when an estimate beats an exact answer.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>groupBy(...).agg(...)</b>groupBy returns GroupedData (a wide transformation); agg takes several functions with <code>.alias()</code>. <code>df.agg(...)</code> alone aggregates everything. mean is an alias of avg.</p></div>
+      <div class="pill"><p><b>Counts</b><code>df.count()</code> is an action returning an int; <code>count("col")</code> skips NULLs; <code>count("*")</code> counts every row.</p></div>
+      <div class="pill"><p><b>Distinct and profiles</b>count_distinct is exact; approx_count_distinct uses HyperLogLog++ with <code>rsd</code> 0.05 by default, trading a bounded error for speed. describe gives five statistics; summary adds the quartiles and takes a statistics list.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Deduplication and Missing Data · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-18-deduplication-and-missing-data.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* mint: the Unit 3 DataFrame API accent */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --warm: #ff6f1f;          /* contrast color: removed rows, null cells, drop marks */
+    --cool: #7dd3fc;          /* second contrast: distinct() result, string fill values */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 18 · Deduplication and Missing Data
+   Objective 3.2: perform data deduplication and validation operations on
+   DataFrames. Teaches the distinctions of official sample question 6
+   (na.drop() drops a row with at least one null in any column; "all" drops
+   only fully null rows; subset checks only the named columns; dropna("all")
+   is the same call as na.drop("all")); the quiz uses its own scenario.
+   Concept lesson: distinct() versus dropDuplicates() and
+   dropDuplicates(subset) (drop_duplicates alias; no argument chooses the
+   surviving row), na.drop / dropna with how ("any" default, "all"), thresh
+   (overrides how) and subset, na.fill / fillna with a single value (only
+   columns of a matching type) or a dict, na.replace / replace, validation
+   with isNull / isNotNull and the count(when(col(c).isNull(), c)) null
+   count, and df.na returning DataFrameNaFunctions. Window functions get one
+   line in the second quiz; streaming deduplication is Chapter 36.
+   Sources (docs.databricks.com/aws/en/pyspark/reference/...):
+   classes/dataframe/distinct, classes/dataframe/dropDuplicates (subset
+   defaults to all columns; streaming keeps state), classes/dataframe/dropna
+   and classes/dataframenafunctions/drop (how 'any' default or 'all'; thresh
+   drops rows with fewer than thresh non-null values and overrides how;
+   subset str, tuple or list; null or NaN; dropna and na.drop are aliases),
+   classes/dataframe/fillna and classes/dataframenafunctions/fill (int,
+   float, str, bool or dict; columns without a matching data type are
+   ignored; subset ignored for a dict), classes/dataframe/replace and
+   classes/dataframenafunctions/replace (numerics, booleans, strings; list
+   value must match to_replace in length and type; dict form ignores value;
+   None allowed as the value), classes/dataframe/na (returns
+   DataFrameNaFunctions), classes/column/isNull and classes/column/isNotNull,
+   functions/when (returns None for unmatched conditions without otherwise),
+   functions/count (counts non-null values of a column). drop_duplicates as
+   the alias of dropDuplicates: the PySpark API reference
+   (api-docs.databricks.com, via search snippet).
+   Cover animates (duplicate rows slide into their twin and fade; a sweep
+   bar pushes rows with null cells out of the table). Step builds on card 1
+   (distinct versus dropDuplicates on a key), card 2 (the four na.drop
+   variants on one table, swap captions) and card 3 (na.fill by type, then
+   by dict).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-19-aggregations.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c18r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c18dup { animation: c18merge 6.5s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c18dup.t2 { animation-delay: 0.3s; }
+      @keyframes c18merge {
+        0%, 22% { transform: translate(0px, 0px); opacity: 1; }
+        50% { transform: translate(0px, -24px); opacity: 1; }
+        60%, 88% { transform: translate(0px, -24px); opacity: 0; }
+        92% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c18keep { animation: c18pulse 6.5s ease-in-out infinite; }
+      @keyframes c18pulse { 0%, 45% { stroke-opacity: 0.3; } 58%, 80% { stroke-opacity: 1; } 95%, 100% { stroke-opacity: 0.3; } }
+      .c18out { animation: c18sweep 6.5s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c18out.t2 { animation-delay: 0.35s; }
+      @keyframes c18sweep {
+        0%, 30% { transform: translate(0px, 0px); opacity: 1; }
+        58%, 88% { transform: translate(40px, 0px); opacity: 0; }
+        92% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c18bar { animation: c18bar 6.5s ease-in-out infinite; }
+      @keyframes c18bar {
+        0%, 24% { transform: translate(0px, 0px); opacity: 0; }
+        30% { transform: translate(0px, 0px); opacity: 1; }
+        58% { transform: translate(130px, 0px); opacity: 1; }
+        66%, 100% { transform: translate(130px, 0px); opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .c18dup, .c18keep, .c18out { animation: none; }
+        .c18bar { animation: none; opacity: 0; }
+      }
+    </style>
+    <ellipse cx="160" cy="96" rx="155" ry="82" fill="url(#c18r)"/>
+    <rect x="38" y="10" width="88" height="18" rx="9" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+    <text x="82" y="22.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">dropDuplicates()</text>
+    <rect x="200" y="10" width="76" height="18" rx="9" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+    <text x="238" y="22.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">na.drop()</text>
+    <rect class="c18keep" x="20" y="40" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="40" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">101</text>
+    <text x="82" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+    <text x="124" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">40</text>
+    <rect class="c18keep" x="20" y="88" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="40" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">102</text>
+    <text x="82" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+    <text x="124" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">55</text>
+    <g class="c18dup">
+      <rect x="20" y="64" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--warm)" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <text x="40" y="77.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">101</text>
+      <text x="82" y="77.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+      <text x="124" y="77.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">40</text>
+    </g>
+    <g class="c18dup t2">
+      <rect x="20" y="112" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--warm)" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <text x="40" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">102</text>
+      <text x="82" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+      <text x="124" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">55</text>
+    </g>
+    <path d="M160 36 L160 136" fill="none" stroke="var(--line)" stroke-width="1"/>
+    <rect x="176" y="40" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="196" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">1</text>
+    <text x="238" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+    <text x="280" y="53.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">900</text>
+    <rect x="176" y="88" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="196" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">3</text>
+    <text x="238" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+    <text x="280" y="101.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">120</text>
+    <g class="c18out">
+      <rect x="176" y="64" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="196" y="77.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">2</text>
+      <rect x="220" y="67" width="36" height="14" rx="3" fill="none" stroke="var(--warm)" stroke-width="1" stroke-dasharray="2 2"/>
+      <text x="238" y="77.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+      <text x="280" y="77.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">450</text>
+    </g>
+    <g class="c18out t2">
+      <rect x="176" y="112" width="124" height="20" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="196" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">4</text>
+      <text x="238" y="125.5" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">Bergen</text>
+      <rect x="262" y="115" width="36" height="14" rx="3" fill="none" stroke="var(--warm)" stroke-width="1" stroke-dasharray="2 2"/>
+      <text x="280" y="125.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    </g>
+    <g class="c18bar">
+      <path d="M172 36 L172 136" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+    </g>
+    <text x="82" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">4 rows in, 2 unique rows out</text>
+    <text x="238" y="156" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">4 rows in, 2 complete rows out</text>
+    <text x="160" y="188" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Repeats collapse to one. Rows with gaps get swept out.</text>
+  </svg>`,
+
+  dedup: `<svg viewBox="0 0 320 200">
+    <text x="46" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">customer_id</text>
+    <text x="110" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">city</text>
+    <text x="168" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">amount</text>
+    <rect x="14" y="32" width="182" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="54" width="182" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="76" width="182" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="98" width="182" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="120" width="182" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="46" y="44.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">101</text>
+    <text x="110" y="44.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+    <text x="168" y="44.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">40</text>
+    <text x="46" y="66.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">101</text>
+    <text x="110" y="66.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+    <text x="168" y="66.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">40</text>
+    <text x="46" y="88.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">101</text>
+    <text x="110" y="88.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Bergen</text>
+    <text x="168" y="88.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">75</text>
+    <text x="46" y="110.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">102</text>
+    <text x="110" y="110.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+    <text x="168" y="110.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">55</text>
+    <text x="46" y="132.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">102</text>
+    <text x="110" y="132.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+    <text x="168" y="132.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">55</text>
+    <g data-step="1">
+      <path d="M20 63 L190 63 M20 129 L190 129" fill="none" stroke="var(--warm)" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="202" y="66" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">exact copy</text>
+      <text x="202" y="132" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">exact copy</text>
+      <text x="14" y="158" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">distinct() = dropDuplicates(): 3 rows left</text>
+    </g>
+    <g data-step="2">
+      <path d="M252 34 L258 34 L258 92 L252 92 M252 100 L258 100 L258 136 L252 136" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="264" y="60" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">key 101</text>
+      <text x="264" y="72" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">1 row kept</text>
+      <text x="264" y="116" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">key 102</text>
+      <text x="264" y="128" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">1 row kept</text>
+      <text x="14" y="174" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">dropDuplicates(["customer_id"]): 2 rows left</text>
+    </g>
+    <g data-step="3">
+      <circle cx="168" cy="41" r="9" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="3 2"/>
+      <circle cx="168" cy="85" r="9" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="3 2"/>
+      <text x="14" y="190" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">The 101 survivor: amount 40 or 75? Not guaranteed.</text>
+    </g>
+  </svg>`,
+
+  nadrop: `<svg viewBox="0 0 320 200">
+    <text x="39" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">store_id</text>
+    <text x="89" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">city</text>
+    <text x="139" y="26" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700">sqft</text>
+    <rect x="14" y="34" width="150" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="56" width="150" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="78" width="150" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="100" width="150" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="14" y="122" width="150" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="39" y="46.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">1</text>
+    <text x="89" y="46.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Oslo</text>
+    <text x="139" y="46.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">900</text>
+    <text x="39" y="68.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">2</text>
+    <text x="89" y="68.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="139" y="68.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">450</text>
+    <text x="39" y="90.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">3</text>
+    <text x="89" y="90.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">Rome</text>
+    <text x="139" y="90.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="39" y="112.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9">4</text>
+    <text x="89" y="112.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="139" y="112.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="39" y="134.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="89" y="134.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="139" y="134.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-style="italic">null</text>
+    <text x="89" y="160" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">non-null values per row: 3, 2, 2, 1, 0</text>
+    <g data-step="1">
+      <text x="190" y="26" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">any</text>
+      <circle cx="190" cy="43" r="6" fill="var(--accent)"/><path d="M187 43 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M186 61 l8 8 M194 61 l-8 8 M186 83 l8 8 M194 83 l-8 8 M186 105 l8 8 M194 105 l-8 8 M186 127 l8 8 M194 127 l-8 8" fill="none" stroke="var(--warm)" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="190" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">1 row</text>
+    </g>
+    <g data-step="2">
+      <text x="224" y="26" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">all</text>
+      <circle cx="224" cy="43" r="6" fill="var(--accent)"/><path d="M221 43 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="224" cy="65" r="6" fill="var(--accent)"/><path d="M221 65 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="224" cy="87" r="6" fill="var(--accent)"/><path d="M221 87 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="224" cy="109" r="6" fill="var(--accent)"/><path d="M221 109 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M220 127 l8 8 M228 127 l-8 8" fill="none" stroke="var(--warm)" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="224" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">4 rows</text>
+    </g>
+    <g data-step="3">
+      <text x="258" y="26" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">thresh=2</text>
+      <circle cx="258" cy="43" r="6" fill="var(--accent)"/><path d="M255 43 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="258" cy="65" r="6" fill="var(--accent)"/><path d="M255 65 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="258" cy="87" r="6" fill="var(--accent)"/><path d="M255 87 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M254 105 l8 8 M262 105 l-8 8 M254 127 l8 8 M262 127 l-8 8" fill="none" stroke="var(--warm)" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="258" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">3 rows</text>
+    </g>
+    <g data-step="4">
+      <text x="296" y="26" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">subset</text>
+      <circle cx="296" cy="43" r="6" fill="var(--accent)"/><path d="M293 43 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="296" cy="65" r="6" fill="var(--accent)"/><path d="M293 65 l2 2 l4 -4" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M292 83 l8 8 M300 83 l-8 8 M292 105 l8 8 M300 105 l-8 8 M292 127 l8 8 M300 127 l-8 8" fill="none" stroke="var(--warm)" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="296" y="160" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">2 rows</text>
+    </g>
+  </svg>`,
+
+  fill: `<svg viewBox="0 0 320 180">
+    <text x="80" y="24" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">store_id</text>
+    <text x="160" y="24" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+    <text x="240" y="24" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">sqft</text>
+    <text x="80" y="36" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">int</text>
+    <text x="160" y="36" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="7.5">string</text>
+    <text x="240" y="36" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5">int</text>
+    <rect x="40" y="44" width="240" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="40" y="70" width="240" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="40" y="96" width="240" height="22" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="80" y="58.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5">1</text>
+    <text x="160" y="58.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5">Oslo</text>
+    <text x="240" y="58.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-style="italic">null</text>
+    <text x="80" y="84.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5">2</text>
+    <text x="160" y="84.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-style="italic">null</text>
+    <text x="240" y="84.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5">450</text>
+    <text x="80" y="110.5" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5">3</text>
+    <text x="160" y="110.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-style="italic">null</text>
+    <text x="240" y="110.5" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-style="italic">null</text>
+    <g data-step="1">
+      <rect x="214" y="47" width="52" height="16" rx="4" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="240" y="58.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">0</text>
+      <rect x="214" y="99" width="52" height="16" rx="4" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="240" y="110.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">0</text>
+      <text x="40" y="142" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">na.fill(0): numeric columns only, city stays null</text>
+    </g>
+    <g data-step="2">
+      <rect x="130" y="73" width="60" height="16" rx="4" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="160" y="84.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">unknown</text>
+      <rect x="130" y="99" width="60" height="16" rx="4" fill="var(--bg)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="160" y="110.5" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">unknown</text>
+      <text x="40" y="162" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">a dict: one value per column, any type mix</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 18</div>
+    <h1 class="reveal">Deduplication and missing data</h1>
+    <p class="lead reveal">Real data repeats itself and has holes. Apache Spark gives each problem its own methods: <code>distinct</code> and <code>dropDuplicates</code> for repeats, the <code>na</code> functions for nulls. This chapter covers both, and how to measure the damage before fixing it.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: distinct versus dropDuplicates, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Repeats</div>
+    <h2 class="reveal" style="font-size:24px">Whole-row duplicates or key duplicates</h2>
+    <div class="art reveal">${A.dedup}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Five order rows. Rows 1 and 2 match in every column; rows 1 to 3 all belong to customer 101. Tap to deduplicate two ways.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>df.distinct()</code> removes rows identical in <strong>every</strong> column. <code>df.dropDuplicates()</code> with no argument does the same (its subset defaults to all columns), and <code>drop_duplicates()</code> is an alias.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>df.dropDuplicates(["customer_id"])</code> compares only the listed columns and keeps <strong>one row per key combination</strong>. Two rows remain.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Which 101 row survives? The method takes no ordering argument and promises none, so treat the survivor as <strong>arbitrary</strong>. (On a stream, dropDuplicates keeps state: Chapter 36.)</p>
+    </div>` },
+
+  /* 2: na.drop parameters, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Nulls: drop the row</div>
+    <h2 class="reveal" style="font-size:24px">One table, four na.drop calls</h2>
+    <div class="art reveal">${A.nadrop}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">Five store rows with between 3 and 0 non-null values. Each tap runs one variant and marks the rows that survive. <code>na.drop</code> treats null and NaN alike.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>df.na.drop()</code> uses <code>how="any"</code>, the default: a row goes if <strong>any</strong> column is null. Only store 1 is left.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>df.na.drop(how="all")</code> drops a row only when <strong>every</strong> column is null. Just the empty last row goes; four survive.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>df.na.drop(thresh=2)</code> keeps rows with <strong>at least 2 non-null values</strong>. Store 4 has 1, the last row 0. When thresh is set it overrides how.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><code>df.na.drop(subset=["sqft"])</code> checks <strong>only the listed columns</strong> (a single string such as <code>subset="sqft"</code> works too). Stores 1 and 2 have a sqft.</p>
+    </div>` },
+
+  /* 3: na.fill, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Nulls: fill the gap</div>
+    <h2 class="reveal" style="font-size:24px">na.fill matches the value's type</h2>
+    <div class="art reveal">${A.fill}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A string column and two integer columns, with gaps. Tap to fill them two ways.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>df.na.fill(0)</code> fills nulls only in columns whose type <strong>matches the value</strong>. 0 is numeric, so sqft is filled and the string column city is silently skipped. <code>na.fill("unknown")</code> would do the reverse.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">A dict sets a value per column: <code>df.na.fill({"city": "unknown", "sqft": 0})</code>. With a dict, <code>subset</code> is ignored. <code>df.fillna(...)</code> is the same method under its other name.</p>
+    </div>` },
+
+  /* 4: na.replace */
+  { html: `
+    <div class="eyebrow reveal">Sentinels</div>
+    <h2 class="reveal" style="font-size:26px">na.replace swaps named values</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Missing data often arrives as a placeholder such as <code>"N/A"</code> or <code>-1</code> rather than a real null. <code>replace</code> rewrites values you name; <code>df.replace</code> and <code>df.na.replace</code> are aliases.</p>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm"># a placeholder string becomes a real null</span>
+<span class="al">df = df.na.replace(<span class="st">"N/A"</span>, <span class="kw">None</span>)</span>
+<span class="cm"># lists pair up by position: same length, same type</span>
+df = df.replace([<span class="st">"NY"</span>, <span class="st">"LA"</span>], [<span class="st">"New York"</span>, <span class="st">"Los Angeles"</span>], <span class="st">"city"</span>)
+<span class="cm"># a dict maps old to new, and value is then ignored</span>
+df = df.replace({-1: 0}, subset=[<span class="st">"sqft"</span>])</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Types must line up</b>Values can be numbers, booleans or strings, and a replacement must have the same type as what it replaces; <code>None</code> is allowed as the replacement. Columns in subset of another type are skipped.</p></div>
+      <div class="pill"><p><b>fill or replace</b><code>fill</code> puts a value where a null is. <code>replace</code> turns a value you name into another value, or into null so <code>na.drop</code> and <code>na.fill</code> can see it.</p></div>
+    </div>` },
+
+  /* 5: validation */
+  { html: `
+    <div class="eyebrow reveal">Validate first</div>
+    <h2 class="reveal" style="font-size:26px">Count the gaps, then look at them</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Before dropping or filling, measure. Two patterns cover the validation half of the objective.</p>
+    <div class="codeblock reveal" style="white-space:pre"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, count, when
+<span class="al">nulls = df.select([count(when(col(c).isNull(), c)).alias(c)</span>
+<span class="al">                   for c in df.columns])</span>
+bad  = df.filter(col(<span class="st">"sqft"</span>).isNull())     <span class="cm"># inspect these</span>
+good = df.filter(col(<span class="st">"sqft"</span>).isNotNull())</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Why the count works</b><code>when</code> without <code>otherwise</code> returns null where the condition is false, and <code>count(col)</code> counts only non-null values. So each output column holds that column's number of nulls, in one row.</p></div>
+      <div class="pill"><p><b>Duplicate check</b><code>df.count() - df.dropDuplicates(["store_id"]).count()</code> is how many rows repeat a key. Zero means store_id is unique.</p></div>
+    </div>` },
+
+  /* 6: comparison table */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:26px">Every drop, two spellings</h2>
+    <p class="lead reveal" style="margin-bottom:12px"><code>df.na</code> returns a <strong>DataFrameNaFunctions</strong> object. Its <code>drop</code>, <code>fill</code> and <code>replace</code> are aliases of <code>dropna</code>, <code>fillna</code> and <code>replace</code> on the DataFrame.</p>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 6px; color:var(--accent); font-weight:700;">Call</td>
+          <td style="padding:8px 6px; color:var(--accent); font-weight:700;">Removes a row when</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink);"><code>na.drop()</code><br><code>dropna()</code></td><td style="padding:8px 6px; color:var(--ink);">Any column is null or NaN (<code>how="any"</code>, the default)</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink);"><code>na.drop("all")</code><br><code>dropna("all")</code></td><td style="padding:8px 6px; color:var(--ink);">Every column is null. The first positional argument is <code>how</code></td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink);"><code>na.drop(thresh=2)</code></td><td style="padding:8px 6px; color:var(--ink);">It has fewer than 2 non-null values; <code>how</code> is ignored</td></tr>
+        <tr><td style="padding:8px 6px; color:var(--ink);"><code>na.drop(subset="sqft")</code></td><td style="padding:8px 6px; color:var(--ink);">The listed column is null; other columns are not checked</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Not to be confused with <code>df.drop("sqft")</code>, which removes a <strong>column</strong> (Chapter 16), not rows.</p>` },
+
+  /* 7: quiz, mirrors the any / all / subset distinction */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A pricing model rejects any input with a gap. Which code returns a new DataFrame from <code>listingsDF</code> without every row that has at least one missing value in any column?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><code>listingsDF.na.drop("all")</code></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><code>listingsDF.na.drop()</code></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><code>listingsDF.na.drop(subset="price")</code></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> With no arguments, <code>how</code> defaults to <code>"any"</code>, so one null or NaN in any column removes the row. Option A is the tempting one: <code>"all"</code> drops a row only when every column is null, so a row with a single gap survives (and <code>dropna("all")</code> is the same call spelled differently). Option C checks only the price column, so a row missing its city passes.</div>` },
+
+  /* 8: quiz, dropDuplicates does not pick by recency */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">An <code>orders</code> DataFrame holds several updates per customer, each with an <code>updated_at</code> timestamp. The team needs only the latest row for each <code>customer_id</code>. Which approach is right?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><code>orders.dropDuplicates(["customer_id"])</code>, because it keeps the newest row for each key</button>
+      <button class="choice" data-correct="false"><span class="key">B</span><code>orders.distinct()</code>, because it removes rows that repeat a customer_id</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Rank each customer's rows by <code>updated_at</code> descending and keep the top one, or aggregate to find each customer's latest timestamp</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Only an explicit ordering decides which row wins: <code>row_number()</code> over a window partitioned by customer_id and ordered by updated_at descending, keeping row 1, or an aggregation on the timestamp. Option A is the trap: dropDuplicates does leave one row per customer, but it takes no ordering argument and does not promise which row survives, so a stale update can win. Option B compares whole rows; two updates with different timestamps are not duplicates, so both stay.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 18 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now remove repeats by row or by key, drop or fill nulls with the right parameters, and measure both first.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Duplicates</b><code>distinct()</code> equals <code>dropDuplicates()</code>: whole-row matches. <code>dropDuplicates(["k"])</code> keeps one row per key, survivor not guaranteed. <code>drop_duplicates</code> is an alias.</p></div>
+      <div class="pill"><p><b>na.drop / dropna</b><code>how="any"</code> is the default; <code>"all"</code> needs every column null; <code>thresh=N</code> keeps rows with N or more non-null values and overrides how; <code>subset</code> limits the columns checked.</p></div>
+      <div class="pill"><p><b>na.fill and na.replace</b>A single fill value only reaches columns of its type; a dict sets one per column. replace swaps named values of the same type, or to None.</p></div>
+      <div class="pill"><p><b>Validate</b><code>count(when(col(c).isNull(), c))</code> per column counts nulls; <code>isNull()</code> and <code>isNotNull()</code> filters split bad rows from good.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

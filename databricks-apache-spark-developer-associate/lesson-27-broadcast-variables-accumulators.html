@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Broadcast Variables and Accumulators · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-27-broadcast-variables-accumulators.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* Unit 3 mint: broadcast variables, driver to executors */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --warm: #fdba74;          /* contrast color: accumulator updates flowing back, retries */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 27 · Broadcast Variables and Accumulators
+   Objective 3.9: describe different types of variables in Spark, including
+   broadcast variables and accumulators.
+   Concept lesson. The closure problem (a function shipped to executors
+   works on copies of every driver variable it references, and changes made
+   on executors never reach the driver), broadcast variables
+   (spark.sparkContext.broadcast, .value, unpersist, destroy), accumulators
+   (spark.sparkContext.accumulator, add or +=, only the driver reads
+   .value), the reliability caveat (actions: applied once per task;
+   transformations: may be applied more than once on re-execution, and not
+   at all before an action), classic mode only (SparkContext is not exposed
+   by Spark Connect), and the contrast with the broadcast() join hint
+   (Chapter 28 owns broadcast joins).
+   Sources: the Apache Spark RDD programming guide, sections "Understanding
+   closures", "Shared Variables", "Broadcast Variables" and "Accumulators"
+   (read from its source, docs/rdd-programming-guide.md on the apache/spark
+   branch-4.0 GitHub tree, since spark.apache.org is blocked from the
+   authoring sandbox; this is where the exactly-once-in-actions rule and the
+   lazy-evaluation rule are quoted from); PySpark 4.0 source docstrings for
+   SparkContext.broadcast ("sent to each cluster only once"),
+   SparkContext.accumulator, Broadcast.value / unpersist / destroy
+   (blocking=False default) and Accumulator ("only the driver program is
+   allowed to access its value"; reading .value in a task raises
+   VALUE_NOT_ACCESSIBLE), and pyspark/sql/connect/session.py (sparkContext
+   raises JVM_ATTRIBUTE_NOT_SUPPORTED under Spark Connect);
+   docs.databricks.com/aws/en/pyspark/reference/classes/sparksession/sparkContext
+   (not available on Serverless compute);
+   docs.databricks.com/aws/en/error-messages/unsupported-connect-feature-error-class
+   (SparkContext and RDDs not available on Standard access mode or
+   Serverless, use Dedicated); docs.databricks.com/aws/en/pyspark/reference/
+   functions/broadcast (marks a DataFrame for broadcast joins, supports Spark
+   Connect), /functions/udf (returnType DDL string) and
+   /classes/dataframe/foreach.
+   Cover animates (one lookup copy flies to each executor, then "+1"
+   signals flow back and the driver's accumulator counts 0, 1, 2, 3).
+   Step builds on card 1 (the closure problem), card 3 (copy per task
+   versus copy per executor, then release) and card 5 (accumulator
+   reliability: action, transformation with a retry, no action yet).
+   Code blocks carry an inline white-space:pre so Python indentation and
+   line breaks survive (the shell .codeblock rule does not preserve them).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-28-broadcast-joins.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c27r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c27p { opacity: 0; animation: c27send 8s cubic-bezier(0.4,0,0.2,1) infinite backwards; }
+      .c27p.e2, .c27k.e2 { animation-delay: 0.3s; }
+      .c27p.e3, .c27k.e3 { animation-delay: 0.6s; }
+      @keyframes c27send {
+        0% { transform: translate(0px, 0px); opacity: 0; }
+        4% { transform: translate(0px, 0px); opacity: 1; }
+        30% { transform: translate(var(--dx), var(--dy)); opacity: 1; }
+        34%, 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+      }
+      .c27k { opacity: 0.15; animation: c27cache 8s ease-in-out infinite backwards; }
+      @keyframes c27cache { 0%, 29% { opacity: 0.15; } 34%, 92% { opacity: 1; } 100% { opacity: 0.15; } }
+      .c27s { opacity: 0; animation: c27back 8s cubic-bezier(0.4,0,0.2,1) infinite backwards; }
+      .c27s.e2 { animation-delay: 0.32s; }
+      .c27s.e3 { animation-delay: 0.64s; }
+      @keyframes c27back {
+        0%, 44% { transform: translate(0px, 0px); opacity: 0; }
+        48% { transform: translate(0px, 0px); opacity: 1; }
+        68% { transform: translate(var(--dx), var(--dy)); opacity: 1; }
+        70%, 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+      }
+      .c27n.d0 { opacity: 1; animation: c27d0 8s linear infinite; }
+      .c27n.d1 { opacity: 0; animation: c27d1 8s linear infinite; }
+      .c27n.d2 { opacity: 0; animation: c27d2 8s linear infinite; }
+      .c27n.d3 { opacity: 0; animation: c27d3 8s linear infinite; }
+      @keyframes c27d0 { 0%, 69% { opacity: 1; } 70%, 96% { opacity: 0; } 98%, 100% { opacity: 1; } }
+      @keyframes c27d1 { 0%, 69% { opacity: 0; } 70%, 73% { opacity: 1; } 74%, 100% { opacity: 0; } }
+      @keyframes c27d2 { 0%, 73% { opacity: 0; } 74%, 77% { opacity: 1; } 78%, 100% { opacity: 0; } }
+      @keyframes c27d3 { 0%, 77% { opacity: 0; } 78%, 95% { opacity: 1; } 97%, 100% { opacity: 0; } }
+      .c27g { animation: c27ring 8s ease-out infinite; }
+      @keyframes c27ring { 0%, 68% { opacity: 0.35; } 72%, 80% { opacity: 1; } 92%, 100% { opacity: 0.35; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c27p, .c27s { animation: none; opacity: 0; }
+        .c27k { animation: none; opacity: 1; }
+        .c27n.d0, .c27n.d1, .c27n.d2 { animation: none; opacity: 0; }
+        .c27n.d3 { animation: none; opacity: 1; }
+        .c27g { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="86" fill="url(#c27r)"/>
+    <path d="M118 84 L206 40 M118 100 L206 100 M118 116 L206 164" fill="none" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3 4"/>
+    <rect x="14" y="54" width="104" height="92" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="66" y="70" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">DRIVER</text>
+    <rect x="34" y="80" width="24" height="22" rx="3" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1.1"/>
+    <path d="M34 87 L58 87 M34 94 L58 94 M44 80 L44 102" fill="none" stroke="var(--accent)" stroke-width="0.8"/>
+    <text x="46" y="116" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">lookup</text>
+    <text x="46" y="128" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">broadcast</text>
+    <circle class="c27g" cx="92" cy="92" r="14" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.4"/>
+    <text class="c27n d0" x="92" y="96" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="11" font-weight="700">0</text>
+    <text class="c27n d1" x="92" y="96" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="11" font-weight="700">1</text>
+    <text class="c27n d2" x="92" y="96" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="11" font-weight="700">2</text>
+    <text class="c27n d3" x="92" y="96" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="11" font-weight="700">3</text>
+    <text x="92" y="116" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">acc.value</text>
+    <text x="92" y="128" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">accumulator</text>
+    <rect x="206" y="14" width="100" height="44" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="206" y="78" width="100" height="44" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="206" y="142" width="100" height="44" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="256" y="28" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">executor 1</text>
+    <text x="256" y="92" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">executor 2</text>
+    <text x="256" y="156" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">executor 3</text>
+    <g class="c27k">
+      <rect x="216" y="34" width="22" height="16" rx="2" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1"/>
+      <path d="M216 40 L238 40 M216 45 L238 45 M224 34 L224 50" fill="none" stroke="var(--accent)" stroke-width="0.7"/>
+      <text x="246" y="45" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">cached copy</text>
+    </g>
+    <g class="c27k e2">
+      <rect x="216" y="98" width="22" height="16" rx="2" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1"/>
+      <path d="M216 104 L238 104 M216 109 L238 109 M224 98 L224 114" fill="none" stroke="var(--accent)" stroke-width="0.7"/>
+      <text x="246" y="109" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">cached copy</text>
+    </g>
+    <g class="c27k e3">
+      <rect x="216" y="162" width="22" height="16" rx="2" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1"/>
+      <path d="M216 168 L238 168 M216 173 L238 173 M224 162 L224 178" fill="none" stroke="var(--accent)" stroke-width="0.7"/>
+      <text x="246" y="173" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">cached copy</text>
+    </g>
+    <rect class="c27p" style="--dx:181px; --dy:-49px" x="37" y="84" width="18" height="14" rx="2" fill="var(--accent)"/>
+    <rect class="c27p e2" style="--dx:181px; --dy:15px" x="37" y="84" width="18" height="14" rx="2" fill="var(--accent)"/>
+    <rect class="c27p e3" style="--dx:181px; --dy:79px" x="37" y="84" width="18" height="14" rx="2" fill="var(--accent)"/>
+    <text class="c27s" style="--dx:-104px; --dy:56px" x="196" y="40" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="10" font-weight="700">+1</text>
+    <text class="c27s e2" style="--dx:-104px; --dy:-8px" x="196" y="104" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="10" font-weight="700">+1</text>
+    <text class="c27s e3" style="--dx:-104px; --dy:-72px" x="196" y="168" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="10" font-weight="700">+1</text>
+    <text x="160" y="197" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">One copy out per executor; only adds flow back.</text>
+  </svg>`,
+
+  closure: `<svg viewBox="0 0 320 200">
+    <rect x="86" y="6" width="148" height="50" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="160" y="20" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.2">DRIVER</text>
+    <text x="160" y="34" text-anchor="middle" fill="var(--ink)" font-family="Menlo, monospace" font-size="9">lookup = {...}</text>
+    <text x="160" y="48" text-anchor="middle" fill="var(--ink)" font-family="Menlo, monospace" font-size="9">counter = 0</text>
+    <rect x="8" y="92" width="148" height="102" rx="10" fill="none" stroke="var(--line)"/>
+    <rect x="164" y="92" width="148" height="102" rx="10" fill="none" stroke="var(--line)"/>
+    <text x="82" y="105" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">executor 1</text>
+    <text x="238" y="105" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">executor 2</text>
+    <rect x="16" y="112" width="64" height="74" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="86" y="112" width="64" height="74" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="172" y="112" width="64" height="74" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="242" y="112" width="64" height="74" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="48" y="125" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">task 1</text>
+    <text x="118" y="125" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">task 2</text>
+    <text x="204" y="125" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">task 3</text>
+    <text x="274" y="125" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">task 4</text>
+    <g data-step="1">
+      <path d="M160 56 L48 112 M160 56 L118 112 M160 56 L204 112 M160 56 L274 112" fill="none" stroke="var(--accent)" stroke-width="0.9" stroke-dasharray="3 2"/>
+      <rect x="94" y="66" width="132" height="16" rx="8" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="160" y="77" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">closure copied into every task</text>
+      <text x="48" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">lookup copy</text>
+      <text x="118" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">lookup copy</text>
+      <text x="204" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">lookup copy</text>
+      <text x="274" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">lookup copy</text>
+      <text x="48" y="156" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5">counter: 0</text>
+      <text x="118" y="156" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5">counter: 0</text>
+      <text x="204" y="156" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5">counter: 0</text>
+      <text x="274" y="156" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5">counter: 0</text>
+    </g>
+    <g data-step="2">
+      <text x="48" y="174" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">+= 1, now 3</text>
+      <text x="118" y="174" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">+= 1, now 5</text>
+      <text x="204" y="174" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">+= 1, now 2</text>
+      <text x="274" y="174" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700">+= 1, now 4</text>
+    </g>
+    <g data-step="3">
+      <path d="M296 92 Q306 36 236 31" fill="none" stroke="var(--warm)" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <path d="M280 43 L292 55 M292 43 L280 55" fill="none" stroke="var(--warm)" stroke-width="2" stroke-linecap="round"/>
+      <rect x="4" y="18" width="76" height="26" rx="8" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="42" y="35" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">driver: still 0</text>
+    </g>
+  </svg>`,
+
+  bcast: `<svg viewBox="0 0 320 208">
+    <text x="82" y="12" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.2">WITHOUT</text>
+    <text x="238" y="12" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.2">WITH BROADCAST</text>
+    <path d="M160 4 L160 166" fill="none" stroke="var(--line)" stroke-width="1"/>
+    <rect x="50" y="20" width="64" height="20" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="206" y="20" width="64" height="20" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="82" y="33" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">driver</text>
+    <text x="238" y="33" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">driver</text>
+    <rect x="10" y="74" width="68" height="82" rx="8" fill="none" stroke="var(--line)"/>
+    <rect x="86" y="74" width="68" height="82" rx="8" fill="none" stroke="var(--line)"/>
+    <rect x="166" y="74" width="68" height="82" rx="8" fill="none" stroke="var(--line)"/>
+    <rect x="242" y="74" width="68" height="82" rx="8" fill="none" stroke="var(--line)"/>
+    <text x="44" y="86" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">executor</text>
+    <text x="120" y="86" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">executor</text>
+    <text x="200" y="86" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">executor</text>
+    <text x="276" y="86" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">executor</text>
+    <rect x="34" y="92" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="34" y="112" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="34" y="132" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="92" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="112" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="110" y="132" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="190" y="92" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="190" y="112" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="190" y="132" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="266" y="92" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="266" y="112" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="266" y="132" width="38" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="53" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="53" y="123" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="53" y="143" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="129" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="129" y="123" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="129" y="143" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="209" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="209" y="123" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="209" y="143" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="285" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="285" y="123" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <text x="285" y="143" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7">task</text>
+    <g data-step="1">
+      <path d="M82 40 L34 74 M82 40 L44 74 M82 40 L54 74 M82 40 L110 74 M82 40 L120 74 M82 40 L130 74" fill="none" stroke="var(--warm)" stroke-width="0.9"/>
+      <rect x="18" y="95" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <rect x="18" y="115" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <rect x="18" y="135" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <rect x="94" y="95" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <rect x="94" y="115" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <rect x="94" y="135" width="12" height="10" rx="1.5" fill="rgba(253,186,116,0.22)" stroke="var(--warm)" stroke-width="0.8"/>
+      <text x="82" y="172" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">6 tasks, 6 copies</text>
+    </g>
+    <g data-step="2">
+      <path d="M238 40 L200 74 M238 40 L276 74" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <rect x="172" y="92" width="14" height="56" rx="3" fill="rgba(110,231,183,0.18)" stroke="var(--accent)" stroke-width="1.1"/>
+      <rect x="248" y="92" width="14" height="56" rx="3" fill="rgba(110,231,183,0.18)" stroke="var(--accent)" stroke-width="1.1"/>
+      <path d="M186 100 L190 100 M186 120 L190 120 M186 140 L190 140 M262 100 L266 100 M262 120 L266 120 M262 140 L266 140" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="238" y="172" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">2 executors, 2 copies</text>
+    </g>
+    <g data-step="3">
+      <rect x="8" y="182" width="148" height="22" rx="11" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="82" y="196" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">unpersist(): free executor copies</text>
+      <rect x="164" y="182" width="148" height="22" rx="11" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.1"/>
+      <text x="238" y="196" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">destroy(): free all, no reuse</text>
+    </g>
+  </svg>`,
+
+  retry: `<svg viewBox="0 0 320 200">
+    <rect x="4" y="6" width="312" height="58" rx="10" fill="rgba(255,255,255,0.02)" stroke="var(--line)"/>
+    <rect x="4" y="72" width="312" height="58" rx="10" fill="rgba(255,255,255,0.02)" stroke="var(--line)"/>
+    <rect x="4" y="138" width="312" height="58" rx="10" fill="rgba(255,255,255,0.02)" stroke="var(--line)"/>
+    <text x="14" y="30" fill="var(--ink)" font-family="Menlo, monospace" font-size="9" font-weight="700">foreach(f)</text>
+    <text x="14" y="44" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">inside an action</text>
+    <text x="14" y="96" fill="var(--ink)" font-family="Menlo, monospace" font-size="9" font-weight="700">map(g) or UDF</text>
+    <text x="14" y="110" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">inside a transformation</text>
+    <text x="14" y="162" fill="var(--ink)" font-family="Menlo, monospace" font-size="9" font-weight="700">map(g) only</text>
+    <text x="14" y="176" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">no action has run</text>
+    <g data-step="1">
+      <rect x="112" y="22" width="58" height="26" rx="6" fill="none" stroke="var(--warm)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="141" y="33" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">attempt 1</text>
+      <text x="141" y="43" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">lost</text>
+      <rect x="176" y="22" width="58" height="26" rx="6" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1"/>
+      <text x="205" y="33" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">attempt 2</text>
+      <text x="205" y="43" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">+5</text>
+      <rect x="242" y="20" width="68" height="30" rx="8" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="276" y="33" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">acc = 5</text>
+      <text x="276" y="44" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7">applied once</text>
+    </g>
+    <g data-step="2">
+      <rect x="112" y="88" width="58" height="26" rx="6" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1"/>
+      <text x="141" y="99" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">attempt 1</text>
+      <text x="141" y="109" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">+5</text>
+      <rect x="176" y="88" width="58" height="26" rx="6" fill="var(--surface-2)" stroke="var(--warm)" stroke-width="1"/>
+      <text x="205" y="99" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">stage re-run</text>
+      <text x="205" y="109" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">+5 again</text>
+      <rect x="242" y="86" width="68" height="30" rx="8" fill="rgba(253,186,116,0.14)" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="276" y="99" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">acc = 10</text>
+      <text x="276" y="110" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="7">counted twice</text>
+    </g>
+    <g data-step="3">
+      <rect x="112" y="154" width="122" height="26" rx="6" fill="none" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="173" y="165" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">plan defined, lazy</text>
+      <text x="173" y="175" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">no task has run</text>
+      <rect x="242" y="152" width="68" height="30" rx="8" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="1.2"/>
+      <text x="276" y="165" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">acc = 0</text>
+      <text x="276" y="176" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7">not yet</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 27</div>
+    <h1 class="reveal">Broadcast variables and accumulators</h1>
+    <p class="lead reveal">Apache Spark gives a function running on executors its own copies of the driver's variables, and nothing it changes ever comes back. Two shared variables fix the two halves of that: one sends read-only data out efficiently, the other carries counts back.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the closure problem, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The problem</div>
+    <h2 class="reveal" style="font-size:24px">Tasks get copies, and copies do not report back</h2>
+    <div class="art reveal">${A.closure}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">The driver holds a lookup dict and a counter. A function passed to <code>map</code> or <code>foreach</code> references both. Tap to run it.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Before a task runs, Spark serializes its <strong>closure</strong> (every variable the function references) and ships it out. By default a copy of each variable travels <strong>with each task</strong>.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Each task increments <strong>its own copy</strong> of <code>counter</code>. Four tasks, four private counters.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">No update on an executor is propagated back, so the driver's <code>counter</code> is <strong>still 0</strong>. The Spark docs call mutating outside variables this way undefined behavior: use an accumulator instead.</p>
+    </div>` },
+
+  /* 2: broadcast variables, code */
+  { html: `
+    <div class="eyebrow reveal">Shared variable 1</div>
+    <h2 class="reveal" style="font-size:26px">Broadcast variables: read-only data, sent once</h2>
+    <p class="lead reveal" style="margin-bottom:14px"><code>spark.sparkContext.broadcast(value)</code> returns a <code>Broadcast</code> object. The value is cached on each executor instead of shipping with every task, and functions read it through <code>.value</code>.</p>
+    <div class="codeblock reveal" style="white-space:pre">lookup = {<span class="st">"P1"</span>: <span class="st">"toys"</span>, <span class="st">"P2"</span>: <span class="st">"books"</span>}
+<span class="al">bc = spark.sparkContext.broadcast(lookup)</span>
+@udf(returnType=<span class="st">"string"</span>)
+<span class="kw">def</span> category(pid):
+    <span class="kw">return</span> bc.value.get(pid)  <span class="cm"># on executors</span>
+df = df.withColumn(<span class="st">"cat"</span>, category(<span class="st">"pid"</span>))</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Use bc.value, not lookup</b>Reference the broadcast inside the function, or the plain dict still rides along with every task. Do not modify the original after broadcasting it, so every node sees the same value.</p></div>
+      <div class="pill"><p><b>Typical use</b>A lookup dict or a small reference set used inside a UDF or an RDD <code>map</code>.</p></div>
+    </div>` },
+
+  /* 3: copy per task versus copy per executor, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">What it saves</div>
+    <h2 class="reveal" style="font-size:24px">One copy per executor, not per task</h2>
+    <div class="art reveal">${A.bcast}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Same job, two executors, three tasks each. Tap to compare how the lookup data gets there.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Without:</strong> the dict is part of every task's closure, so it is serialized and sent six times. With 2,000 tasks it is sent 2,000 times.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>With broadcast:</strong> each executor receives the value once and caches it; every task on that executor reads the cached copy through <code>bc.value</code>.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Releasing it:</strong> <code>bc.unpersist()</code> deletes the executor copies (used again, it is re-sent). <code>bc.destroy()</code> frees everything for good; the variable cannot be used after. Neither blocks by default (<code>blocking=False</code>).</p>
+    </div>` },
+
+  /* 4: accumulators, code */
+  { html: `
+    <div class="eyebrow reveal">Shared variable 2</div>
+    <h2 class="reveal" style="font-size:26px">Accumulators: tasks add, the driver reads</h2>
+    <p class="lead reveal" style="margin-bottom:14px"><code>spark.sparkContext.accumulator(0)</code> creates a variable that tasks can only add to, with <code>acc.add(n)</code> or <code>+=</code>. Only the driver can read it, through <code>acc.value</code>.</p>
+    <div class="codeblock reveal" style="white-space:pre">bad = spark.sparkContext.accumulator(<span class="kw">0</span>)
+<span class="kw">def</span> check(row):
+    <span class="kw">if</span> row.amount <span class="kw">is None</span>:
+        <span class="al">bad.add(1)</span>        <span class="cm"># tasks only add</span>
+df.foreach(check)         <span class="cm"># an action runs it</span>
+print(bad.value)          <span class="cm"># driver reads: 37</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Write-only on executors</b>A task cannot read the total: <code>acc.value</code> inside a task raises an error. Updates flow back to the driver automatically as tasks finish.</p></div>
+      <div class="pill"><p><b>Typical use</b>A side channel: counting bad records or events while the job does its real work. Integers and floats work out of the box.</p></div>
+    </div>` },
+
+  /* 5: the reliability caveat, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The caveat</div>
+    <h2 class="reveal" style="font-size:24px">Where the add happens decides if it is exact</h2>
+    <div class="art reveal">${A.retry}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">One task finds 5 bad rows. Tap through three places to put <code>bad.add(1)</code>.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Inside an action</strong> such as <code>foreach</code>: Spark guarantees each task's update is applied <strong>once</strong>. A restarted task does not add again.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Inside a transformation</strong> such as <code>map</code> or a UDF: if a task or stage is re-executed, its update <strong>may be applied more than once</strong>. Treat the total as approximate.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Before any action:</strong> transformations are lazy, so the function has not run and the accumulator is still <strong>0</strong>. Read <code>.value</code> only after an action.</p>
+    </div>` },
+
+  /* 6: classic mode only, and not a broadcast join */
+  { html: `
+    <div class="eyebrow reveal">Two boundaries</div>
+    <h2 class="reveal" style="font-size:26px">Classic mode only, and not a join hint</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Both variables hang off <code>SparkContext</code>, the RDD-era entry point reached as <code>spark.sparkContext</code>. That has two consequences worth knowing for the exam.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>They need classic mode</b>A Spark Connect session does not expose <code>spark.sparkContext</code> (accessing it raises an error), so broadcast variables and accumulators need a classic session. On Databricks, SparkContext is unavailable on Serverless compute and Standard access mode; Dedicated access mode has it.</p></div>
+      <div class="pill"><p><b>Not the same as a broadcast join</b><code>pyspark.sql.functions.broadcast(df)</code> is a hint that marks a small <strong>DataFrame</strong> for a broadcast join, and Spark ships it for you (Spark Connect supports it). A broadcast variable wraps any Python value you read yourself. Chapter 28 covers broadcast joins.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 7: comparison table */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:26px">Opposite directions</h2>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:8px 6px; color:var(--ink-faint); font-weight:600;"></td>
+          <td style="padding:8px 6px; color:var(--accent); font-weight:700;">Broadcast variable</td>
+          <td style="padding:8px 6px; color:var(--warm); font-weight:700;">Accumulator</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink-soft);">Created by</td><td style="padding:8px 6px; color:var(--ink);"><code>sc.broadcast(v)</code></td><td style="padding:8px 6px; color:var(--ink);"><code>sc.accumulator(0)</code></td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink-soft);">Direction</td><td style="padding:8px 6px; color:var(--ink);">Driver to executors</td><td style="padding:8px 6px; color:var(--ink);">Tasks to driver</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink-soft);">Who writes</td><td style="padding:8px 6px; color:var(--ink);">The driver, once (read-only after)</td><td style="padding:8px 6px; color:var(--ink);">Tasks, add only</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink-soft);">Who reads</td><td style="padding:8px 6px; color:var(--ink);">Tasks, via <code>.value</code></td><td style="padding:8px 6px; color:var(--ink);">The driver only, via <code>.value</code></td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px 6px; color:var(--ink-soft);">Typical use</td><td style="padding:8px 6px; color:var(--ink);">Lookup dict or reference set in a UDF or <code>map</code></td><td style="padding:8px 6px; color:var(--ink);">Counting bad records or events</td></tr>
+        <tr><td style="padding:8px 6px; color:var(--ink-soft);">Watch for</td><td style="padding:8px 6px; color:var(--ink);"><code>unpersist()</code>, <code>destroy()</code> when done</td><td style="padding:8px 6px; color:var(--ink);">Exact only inside actions</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Here <code>sc</code> is <code>spark.sparkContext</code>. Both are classic-mode APIs.</p>` },
+
+  /* 8: quiz, accumulator in a transformation over-counts */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A job adds 1 to an accumulator inside a Python UDF for each malformed row, then writes the output. An executor is lost, a stage is re-run, and the driver reports 1,240 bad rows; a filter-and-count on the same data finds 1,000. What explains the gap?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The driver read acc.value before the write finished, so it saw a partial total</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>The UDF runs in a transformation, so re-executed tasks applied their updates again</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>An accumulator is the wrong tool: a broadcast variable would give all tasks one shared counter</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Spark applies each task's accumulator update exactly once only for updates made inside actions; inside a transformation such as a UDF or <code>map</code>, a re-executed task or stage can add its count again, which inflates the total. Count inside an action such as <code>foreach</code>, or count with a filter, when the number must be exact. A is the tempting distractor, but a read taken too early shows too few rows (zero before any action), never too many. C fails because a broadcast variable is read-only: tasks cannot update it.</div>` },
+
+  /* 9: quiz, broadcast a large lookup dict */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A Python UDF maps product codes to categories with a 50 MB dict built on the driver. The job runs 2,000 tasks on 20 executors and spends much of its time shipping task data. What is the best fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Wrap the dict with pyspark.sql.functions.broadcast() so the optimizer ships it once</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Put the dict in an accumulator so every task reads one shared copy</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Call spark.sparkContext.broadcast(lookup) and read bc.value inside the UDF</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A broadcast variable sends the dict to each executor once and caches it there, so 20 executors hold 20 copies instead of the dict riding along with all 2,000 tasks. A is the tempting distractor: <code>functions.broadcast()</code> is a join hint that takes a DataFrame, not a Python dict (turning the dict into a small DataFrame and joining is the other route, Chapter 28). B fails because tasks can only add to an accumulator; only the driver can read it.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 27 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now say which shared variable moves data out, which carries counts back, and when a count can be trusted.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Broadcast variable</b><code>spark.sparkContext.broadcast(v)</code>: read-only, cached once per executor, read with <code>.value</code>, released with <code>unpersist()</code> or <code>destroy()</code>.</p></div>
+      <div class="pill"><p><b>Accumulator</b><code>spark.sparkContext.accumulator(0)</code>: tasks <code>add</code> or <code>+=</code>, only the driver reads <code>.value</code>. Exactly once inside actions; may double count in transformations; 0 until an action runs.</p></div>
+      <div class="pill"><p><b>Boundaries</b>Both live on SparkContext, so classic mode only. Neither is the <code>broadcast()</code> join hint.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

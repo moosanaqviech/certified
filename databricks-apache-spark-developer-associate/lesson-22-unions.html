@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Unions: union, unionAll and unionByName · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-22-unions.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* mint: the Unit 3 DataFrame API accent */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --cool: #7dd3fc;          /* contrast color: the second DataFrame (df2) */
+    --warm: #ff6f1f;          /* warning color: misaligned values, nulls, errors */
+    --deep: #047857;          /* gradient end for the duplicate rows on the cover */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 22 · Unions: union, unionAll and unionByName
+   Objective 3.5, union side: combine DataFrames with union and union all
+   (the join side is Chapter 21, broadcast joins are Chapter 28).
+   Concept lesson: union appends rows by POSITION and keeps duplicates
+   (SQL UNION ALL), distinct() after it gives SQL UNION; unionAll is an
+   alias of union; both sides need the same number of columns; a column
+   order mismatch with compatible types gives silently wrong data, with
+   incompatible types an error; unionByName matches by name and
+   allowMissingColumns=True fills missing columns with null; intersect,
+   intersectAll, subtract and exceptAll as the other set operations.
+   Sources: docs.databricks.com/aws/en/pyspark/reference/classes/dataframe/
+   union (resolves columns by position, not by name; no automatic
+   deduplication; use distinct() to deduplicate), .../unionByName
+   (signature unionByName(other, allowMissingColumns=False), resolves by
+   name, missing columns filled with null, example output),
+   .../intersect (INTERSECT, duplicates removed), .../intersectAll
+   (INTERSECT ALL, keeps duplicates, by position), .../subtract (EXCEPT
+   DISTINCT), .../exceptAll (EXCEPT ALL, keeps duplicates, by position);
+   docs.databricks.com/aws/en/error-messages/error-classes
+   (NUM_COLUMNS_MISMATCH and INCOMPATIBLE_COLUMN_TYPE for set operators);
+   spark.apache.org PySpark reference for DataFrame.unionAll and
+   DataFrame.union, read through search snippets (unionAll is an alias to
+   union; equivalent to UNION ALL in SQL; follow with distinct() for a
+   SQL-style set union) and DataFrame.unionByName (missing columns of this
+   DataFrame are added at the end of the result schema).
+   Cover animates (two stacks of rows slide into one taller stack; the
+   identical pair stays as two rows); step builds on card 2 (position
+   versus name) and card 3 (allowMissingColumns).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-23-explicit-schemas.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c22r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.20)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+      <linearGradient id="c22g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:var(--deep)"/>
+        <stop offset="1" style="stop-color:var(--accent)"/>
+      </linearGradient>
+    </defs>
+    <style>
+      .c22s { animation: c22slide 7s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c22s.d2 { animation-delay: 0.12s; } .c22s.d3 { animation-delay: 0.24s; }
+      @keyframes c22slide {
+        0%, 20% { transform: translate(0px, 0px); opacity: 1; }
+        50%, 86% { transform: translate(var(--dx), var(--dy)); opacity: 1; }
+        91% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+        93% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c22in { animation: c22show 7s ease-in-out infinite; }
+      @keyframes c22show { 0%, 50% { opacity: 0; } 57%, 84% { opacity: 1; } 90%, 100% { opacity: 0; } }
+      .c22out { animation: c22fade 7s ease-in-out infinite; }
+      @keyframes c22fade { 0%, 20% { opacity: 1; } 45%, 86% { opacity: 0.2; } 96%, 100% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c22s { animation: none; transform: translate(var(--dx), var(--dy)); }
+        .c22in { animation: none; opacity: 1; }
+        .c22out { animation: none; opacity: 0.2; }
+      }
+    </style>
+    <ellipse cx="160" cy="104" rx="150" ry="80" fill="url(#c22r)"/>
+    <g class="c22out">
+      <text x="60" y="40" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">df1</text>
+      <text x="260" y="40" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="10" font-weight="700">df2</text>
+    </g>
+    <g class="c22in">
+      <rect x="110" y="26" width="100" height="18" rx="9" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="160" y="38.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df1.union(df2)</text>
+      <path d="M206 92 L212 92 L212 124 L206 124" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="218" y="106" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">both kept</text>
+      <text x="218" y="117" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">no dedup</text>
+    </g>
+    <g class="c22s" style="--dx:100px; --dy:0px">
+      <rect x="20" y="50" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="60" y="61" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">1 · Lyon</text>
+    </g>
+    <g class="c22s d2" style="--dx:100px; --dy:0px">
+      <rect x="20" y="70" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="60" y="81" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2 · Oslo</text>
+    </g>
+    <g class="c22s d3" style="--dx:100px; --dy:0px">
+      <rect x="20" y="90" width="80" height="16" rx="4" fill="url(#c22g)"/>
+      <text x="60" y="101" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">3 · Rome</text>
+    </g>
+    <g class="c22s" style="--dx:-100px; --dy:60px">
+      <rect x="220" y="50" width="80" height="16" rx="4" fill="url(#c22g)"/>
+      <text x="260" y="61" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">3 · Rome</text>
+    </g>
+    <g class="c22s d2" style="--dx:-100px; --dy:60px">
+      <rect x="220" y="70" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--cool)" stroke-width="0.8"/>
+      <text x="260" y="81" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">4 · Kyiv</text>
+    </g>
+    <g class="c22s d3" style="--dx:-100px; --dy:60px">
+      <rect x="220" y="90" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--cool)" stroke-width="0.8"/>
+      <text x="260" y="101" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">5 · Pune</text>
+    </g>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Rows stack up by position. Duplicates stay.</text>
+  </svg>`,
+
+  position: `<svg viewBox="0 0 320 200">
+    <text x="16" y="12" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df1</text>
+    <rect x="16" y="18" width="132" height="16" rx="3" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+    <text x="49" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">name</text>
+    <text x="115" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+    <rect x="16" y="34" width="132" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="49" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Ana</text>
+    <text x="115" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Lyon</text>
+    <text x="172" y="12" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df2 (other column order)</text>
+    <rect x="172" y="18" width="132" height="16" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--cool)" stroke-width="0.8"/>
+    <text x="205" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+    <text x="271" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">name</text>
+    <rect x="172" y="34" width="132" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="205" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Oslo</text>
+    <text x="271" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Ben</text>
+    <g data-step="1">
+      <text x="82" y="74" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df1.union(df2)</text>
+      <rect x="16" y="82" width="132" height="16" rx="3" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="49" y="93" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">name</text>
+      <text x="115" y="93" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+      <rect x="16" y="98" width="132" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="49" y="109" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Ana</text>
+      <text x="115" y="109" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Lyon</text>
+      <rect x="16" y="114" width="132" height="16" rx="3" fill="rgba(255,111,31,0.14)" stroke="var(--warm)" stroke-width="1"/>
+      <text x="49" y="125" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">Oslo</text>
+      <text x="115" y="125" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">Ben</text>
+    </g>
+    <g data-step="2">
+      <rect x="16" y="140" width="132" height="20" rx="10" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="82" y="153" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">no error, wrong data</text>
+      <text x="82" y="174" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">a city sits under "name"</text>
+    </g>
+    <g data-step="3">
+      <text x="238" y="74" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df1.unionByName(df2)</text>
+      <rect x="172" y="82" width="132" height="16" rx="3" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="205" y="93" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">name</text>
+      <text x="271" y="93" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+      <rect x="172" y="98" width="132" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="205" y="109" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Ana</text>
+      <text x="271" y="109" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Lyon</text>
+      <rect x="172" y="114" width="132" height="16" rx="3" fill="rgba(110,231,183,0.14)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="205" y="125" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">Ben</text>
+      <text x="271" y="125" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">Oslo</text>
+      <rect x="172" y="140" width="132" height="20" rx="10" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="238" y="153" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">matched by name</text>
+      <text x="238" y="174" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">df1's column order wins</text>
+    </g>
+  </svg>`,
+
+  missing: `<svg viewBox="0 0 320 200">
+    <text x="10" y="12" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df1</text>
+    <rect x="10" y="18" width="144" height="16" rx="3" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+    <text x="34" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">id</text>
+    <text x="82" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+    <text x="130" y="29" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">tier</text>
+    <rect x="10" y="34" width="144" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="34" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">1</text>
+    <text x="82" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Lyon</text>
+    <text x="130" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">gold</text>
+    <text x="166" y="12" fill="var(--cool)" font-family="Hanken Grotesk" font-size="9" font-weight="700">df2</text>
+    <rect x="166" y="18" width="144" height="16" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--cool)" stroke-width="0.8"/>
+    <text x="190" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">id</text>
+    <text x="238" y="29" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+    <text x="286" y="29" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">src</text>
+    <rect x="166" y="34" width="144" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="190" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2</text>
+    <text x="238" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Oslo</text>
+    <text x="286" y="45" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">app</text>
+    <g data-step="1">
+      <rect x="50" y="60" width="220" height="20" rx="10" fill="var(--bg)" stroke="var(--warm)" stroke-width="1.2"/>
+      <text x="160" y="73" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">unionByName(df2): names differ, it fails</text>
+    </g>
+    <g data-step="2">
+      <text x="160" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">unionByName(df2, allowMissingColumns=True)</text>
+      <rect x="48" y="106" width="224" height="16" rx="3" fill="rgba(110,231,183,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="76" y="117" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">id</text>
+      <text x="132" y="117" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">city</text>
+      <text x="188" y="117" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">tier</text>
+      <text x="244" y="117" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">src</text>
+      <rect x="48" y="122" width="224" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="76" y="133" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">1</text>
+      <text x="132" y="133" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Lyon</text>
+      <text x="188" y="133" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">gold</text>
+      <rect x="220" y="124" width="48" height="12" rx="3" fill="rgba(255,111,31,0.14)"/>
+      <text x="244" y="133" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">null</text>
+    </g>
+    <g data-step="3">
+      <rect x="48" y="138" width="224" height="16" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="76" y="149" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">2</text>
+      <text x="132" y="149" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">Oslo</text>
+      <rect x="164" y="140" width="48" height="12" rx="3" fill="rgba(255,111,31,0.14)"/>
+      <text x="188" y="149" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">null</text>
+      <text x="244" y="149" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">app</text>
+      <text x="160" y="176" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">df1's columns first; df2's extra column is added at the end</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 22</div>
+    <h1 class="reveal">Unions: union, unionAll and unionByName</h1>
+    <p class="lead reveal">A join puts columns side by side; a union stacks rows on top of each other. In Apache Spark it is one line of code with two traps: it lines columns up by position, and it never removes duplicates.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: union is UNION ALL */
+  { html: `
+    <div class="eyebrow reveal">The default behaviour</div>
+    <h2 class="reveal" style="font-size:26px">union keeps every row</h2>
+    <p class="lead reveal" style="margin-bottom:14px"><code>df1.union(df2)</code> returns a new DataFrame with all rows of both. It is the equivalent of SQL <strong>UNION ALL</strong>, not SQL UNION: nothing is deduplicated.</p>
+    <div class="codeblock reveal" style="white-space:pre">a = spark.createDataFrame([(1, <span class="st">"Lyon"</span>), (2, <span class="st">"Oslo"</span>)], [<span class="st">"id"</span>, <span class="st">"city"</span>])
+b = spark.createDataFrame([(2, <span class="st">"Oslo"</span>), (3, <span class="st">"Rome"</span>)], [<span class="st">"id"</span>, <span class="st">"city"</span>])
+a.union(b).count()             <span class="cm"># 4: (2, Oslo) appears twice</span>
+<span class="al">a.union(b).distinct().count()  # 3: SQL UNION semantics</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Want SQL UNION?</b>Follow the union with <code>distinct()</code>, or with <code>dropDuplicates(["id"])</code> when only some columns define a duplicate.</p></div>
+      <div class="pill"><p><b>Same column count</b>Both sides must have the same number of columns, or Spark raises a NUM_COLUMNS_MISMATCH error.</p></div>
+    </div>` },
+
+  /* 2: by position versus by name, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The positional trap</div>
+    <h2 class="reveal" style="font-size:24px">union matches columns by position</h2>
+    <div class="art reveal">${A.position}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Both DataFrames have a name and a city column, but df2 was built with them in the other order. Tap to union them.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>union</code> ignores the headers: df2's first column goes under df1's first column. Oslo lands under <strong>name</strong>, Ben under <strong>city</strong>.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Both columns are strings, so the types line up and nothing fails. The data is simply wrong. When the types at a position cannot be reconciled, Spark raises INCOMPATIBLE_COLUMN_TYPE instead.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>unionByName</code> resolves columns <strong>by name</strong>, so Ben goes under name and Oslo under city. The result keeps df1's column order.</p>
+    </div>` },
+
+  /* 3: allowMissingColumns, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Different columns</div>
+    <h2 class="reveal" style="font-size:24px">allowMissingColumns fills the gaps with null</h2>
+    <div class="art reveal">${A.missing}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">df1 has a <strong>tier</strong> column df2 lacks; df2 has a <strong>src</strong> column df1 lacks. The signature is <code>unionByName(other, allowMissingColumns=False)</code>.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">With the default <code>False</code>, both sides must carry the same set of column names, so this call fails.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">With <code>allowMissingColumns=True</code> the result has every column from both sides. df1's row has no src, so it gets <strong>null</strong> there.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">It works in both directions: df2's row has no tier, so tier is null. df1's columns come first and df2's extra columns are added at the end.</p>
+    </div>` },
+
+  /* 4: union versus unionAll */
+  { html: `
+    <div class="eyebrow reveal">A naming trap</div>
+    <h2 class="reveal" style="font-size:26px">unionAll is just another name for union</h2>
+    <p class="lead reveal" style="margin-bottom:14px"><code>unionAll</code> is <strong>an alias of union</strong>, kept so older code keeps working. Same positional matching, same duplicates, same result.</p>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm"># these two lines return identical DataFrames</span>
+a.union(b)
+a.unionAll(b)
+<span class="al">a.union(b).distinct()   # the only way to drop repeats</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Where the trap comes from</b>In SQL, UNION removes duplicates and UNION ALL keeps them. In the DataFrame API there is no deduplicating union: <code>union</code> and <code>unionAll</code> both behave like UNION ALL.</p></div>
+      <div class="pill"><p><b>Exam reflex</b>"Switch to unionAll" never fixes duplicates, and "switch to union" never removes them. Only <code>distinct()</code> or <code>dropDuplicates()</code> does.</p></div>
+    </div>` },
+
+  /* 5: comparison table */
+  { html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:26px">Four ways to stack rows</h2>
+    <p class="lead reveal" style="margin-bottom:12px">Three questions decide which one a scenario needs: how columns match, whether repeats survive, and what happens to a column only one side has.</p>
+    <div class="reveal" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:7px 5px; color:var(--ink-faint); font-weight:600;"></td>
+          <td style="padding:7px 5px; color:var(--accent); font-weight:700;">Matches by</td>
+          <td style="padding:7px 5px; color:var(--accent); font-weight:700;">Duplicates</td>
+          <td style="padding:7px 5px; color:var(--accent); font-weight:700;">Missing column</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 5px; color:var(--ink); font-weight:600;"><code>union</code></td><td style="padding:7px 5px; color:var(--ink-soft);">Position</td><td style="padding:7px 5px; color:var(--ink-soft);">Kept (UNION ALL)</td><td style="padding:7px 5px; color:var(--ink-soft);">Error: same count required</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 5px; color:var(--ink); font-weight:600;"><code>unionAll</code></td><td style="padding:7px 5px; color:var(--ink-soft);">Position (alias)</td><td style="padding:7px 5px; color:var(--ink-soft);">Kept</td><td style="padding:7px 5px; color:var(--ink-soft);">Error: same count required</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 5px; color:var(--ink); font-weight:600;"><code>unionByName</code></td><td style="padding:7px 5px; color:var(--ink-soft);">Name</td><td style="padding:7px 5px; color:var(--ink-soft);">Kept</td><td style="padding:7px 5px; color:var(--ink-soft);">Error by default; null with <code>allowMissingColumns=True</code></td></tr>
+        <tr><td style="padding:7px 5px; color:var(--ink); font-weight:600;"><code>union</code> + <code>distinct()</code></td><td style="padding:7px 5px; color:var(--ink-soft);">Position</td><td style="padding:7px 5px; color:var(--ink-soft);">Removed (SQL UNION)</td><td style="padding:7px 5px; color:var(--ink-soft);">Error: same count required</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px">Rule of thumb: when two sources might list columns in a different order, reach for <strong>unionByName</strong>.</p>` },
+
+  /* 6: other set operations */
+  { html: `
+    <div class="eyebrow reveal">The rest of the family</div>
+    <h2 class="reveal" style="font-size:26px">intersect, subtract and their ALL forms</h2>
+    <p class="lead reveal" style="margin-bottom:14px">The other set operations follow SQL too, and the name tells you whether duplicates survive.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>intersect / intersectAll</b>Rows present in both DataFrames. <code>intersect</code> is SQL INTERSECT and removes duplicates; <code>intersectAll</code> is INTERSECT ALL and preserves them.</p></div>
+      <div class="pill"><p><b>subtract / exceptAll</b>Rows in this DataFrame but not in the other. <code>subtract</code> is SQL EXCEPT DISTINCT; <code>exceptAll</code> is EXCEPT ALL and preserves duplicates.</p></div>
+      <div class="pill"><p><b>Also positional</b>Like <code>union</code>, these resolve columns by position, not by name, so line the columns up first.</p></div>
+    </div>` },
+
+  /* 7: quiz, positional mismatch */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px"><code>east</code> has columns (customer_id, first_name, last_name); <code>west</code> has (customer_id, last_name, first_name). After <code>east.union(west)</code>, west's surnames appear under first_name. No error was raised. What fixes it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Use <code>east.unionAll(west)</code>, which matches columns by name</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Use <code>east.unionByName(west)</code>, which matches columns by name</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Add <code>.distinct()</code> after the union to drop the misaligned rows</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>union</code> resolves columns by position, and because both name columns are strings the mismatch passes silently. <code>unionByName</code> matches on column names, so each value lands under its own header. Option A is the tempting one, but <code>unionAll</code> is only an alias of <code>union</code>: same positional matching, same wrong result. Option C removes exact duplicate rows; it does nothing about values sitting in the wrong column.</div>` },
+
+  /* 8: quiz, duplicates from overlapping extracts */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">Monday's extract has 10,000 rows and Tuesday's has 8,000, with the same schema. Tuesday re-sent 500 of Monday's rows unchanged, and neither day has internal repeats. What does <code>mon.union(tue).count()</code> return?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>17,500: union drops the 500 repeated rows, as SQL UNION does</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>18,000, and switching to <code>unionAll</code> would bring it down to 17,500</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>18,000; add <code>.distinct()</code> (or <code>dropDuplicates</code> on the key columns) to get 17,500</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>union</code> is the equivalent of SQL UNION ALL: every row from both sides is kept, so the 500 repeats appear twice. Deduplication is a separate step, <code>distinct()</code> for whole-row duplicates or <code>dropDuplicates([...])</code> for a key. Option A is the classic distractor, borrowed from SQL, where UNION does deduplicate. Option B gets the alias backwards: <code>unionAll</code> returns exactly what <code>union</code> returns.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 22 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now stack DataFrames without losing rows or scrambling columns.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>union = UNION ALL</b>Rows from both sides, duplicates kept, columns matched by position. Same column count required. Add <code>distinct()</code> for SQL UNION.</p></div>
+      <div class="pill"><p><b>unionAll</b>An alias of union: identical behaviour, never a fix for duplicates or column order.</p></div>
+      <div class="pill"><p><b>unionByName</b>Matches by column name. <code>allowMissingColumns=True</code> fills a column missing on either side with null.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Dates and Timestamps · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-20-dates-and-timestamps.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060c0a;            /* page background */
+    --bg-tint: #0d2219;       /* ambient glow tint behind the card */
+    --accent: #6ee7b7;        /* mint: the Unit 3 DataFrame API accent */
+    --accent-glow: rgba(110,231,183,0.12);  /* correct-answer fill */
+    --accent-ink: #060c0a;    /* text on top of the accent key chip */
+    --cool: #7dd3fc;          /* contrast color: string results, formatting arrows */
+    --warm: #ff8a65;          /* trap color: epoch longs, milliseconds, mm, dayofweek */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Chapter 20 · Dates and Timestamps
+   Objective 3.4: manipulate and utilize the Date data type, such as Unix
+   epoch to date string, and extract date components.
+   Concept lesson: the four types (long epoch, string, date, timestamp) and
+   the function that moves between each pair; from_unixtime (STRING, default
+   yyyy-MM-dd HH:mm:ss) versus timestamp_seconds (TIMESTAMP) and the epoch
+   milliseconds trap (divide by 1000 or timestamp_millis); unix_timestamp
+   for the reverse; to_date and to_timestamp with datetime patterns (MM is
+   month, mm is minute); date_format; year, month, dayofmonth, dayofweek
+   (1 = Sunday to 7 = Saturday), dayofyear, hour, weekofyear (ISO 8601);
+   date_add, date_sub, datediff(end, start), months_between, add_months,
+   current_date and current_timestamp; the Spark 4.0 ANSI default (a parse
+   failure raises an error) and try_to_timestamp (NULL instead); the session
+   time zone in one line.
+   Sources: docs.databricks.com/aws/en/pyspark/reference/functions/
+   from_unixtime, timestamp_seconds, timestamp_millis, unix_timestamp,
+   to_date, to_timestamp, try_to_timestamp, date_format, dayofweek,
+   dayofyear, weekofyear, date_add, date_sub, datediff, months_between,
+   add_months; docs.databricks.com/aws/en/sql/language-manual/
+   sql-ref-datetime-pattern (pattern letters; E, F, q, Q are formatting
+   only) and sql-ref-ansi-compliance (ANSI on by default in Spark 4.0;
+   to_date, to_timestamp and unix_timestamp fail on unparseable input).
+   Every example value was also run on Apache Spark 4.0.1 (local PySpark,
+   session time zone UTC): 1710511200123 read as seconds gives
+   +56173-12-10; to_date('2024-03-15', 'yyyy-mm-dd') gives 2024-01-15;
+   try_to_timestamp needs its format as a Column (F.lit) in PySpark 4.0.
+   Cover animates (an epoch number ticks, becomes a timestamp, then splits
+   into year, month and day chips); step builds on card 2 (epoch
+   conversions), card 5 (component extraction) and card 6 (date arithmetic).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-21-joins.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c20r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(110,231,183,0.20)"/>
+        <stop offset="1" style="stop-color:rgba(110,231,183,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c20h { transform-box: view-box; transform-origin: 94px 35px; animation: c20spin 1.5s steps(12) infinite; }
+      @keyframes c20spin { to { transform: rotate(360deg); } }
+      .c20n1 { animation: c20n1 9s linear infinite; }
+      .c20n2 { opacity: 0; animation: c20n2 9s linear infinite; }
+      .c20n3 { opacity: 0; animation: c20n3 9s linear infinite; }
+      .c20n4 { animation: c20n4 9s linear infinite; }
+      @keyframes c20n1 { 0%, 6.9% { opacity: 1; } 7%, 95.9% { opacity: 0; } 96%, 100% { opacity: 1; } }
+      @keyframes c20n2 { 0%, 6.9% { opacity: 0; } 7%, 13.9% { opacity: 1; } 14%, 100% { opacity: 0; } }
+      @keyframes c20n3 { 0%, 13.9% { opacity: 0; } 14%, 20.9% { opacity: 1; } 21%, 100% { opacity: 0; } }
+      @keyframes c20n4 { 0%, 20.9% { opacity: 0; } 21%, 95.9% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c20a { animation: c20a 9s ease-in-out infinite; }
+      @keyframes c20a { 0%, 22% { opacity: 0; } 26%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c20k { animation: c20k 9s cubic-bezier(0.2,0.7,0.2,1) infinite; }
+      @keyframes c20k { 0%, 27% { opacity: 0; transform: translateY(-6px); } 33%, 92% { opacity: 1; transform: translateY(0px); } 96%, 100% { opacity: 0; transform: translateY(0px); } }
+      .c20f { animation: c20f 9s ease-in-out infinite; }
+      @keyframes c20f { 0%, 39% { opacity: 0; } 44%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c20c1 { animation: c20c1 9s cubic-bezier(0.2,0.7,0.2,1) infinite; }
+      .c20c2 { animation: c20c2 9s cubic-bezier(0.2,0.7,0.2,1) infinite; }
+      .c20c3 { animation: c20c3 9s cubic-bezier(0.2,0.7,0.2,1) infinite; }
+      @keyframes c20c1 { 0%, 46% { opacity: 0; transform: translateY(-8px); } 51%, 92% { opacity: 1; transform: translateY(0px); } 96%, 100% { opacity: 0; transform: translateY(0px); } }
+      @keyframes c20c2 { 0%, 52% { opacity: 0; transform: translateY(-8px); } 57%, 92% { opacity: 1; transform: translateY(0px); } 96%, 100% { opacity: 0; transform: translateY(0px); } }
+      @keyframes c20c3 { 0%, 58% { opacity: 0; transform: translateY(-8px); } 63%, 92% { opacity: 1; transform: translateY(0px); } 96%, 100% { opacity: 0; transform: translateY(0px); } }
+      @media (prefers-reduced-motion: reduce) {
+        .c20h, .c20a, .c20k, .c20f, .c20c1, .c20c2, .c20c3 { animation: none; opacity: 1; transform: none; }
+        .c20n1, .c20n2, .c20n3 { animation: none; opacity: 0; }
+        .c20n4 { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="82" fill="url(#c20r)"/>
+    <text x="160" y="10" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8" font-weight="700" letter-spacing="1.2">SECONDS SINCE 1970-01-01 UTC</text>
+    <rect x="70" y="16" width="180" height="38" rx="19" fill="var(--surface-2)" stroke="var(--line)"/>
+    <circle cx="94" cy="35" r="10" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+    <line class="c20h" x1="94" y1="35" x2="94" y2="28" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
+    <text class="c20n1" x="112" y="40" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="600">1710511197</text>
+    <text class="c20n2" x="112" y="40" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="600">1710511198</text>
+    <text class="c20n3" x="112" y="40" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="600">1710511199</text>
+    <text class="c20n4" x="112" y="40" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="600">1710511200</text>
+    <text x="238" y="39" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">long</text>
+    <g class="c20a">
+      <line x1="160" y1="58" x2="160" y2="73" stroke="var(--accent)" stroke-width="1.4"/>
+      <path d="M155 69 L160 75 L165 69" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="168" y="69" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">timestamp_seconds</text>
+    </g>
+    <g class="c20k">
+      <rect x="60" y="80" width="200" height="42" rx="10" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="72" y="87" width="26" height="28" rx="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1"/>
+      <rect x="72" y="87" width="26" height="8" rx="3" fill="var(--accent)"/>
+      <text x="85" y="111" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="11" font-weight="700">15</text>
+      <text x="108" y="100" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="11.5" font-weight="600">2024-03-15 14:00:00</text>
+      <text x="108" y="114" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" letter-spacing="1">TIMESTAMP, UTC SESSION</text>
+    </g>
+    <g class="c20f">
+      <path d="M130 124 L76 146 M160 124 L160 146 M190 124 L244 146" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 2"/>
+    </g>
+    <g class="c20c1">
+      <rect x="33" y="148" width="84" height="26" rx="13" fill="var(--accent)"/>
+      <text x="75" y="165" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">year 2024</text>
+    </g>
+    <g class="c20c2">
+      <rect x="118" y="148" width="84" height="26" rx="13" fill="var(--accent)"/>
+      <text x="160" y="165" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">month 3</text>
+    </g>
+    <g class="c20c3">
+      <rect x="203" y="148" width="84" height="26" rx="13" fill="var(--accent)"/>
+      <text x="245" y="165" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">dayofmonth 15</text>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">A count of seconds becomes a timestamp, then its parts.</text>
+  </svg>`,
+
+  typemap: `<svg viewBox="0 0 320 200">
+    <rect x="8" y="84" width="84" height="34" rx="8" fill="rgba(255,138,101,0.10)" stroke="var(--warm)" stroke-width="1.2"/>
+    <text x="50" y="99" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">LONG</text>
+    <text x="50" y="111" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">epoch seconds</text>
+    <rect x="118" y="10" width="84" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="160" y="25" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">TIMESTAMP</text>
+    <text x="160" y="37" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">date and time</text>
+    <rect x="118" y="156" width="84" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="160" y="171" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">DATE</text>
+    <text x="160" y="183" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">day only</text>
+    <rect x="228" y="84" width="84" height="34" rx="8" fill="rgba(125,211,252,0.10)" stroke="var(--cool)" stroke-width="1.2"/>
+    <text x="270" y="99" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">STRING</text>
+    <text x="270" y="111" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">text you can read</text>
+    <path d="M66 80 L112 36" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+    <path d="M107 36 L114 34 L112 41" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="88" y="54" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">timestamp_seconds</text>
+    <path d="M124 48 L84 81" fill="none" stroke="var(--warm)" stroke-width="1.3"/>
+    <path d="M88 81 L81 83 L83 76" fill="none" stroke="var(--warm)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="94" y="81" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">unix_timestamp</text>
+    <path d="M254 80 L208 36" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+    <path d="M213 36 L206 34 L208 41" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="232" y="54" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">to_timestamp</text>
+    <path d="M196 48 L236 81" fill="none" stroke="var(--cool)" stroke-width="1.3"/>
+    <path d="M232 76 L239 83 L232 81" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="214" y="66" text-anchor="end" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">date_format</text>
+    <path d="M254 122 L208 166" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+    <path d="M213 164 L206 166 L208 159" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="232" y="154" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">to_date</text>
+    <path d="M196 152 L236 121" fill="none" stroke="var(--cool)" stroke-width="1.3"/>
+    <path d="M232 119 L239 118 L237 125" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="215" y="134" text-anchor="end" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">date_format</text>
+    <path d="M94 101 L224 101" fill="none" stroke="var(--cool)" stroke-width="1.3"/>
+    <path d="M219 97 L225 101 L219 105" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="126" y="96" text-anchor="middle" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">from_unixtime</text>
+    <path d="M160 46 L160 152" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="3 2"/>
+    <path d="M156 147 L160 153 L164 147" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="154" y="134" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700" stroke="var(--surface)" stroke-width="3" paint-order="stroke">to_date</text>
+  </svg>`,
+
+  epoch: `<svg viewBox="0 0 320 200">
+    <rect x="10" y="8" width="300" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+    <text x="22" y="27" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="11" font-weight="600">event_s = 1710511200</text>
+    <text x="298" y="27" text-anchor="end" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">long, in seconds</text>
+    <g data-step="1">
+      <text x="12" y="68" fill="var(--cool)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">F.from_unixtime(c)</text>
+      <path d="M128 65 L146 65" fill="none" stroke="var(--cool)" stroke-width="1.3"/>
+      <path d="M141 61 L147 65 L141 69" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="152" y="48" width="158" height="34" rx="8" fill="rgba(125,211,252,0.10)" stroke="var(--cool)" stroke-width="1.2"/>
+      <text x="162" y="63" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9.5" font-weight="600">'2024-03-15 14:00:00'</text>
+      <text x="162" y="76" fill="var(--cool)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" letter-spacing="1">STRING</text>
+    </g>
+    <g data-step="2">
+      <text x="12" y="112" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">F.timestamp_seconds(c)</text>
+      <path d="M128 109 L146 109" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+      <path d="M141 105 L147 109 L141 113" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="152" y="92" width="158" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="162" y="107" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9.5" font-weight="600">2024-03-15 14:00:00</text>
+      <text x="162" y="120" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" letter-spacing="1">TIMESTAMP</text>
+    </g>
+    <g data-step="3">
+      <path d="M10 136 L310 136" fill="none" stroke="var(--line)" stroke-width="1"/>
+      <text x="12" y="152" fill="var(--warm)" font-family="ui-monospace, Menlo, monospace" font-size="9" font-weight="600">event_ms = 1710511200123</text>
+      <text x="308" y="152" text-anchor="end" fill="var(--warm)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">as seconds: year +56173</text>
+      <rect x="10" y="160" width="300" height="32" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="20" y="180" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8" font-weight="600">F.timestamp_millis(ms)</text>
+      <text x="141" y="180" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">or</text>
+      <text x="300" y="180" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8" font-weight="600">F.timestamp_seconds(ms / 1000)</text>
+    </g>
+  </svg>`,
+
+  parts: `<svg viewBox="0 0 320 186">
+    <rect x="60" y="6" width="200" height="26" rx="13" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="160" y="23" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="11" font-weight="600">t = 2024-03-15 09:41:07</text>
+    <g data-step="1">
+      <rect x="12" y="44" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="58" y="57" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">year(t)</text>
+      <text x="58" y="72" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">2024</text>
+      <rect x="114" y="44" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="160" y="57" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">month(t)</text>
+      <text x="160" y="72" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">3</text>
+      <rect x="216" y="44" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="262" y="57" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">dayofmonth(t)</text>
+      <text x="262" y="72" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">15</text>
+    </g>
+    <g data-step="2">
+      <rect x="12" y="90" width="92" height="34" rx="8" fill="rgba(255,138,101,0.10)" stroke="var(--warm)" stroke-width="1"/>
+      <text x="58" y="103" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">dayofweek(t)</text>
+      <text x="58" y="118" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="12" font-weight="700">6</text>
+      <rect x="114" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="142" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="170" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="198" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="226" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <rect x="254" y="90" width="26" height="34" rx="5" fill="var(--warm)"/>
+      <rect x="282" y="90" width="26" height="34" rx="5" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="127" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">1</text>
+      <text x="155" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">2</text>
+      <text x="183" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">3</text>
+      <text x="211" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">4</text>
+      <text x="239" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">5</text>
+      <text x="267" y="104" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">6</text>
+      <text x="295" y="104" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">7</text>
+      <text x="127" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Sun</text>
+      <text x="155" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Mon</text>
+      <text x="183" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Tue</text>
+      <text x="211" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Wed</text>
+      <text x="239" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Thu</text>
+      <text x="267" y="118" text-anchor="middle" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">Fri</text>
+      <text x="295" y="118" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">Sat</text>
+    </g>
+    <g data-step="3">
+      <rect x="12" y="136" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="58" y="149" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">dayofyear(t)</text>
+      <text x="58" y="164" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">75</text>
+      <rect x="114" y="136" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="160" y="149" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">weekofyear(t)</text>
+      <text x="160" y="164" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">11</text>
+      <rect x="216" y="136" width="92" height="34" rx="8" fill="rgba(110,231,183,0.10)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="262" y="149" text-anchor="middle" fill="var(--ink-faint)" font-family="ui-monospace, Menlo, monospace" font-size="8">hour(t)</text>
+      <text x="262" y="164" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="12" font-weight="700">9</text>
+      <text x="160" y="183" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">every one returns an integer</text>
+    </g>
+  </svg>`,
+
+  arith: `<svg viewBox="0 22 320 168">
+    <path d="M24 80 L304 80" fill="none" stroke="var(--line)" stroke-width="1.6"/>
+    <circle cx="40" cy="80" r="5" fill="var(--accent)"/>
+    <circle cx="280" cy="80" r="5" fill="var(--accent)"/>
+    <text x="30" y="98" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9" font-weight="600">a 2024-01-31</text>
+    <text x="304" y="98" text-anchor="end" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="9" font-weight="600">b 2024-03-15</text>
+    <g data-step="1">
+      <path d="M42 74 Q122 26 203 74" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+      <path d="M196 72 L204 76 L202 67" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="112" y="42" text-anchor="middle" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">date_add(a, 30)</text>
+      <path d="M278 74 Q238 40 198 74" fill="none" stroke="var(--cool)" stroke-width="1.3"/>
+      <path d="M199 66 L197 75 L205 72" fill="none" stroke="var(--cool)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="262" y="44" text-anchor="middle" fill="var(--cool)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">date_sub(b, 15)</text>
+      <circle cx="198" cy="80" r="3.5" fill="var(--cool)"/>
+      <circle cx="204" cy="80" r="3.5" fill="var(--accent)"/>
+      <text x="195" y="112" text-anchor="end" fill="var(--cool)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">02-29</text>
+      <text x="207" y="112" fill="var(--accent)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">03-01</text>
+    </g>
+    <g data-step="2">
+      <path d="M40 122 L40 128 L280 128 L280 122" fill="none" stroke="var(--warm)" stroke-width="1.3"/>
+      <text x="160" y="142" text-anchor="middle" fill="var(--warm)" font-family="ui-monospace, Menlo, monospace" font-size="9" font-weight="600">datediff(b, a) = 44</text>
+      <text x="160" y="154" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">end first; datediff(a, b) = -44</text>
+    </g>
+    <g data-step="3">
+      <text x="160" y="170" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">months_between(b, a) = 1.48387097</text>
+      <text x="160" y="184" text-anchor="middle" fill="var(--ink)" font-family="ui-monospace, Menlo, monospace" font-size="8.5" font-weight="600">add_months(a, 1) = 2024-02-29</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Chapter 20</div>
+    <h1 class="reveal">Dates and timestamps</h1>
+    <p class="lead reveal">Event data arrives as epoch numbers and date strings. Apache Spark has a built-in function for every move between a number, a string, a date and a timestamp, and the exam tests which one returns which type, plus two classic traps.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the type map */
+  { html: `
+    <div class="eyebrow reveal">The map</div>
+    <h2 class="reveal" style="font-size:26px">Four types, one function per move</h2>
+    <div class="art reveal">${A.typemap}</div>
+    <p class="lead reveal" style="font-size:14.5px">All of these live in <code>pyspark.sql.functions</code> (imported as <code>F</code>). Arrows into <strong>STRING</strong> format for people; arrows into <strong>DATE</strong> and <strong>TIMESTAMP</strong> give Spark a real type it can compare, sort and do arithmetic on. <code>unix_timestamp</code> goes back to epoch seconds.</p>` },
+
+  /* 2: epoch conversions, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Unix epoch</div>
+    <h2 class="reveal" style="font-size:24px">Same number, two result types</h2>
+    <div class="art reveal">${A.epoch}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">One column of epoch seconds (seconds since 1970-01-01 00:00:00 UTC). Tap to convert it two ways, then meet the milliseconds trap.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>from_unixtime(col, format)</code> returns a <strong>STRING</strong>. With no format it uses <code>yyyy-MM-dd HH:mm:ss</code>, shown in the session time zone (UTC here).</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>timestamp_seconds(col)</code> returns a real <strong>TIMESTAMP</strong>, so date functions, filters and sorting work on it without parsing text back.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Epoch <strong>milliseconds</strong> read as seconds land in the year 56173. Divide by 1000 first, or call <code>timestamp_millis(col)</code>.</p>
+    </div>` },
+
+  /* 3: parsing with patterns */
+  { html: `
+    <div class="eyebrow reveal">Parsing strings</div>
+    <h2 class="reveal" style="font-size:25px">to_date and to_timestamp read a pattern</h2>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm"># d = '15/03/2024', t = '2024-03-15 09:41:07'</span>
+F.to_date(<span class="st">"d"</span>, <span class="st">"dd/MM/yyyy"</span>)      <span class="cm"># DATE 2024-03-15</span>
+F.to_timestamp(<span class="st">"t"</span>, <span class="st">"yyyy-MM-dd HH:mm:ss"</span>)
+F.to_date(<span class="st">"t"</span>)   <span class="cm"># no format: same as cast("date")</span></div>
+    <div class="reveal" style="overflow-x:auto; margin-top:12px;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--ink-faint); font-weight:600;">Letters</td><td style="padding:6px; color:var(--ink-faint); font-weight:600;">Means</td><td style="padding:6px; color:var(--ink-faint); font-weight:600;">From t</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--ink); font-family:ui-monospace,Menlo,monospace;">yyyy</td><td style="padding:6px; color:var(--ink-soft);">year</td><td style="padding:6px; color:var(--ink);">2024</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--accent); font-weight:700; font-family:ui-monospace,Menlo,monospace;">MM</td><td style="padding:6px; color:var(--accent); font-weight:700;">month-of-year (capital M)</td><td style="padding:6px; color:var(--ink);">03</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--ink); font-family:ui-monospace,Menlo,monospace;">dd</td><td style="padding:6px; color:var(--ink-soft);">day-of-month</td><td style="padding:6px; color:var(--ink);">15</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--ink); font-family:ui-monospace,Menlo,monospace;">HH</td><td style="padding:6px; color:var(--ink-soft);">hour-of-day, 0 to 23</td><td style="padding:6px; color:var(--ink);">09</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:6px; color:var(--warm); font-weight:700; font-family:ui-monospace,Menlo,monospace;">mm</td><td style="padding:6px; color:var(--warm); font-weight:700;">minute-of-hour (small m)</td><td style="padding:6px; color:var(--ink);">41</td></tr>
+        <tr><td style="padding:6px; color:var(--ink); font-family:ui-monospace,Menlo,monospace;">ss</td><td style="padding:6px; color:var(--ink-soft);">second-of-minute</td><td style="padding:6px; color:var(--ink);">07</td></tr>
+      </table>
+    </div>` },
+
+  /* 4: date_format and unix_timestamp */
+  { html: `
+    <div class="eyebrow reveal">Formatting</div>
+    <h2 class="reveal" style="font-size:25px">date_format turns a date into text</h2>
+    <div class="codeblock reveal" style="white-space:pre">ts = F.to_timestamp(<span class="st">"t"</span>)   <span class="cm"># 2024-03-15 09:41:07</span>
+F.date_format(ts, <span class="st">"dd MMM yyyy"</span>)   <span class="cm"># '15 Mar 2024'</span>
+F.date_format(ts, <span class="st">"yyyy-MM"</span>)       <span class="cm"># '2024-03'</span>
+F.date_format(ts, <span class="st">"EEEE"</span>)          <span class="cm"># 'Friday'</span>
+<span class="al">F.unix_timestamp(ts)</span>               <span class="cm"># 1710495667</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>The result is always a STRING</b><code>date_format(col, fmt)</code> accepts a date, a timestamp or a date string and returns text. Good for display and for keys like <code>'2024-03'</code>; keep the real type for comparisons.</p></div>
+      <div class="pill"><p><b>Format-only letters</b><code>E</code> (day name), <code>F</code>, <code>q</code> and <code>Q</code> (quarter) work for formatting but are not allowed when parsing.</p></div>
+      <div class="pill"><p><b>The way back</b><code>unix_timestamp(col, fmt)</code> returns epoch seconds as a long (default format <code>yyyy-MM-dd HH:mm:ss</code>); with no argument it returns the current time.</p></div>
+    </div>` },
+
+  /* 5: component extraction, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Extracting parts</div>
+    <h2 class="reveal" style="font-size:24px">One function per component</h2>
+    <div class="art reveal">${A.parts}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">One timestamp. Each extraction function returns one part of it. Tap to pull them out.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>year</code>, <code>month</code> and <code>dayofmonth</code> return 2024, 3 and 15 as integers: month is 3, not <code>'03'</code> and not <code>'March'</code> (that is <code>date_format</code>'s job).</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>dayofweek</code> counts from Sunday: <strong>1 = Sunday through 7 = Saturday</strong>, so a Friday returns 6.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>dayofyear</code> is 75 (31 + 29 + 15 in a leap year). <code>weekofyear</code> follows ISO 8601, with weeks starting on Monday. <code>hour</code> reads 0 to 23.</p>
+    </div>` },
+
+  /* 6: date arithmetic, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Date arithmetic</div>
+    <h2 class="reveal" style="font-size:24px">Adding days, counting gaps</h2>
+    <div class="art reveal">${A.arith}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Two dates. For "today", <code>current_date()</code> returns a DATE and <code>current_timestamp()</code> a TIMESTAMP. Tap to move between a and b.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>date_add(a, 30)</code> gives 2024-03-01 and <code>date_sub(b, 15)</code> gives 2024-02-29. Both return a DATE; a negative count moves the other way.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>datediff(end, start)</code> counts days, <strong>end first</strong>: <code>datediff(b, a)</code> is 44. Swap the arguments and the answer is -44.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><code>months_between</code> is positive when the first date is later and fractional unless the days of month line up. <code>add_months(a, 1)</code> lands on February's last day.</p>
+    </div>` },
+
+  /* 7: ANSI default and time zone */
+  { html: `
+    <div class="eyebrow reveal">Spark 4.0 behavior</div>
+    <h2 class="reveal" style="font-size:24px">A string that does not parse now fails the job</h2>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm"># d = '15/03/2024', pattern says yyyy-MM-dd</span>
+df.select(F.to_date(<span class="st">"d"</span>, <span class="st">"yyyy-MM-dd"</span>)).show()
+<span class="cm"># error CANNOT_PARSE_TIMESTAMP: the action fails</span>
+fmt = F.lit(<span class="st">"yyyy-MM-dd"</span>)
+<span class="al">df.select(F.try_to_timestamp("d", fmt)).show()</span>  <span class="cm"># NULL</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Why</b><code>spark.sql.ansi.enabled</code> is true by default in Spark 4.0, so <code>to_date</code>, <code>to_timestamp</code> and <code>unix_timestamp</code> raise an error on input they cannot parse. With it set to false they return NULL instead.</p></div>
+      <div class="pill"><p><b>try_to_timestamp</b>Returns NULL on invalid input with ANSI mode on or off. In PySpark 4.0 pass the pattern as <code>F.lit(...)</code>; wrap the result in <code>to_date</code> for a DATE.</p></div>
+      <div class="pill"><p><b>Session time zone</b><code>spark.sql.session.timeZone</code> sets how timestamps render: epoch 1710511200 shows 14:00:00 in UTC and 10:00:00 in America/New_York.</p></div>
+    </div>` },
+
+  /* 8: quiz, epoch milliseconds */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A column <code>event_ms</code> holds values like 1710511200123. The code <code>F.to_date(F.from_unixtime("event_ms"))</code> produces dates such as +56173-12-10. What fixes it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Set spark.sql.session.timeZone to UTC before converting</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>Convert milliseconds first: <code>F.from_unixtime(F.col("event_ms") / 1000)</code> or <code>F.timestamp_millis("event_ms")</code></button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Replace from_unixtime with <code>F.unix_timestamp("event_ms")</code></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> from_unixtime and timestamp_seconds expect seconds since the epoch; a 13-digit millisecond value is a thousand times too large, which pushes the date about 54,000 years ahead. Dividing by 1000, or using timestamp_millis, fixes the unit. The time zone (A) is the tempting distractor, but a zone only shifts the result by hours, never by millennia. unix_timestamp (C) goes the other direction: it turns a date or string into epoch seconds.</div>` },
+
+  /* 9: quiz, mm versus MM */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">Order dates arrive as strings like '2024-03-15'. A job parses them with <code>F.to_date("order_dt", "yyyy-mm-dd")</code>. It runs without error, but '2024-03-15' becomes 2024-01-15 and every order lands in January. Why?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>The session time zone shifted every date back to the start of the year</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>to_date ignores the pattern whenever the string is already ISO formatted</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>Small mm is minute-of-hour, so 03 is read as minutes and the month defaults to 1; the pattern needs MM</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> In datetime patterns MM is month-of-year and mm is minute-of-hour. The string matches yyyy-mm-dd shape for shape, so nothing fails: the 03 becomes 3 minutes, no month is parsed, and January fills the gap. A time zone (A) moves a timestamp by hours, not a date by two months. B is wrong because the pattern is always applied; only to_date with no format falls back to cast rules.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 20 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">You can now move a value between epoch, string, date and timestamp, and say which type comes back.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Epoch</b>from_unixtime returns a STRING (yyyy-MM-dd HH:mm:ss), timestamp_seconds a TIMESTAMP. Milliseconds: divide by 1000 or use timestamp_millis. unix_timestamp goes back.</p></div>
+      <div class="pill"><p><b>Parse and format</b>to_date and to_timestamp read a pattern in; date_format writes a string out. MM is month, mm is minute.</p></div>
+      <div class="pill"><p><b>Parts and gaps</b>dayofweek runs 1 = Sunday to 7 = Saturday. datediff(end, start) counts days, end first.</p></div>
+      <div class="pill"><p><b>Spark 4.0 ANSI</b>An unparseable string raises an error; try_to_timestamp returns NULL instead.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
