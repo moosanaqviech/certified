@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Writing: partitionBy and Overwrite · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-11-writing-partitionby-and-overwrite.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #070b10;            /* page background */
+    --bg-tint: #0f1f2e;       /* ambient glow tint behind the card */
+    --accent: #7dd3fc;        /* sky: the Unit 2 files, tables and SQL accent */
+    --accent-glow: rgba(125,211,252,0.12);  /* correct-answer fill */
+    --accent-ink: #070b10;    /* text on top of the accent key chip */
+    --warm: #ff6f1f;          /* contrast color: the FR folder, the cardinality warning */
+    --leaf: #a3e635;          /* third key color: the US folder */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 11 · Writing: partitionBy and Overwrite
+   Objective 2.1, write side: write Spark DataFrames using Spark SQL,
+   including overwriting existing data and partitioning the output by a
+   column. Mirrors official sample question 1 (the line that writes df to
+   Parquet partitioned by country and overwrites the path:
+   df.write.mode("overwrite").partitionBy("country").parquet("/data/output");
+   the distractors use mode("append"), omit the mode so the default
+   errorifexists fails on an existing path, or omit partitionBy).
+   Concept lesson with a worked example: the DataFrameWriter pattern and its
+   shortcut methods, the sample line assembled piece by piece, the Hive-style
+   directory layout partitionBy produces (country=DE/ ...), partition
+   elimination on later filtered reads, when partitioning hurts (high
+   cardinality, small files; Liquid Clustering named once as the Delta
+   recommendation), JDBC writes. Save-mode semantics in depth are Chapter 13;
+   the four mode strings are named once here.
+   Sources: docs.databricks.com/aws/en/pyspark/reference/classes/
+   dataframewriter/ (method list), .../dataframewriter/partitionBy (Hive-style
+   layout, name=Alice/ example, read of one subfolder), .../mode (the four
+   strings; 'error' equals 'errorifexists'), .../parquet and .../save
+   (signatures; errorifexists is the default), .../csv, .../format, .../jdbc
+   (jdbc(url, table, mode=None, properties=None); too many parallel
+   partitions can crash the database); docs.databricks.com/aws/en/query/
+   formats/parquet (format("parquet").mode("overwrite").save, partitionBy
+   ("year", "month"), Delta Lake recommended); docs.databricks.com/aws/en/
+   connect/external-systems/jdbc (format("jdbc") with url, dbtable, user,
+   password; default errors if the table exists; append and overwrite;
+   repartition before writing, too many simultaneous queries overwhelm the
+   service); docs.databricks.com/aws/en/tables/external-partition-discovery
+   (key=value directories such as year=2021/month=01/ for Parquet, ORC, CSV
+   and JSON); docs.databricks.com/aws/en/tables/partitions (low or known
+   cardinality fields only, not timestamps; small-file issues of static
+   partitioning; Liquid Clustering recommended for managed tables; Hive-style
+   layout is not part of the Delta protocol); databricks.com/discover/pages/
+   optimize-data-workloads-guide (partition elimination reads only the
+   filtered partition's folder; low-cardinality partition columns; at least
+   1 GB per partition; do not partition tables under 1 TB).
+   Cover animates (mixed rows drop into country= folders); step builds on
+   card 2 (the sample line assembled) and card 3 (the directory layout).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-12-querying-files-directly-with-sql.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c11r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(125,211,252,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(125,211,252,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c11c { animation: c11drop 7s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c11c.t2 { animation-delay: 0.3s; } .c11c.t3 { animation-delay: 0.6s; }
+      @keyframes c11drop {
+        0%, 20% { transform: translate(0px, 0px); opacity: 1; }
+        56%, 86% { transform: translate(var(--dx), 100px); opacity: 1; }
+        91% { transform: translate(var(--dx), 100px); opacity: 0; }
+        93% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c11f { animation: c11lit 7s ease-in-out infinite; }
+      @keyframes c11lit { 0%, 40% { opacity: 0.25; } 60%, 86% { opacity: 1; } 92%, 100% { opacity: 0.25; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c11c { animation: none; transform: translate(var(--dx), 100px); }
+        .c11f { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="150" ry="80" fill="url(#c11r)"/>
+    <text x="160" y="16" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1.5">DATAFRAME ROWS, COUNTRIES MIXED</text>
+    <rect x="22" y="30" width="276" height="32" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="112" y="80" width="96" height="20" rx="10" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="160" y="93" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">partitionBy("country")</text>
+    <path d="M70 62 L70 122 M160 62 L160 122 M250 62 L250 122" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/>
+    <path d="M30 128 L30 124 Q30 122 32 122 L54 122 L60 128 L108 128 Q110 128 110 130 L110 170 Q110 172 108 172 L32 172 Q30 172 30 170 Z" fill="var(--surface-2)" stroke="var(--line)"/>
+    <path d="M120 128 L120 124 Q120 122 122 122 L144 122 L150 128 L198 128 Q200 128 200 130 L200 170 Q200 172 198 172 L122 172 Q120 172 120 170 Z" fill="var(--surface-2)" stroke="var(--line)"/>
+    <path d="M210 128 L210 124 Q210 122 212 122 L234 122 L240 128 L288 128 Q290 128 290 130 L290 170 Q290 172 288 172 L212 172 Q210 172 210 170 Z" fill="var(--surface-2)" stroke="var(--line)"/>
+    <g class="c11f">
+      <rect x="30" y="122" width="80" height="50" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="120" y="122" width="80" height="50" rx="4" fill="none" stroke="var(--warm)" stroke-width="1.2"/>
+      <rect x="210" y="122" width="80" height="50" rx="4" fill="none" stroke="var(--leaf)" stroke-width="1.2"/>
+    </g>
+    <text x="70" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8" font-weight="600">country=DE/</text>
+    <text x="160" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8" font-weight="600">country=FR/</text>
+    <text x="250" y="136" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8" font-weight="600">country=US/</text>
+    <g class="c11c" style="--dx:6px"><rect x="27" y="39" width="26" height="14" rx="4" fill="var(--accent)"/><text x="40" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">DE</text></g>
+    <g class="c11c t2" style="--dx:66px"><rect x="57" y="39" width="26" height="14" rx="4" fill="var(--warm)"/><text x="70" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">FR</text></g>
+    <g class="c11c t3" style="--dx:126px"><rect x="87" y="39" width="26" height="14" rx="4" fill="var(--leaf)"/><text x="100" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">US</text></g>
+    <g class="c11c t2" style="--dx:120px"><rect x="117" y="39" width="26" height="14" rx="4" fill="var(--leaf)"/><text x="130" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">US</text></g>
+    <g class="c11c" style="--dx:-90px"><rect x="147" y="39" width="26" height="14" rx="4" fill="var(--accent)"/><text x="160" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">DE</text></g>
+    <g class="c11c t3" style="--dx:-30px"><rect x="177" y="39" width="26" height="14" rx="4" fill="var(--warm)"/><text x="190" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">FR</text></g>
+    <g class="c11c" style="--dx:-36px"><rect x="207" y="39" width="26" height="14" rx="4" fill="var(--warm)"/><text x="220" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">FR</text></g>
+    <g class="c11c t3" style="--dx:24px"><rect x="237" y="39" width="26" height="14" rx="4" fill="var(--leaf)"/><text x="250" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">US</text></g>
+    <g class="c11c t2" style="--dx:-186px"><rect x="267" y="39" width="26" height="14" rx="4" fill="var(--accent)"/><text x="280" y="49" text-anchor="middle" fill="var(--bg)" font-family="Hanken Grotesk" font-size="8" font-weight="700">DE</text></g>
+    <text x="160" y="192" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">partitionBy writes each value's rows into its own folder.</text>
+  </svg>`,
+
+  layout: `<svg viewBox="0 0 320 200">
+    <path d="M14 20 L14 14 Q14 12 16 12 L26 12 L30 16 L46 16 Q48 16 48 18 L48 30 Q48 32 46 32 L16 32 Q14 32 14 30 Z" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="56" y="27" fill="var(--ink)" font-family="Hanken Grotesk" font-size="10" font-weight="700">/data/output/</text>
+    <text x="56" y="40" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">the path passed to .parquet(...)</text>
+    <g data-step="1">
+      <path d="M30 34 L30 134 M30 62 L48 62 M30 98 L48 98 M30 134 L48 134" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+      <rect x="52" y="52" width="92" height="20" rx="5" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="98" y="65" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=DE/</text>
+      <rect x="52" y="88" width="92" height="20" rx="5" fill="rgba(255,111,31,0.10)" stroke="var(--warm)" stroke-width="1.1"/>
+      <text x="98" y="101" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=FR/</text>
+      <rect x="52" y="124" width="92" height="20" rx="5" fill="rgba(163,230,53,0.10)" stroke="var(--leaf)" stroke-width="1.1"/>
+      <text x="98" y="137" text-anchor="middle" fill="var(--leaf)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=US/</text>
+      <text x="98" y="158" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">one folder per distinct value</text>
+    </g>
+    <g data-step="2">
+      <path d="M146 62 L166 62" fill="none" stroke="var(--accent)" stroke-width="1.1" stroke-dasharray="3 2"/>
+      <rect x="168" y="46" width="140" height="56" rx="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="176" y="58" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" letter-spacing="1">INSIDE country=DE/</text>
+      <text x="176" y="72" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">part-00000-...snappy.parquet</text>
+      <text x="176" y="84" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">part-00001-...snappy.parquet</text>
+      <text x="176" y="96" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">only DE rows, no country column inside</text>
+    </g>
+    <g data-step="3">
+      <rect x="14" y="168" width="292" height="26" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="22" y="179" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700" letter-spacing="1">TWO COLUMNS: partitionBy("country", "year")</text>
+      <text x="22" y="190" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8.5">/data/output/country=US/year=2025/part-00000-...parquet</text>
+    </g>
+  </svg>`,
+
+  prune: `<svg viewBox="0 0 320 120">
+    <rect x="86" y="8" width="148" height="20" rx="10" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="160" y="21" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">.filter(col("country") == "DE")</text>
+    <path d="M160 28 L160 44 M160 44 L70 44 L70 56 M160 44 L160 56 M160 44 L250 44 L250 56" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+    <rect x="30" y="58" width="80" height="40" rx="6" fill="rgba(125,211,252,0.14)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="70" y="75" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=DE/</text>
+    <text x="70" y="89" text-anchor="middle" fill="var(--ink)" font-family="Hanken Grotesk" font-size="8">read</text>
+    <rect x="120" y="58" width="80" height="40" rx="6" fill="var(--surface-2)" stroke="var(--line)" opacity="0.6"/>
+    <text x="160" y="75" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=FR/</text>
+    <text x="160" y="89" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">skipped</text>
+    <rect x="210" y="58" width="80" height="40" rx="6" fill="var(--surface-2)" stroke="var(--line)" opacity="0.6"/>
+    <text x="250" y="75" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700">country=US/</text>
+    <text x="250" y="89" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">skipped</text>
+    <text x="160" y="114" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">One folder opened out of three: a third of the files scanned.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 11</div>
+    <h1 class="reveal">Writing: partitionBy and overwrite</h1>
+    <p class="lead reveal">Reading was Chapter 10. Writing is the mirror image, with two decisions the exam asks about directly: what happens if the path already holds data, and how the output is laid out on disk. One line of code carries both.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the writer pattern */
+  { html: `
+    <div class="eyebrow reveal">The pattern</div>
+    <h2 class="reveal" style="font-size:26px">df.write is a DataFrameWriter</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Apache Spark writes through a builder, exactly like it reads. <code>df.write</code> returns a <strong>DataFrameWriter</strong>; each call configures it and returns it again, and <code>save(path)</code> is the action that runs the job.</p>
+    <div class="codeblock reveal">(df.write
+   .format(<span class="st">"parquet"</span>)        <span class="cm"># or csv, json, orc, text, delta</span>
+   .mode(<span class="st">"overwrite"</span>)        <span class="cm"># default: errorifexists</span>
+   .option(<span class="st">"compression"</span>, <span class="st">"snappy"</span>)
+   .save(<span class="st">"/data/output"</span>))
+df.write.parquet(<span class="st">"/data/output"</span>, mode=<span class="st">"overwrite"</span>)  <span class="cm"># shortcut</span></div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Shortcut methods</b><code>parquet()</code>, <code>csv()</code>, <code>json()</code>, <code>orc()</code>, <code>text()</code> and <code>jdbc()</code> set the format and save in one call. Delta Lake has no shortcut: <code>format("delta")</code>.</p></div>
+      <div class="pill"><p><b>Four mode strings</b><code>"append"</code>, <code>"overwrite"</code>, <code>"ignore"</code>, <code>"errorifexists"</code> (the default; <code>"error"</code> is the same mode). What each does to existing data is Chapter 13.</p></div>
+    </div>` },
+
+  /* 2: the sample line, assembled, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Worked example</div>
+    <h2 class="reveal" style="font-size:24px">Write df to Parquet, partitioned by country, replacing what is there</h2>
+    <div class="codeblock reveal" style="line-height:2">
+      <div>df.write</div>
+      <div data-step="1" style="padding-left:22px"><span class="al">.mode(<span class="st">"overwrite"</span>)</span></div>
+      <div data-step="2" style="padding-left:22px"><span class="al">.partitionBy(<span class="st">"country"</span>)</span></div>
+      <div data-step="3" style="padding-left:22px"><span class="al">.parquet(<span class="st">"/data/output"</span>)</span></div>
+    </div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px;margin-top:14px"><code>df.write</code> alone does nothing: it only hands back a writer. Tap to add each piece and see what breaks without it.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px;margin-top:14px"><strong>Without it:</strong> the default mode is <code>errorifexists</code>, so a second run against a path that already holds data fails with an error. <code>mode("append")</code> would run, but it adds the new rows next to the old ones instead of replacing them.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px;margin-top:14px"><strong>Without it:</strong> the write still succeeds, but every file lands directly in <code>/data/output/</code> with countries mixed. The question asked for output partitioned by <code>country</code>, so this line is wrong even though it runs.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px;margin-top:14px"><strong>Without it:</strong> nothing is written. <code>parquet(path)</code> is the action; it is the same as <code>.format("parquet").save(path)</code>. Order of <code>mode</code> and <code>partitionBy</code> does not matter, only that both precede the action.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px;margin-top:14px"><strong>Complete.</strong> This is the answer to official sample question 1. Read every exam option left to right and check three things: is the mode <code>overwrite</code>, is <code>partitionBy</code> present, does the line end in an action.</p>
+    </div>` },
+
+  /* 3: directory layout, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">On disk</div>
+    <h2 class="reveal" style="font-size:24px">What partitionBy leaves on the file system</h2>
+    <div class="art reveal">${A.layout}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">The path is a directory, never a single file. Tap to see how <code>partitionBy("country")</code> arranges it.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Hive-style folders.</strong> One subdirectory per distinct value, named <code>column=value</code>. Spark uses this layout for Parquet, ORC, CSV and JSON output alike.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Part files inside.</strong> Each folder holds the files its tasks wrote, DE rows only. The <code>country</code> value lives in the folder name, and a read of the root path recovers it as a column.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Several columns nest</strong> in the order given: <code>partitionBy("country", "year")</code> yields <code>country=US/year=2025/</code>. The total folder count is the product of the distinct values, which card 5 returns to.</p>
+    </div>` },
+
+  /* 4: partition pruning */
+  { html: `
+    <div class="eyebrow reveal">Why bother</div>
+    <h2 class="reveal" style="font-size:26px">Later reads skip whole folders</h2>
+    <p class="lead reveal" style="margin-bottom:12px">The payoff comes on the read side. A filter on the partition column lets Spark open only the matching <code>country=...</code> folder: <strong>partition elimination</strong>, often called partition pruning. The other folders are never scanned.</p>
+    <div class="art reveal" style="min-height:0;margin:0 0 12px">${A.prune}</div>
+    <div class="codeblock reveal">de = (spark.read.parquet(<span class="st">"/data/output"</span>)
+        .filter(col(<span class="st">"country"</span>) == <span class="st">"DE"</span>))   <span class="cm"># reads country=DE/ only</span>
+spark.read.parquet(<span class="st">"/data/output/country=DE"</span>)  <span class="cm"># same files, no country col</span></div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">So the right partition column is one that <strong>queries filter on</strong>: a date, a region, a country. A filter on any other column still scans every folder.</p>` },
+
+  /* 5: when it hurts */
+  { html: `
+    <div class="eyebrow reveal">The trap</div>
+    <h2 class="reveal" style="font-size:26px">High cardinality means small files</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Every distinct value becomes its own folder with its own files. Partition by <code>user_id</code> and a 10 GB table becomes millions of tiny files that are slow to list, slow to open and slow to read.</p>
+    <div class="pills reveal">
+      <div class="pill" style="border-color:rgba(255,111,31,0.45)"><p><b>Pick low or known cardinality</b>Databricks' guidance: date fields and physical locations work; timestamps and ids do not. Aim for at least 1 GB of data per partition, and do not partition tables under 1 TB at all.</p></div>
+      <div class="pill"><p><b>Pick a column people filter on</b>A partition nobody filters by costs the small-file penalty and buys no pruning.</p></div>
+      <div class="pill"><p><b>Delta Lake: Liquid Clustering instead</b>For Delta tables Databricks recommends Liquid Clustering, which handles high and low cardinality without fixed folder boundaries; <code>partitionBy</code> is the contrast case. The exam's path writes are plain Parquet, where <code>partitionBy</code> is the only layout tool.</p></div>
+    </div>` },
+
+  /* 6: JDBC writes */
+  { html: `
+    <div class="eyebrow reveal">Databases</div>
+    <h2 class="reveal" style="font-size:26px">Writing to a table over JDBC</h2>
+    <p class="lead reveal" style="margin-bottom:14px">A database is a table, not a folder, so the writer takes a URL and a table name instead of a path, and there is no <code>partitionBy</code>. Two spellings of the same write:</p>
+    <div class="codeblock reveal">props = {<span class="st">"user"</span>: user, <span class="st">"password"</span>: pw}
+<span class="al">df.write.jdbc(url, <span class="st">"sales"</span>, mode=<span class="st">"append"</span>, properties=props)</span>
+<span class="cm"># or the generic form</span>
+(df.write.format(<span class="st">"jdbc"</span>).option(<span class="st">"url"</span>, url)
+   .option(<span class="st">"dbtable"</span>, <span class="st">"sales"</span>).option(<span class="st">"user"</span>, user)
+   .option(<span class="st">"password"</span>, pw).mode(<span class="st">"overwrite"</span>).save())</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Same modes</b>The default errors if the table exists; <code>append</code> inserts into it; <code>overwrite</code> replaces it.</p></div>
+      <div class="pill"><p><b>Parallelism is the partition count</b>Each DataFrame partition opens its own connection. <code>repartition(8)</code> before the write caps that at 8; too many parallel writers can overwhelm the database.</p></div>
+    </div>` },
+
+  /* 7: quiz, sample question 1 */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A job must write <code>df</code> to Parquet at <code>/data/output</code>, one folder per <code>country</code>, replacing whatever a previous run left there. Which line does it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><code>df.write.mode("append").partitionBy("country").parquet("/data/output")</code></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><code>df.write.mode("overwrite").partitionBy("country").parquet("/data/output")</code></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><code>df.write.partitionBy("country").parquet("/data/output")</code></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> B replaces the existing data (<code>overwrite</code>), lays it out by <code>country</code> and ends in the Parquet action. A runs without error but keeps the previous run's rows alongside the new ones, which is the opposite of "replacing". C omits the mode, so the default <code>errorifexists</code> makes the second run fail because the path already holds data. A fourth exam distractor drops <code>partitionBy</code>: it writes, but with countries mixed in one folder.</div>` },
+
+  /* 8: quiz, cardinality */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A 20 GB clickstream DataFrame is written with <code>partitionBy("event_id")</code>, where <code>event_id</code> is unique per row. Most queries filter on <code>event_date</code>. What is the consequence?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Every query speeds up, since each event sits in its own folder and can be found directly</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>No harm as long as mode("overwrite") is used, because overwrite compacts the output into large files</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>One folder and one tiny file per row: millions of small files, and no pruning for the date filters. Partition by event_date instead</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A unique id is the highest cardinality possible, so the write produces as many folders as rows, each with a file holding one row, and listing them dominates every later read. A is wrong because the queries filter on <code>event_date</code>, not <code>event_id</code>, so no folder is ever skipped. B confuses the two decisions: <code>mode</code> only decides what happens to data already at the path; it has no effect on file layout or file size.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 11 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">You can now read a write line and say what it does to existing data and to the folders it leaves behind.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The line</b><code>df.write.mode("overwrite").partitionBy("country").parquet(path)</code>. No mode means <code>errorifexists</code>, so a rerun fails; <code>append</code> keeps old rows; no <code>partitionBy</code> means one mixed folder.</p></div>
+      <div class="pill"><p><b>The layout</b>Hive-style <code>country=DE/</code> folders holding part files; several columns nest. A filter on the partition column reads one folder: partition elimination.</p></div>
+      <div class="pill"><p><b>The judgment</b>Partition only on low-cardinality columns that queries filter on; ids and timestamps make small files. Liquid Clustering is the Delta recommendation. JDBC writes take a URL and table, same modes, no <code>partitionBy</code>.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

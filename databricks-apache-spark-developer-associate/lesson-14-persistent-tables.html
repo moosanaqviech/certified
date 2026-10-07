@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-14-persistent-tables.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #070b10;            /* page background */
+    --bg-tint: #0f1f2e;       /* ambient glow tint behind the card */
+    --accent: #7dd3fc;        /* Unit 2 sky: files, tables and SQL */
+    --accent-glow: rgba(125,211,252,0.12);  /* correct-answer fill */
+    --accent-ink: #070b10;    /* text on top of the accent key chip */
+    --deep: #0369a1;          /* gradient end for the cover's table header */
+    --warm: #fbbf24;          /* contrast color: sort-order marks inside buckets */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 14 · Persistent Tables: saveAsTable, Partitioning,
+   Bucketing and Sorting
+   Objective 2.3: save data to persistent tables while applying sorting and
+   partitioning to optimize data retrieval.
+   Concept lesson with a diagram that builds. saveAsTable versus save(path)
+   (a table is registered in the metastore, Unity Catalog on Databricks, and
+   survives the session; a path write is only files), managed versus external
+   tables (DROP TABLE deletes a managed table's files, leaves an external
+   table's files; option("path") with saveAsTable creates an external table),
+   partitionBy and partition pruning, bucketBy(n, col) and sortBy(col) (only
+   with saveAsTable, never with a plain path save; pre-shuffle by key so
+   later joins and aggregations on that key avoid a shuffle; sort within each
+   bucket), the Delta default on Databricks with the Liquid Clustering
+   one-liner (recommended; partitioning and bucketing are the classic Spark
+   SQL contrast case the exam asks about), reading back with spark.table and
+   spark.sql, appending with insertInto (position-based) versus
+   mode("append").saveAsTable (name-based).
+   Sources: docs.databricks.com/aws/en/pyspark/reference/classes/
+   dataframewriter/saveAsTable, /bucketBy ("Applicable for file-based data
+   sources in combination with DataFrameWriter.saveAsTable"), /sortBy ("sorts
+   the output in each bucket by the given columns on the file system"),
+   /partitionBy, /insertInto ("ignores column names and uses position-based
+   resolution"; schema must match the table), /save, /option;
+   docs.databricks.com/aws/en/pyspark/reference/classes/sparksession/table;
+   docs.databricks.com/aws/en/tables/ (Delta is the default format),
+   /tables/managed (dropping a managed table deletes the data files after the
+   recovery period, default 7 days), /tables/external (dropping an external
+   table does not delete the data; the Python example uses
+   option("path", ...).saveAsTable(...)), /tables/partitions (do not
+   partition tables under 1 TB, at least 1 GB per partition, liquid
+   clustering recommended), /delta/clustering ("Databricks recommends liquid
+   clustering for all new tables"; it "replaces table partitioning and
+   ZORDER"), /sql/language-manual/sql-ref-syntax-ddl-create-table-using
+   (CLUSTERED BY "isn't supported for Delta or Iceberg tables"; "Specifying
+   a location makes the table an external table"; "If USING is omitted, the
+   default is DELTA"). Apache Spark SQL data sources guide, "Bucketing,
+   Sorting and Partitioning" ("Bucketing and sorting are applicable only to
+   persistent tables"; partitionBy works with both save and saveAsTable;
+   a custom path via option("path") is kept when the table is dropped, the
+   default warehouse path is removed) and CREATE DATASOURCE TABLE
+   ("Bucketing is an optimization technique that uses buckets (and
+   bucketing columns) to determine data partitioning and avoid data
+   shuffle"); the spark.sql.bucketing.coalesceBucketsInJoin.enabled
+   description (a shuffle-free bucket join needs the same bucket count on
+   both sides unless coalescing, off by default, reconciles a divisible
+   mismatch), via search snippets.
+   Cover animates (loose files drop into a catalog-labelled table, then
+   partitions, buckets and sort marks line up inside it); step builds on
+   card 1 (save versus saveAsTable) and card 3 (the layout grows from plain
+   files to partitions to buckets to sorted buckets).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-15-temporary-views.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c14r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(125,211,252,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(125,211,252,0)"/>
+      </radialGradient>
+      <linearGradient id="c14g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:var(--deep)"/>
+        <stop offset="1" style="stop-color:var(--accent)"/>
+      </linearGradient>
+    </defs>
+    <style>
+      .c14f { animation: c14drop 9s cubic-bezier(0.4,0,0.2,1) infinite; }
+      .c14f.f2 { animation-delay: 0.2s; } .c14f.f3 { animation-delay: 0.4s; } .c14f.f4 { animation-delay: 0.6s; }
+      @keyframes c14drop {
+        0%, 8% { transform: translate(0px, 0px); opacity: 1; }
+        28%, 34% { transform: translate(var(--tx), var(--ty)); opacity: 1; }
+        40%, 93% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+        96% { transform: translate(0px, 0px); opacity: 0; }
+        100% { transform: translate(0px, 0px); opacity: 1; }
+      }
+      .c14t { animation: c14frame 9s ease-in-out infinite; }
+      @keyframes c14frame { 0%, 26% { opacity: 0.25; } 38%, 90% { opacity: 1; } 97%, 100% { opacity: 0.25; } }
+      .c14p { animation: c14show 9s ease-in-out infinite; }
+      @keyframes c14show { 0%, 42% { opacity: 0; } 50%, 90% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c14p.p2 { animation-delay: 0.25s; } .c14p.p3 { animation-delay: 0.5s; }
+      .c14b { animation: c14buck 9s ease-in-out infinite; }
+      @keyframes c14buck { 0%, 60% { opacity: 0; } 67%, 90% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c14s { animation: c14sort 9s ease-in-out infinite; }
+      @keyframes c14sort { 0%, 73% { opacity: 0; } 79%, 90% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c14f { animation: none; opacity: 0; }
+        .c14t, .c14p, .c14b, .c14s { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="110" rx="150" ry="80" fill="url(#c14r)"/>
+    <text x="160" y="16" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1.5">LOOSE FILES</text>
+    <g class="c14f" style="--tx:14px; --ty:100px">
+      <path d="M52 26 h16 l8 8 v20 h-24 z" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/>
+      <path d="M68 26 v8 h8" fill="none" stroke="var(--ink-soft)" stroke-width="1"/>
+    </g>
+    <g class="c14f f2" style="--tx:38px; --ty:100px">
+      <path d="M112 26 h16 l8 8 v20 h-24 z" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/>
+      <path d="M128 26 v8 h8" fill="none" stroke="var(--ink-soft)" stroke-width="1"/>
+    </g>
+    <g class="c14f f3" style="--tx:-22px; --ty:100px">
+      <path d="M172 26 h16 l8 8 v20 h-24 z" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/>
+      <path d="M188 26 v8 h8" fill="none" stroke="var(--ink-soft)" stroke-width="1"/>
+    </g>
+    <g class="c14f f4" style="--tx:2px; --ty:100px">
+      <path d="M232 26 h16 l8 8 v20 h-24 z" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/>
+      <path d="M248 26 v8 h8" fill="none" stroke="var(--ink-soft)" stroke-width="1"/>
+    </g>
+    <path d="M160 60 L160 76 M155 71 L160 77 L165 71" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="84" width="260" height="100" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <g class="c14t">
+      <rect x="30" y="84" width="260" height="100" rx="10" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <rect x="30" y="84" width="260" height="20" rx="10" fill="url(#c14g)"/>
+      <rect x="30" y="94" width="260" height="10" fill="url(#c14g)"/>
+      <text x="40" y="98" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="9" font-weight="700">main.sales.orders</text>
+      <text x="282" y="98" text-anchor="end" fill="var(--accent-ink)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">registered in the catalog</text>
+    </g>
+    <g class="c14p">
+      <rect x="40" y="110" width="76" height="66" rx="6" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="78" y="121" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-05</text>
+    </g>
+    <g class="c14p p2">
+      <rect x="122" y="110" width="76" height="66" rx="6" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="160" y="121" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-06</text>
+    </g>
+    <g class="c14p p3">
+      <rect x="204" y="110" width="76" height="66" rx="6" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="242" y="121" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-07</text>
+    </g>
+    <g class="c14b">
+      <rect x="46" y="127" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="46" y="143" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="46" y="159" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="127" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="143" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="159" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="210" y="127" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="210" y="143" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="210" y="159" width="64" height="12" rx="3" fill="rgba(125,211,252,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="50" y="136" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="50" y="152" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="50" y="168" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+      <text x="132" y="136" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="132" y="152" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="132" y="168" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+      <text x="214" y="136" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="214" y="152" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="214" y="168" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+    </g>
+    <g class="c14s" fill="var(--warm)">
+      <rect x="94" y="134" width="3" height="3"/><rect x="99" y="132" width="3" height="5"/><rect x="104" y="130" width="3" height="7"/>
+      <rect x="94" y="150" width="3" height="3"/><rect x="99" y="148" width="3" height="5"/><rect x="104" y="146" width="3" height="7"/>
+      <rect x="94" y="166" width="3" height="3"/><rect x="99" y="164" width="3" height="5"/><rect x="104" y="162" width="3" height="7"/>
+      <rect x="176" y="134" width="3" height="3"/><rect x="181" y="132" width="3" height="5"/><rect x="186" y="130" width="3" height="7"/>
+      <rect x="176" y="150" width="3" height="3"/><rect x="181" y="148" width="3" height="5"/><rect x="186" y="146" width="3" height="7"/>
+      <rect x="176" y="166" width="3" height="3"/><rect x="181" y="164" width="3" height="5"/><rect x="186" y="162" width="3" height="7"/>
+      <rect x="258" y="134" width="3" height="3"/><rect x="263" y="132" width="3" height="5"/><rect x="268" y="130" width="3" height="7"/>
+      <rect x="258" y="150" width="3" height="3"/><rect x="263" y="148" width="3" height="5"/><rect x="268" y="146" width="3" height="7"/>
+      <rect x="258" y="166" width="3" height="3"/><rect x="263" y="164" width="3" height="5"/><rect x="268" y="162" width="3" height="7"/>
+    </g>
+    <text x="160" y="196" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">Files become a table; partitions, buckets and sort order give it a shape.</text>
+  </svg>`,
+
+  tablevspath: `<svg viewBox="0 0 320 170">
+    <text x="80" y="14" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">save(path)</text>
+    <text x="240" y="14" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">saveAsTable(name)</text>
+    <path d="M160 8 L160 162" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+    <g data-step="1">
+      <rect x="20" y="86" width="120" height="68" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="80" y="101" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">/mnt/out/orders/</text>
+      <rect x="30" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="65" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="100" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <text x="45" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-0</text>
+      <text x="80" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-1</text>
+      <text x="115" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-2</text>
+      <text x="80" y="144" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">files, and nothing else</text>
+      <rect x="28" y="36" width="104" height="30" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="80" y="49" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">to read: know the path</text>
+      <text x="80" y="60" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">and the format</text>
+    </g>
+    <g data-step="2">
+      <rect x="180" y="86" width="120" height="68" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="240" y="101" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">the same kind of files</text>
+      <rect x="190" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="225" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="260" y="110" width="30" height="16" rx="3" fill="var(--bg)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <text x="205" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-0</text>
+      <text x="240" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-1</text>
+      <text x="275" y="121" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="6">part-2</text>
+      <text x="240" y="144" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">plus a catalog entry</text>
+      <rect x="180" y="30" width="120" height="40" rx="8" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="240" y="45" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">main.sales.orders</text>
+      <text x="240" y="58" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">name, schema, format, location</text>
+      <path d="M240 70 L240 84 M236 80 L240 85 L244 80" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>`,
+
+  layout: `<svg viewBox="0 0 320 190">
+    <text x="12" y="12" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">ORDERS, AS LAID OUT ON DISK</text>
+    <g data-step="1">
+      <rect x="20" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="68" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="116" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="164" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="212" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <rect x="260" y="20" width="36" height="18" rx="3" fill="var(--surface-2)" stroke="var(--ink-faint)" stroke-width="0.8"/>
+      <text x="38" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-0</text>
+      <text x="86" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-1</text>
+      <text x="134" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-2</text>
+      <text x="182" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-3</text>
+      <text x="230" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-4</text>
+      <text x="278" y="32" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">part-5</text>
+      <text x="160" y="50" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">plain files: a filter on dt opens all six</text>
+    </g>
+    <g data-step="2">
+      <rect x="20" y="60" width="84" height="116" rx="7" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.1"/>
+      <rect x="120" y="60" width="84" height="116" rx="7" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.1"/>
+      <rect x="220" y="60" width="84" height="116" rx="7" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.1"/>
+      <text x="62" y="73" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-05/</text>
+      <text x="162" y="73" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-06/</text>
+      <text x="262" y="73" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">dt=2026-10-07/</text>
+      <text x="160" y="187" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">partitionBy("dt"): one directory per value</text>
+    </g>
+    <g data-step="3">
+      <rect x="28" y="82" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="28" y="104" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="28" y="126" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="28" y="148" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="82" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="104" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="126" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="128" y="148" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="228" y="82" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="228" y="104" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="228" y="126" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <rect x="228" y="148" width="68" height="18" rx="3" fill="rgba(125,211,252,0.10)" stroke="var(--accent)" stroke-width="0.8"/>
+      <text x="33" y="94" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="33" y="116" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="33" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+      <text x="33" y="160" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 3</text>
+      <text x="133" y="94" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="133" y="116" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="133" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+      <text x="133" y="160" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 3</text>
+      <text x="233" y="94" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 0</text>
+      <text x="233" y="116" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 1</text>
+      <text x="233" y="138" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 2</text>
+      <text x="233" y="160" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="6.5">bucket 3</text>
+    </g>
+    <g data-step="4" fill="var(--warm)">
+      <rect x="78" y="94" width="3" height="3"/><rect x="83" y="91" width="3" height="6"/><rect x="88" y="88" width="3" height="9"/>
+      <rect x="78" y="116" width="3" height="3"/><rect x="83" y="113" width="3" height="6"/><rect x="88" y="110" width="3" height="9"/>
+      <rect x="78" y="138" width="3" height="3"/><rect x="83" y="135" width="3" height="6"/><rect x="88" y="132" width="3" height="9"/>
+      <rect x="78" y="160" width="3" height="3"/><rect x="83" y="157" width="3" height="6"/><rect x="88" y="154" width="3" height="9"/>
+      <rect x="178" y="94" width="3" height="3"/><rect x="183" y="91" width="3" height="6"/><rect x="188" y="88" width="3" height="9"/>
+      <rect x="178" y="116" width="3" height="3"/><rect x="183" y="113" width="3" height="6"/><rect x="188" y="110" width="3" height="9"/>
+      <rect x="178" y="138" width="3" height="3"/><rect x="183" y="135" width="3" height="6"/><rect x="188" y="132" width="3" height="9"/>
+      <rect x="178" y="160" width="3" height="3"/><rect x="183" y="157" width="3" height="6"/><rect x="188" y="154" width="3" height="9"/>
+      <rect x="278" y="94" width="3" height="3"/><rect x="283" y="91" width="3" height="6"/><rect x="288" y="88" width="3" height="9"/>
+      <rect x="278" y="116" width="3" height="3"/><rect x="283" y="113" width="3" height="6"/><rect x="288" y="110" width="3" height="9"/>
+      <rect x="278" y="138" width="3" height="3"/><rect x="283" y="135" width="3" height="6"/><rect x="288" y="132" width="3" height="9"/>
+      <rect x="278" y="160" width="3" height="3"/><rect x="283" y="157" width="3" height="6"/><rect x="288" y="154" width="3" height="9"/>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 14</div>
+    <h1 class="reveal">Persistent tables</h1>
+    <p class="lead reveal">A path write leaves files behind. <code>saveAsTable</code> leaves a table: a name in the catalog that outlives the session and that anyone can query. This chapter covers that difference, and the three layout choices (partition, bucket, sort) that make the table faster to read back.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: saveAsTable versus save, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Two ways to write</div>
+    <h2 class="reveal" style="font-size:24px">Files at a path, or a table in the catalog</h2>
+    <div class="art reveal">${A.tablevspath}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Both calls produce the same kind of data files. Tap to see what each one leaves behind.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><code>df.write.format("parquet").save("/mnt/out/orders")</code> writes files and nothing else. A later reader has to know the path and the format, and nothing in the metastore knows the data exists.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><code>df.write.saveAsTable("main.sales.orders")</code> writes the files <strong>and registers a table</strong> in the metastore (Unity Catalog on Databricks): name, schema, format, location. It survives the session, and any session can read it by name.</p>
+    </div>` },
+
+  /* 2: managed versus external */
+  { html: `
+    <div class="eyebrow reveal">Who owns the files</div>
+    <h2 class="reveal" style="font-size:26px">Managed or external</h2>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="cm"># managed: the catalog owns the files</span>
+df.write.saveAsTable(<span class="st">"main.sales.orders"</span>)
+<span class="cm"># external: the path is yours, the catalog keeps the metadata</span>
+(df.write.<span class="al">option("path", "s3://bucket/sales/orders")</span>
+   .saveAsTable(<span class="st">"main.sales.orders_ext"</span>))</div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Managed table</b>No path given. The catalog stores the files in its own location and manages them. <code>DROP TABLE</code> removes the metadata <strong>and</strong> the data files (Unity Catalog deletes them after a recovery period, 7 days by default).</p></div>
+      <div class="pill"><p><b>External table</b><code>option("path", ...)</code> with <code>saveAsTable</code> (or <code>LOCATION</code> in SQL) makes the table external. <code>DROP TABLE</code> removes only the catalog entry: the files stay where they are, and deleting them is the owner's job.</p></div>
+      <div class="pill"><p><b>Which to pick</b>Managed when the data belongs to the platform and other sessions or SQL users need it by name. External when another system owns the files and Spark is one reader among several.</p></div>
+    </div>` },
+
+  /* 3: the layout grows, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Layout</div>
+    <h2 class="reveal" style="font-size:24px">Three ways to shape the files</h2>
+    <div class="art reveal">${A.layout}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">The same orders table, laid out four ways. Tap to add each layout choice and see what it speeds up.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Plain files.</strong> <code>WHERE dt = '2026-10-07'</code> has to open every file: nothing in the layout says where that date lives.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong><code>partitionBy("dt")</code></strong> writes one directory per value, Hive style. A filter on <code>dt</code> opens only the matching directory and skips the rest: <strong>partition pruning</strong>.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong><code>bucketBy(4, "customer_id")</code></strong> hashes each row's key into a fixed number of files inside each partition. Equal keys always share a bucket, so a later join or <code>groupBy</code> on <code>customer_id</code> finds its rows pre-grouped and can <strong>avoid a shuffle</strong>.</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong><code>sortBy("order_ts")</code></strong> orders the rows inside each bucket file. A read that wants a range of <code>order_ts</code> within a bucket, or a sort-merge join on the sorted key, finds the data already in order.</p>
+    </div>` },
+
+  /* 4: what each optimizes */
+  { html: `
+    <div class="eyebrow reveal">Choosing</div>
+    <h2 class="reveal" style="font-size:24px">What each one speeds up</h2>
+    <div class="reveal" style="overflow-x:auto; margin-top:10px;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 6px; color:var(--ink-faint); font-weight:600;">Queries often</td>
+          <td style="padding:9px 6px; color:var(--accent); font-weight:700;">Use</td>
+          <td style="padding:9px 6px; color:var(--ink-faint); font-weight:600;">Because</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:9px 6px; color:var(--ink-soft);">filter on a column (<code>dt = ...</code>)</td><td style="padding:9px 6px; color:var(--ink);"><code>partitionBy("dt")</code></td><td style="padding:9px 6px; color:var(--ink-soft);">only matching directories are read</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:9px 6px; color:var(--ink-soft);">join or <code>groupBy</code> on a key</td><td style="padding:9px 6px; color:var(--ink);"><code>bucketBy(n, "key")</code></td><td style="padding:9px 6px; color:var(--ink-soft);">equal keys already sit together: no shuffle when both sides share the key and bucket count</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:9px 6px; color:var(--ink-soft);">range reads or sorted merges inside a bucket</td><td style="padding:9px 6px; color:var(--ink);"><code>sortBy("col")</code></td><td style="padding:9px 6px; color:var(--ink-soft);">each bucket file is already ordered</td></tr>
+        <tr><td style="padding:9px 6px; color:var(--ink-soft);">many values, small table</td><td style="padding:9px 6px; color:var(--ink);">none of the above</td><td style="padding:9px 6px; color:var(--ink-soft);">a high-cardinality <code>partitionBy</code> makes thousands of tiny directories; Databricks says do not partition under 1 TB</td></tr>
+      </table>
+    </div>
+    <p class="lead reveal" style="font-size:14px; margin-top:12px"><strong>Rule to remember:</strong> partition for filters, bucket for joins and aggregations, sort within buckets. <code>partitionBy</code> works with <code>save</code> and <code>saveAsTable</code>; <code>bucketBy</code> and <code>sortBy</code> work only with <code>saveAsTable</code>.</p>
+    <div class="spacer"></div>` },
+
+  /* 5: bucketBy and sortBy code */
+  { html: `
+    <div class="eyebrow reveal">The writer chain</div>
+    <h2 class="reveal" style="font-size:26px">bucketBy and sortBy need a table</h2>
+    <div class="codeblock reveal" style="margin-bottom:14px">(orders.write
+   .format(<span class="st">"parquet"</span>)            <span class="cm"># Delta tables are not bucketed</span>
+   .partitionBy(<span class="st">"dt"</span>)
+   .<span class="al">bucketBy(16, "customer_id")</span>
+   .sortBy(<span class="st">"order_ts"</span>)
+   .<span class="al">saveAsTable("main.sales.orders_b")</span>)   <span class="cm"># not .save(path)</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Only with saveAsTable</b>The Spark docs say it plainly: bucketing and sorting are applicable only to persistent tables. Chain <code>bucketBy</code> or <code>sortBy</code> before <code>.save(path)</code> and the write fails, because a bucketed layout only means something when the metastore records the bucket count and columns.</p></div>
+      <div class="pill"><p><b>Same key, same count, both sides</b>A join skips its shuffle only when both tables are bucketed on the join key with the same number of buckets. With different counts Spark shuffles anyway, unless <code>spark.sql.bucketing.coalesceBucketsInJoin.enabled</code> (off by default) can coalesce one side down to the other's count.</p></div>
+      <div class="pill"><p><b>sortBy rides on bucketBy</b><code>sortBy</code> sorts the output in each bucket, so it is always chained after <code>bucketBy</code>. The upfront cost is a shuffle and sort at write time, paid once so nightly joins do not pay it again.</p></div>
+    </div>` },
+
+  /* 6: Delta on Databricks */
+  { html: `
+    <div class="eyebrow reveal">On Databricks</div>
+    <h2 class="reveal" style="font-size:26px">Delta is the default, and it has its own layout</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>saveAsTable writes Delta</b>On Databricks a table created without a <code>format</code> (or without <code>USING</code> in SQL) is a Delta Lake table, for managed and external tables alike. The Parquet-and-metastore picture above is what that Delta table looks like underneath, plus a transaction log.</p></div>
+      <div class="pill"><p><b>Delta tables are not bucketed</b>The <code>CLUSTERED BY</code> bucketing clause is documented as unsupported for Delta and Iceberg tables, which is why the previous card wrote the bucketed table as Parquet. <code>partitionBy</code> still works on Delta.</p></div>
+      <div class="pill"><p><b>Liquid Clustering, in one line</b>Databricks recommends Liquid Clustering for all new Delta tables; it replaces table partitioning and <code>ZORDER</code>. Partitioning and bucketing are the classic Spark SQL layout, and that is what the exam asks about, so know both the Spark methods and the Databricks recommendation.</p></div>
+    </div>` },
+
+  /* 7: reading back and appending */
+  { html: `
+    <div class="eyebrow reveal">Afterwards</div>
+    <h2 class="reveal" style="font-size:26px">Read it by name, append by name or by position</h2>
+    <div class="codeblock reveal" style="margin-bottom:14px">df  = spark.table(<span class="st">"main.sales.orders"</span>)
+df2 = spark.sql(<span class="st">"SELECT * FROM main.sales.orders WHERE dt = '2026-10-07'"</span>)
+<span class="cm"># two ways to add rows to an existing table</span>
+new_rows.write.<span class="al">insertInto("main.sales.orders")</span>                <span class="cm"># by position</span>
+new_rows.write.mode(<span class="st">"append"</span>).<span class="al">saveAsTable("main.sales.orders")</span>  <span class="cm"># by name</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>spark.table and spark.sql</b>Both resolve the name through the catalog. No path, no format, no schema in the code: the table carries all three, and <code>WHERE dt = ...</code> prunes partitions on a partitioned table.</p></div>
+      <div class="pill"><p><b>insertInto: positional</b>Requires the table to exist with a matching schema. It ignores column names and matches columns by position, so a DataFrame with its columns in a different order silently lands in the wrong columns. <code>insertInto(name, overwrite=True)</code> replaces the data instead of adding to it.</p></div>
+      <div class="pill"><p><b>mode("append").saveAsTable: by name</b>Creates the table if it is missing, otherwise appends using the existing table's format and options, and matches columns by name rather than position.</p></div>
+    </div>` },
+
+  /* 8: quiz, bucketing for a repeated join */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">Two large tables, orders and payments, are rewritten every night and then joined on customer_id by a dozen downstream jobs. The join's shuffle dominates every run. Which write-time change removes it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>partitionBy("customer_id") on both tables, so each customer's rows sit in one directory</button>
+      <button class="choice" data-correct="true"><span class="key">B</span>bucketBy(n, "customer_id") on both tables with the same n, saved with saveAsTable</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>sortBy("customer_id") on both tables, written with save(path) so the files stay sorted</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Bucketing hashes rows by key into a fixed number of files, so when both sides share the key and the bucket count, matching customers are already co-located and the join needs no shuffle. Partitioning by a high-cardinality key is the tempting distractor: it helps filters through pruning, not joins, and millions of customers would mean millions of tiny directories. Option C cannot even run: sortBy requires bucketBy, and both require saveAsTable, not a path save.</div>` },
+
+  /* 9: quiz, table versus path */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:20px">A notebook computes a quarterly summary. Analysts on another team must query the result by name from SQL next week, after this cluster is gone. Which write delivers that?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>df.write.format("delta").save("/mnt/results/q3") and share the path</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>df.createOrReplaceTempView("q3_results") so SQL can reach it</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>df.write.saveAsTable("main.finance.q3_results")</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> saveAsTable registers a persistent table in the catalog: it survives the session and the cluster, and anyone with access queries it by name. A path save leaves valid Delta files but no catalog entry, so the analysts would need the path and the format and would get nothing by name. The temporary view is the tempting distractor: SQL can query it today, but it is scoped to this SparkSession and vanishes when the session ends (Chapter 15).</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 14 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">A table is files plus a catalog entry; its layout decides what a later read can skip.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Table, not path</b><code>saveAsTable</code> registers a persistent table that outlives the session; <code>save(path)</code> leaves only files. Managed tables lose their files on <code>DROP TABLE</code>, external tables (<code>option("path")</code>) keep them.</p></div>
+      <div class="pill"><p><b>Partition, bucket, sort</b><code>partitionBy</code> for filters (pruning), <code>bucketBy</code> for joins and aggregations on a key (no shuffle, same key and count on both sides), <code>sortBy</code> inside each bucket. Only <code>partitionBy</code> works with <code>save</code>; the other two need <code>saveAsTable</code>.</p></div>
+      <div class="pill"><p><b>Read and append</b><code>spark.table</code> or <code>spark.sql</code> by name; <code>insertInto</code> appends by position, <code>mode("append").saveAsTable</code> by name. On Databricks the default is Delta, and Liquid Clustering is the recommended layout.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
