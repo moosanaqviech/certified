@@ -65,11 +65,18 @@ cert-config-databricks-spark-developer-associate.md; the index is LOCKED,
 verified against the official 30 Oct 2025 exam guide PDF on 5 Oct 2026: 7
 units mirroring the seven weighted sections (20/20/30/10/10/5/5, official),
 40 chapters, one per objective with bundled objectives split. 45 single-answer
-questions, 90 minutes, Python only, no select-two items. No lesson, exam,
-course folder, hub or catalog entry exists yet; the course folder will be
-`databricks-apache-spark-developer-associate/` and exams use the
-`spark-practice-exam-NN.html` prefix, 01 to 03 section exams and 04 to 06
-full mocks sampled at the official weights).
+questions, 90 minutes, Python only, no select-two items. The course lives in
+`databricks-apache-spark-developer-associate/` and is paid from launch (course
+id spark-assoc, $9.99, Unit 1 free through spark-practice-exam-01, registered
+in gate.ts, _shared.mjs and build_sitemap.py). Unit 1 is live: chapters 01 to
+09 on the v2 template plus the Unit 1 section exam (9 questions, 18 minutes);
+chapters 10 to 40 are listed on the course home as "Coming soon". Exams use the
+`spark-practice-exam-NN.html` prefix: 01 to 03 section exams (Unit 1; Units 2
+to 3; Units 4 to 7) and 04 to 06 full mocks sampled at the official weights,
+listed in the course home's "Full-length mock exams" section once authored.
+No practice hub yet (planned slug databricks-spark-associate; the course home's
+Practice toggle is disabled until it ships). The catalog row, catalog.json
+entry, pricing row and footer links are live.)
 
 ## Site structure
 

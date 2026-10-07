@@ -102,6 +102,18 @@ FREE_STEMS = {
         "lesson-10-upload-a-file",
         "da-practice-exam-01",
     },
+    "databricks-apache-spark-developer-associate": {
+        "lesson-01-why-spark",
+        "lesson-02-cluster-anatomy",
+        "lesson-03-dataframes-datasets-sparksession",
+        "lesson-04-caching-and-storage-levels",
+        "lesson-05-executor-memory-and-gc",
+        "lesson-06-execution-hierarchy",
+        "lesson-07-partitions-and-shuffles",
+        "lesson-08-transformations-actions-lazy-evaluation",
+        "lesson-09-spark-modules",
+        "spark-practice-exam-01",
+    },
     "aws-data-engineer-associate": {
         "lesson-01-streaming-vs-batch-ingestion",
         "lesson-02-kinesis-data-streams",

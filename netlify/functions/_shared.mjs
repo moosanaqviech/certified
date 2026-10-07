@@ -55,6 +55,11 @@ export const COURSES = {
     title: "Databricks Data Analyst Associate",
     priceId: "STRIPE_PRICE_DA_ASSOC",
   },
+  "spark-assoc": {
+    folder: "databricks-apache-spark-developer-associate",
+    title: "Databricks Spark Developer Associate",
+    priceId: "STRIPE_PRICE_SPARK_ASSOC",
+  },
   "aws-dea": {
     folder: "aws-data-engineer-associate",
     title: "AWS Data Engineer Associate",

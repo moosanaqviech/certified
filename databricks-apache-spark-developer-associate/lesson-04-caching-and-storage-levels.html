@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<title>Caching and Storage Levels · Databricks Spark Developer Associate</title>
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-04-caching-and-storage-levels.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0c0906;            /* page background */
+    --bg-tint: #2a160a;       /* ambient glow tint behind the card */
+    --accent: #ff6f1f;        /* topic color: Unit 1 Spark ember orange */
+    --accent-glow: rgba(255,111,31,0.12);  /* correct-answer fill */
+    --accent-ink: #0c0906;    /* text on top of the accent key chip */
+    --cool: #7dd3fc;          /* disk, the cool side of the spill */
+    --deep: #b4480f;          /* gradient end for the ember blocks */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 04 · Caching and Storage Levels
+   Objective 1.3, second part: caching and storage levels. Trade-off lesson
+   (TO): shared ground (why cache, laziness, cache() is persist() with the
+   default), one card per option (MEMORY_ONLY, MEMORY_AND_DISK, DISK_ONLY,
+   the _SER and _2 suffixes), a side-by-side table, decision signals, when
+   not to cache, two quizzes pulling opposite ways, recap.
+   Sources: docs.databricks.com/aws/en/pyspark/reference/classes/dataframe/persist
+   (signature persist(storageLevel=StorageLevel.MEMORY_AND_DISK_DESER), lazy
+   wording, InMemoryTableScan example), .../dataframe/storageLevel (the
+   StorageLevel(True, True, False, True, 1) tuple after cache(), DISK_ONLY_2
+   example), .../dataframe/unpersist (blocking=False, shared across
+   sessions), .../catalog/clearCache, docs.databricks.com/aws/en/optimizations/disk-cache
+   (disk cache versus Spark cache table), spark.apache.org RDD programming
+   guide (storage level grid, Python always serialized, LRU eviction,
+   replicated levels and lost partitions) and web-ui.html (Storage tab).
+   Cover animates (partitions fill memory, the overflow spills to disk);
+   step builds on card 6 (the comparison table) and card 7 (decision signals).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-05-executor-memory-and-gc.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <linearGradient id="c04g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color:var(--deep)"/>
+        <stop offset="1" style="stop-color:var(--accent)"/>
+      </linearGradient>
+      <radialGradient id="c04r" cx="0.5" cy="0.4" r="0.6">
+        <stop offset="0" style="stop-color:rgba(255,111,31,0.20)"/>
+        <stop offset="1" style="stop-color:rgba(255,111,31,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c04p { opacity: 0; animation: c04fill 9s ease-in-out infinite; }
+      .c04p.k1 { animation-delay: 0.2s; } .c04p.k2 { animation-delay: 0.7s; } .c04p.k3 { animation-delay: 1.2s; }
+      .c04p.k4 { animation-delay: 1.7s; } .c04p.k5 { animation-delay: 2.2s; } .c04p.k6 { animation-delay: 2.7s; }
+      .c04s { opacity: 0; animation: c04spill 9s ease-in-out infinite; }
+      .c04s.k7 { animation-delay: 3.3s; } .c04s.k8 { animation-delay: 3.8s; }
+      .c04a { opacity: 0; animation: c04arrow 9s ease-in-out infinite; animation-delay: 3.3s; }
+      .c04f { opacity: 0; animation: c04full 9s ease-in-out infinite; animation-delay: 3.0s; }
+      @keyframes c04fill { 0% { opacity: 0; } 6%, 70% { opacity: 1; } 80%, 100% { opacity: 0; } }
+      @keyframes c04spill { 0% { opacity: 0; transform: translateY(0); } 6%, 16% { opacity: 1; transform: translateY(0); } 26%, 66% { opacity: 1; transform: translateY(74px); } 76%, 100% { opacity: 0; transform: translateY(74px); } }
+      @keyframes c04arrow { 0%, 4% { opacity: 0; } 10%, 30% { opacity: 1; } 40%, 100% { opacity: 0; } }
+      @keyframes c04full { 0% { opacity: 0; } 8%, 60% { opacity: 1; } 70%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c04p, .c04s, .c04a, .c04f { animation: none; opacity: 1; }
+        .c04s { transform: translateY(74px); }
+      }
+    </style>
+    <ellipse cx="160" cy="96" rx="150" ry="80" fill="url(#c04r)"/>
+    <text x="30" y="34" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1">STORAGE MEMORY</text>
+    <rect x="30" y="42" width="204" height="54" rx="9" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text class="c04f" x="222" y="34" text-anchor="end" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">full</text>
+    <rect class="c04p k1" x="38" y="55" width="28" height="28" rx="5" fill="url(#c04g)"/>
+    <rect class="c04p k2" x="70" y="55" width="28" height="28" rx="5" fill="url(#c04g)"/>
+    <rect class="c04p k3" x="102" y="55" width="28" height="28" rx="5" fill="url(#c04g)"/>
+    <rect class="c04p k4" x="134" y="55" width="28" height="28" rx="5" fill="url(#c04g)"/>
+    <rect class="c04p k5" x="166" y="55" width="28" height="28" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <rect class="c04p k6" x="198" y="55" width="28" height="28" rx="5" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.2"/>
+    <rect class="c04s k7" x="242" y="55" width="28" height="28" rx="5" fill="var(--surface-2)" stroke="var(--cool)" stroke-width="1.2"/>
+    <rect class="c04s k8" x="274" y="55" width="16" height="28" rx="5" fill="var(--surface-2)" stroke="var(--cool)" stroke-width="1.2"/>
+    <path class="c04a" d="M258 100 C 258 112, 258 118, 258 124" fill="none" stroke="var(--cool)" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <path class="c04a" d="M253 119 L258 126 L263 119" fill="none" stroke="var(--cool)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text class="c04a" x="236" y="112" text-anchor="end" fill="var(--cool)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">spill</text>
+    <text x="30" y="124" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="9" font-weight="700" letter-spacing="1">LOCAL DISK</text>
+    <rect x="30" y="130" width="260" height="40" rx="9" fill="var(--surface-2)" stroke="var(--cool)" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="10">MEMORY_AND_DISK: what no longer fits is spilled, not recomputed.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 04</div>
+    <h1 class="reveal">Caching and storage levels</h1>
+    <p class="lead reveal">A DataFrame that several actions reuse is otherwise rebuilt from source every time. Caching keeps it, and the storage level decides where it is kept and what happens when memory runs out.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: shared ground */
+  { html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal" style="font-size:25px">Why cache at all</h2>
+    <p class="lead reveal" style="font-size:15.5px;margin-bottom:14px">Apache Spark is lazy: a DataFrame is a plan, and each action runs the plan from source again. <code>cache()</code> asks Spark to keep the result after the <strong>first action</strong> computes it; later actions read the kept copy. The call itself does nothing until that action.</p>
+    <div class="codeblock reveal" style="margin-bottom:14px">df = spark.read.parquet(<span class="st">"/data/events"</span>).filter(<span class="st">"country = 'DE'"</span>)
+<span class="al">df.cache()</span>                 <span class="cm"># lazy: nothing is stored yet</span>
+df.count()                 <span class="cm"># first action materializes the cache</span>
+df.groupBy(<span class="st">"day"</span>).count().show()   <span class="cm"># read from the cache</span>
+df.unpersist()             <span class="cm"># release it when the reuse is over</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>cache() is persist() with the default level</b><code>persist()</code> takes a <code>StorageLevel</code>; with no argument it uses MEMORY_AND_DISK, and <code>cache()</code> is that call. The plan then shows <code>InMemoryTableScan</code> in <code>df.explain()</code>.</p></div>
+      <div class="pill"><p><b>See it in the Spark UI</b>The Storage tab lists persisted DataFrames with their level, size and partitions, and shows nothing until the first action materializes them. <code>df.storageLevel</code> reports the level in code.</p></div>
+    </div>` },
+
+  /* 2: option: MEMORY_ONLY */
+  { html: `
+    <div class="eyebrow reveal">Option 1 of 4</div>
+    <h2 class="reveal">MEMORY_ONLY</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Keep every partition in executor <strong>storage memory</strong>, and only there. The fastest level to read from, and the least forgiving.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Where the data lives</b>In memory on the executors that computed it. Reads never touch disk.</p></div>
+      <div class="pill"><p><b>When memory runs out</b>The partitions that do not fit are simply not cached. Each time an action needs one, Spark recomputes it from the lineage, so a cache that is too big quietly costs the full plan again and again.</p></div>
+      <div class="pill"><p><b>Best for</b>A DataFrame that comfortably fits, is reused many times, and where every read must be as fast as possible. Set it explicitly: <code>persist(StorageLevel.MEMORY_ONLY)</code>.</p></div>
+    </div>` },
+
+  /* 3: option: MEMORY_AND_DISK */
+  { html: `
+    <div class="eyebrow reveal">Option 2 of 4 · the default</div>
+    <h2 class="reveal">MEMORY_AND_DISK</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Keep partitions in memory while they fit; <strong>spill the rest to the executor's local disk</strong> and read them back from there. This is what <code>cache()</code> and a bare <code>persist()</code> give a DataFrame.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>When memory runs out</b>Overflow goes to local disk instead of being dropped. A later read of a spilled partition is slower than a memory read but still avoids running the plan again.</p></div>
+      <div class="pill"><p><b>Why it is the default</b>It degrades gracefully: a cache that outgrows memory gets slower, never silently more expensive. The exam names this level as the DataFrame default; the PySpark reference spells the same level <code>MEMORY_AND_DISK_DESER</code>.</p></div>
+      <div class="pill"><p><b>Best for</b>Almost every reuse case, and anything bigger than the memory available. Reach for another level only when there is a reason.</p></div>
+    </div>` },
+
+  /* 4: option: DISK_ONLY */
+  { html: `
+    <div class="eyebrow reveal">Option 3 of 4</div>
+    <h2 class="reveal">DISK_ONLY</h2>
+    <p class="lead reveal" style="margin-bottom:16px">Write every partition to the executor's <strong>local disk</strong> and keep nothing in memory. Slowest to read, but it takes no storage memory from the job.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Where the data lives</b>On local disk from the first action onward, so there is nothing to run out of and nothing to recompute.</p></div>
+      <div class="pill"><p><b>What it costs</b>Every read is a disk read. That still beats re-running a long chain of joins and shuffles, which is the only reason to choose it.</p></div>
+      <div class="pill"><p><b>Best for</b>A result that is expensive to compute, reused a few times, and too large to hold in memory alongside the execution memory the rest of the job needs. Set it with <code>persist(StorageLevel.DISK_ONLY)</code>.</p></div>
+    </div>` },
+
+  /* 5: option: the suffixes */
+  { html: `
+    <div class="eyebrow reveal">Option 4 of 4</div>
+    <h2 class="reveal" style="font-size:25px">The suffixes: _SER and _2</h2>
+    <div class="codeblock reveal" style="margin-bottom:14px"><span class="kw">from</span> pyspark.storagelevel <span class="kw">import</span> StorageLevel
+big.persist(StorageLevel.DISK_ONLY)
+<span class="al">served.persist(StorageLevel.MEMORY_AND_DISK_2)</span>   <span class="cm"># two copies</span>
+df.cache().storageLevel
+<span class="cm"># StorageLevel(True, True, False, True, 1)</span></div>
+    <div class="pills reveal">
+      <div class="pill"><p><b>_SER: serialized in memory (JVM only)</b>MEMORY_ONLY_SER and MEMORY_AND_DISK_SER store partitions as compact byte arrays: less memory, more CPU to read. They exist in Scala and Java. Python objects are always serialized, so PySpark has no _SER constants.</p></div>
+      <div class="pill"><p><b>_2: replicated</b>MEMORY_ONLY_2, MEMORY_AND_DISK_2 and DISK_ONLY_2 keep each partition on two nodes. Every level survives a lost executor by recomputing; a replicated level keeps tasks running without waiting for that recompute, at twice the storage.</p></div>
+      <div class="pill"><p><b>Reading the tuple</b><code>StorageLevel(useDisk, useMemory, useOffHeap, deserialized, replication)</code>. After <code>cache()</code> a DataFrame reads <code>(True, True, False, True, 1)</code>; DISK_ONLY_2 reads <code>(True, False, False, False, 2)</code>.</p></div>
+    </div>` },
+
+  /* 6: comparison table, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">Three levels, four questions</h2>
+    <div class="reveal" style="margin-top:4px">
+      <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr 1.3fr;gap:0 6px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em">
+        <div>Level</div><div>Read speed</div><div>Memory use</div><div>Out of memory</div>
+      </div>
+      <div data-step="1" style="display:grid;grid-template-columns:1.15fr 1fr 1fr 1.3fr;gap:0 6px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:700">MEMORY_ONLY</div><div>Fastest</div><div>Highest: the whole set must fit</div><div>Partitions that do not fit are <b style="color:var(--ink)">recomputed</b> on every use</div>
+      </div>
+      <div data-step="2" style="display:grid;grid-template-columns:1.15fr 1fr 1fr 1.3fr;gap:0 6px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:700">MEMORY_AND_DISK <span style="color:var(--ink-faint);font-weight:600">default</span></div><div>Fast; spilled partitions read from disk</div><div>As much as it can get</div><div>Overflow <b style="color:var(--ink)">spills</b> to local disk, never recomputed</div>
+      </div>
+      <div data-step="3" style="display:grid;grid-template-columns:1.15fr 1fr 1fr 1.3fr;gap:0 6px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--cool);font-weight:700">DISK_ONLY</div><div>Slowest: every read from disk</div><div>None: storage memory stays free</div><div>Nothing to run out of; all on disk from the start</div>
+      </div>
+    </div>
+    <div class="stepcap-swap" style="margin-top:14px">
+      <p class="lead" data-step="0" style="font-size:14.5px">Tap to add each level. Watch the last column: recompute or spill is the whole trade.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">MEMORY_ONLY buys the fastest reads with a hidden bill: anything that does not fit is run from source again.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">MEMORY_AND_DISK gives up a little read speed on the overflow and never pays the recompute. That is why it is the default.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">DISK_ONLY gives up memory speed entirely to keep storage memory free for execution, and still saves the expensive plan.</p>
+    </div>` },
+
+  /* 7: decision signals, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Decision signals</div>
+    <h2 class="reveal" style="font-size:24px">This signal picks that level</h2>
+    <p class="lead reveal" style="font-size:15px;margin-bottom:14px">Start from the default. Move off it only when one of these is true of the DataFrame.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Reused many times and fits comfortably in memory</b>MEMORY_ONLY. Every read stays in memory and nothing ever touches disk; the default would behave the same while it fits, so this is a choice for the hottest, smallest sets.</p></div>
+      <div class="pill" data-step="2"><p><b>Bigger than the memory available</b>MEMORY_AND_DISK, the default. The overflow spills and is read back; MEMORY_ONLY would recompute it on every action.</p></div>
+      <div class="pill" data-step="3"><p><b>Expensive to recompute, and the job needs its memory for execution</b>DISK_ONLY. The long join or shuffle chain runs once, the result waits on disk, and storage memory is not taken from the rest of the stage.</p></div>
+      <div class="pill" data-step="4"><p><b>A long job that must keep going when an executor is lost</b>A _2 level such as MEMORY_AND_DISK_2. The second copy means tasks continue instead of waiting for the lost partitions to be recomputed.</p></div>
+    </div>` },
+
+  /* 8: when not to cache */
+  { html: `
+    <div class="eyebrow reveal">The other direction</div>
+    <h2 class="reveal" style="font-size:25px">When not to cache</h2>
+    <p class="lead reveal" style="font-size:15px;margin-bottom:14px">Caching costs a materialization pass and the memory it occupies. Four signals say the cost is not worth paying.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Used once</b>One action means one computation either way; <code>cache()</code> only adds the work of storing a result nobody reads again.</p></div>
+      <div class="pill"><p><b>Cheap to recompute</b>A column-pruned read of Parquet with a filter costs little. Recomputing it can be cheaper than keeping it, especially when the source is already fast.</p></div>
+      <div class="pill"><p><b>Executor memory under pressure</b>Cached blocks take storage memory that shuffles and joins need as execution memory (next chapter). A big cache can turn a healthy job into one that spills or hits garbage-collection pauses.</p></div>
+      <div class="pill"><p><b>Forgetting unpersist()</b>A cache lives until the application ends or the least recently used blocks are evicted, and it is shared by every session on the cluster. Call <code>df.unpersist()</code> when the reuse is over; <code>spark.catalog.clearCache()</code> drops everything.</p></div>
+    </div>
+    <p class="reveal" style="font-size:12.5px;line-height:1.45;color:var(--ink-faint);margin-top:12px">Separate mechanism: the Databricks disk cache keeps local copies of Parquet files on worker SSDs automatically, with no code. It is not Spark caching and the exam does not mean it by cache() or persist().</p>` },
+
+  /* 9: quiz: the big, expensive reuse */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A job joins three large tables into a 400 GB DataFrame that five later aggregations all read. The join takes 25 minutes, and the cluster has about 150 GB of storage memory in total. Which choice serves the five aggregations fastest?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>persist(StorageLevel.MEMORY_ONLY), the fastest level</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>No cache: let each aggregation recompute the join</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>persist(StorageLevel.MEMORY_AND_DISK), or simply cache()</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The result is larger than memory and expensive to recompute, which is the signal for MEMORY_AND_DISK: the 150 GB that fits is read from memory and the rest spills to local disk and is read back. MEMORY_ONLY is the trap: the 250 GB that does not fit is not cached at all, so every aggregation re-runs the 25-minute join for those partitions. Not caching pays that join five times.</div>` },
+
+  /* 10: quiz: the cache that should not exist */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A nightly notebook reads a 2 GB Parquet table, filters it to one region, and writes the rows to a Delta table in a single action. A reviewer sees that the author added df.cache() before the write "for speed". What should happen to that line?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span>Remove it: the DataFrame feeds one action, so caching adds a materialization and holds memory for nothing</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Keep it: cache() is lazy, so it is free unless the data is read twice</button>
+      <button class="choice" data-correct="false"><span class="key">C</span>Change it to persist(StorageLevel.DISK_ONLY) so the write reads from disk</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Caching pays off only when more than one action reuses the result. Here the first and only action is the write, so Spark would compute the filter, store the rows in the cache, and read them straight back out, which is extra work plus occupied storage memory until something calls unpersist(). Option B is the tempting distractor: cache() is lazy, but the one action that follows is exactly what materializes it, so it is not free. DISK_ONLY changes where the needless copy lives, not whether it should exist.</div>` },
+
+  /* 11: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 04 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Cache what is reused, pick the level from how it fails, and release it when the reuse is over.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>cache() is persist() with the default</b>MEMORY_AND_DISK for a DataFrame. Lazy until the first action; <code>df.storageLevel</code> and the Storage tab show what is held.</p></div>
+      <div class="pill"><p><b>The grid in one line</b>MEMORY_ONLY recomputes what does not fit, MEMORY_AND_DISK spills it, DISK_ONLY keeps memory free; _SER is JVM only, _2 replicates.</p></div>
+      <div class="pill"><p><b>Do not cache</b>A DataFrame used once, one cheap to recompute, or one that would starve execution memory. Always <code>unpersist()</code>.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
