@@ -145,6 +145,15 @@ Apache Spark 4.0 docs. Verified 5 Oct 2026 against databricks.com (the Spark
       is an objective; mention only where a chapter's example would behave
       differently.
 
+## Code blocks (rendering rule)
+
+    The lesson shell's .codeblock CSS sets no white-space, so raw newlines
+    inside a code block collapse into one wrapped line. Every multi-line
+    code block in this course carries either an inline
+    style="white-space:pre" (with no leading or trailing whitespace inside
+    the block) or one <div> per code line. Units 1 to 3 were checked in
+    Chromium on 7 Oct 2026: no collapsed blocks.
+
 ## Recommended-vs-contrast stances
 
     API: the DataFrame API and Spark SQL recommended; RDDs are the contrast
