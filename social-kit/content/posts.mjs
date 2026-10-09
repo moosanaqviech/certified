@@ -229,4 +229,157 @@ Chapter 11 of our GenAI Engineer Associate course lets you work that corpus inte
     captionFb:
 `The official GenAI Engineer Associate guide opens its sample questions with a chunking cost problem. The key: a new chunk starts every (size minus overlap) tokens, so the stride sets the embedding bill. Raising chunk size AND reducing overlap both stretch it. Chapter 11 of our GenAI course works the numbers interactively: https://certify.courses`,
   },
+
+  // ---- POST 21 (A) ----
+  // Cert: Databricks DE Associate. Pillar: teaching (study planning).
+  // Values pulled from blog/how-long-to-prepare-databricks-data-engineer-associate.html
+  // Profile labels + timelines are the blog's (given in weeks, not hours).
+  {
+    slug: 'how-long-de-associate',
+    format: 'carousel',
+    source: 'Databricks DE Associate study planning, blog/how-long-to-prepare-databricks-data-engineer-associate.html',
+    slides: [
+      { layout: 'hook', lines: ['How long', 'to prepare?', 'An honest number.'] },
+      {
+        layout: 'value',
+        headlineLines: ['It depends on one thing.'],
+        bodyLines: [
+          'How much time you already spend',
+          'in a Databricks workspace each week.',
+        ],
+      },
+      {
+        layout: 'value',
+        headlineLines: ['Three starting points,', 'three timelines.'],
+        bodyLines: [
+          'Experienced: 1 to 2 weeks',
+          [{ t: 'Some exposure: 2 to 4 weeks', gold: true }],
+          'New to Databricks: 4 to 6 weeks',
+        ],
+      },
+      {
+        layout: 'value',
+        headlineLines: ['Where the hours actually go.'],
+        bodyLines: [
+          'Platform and ingestion fill week one.',
+          'Budget for them first.',
+        ],
+      },
+      {
+        layout: 'cta',
+        lines: [
+          'The full breakdown is on the site.',
+          'Week by week, by experience level,',
+          'sourced from the exam guide.',
+        ],
+        url: 'certify.courses',
+      },
+    ],
+    captionIg:
+`How long does it take to prepare for the Databricks Data Engineer Associate exam? The honest answer is a range, not a number, and the range depends on how much of your week already happens inside a Databricks workspace.
+
+A daily user is mostly filling gaps. An experienced data engineer who is new to the platform is learning Databricks-specific behaviour on top of concepts they already hold. A career changer is doing both.
+
+The full post on certify.courses breaks it down by profile, gives a week-by-week plan mapped to the exam domains, and names the parts that make it take longer than people expect. Every exam fact in it comes from the official exam guide, version May 2026.`,
+    hashtags:
+'#databricks #databrickscertification #dataengineer #dataengineering #certification #examprep #lakehouse #deltalake #apachespark #studyplan #datacareers #cloudcertification #certify',
+    captionFb:
+`How long does it take to prepare for the Databricks Data Engineer Associate exam? It depends on how much of your week already happens inside Databricks. Full breakdown by experience level, with a week-by-week plan mapped to the exam domains: https://certify.courses/blog/how-long-to-prepare-databricks-data-engineer-associate
+
+#Databricks #DataEngineering #Certification`,
+  },
+
+  // ---- POST 22 (B) ----
+  // Cert: Databricks GenAI Engineer Associate. Pillar: product (new course).
+  // Built only because Phase 0 confirmed all 55 lessons publish (each UNITS entry
+  // has a file) and 7 practice exams exist. Counts from the GenAI course folder.
+  {
+    slug: 'genai-track-complete',
+    format: 'single',
+    source: 'Databricks GenAI Engineer Associate, databricks-generative-ai-engineer-associate/ (55 lessons, 7 practice exams, all live)',
+    slides: [
+      {
+        layout: 'single',
+        headlineLines: ['Generative AI Engineer', 'Associate is finished.'],
+        bodyLines: [
+          '55 of 55 lessons. 7 practice exams.',
+          'Unit 1 is free.',
+          'certify.courses',
+        ],
+      },
+    ],
+    captionIg:
+`The Databricks Generative AI Engineer Associate track is complete on certify.courses. 55 lessons, 7 practice exams, built from the official exam guide and the current Databricks documentation, nothing else.
+
+Same structure as every other track: one concept per card, a recall check inside each lesson, cross-domain practice exams at the end of each unit. The first unit is free with no account. Try it, then decide.`,
+    hashtags:
+'#databricks #generativeai #genai #llm #rag #vectorsearch #mlops #databrickscertification #certification #examprep #aiengineer #datacareers #certify',
+    captionFb:
+`The Databricks Generative AI Engineer Associate track is complete: 55 lessons and 7 practice exams, built only from the official exam guide and current Databricks docs. Unit 1 is free, no account needed. https://certify.courses
+
+#Databricks #GenerativeAI #Certification`,
+  },
+
+  // ---- POST 23 (C) ----
+  // Cert: Databricks DE Professional. Pillar: teaching (trade-off).
+  // Copy verified against lesson-06-streaming-tables-vs-materialized-views.html
+  // (Unit 1, Ch 6, obj 1.6). Terminology: Lakeflow Spark Declarative Pipelines.
+  {
+    slug: 'streaming-table-or-mv',
+    format: 'carousel',
+    source: 'Databricks DE Professional, Unit 1, Ch 6, obj 1.6 (streaming tables vs materialized views)',
+    slides: [
+      { layout: 'hook', lines: ['Streaming table or', 'materialized view?'] },
+      {
+        layout: 'value',
+        headlineLines: ['Same pipeline.', 'Two very different promises.'],
+        bodyLines: [
+          'Both are declarative.',
+          'Only one processes each source row exactly once.',
+        ],
+      },
+      {
+        layout: 'value',
+        bodyLines: [
+          [{ t: 'Streaming table', gold: true }],
+          'Append-only source. Each row seen once.',
+          'State kept between runs.',
+          [{ t: 'Materialized view', em: true }],
+          'Result recomputed from current source.',
+          'Upstream updates and deletes are fine.',
+        ],
+      },
+      {
+        layout: 'value',
+        headlineLines: ['The signal that picks one.'],
+        bodyLines: [
+          'Can source rows change after they land?',
+          'Yes: materialized view. No: streaming table.',
+        ],
+      },
+      {
+        layout: 'cta',
+        lines: [
+          'Your source is a Kafka topic.',
+          'Which one?',
+          'Answer is in the caption.',
+        ],
+        url: 'certify.courses',
+      },
+    ],
+    captionIg:
+`In Lakeflow Spark Declarative Pipelines, a streaming table and a materialized view can be defined with almost identical syntax, and they behave nothing alike.
+
+A streaming table treats its source as append-only. Each row is processed once and the pipeline keeps state between runs, which is what makes it cheap for high-volume ingestion. A materialized view recomputes its result from the current state of its sources, so it tolerates updates and deletes upstream, and it is the right shape for aggregations and joins over data that can change.
+
+The Kafka question: a topic is append-only, so a streaming table. The exam likes to hide the answer in whether the source can mutate, not in what the output looks like.
+
+Chapter 6 of the Professional track covers this with the failure modes on both sides. Unit 1 is free on certify.courses.`,
+    hashtags:
+'#databricks #lakeflow #streaming #dataengineering #databrickscertification #dataengineer #deltalake #apachespark #kafka #materializedview #certification #examprep #certify',
+    captionFb:
+`Streaming table or materialized view? The deciding question is whether rows in the source can change after they land. Append-only source (a Kafka topic, for example): streaming table. Anything else: materialized view. Chapter 6 of the Databricks Data Engineer Professional track covers both, and Unit 1 is free: https://certify.courses
+
+#Databricks #DataEngineering #Certification`,
+  },
 ];
