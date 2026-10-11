@@ -59,7 +59,7 @@ chapters across 6 units are live and cover all 56 objectives, and all seven
 genai-practice-exam-NN.html exams (01-07) are live. Exams map to objectives
 and SAMPLE them: the real exam is 45 scored questions against 56 objectives,
 so one full mock cannot cover them all).
-In progress: Databricks Certified Associate Developer for Apache Spark (see
+Complete: Databricks Certified Associate Developer for Apache Spark (see
 curriculum-index-databricks-spark-developer-associate.md and
 cert-config-databricks-spark-developer-associate.md; the index is LOCKED,
 verified against the official 30 Oct 2025 exam guide PDF on 5 Oct 2026: 7
@@ -78,12 +78,16 @@ is spark-practice-exam-03 ("Practice test"); Chapters 32, 36 and 38 close
 Units 4 to 6 and point at the next chapter, since those units share exam 03. Multi-line code blocks
 carry an inline white-space:pre (the shell does not keep newlines; see the
 cert config). Exams use the
-`spark-practice-exam-NN.html` prefix: 01 to 03 section exams (Unit 1; Units 2
-to 3; Units 4 to 7) and 04 to 06 full mocks sampled at the official weights,
-listed in the course home's "Full-length mock exams" section once authored.
-No practice hub yet (planned slug databricks-spark-associate; the course home's
-Practice toggle is disabled until it ships). The catalog row, catalog.json
-entry, pricing row and footer links are live.)
+`spark-practice-exam-NN.html` prefix: 01 to 03 are the section exams (Unit 1;
+Units 2 to 3; Units 4 to 7) and 04 to 06 are the three full mocks (45
+single-answer questions, 90 minutes, sampled at the official weights as
+9/9/13/5/4/3/2 per unit, their own scenarios: retail, IoT and finance, media,
+logistics and healthcare), listed in the course home's "Full-length mock
+exams" section; 175 questions in all. The mocks are a sealed pool: never
+reuse their questions in the section exams and never draw them into drills.
+The practice hub is practice/databricks-spark-associate (see the practice
+hubs paragraph below). The catalog row, catalog.json entry, pricing row and
+footer links are live.)
 
 ## Site structure
 
@@ -150,7 +154,8 @@ it through the Learn / Practice toggle; the hub's Learn segment links back to
 the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/aws-dea-c01.html`), GenAI Engineer Associate
 (`practice/databricks-genai-associate.html`), Data Analyst Associate
-(`practice/databricks-da-associate.html`) and AWS MLA-C02
+(`practice/databricks-da-associate.html`), Spark Developer Associate
+(`practice/databricks-spark-associate.html`) and AWS MLA-C02
 (`practice/aws-mla-c02.html`) have hubs, so every live course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub runs its two sealed
@@ -184,6 +189,15 @@ by each question's `Ch NN` header against the chapter ranges 1-20, 21-39,
 minutes) as its mock pool, runs a weighted 12-question Readiness check from
 the unit exams, and its four bars carry the official 28/24/24/24 weights, so
 they read "% of exam". Its pass target is 72, matching the course's exams.
+The Spark Developer Associate hub is the same clone in the Databricks
+palette: it drills from the three section exams (`spark-practice-exam-01` to
+`03`, tagged by each question's `Ch NN` header against the chapter ranges
+1-9, 10-15, 16-28, 29-32, 33-36, 37-38, 39-40, one per official section),
+uses the three full mocks (`04` to `06`, 45 questions, 90 minutes) as its
+mock pool, runs a weighted 12-question Readiness check from the section
+exams, and its seven bars carry the official 20/20/30/10/10/5/5 weights, so
+they read "% of exam". Its pass target is 70 (our practice target; the guide
+publishes no cut score).
 
 ## Author identity and trust pages
 
