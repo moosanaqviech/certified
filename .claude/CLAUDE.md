@@ -69,13 +69,13 @@ questions, 90 minutes, Python only, no select-two items. The course lives in
 `databricks-apache-spark-developer-associate/` and is paid from launch (course
 id spark-assoc, $9.99, Unit 1 free through spark-practice-exam-01, registered
 in gate.ts, _shared.mjs and build_sitemap.py). All 40 chapters (Units 1 to
-7) are live on the v2 template, plus the Unit 1 section exam
-(spark-practice-exam-01, 9 questions, 18 minutes) and the Units 2 to 3
-section exam (spark-practice-exam-02, 19 questions, 38 minutes). Chapter 40,
-the last chapter, ends on Back to catalog (NAV.next null, per the index).
-The Units 4 to 7 section exam (spark-practice-exam-03) is not authored yet;
-when it ships it is listed after Unit 7 and Chapter 40's NAV.next points at
-it ("Practice test"). Multi-line code blocks
+7) are live on the v2 template, plus all three section exams: Unit 1
+(spark-practice-exam-01, 9 questions, 18 minutes), Units 2 to 3
+(spark-practice-exam-02, 19 questions, 38 minutes) and Units 4 to 7
+(spark-practice-exam-03, 12 questions, 24 minutes; 40 questions in all, one
+per chapter). Chapter 40, the last chapter, closes Unit 7, so its NAV.next
+is spark-practice-exam-03 ("Practice test"); Chapters 32, 36 and 38 close
+Units 4 to 6 and point at the next chapter, since those units share exam 03. Multi-line code blocks
 carry an inline white-space:pre (the shell does not keep newlines; see the
 cert config). Exams use the
 `spark-practice-exam-NN.html` prefix: 01 to 03 section exams (Unit 1; Units 2
