@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Deploy Modes: Local vs Client vs Cluster, and Where Spark Connect Fits</title>
+<meta name="description" content="Local, client and cluster mode differ in one thing: where the Spark driver runs. spark-submit flags, the client default, and how Spark Connect changes it.">
+<link rel="canonical" href="https://certify.courses/blog/spark-deploy-modes-local-client-cluster">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark Deploy Modes: Local vs Client vs Cluster, and Where Spark Connect Fits">
+<meta property="og:description" content="Local, client and cluster mode differ in one thing: where the Spark driver runs. spark-submit flags, the client default, and how Spark Connect changes it.">
+<meta property="og:url" content="https://certify.courses/blog/spark-deploy-modes-local-client-cluster">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;white-space:pre;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.55;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  .tablewrap{overflow-x:auto;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-spark-developer-associate-certification-guide">Spark Developer Guide</a><span>&rsaquo;</span>
+    <span>Deploy modes</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Spark Developer &middot; Trade-off</div>
+    <h1>Spark Deploy Modes: Local vs Client vs Cluster, and Where Spark Connect Fits</h1>
+    <p class="lede">An Apache Spark deploy mode decides where the driver process runs. In <strong>local mode</strong> the driver and executor share one JVM on one machine. In <strong>client mode</strong>, the spark-submit default, the driver runs on the submitting machine while executors run on the cluster. In <strong>cluster mode</strong> the cluster manager launches the driver inside the cluster.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">Local mode for a laptop, unit tests and CI. Client mode for shells, notebooks and anything where you read output in your console. Cluster mode for scheduled production jobs, where the machine that submitted the job may go away. The application code is identical in all three; only the launch settings change.</p>
+  </section>
+
+  <section id="roles">
+    <h2>Three roles, one question</h2>
+    <p>Every Spark application has a <strong>driver</strong> (holds the SparkSession, plans the job, schedules tasks, receives results such as <code>collect()</code>), <strong>executors</strong> (run the tasks, hold cached data, and must reach the driver for the whole run) and a <strong>cluster manager</strong> (Standalone, YARN or Kubernetes, named by <code>--master</code>). The deploy mode answers one question: where does the driver run? To choose, ask what happens if the submitting machine goes away.</p>
+  </section>
+
+  <section id="local">
+    <h2>Local mode: everything in one JVM</h2>
+<pre><code>spark-submit --master "local[*]" etl_job.py
+
+# or in code
+spark = SparkSession.builder.master("local[4]").getOrCreate()</code></pre>
+    <p>The driver and the executor run in a single JVM on one machine, and tasks run on threads: <code>local</code> is one thread, <code>local[4]</code> four, <code>local[*]</code> one per logical core. There is no cluster manager and nothing to provision, which makes it right for development, unit tests and small samples. The ceiling is one machine's memory and cores. Strictly, local is a <code>--master</code> value rather than a <code>--deploy-mode</code> value, but the exam guide lists it alongside client and cluster.</p>
+  </section>
+
+  <section id="client">
+    <h2>Client mode: the default, the driver stays with you</h2>
+<pre><code>spark-submit --master yarn --deploy-mode client etl_job.py</code></pre>
+    <p>The driver runs inside the <code>spark-submit</code> process on the submitting machine, and the executors run on the cluster. Leave out <code>--deploy-mode</code> and this is what you get.</p>
+    <p>The catch: the submitting machine must stay up and connected for the whole run. If it sleeps or loses the network, the driver dies and the application with it. Submit from a gateway machine close to the workers, not across a VPN.</p>
+  </section>
+
+  <section id="cluster">
+    <h2>Cluster mode: the driver moves in</h2>
+<pre><code>spark-submit --master yarn --deploy-mode cluster etl_job.py</code></pre>
+    <p>The cluster manager launches the driver on a node inside the cluster (a YARN container, a Kubernetes driver pod), next to its executors. The submitter can disconnect once the job is accepted, and the driver talks to executors over the cluster's own network instead of across a VPN. The cost is visibility: there is no console, so output and driver logs live in the Spark UI and the cluster manager's logs.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <div class="tablewrap">
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">local</th><th>client</th><th>cluster</th></tr></thead>
+      <tbody>
+        <tr><th>Driver runs on</th><td class="col-h">Your machine</td><td>The submitting machine</td><td>A cluster node</td></tr>
+        <tr><th>Executors run on</th><td class="col-h">Same JVM, as threads</td><td>The cluster</td><td>The cluster</td></tr>
+        <tr><th>Submitter can disconnect</th><td class="col-h">No</td><td>No</td><td>Yes</td></tr>
+        <tr><th>Selected by</th><td class="col-h"><code>--master local[*]</code></td><td>Default, or <code>--deploy-mode client</code></td><td><code>--deploy-mode cluster</code></td></tr>
+        <tr><th>Typical use</th><td class="col-h">Dev, tests, CI</td><td>Shells, notebooks</td><td>Production jobs</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="fnote">Sourced from the Submitting Applications and Cluster Mode Overview pages of the Apache Spark documentation.</p>
+  </section>
+
+  <section id="shells">
+    <h2>Shells, notebooks and Python on Standalone</h2>
+    <p>The <code>pyspark</code> shell and notebooks need their driver attached to the console, so they run in client mode, and cluster deploy mode is not available to shells at all. On a gateway node the driver sits on the gateway while the heavy work still runs on the cluster's executors.</p>
+    <p>One restriction the exam likes: on a <strong>Standalone</strong> cluster, Python applications cannot use cluster mode. The documented options are client mode from a gateway, or YARN or Kubernetes when the driver must live inside the cluster.</p>
+  </section>
+
+  <section id="connect">
+    <h2>How Spark Connect changes the picture</h2>
+    <p>Deploy modes describe classic Spark, where your application <em>is</em> the driver. Spark Connect splits them: a thin client builds an unresolved logical plan and sends it over gRPC to a Spark Connect server, which analyzes and runs it. The driver lives with the server, on the cluster side, while the client can be a laptop IDE.</p>
+<pre><code>from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.remote("sc://host:15002").getOrCreate()</code></pre>
+    <p>The <code>pyspark-client</code> package is pure Python with no JVM, a client crash takes down only its own process, and <code>--deploy-mode</code>, a classic <code>spark-submit</code> setting, does not apply. The trade: Connect clients have no RDD API and no SparkContext, so code that needs them stays in classic mode. Spark 4.0 adds <code>spark.api.mode</code> (classic or connect) to switch an application between the two.</p>
+  </section>
+
+  <section id="exam">
+    <h2>Decision signals for the exam</h2>
+    <p>Deployment modes and Spark Connect together form "Using Spark Connect to Deploy Applications", 5% of the Databricks Certified Associate Developer for Apache Spark exam in the official guide. These signals cover it:</p>
+    <ul>
+      <li><strong>Interactive shell, results in the console:</strong> client, from a gateway near the workers.</li>
+      <li><strong>Scheduled job, submitter may go away:</strong> cluster.</li>
+      <li><strong>Python job on a Standalone cluster:</strong> client from a gateway, or move to YARN or Kubernetes for cluster mode.</li>
+      <li><strong>IDE on a laptop with no Java, shared remote cluster:</strong> Spark Connect, not a deploy mode.</li>
+    </ul>
+    <div class="callout"><p><strong>Exam tip:</strong> a job launched with <code>spark-submit --master yarn etl_job.py</code> from a CI runner that shuts down fails partway through because the default is client mode and the driver dies with the runner. Adding <code>--deploy-mode client</code> changes nothing; <code>--deploy-mode cluster</code> fixes it.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the default deploy mode in spark-submit?</summary><div class="fa"><p>Client mode is the default. If spark-submit runs without --deploy-mode, the driver runs inside the spark-submit process on the submitting machine and only the executors run on the cluster.</p></div></details>
+      <details><summary>What is the difference between client mode and cluster mode in Spark?</summary><div class="fa"><p>The difference is where the driver runs. In client mode the driver runs on the machine that submitted the application, which must stay connected; in cluster mode the cluster manager launches the driver on a node inside the cluster, so the submitter can disconnect.</p></div></details>
+      <details><summary>What is local mode in Apache Spark?</summary><div class="fa"><p>Local mode runs the driver and the executor in a single JVM on one machine, with tasks on threads, set with --master local, local[4] or local[*]. It needs no cluster manager and suits development, unit tests and small samples.</p></div></details>
+      <details><summary>Can a PySpark application run in cluster mode on a Standalone cluster?</summary><div class="fa"><p>No. Spark's Standalone cluster manager does not support cluster deploy mode for Python applications. Use client mode from a gateway machine, or run on YARN or Kubernetes when the driver must live inside the cluster.</p></div></details>
+      <details><summary>Does Spark Connect use client or cluster deploy mode?</summary><div class="fa"><p>Neither, in the classic sense. With Spark Connect the driver runs with the Spark Connect server and a thin client sends it unresolved logical plans over gRPC, so --deploy-mode, a classic spark-submit setting, does not apply to the client.</p></div></details>
+    </div>
+  </section>
+
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Deployment modes are a trade-off chapter in the Spark Developer Associate course, next to a chapter on Spark Connect, with the side-by-side table built step by step and quiz cards on the CI-runner and gateway-shell scenarios.</p>
+    <a href="../databricks-apache-spark-developer-associate/lesson-38-deployment-modes.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-spark-developer-associate-certification-guide">The complete Databricks Spark Developer Associate certification guide &rarr;</a>
+    <a href="databricks-spark-developer-associate-exam-sections-weights">The seven exam sections and their weights &rarr;</a>
+    <a href="spark-structured-streaming-output-modes-append-update-complete">Structured Streaming output modes: append vs update vs complete &rarr;</a>
+    <a href="../databricks-apache-spark-developer-associate/lesson-37-spark-connect.html">Chapter 37: Spark Connect &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Spark Deploy Modes: Local vs Client vs Cluster, and Where Spark Connect Fits","description":"Local, client and cluster mode differ in one thing: where the Spark driver runs. spark-submit flags, the client default, and how Spark Connect changes it.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-11","dateModified":"2026-10-11","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/spark-deploy-modes-local-client-cluster"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the default deploy mode in spark-submit?", "acceptedAnswer": {"@type": "Answer", "text": "Client mode is the default. If spark-submit runs without --deploy-mode, the driver runs inside the spark-submit process on the submitting machine and only the executors run on the cluster."}},
+{"@type": "Question", "name": "What is the difference between client mode and cluster mode in Spark?", "acceptedAnswer": {"@type": "Answer", "text": "The difference is where the driver runs. In client mode the driver runs on the machine that submitted the application, which must stay connected; in cluster mode the cluster manager launches the driver on a node inside the cluster, so the submitter can disconnect."}},
+{"@type": "Question", "name": "What is local mode in Apache Spark?", "acceptedAnswer": {"@type": "Answer", "text": "Local mode runs the driver and the executor in a single JVM on one machine, with tasks on threads, set with --master local, local[4] or local[*]. It needs no cluster manager and suits development, unit tests and small samples."}},
+{"@type": "Question", "name": "Can a PySpark application run in cluster mode on a Standalone cluster?", "acceptedAnswer": {"@type": "Answer", "text": "No. Spark's Standalone cluster manager does not support cluster deploy mode for Python applications. Use client mode from a gateway machine, or run on YARN or Kubernetes when the driver must live inside the cluster."}},
+{"@type": "Question", "name": "Does Spark Connect use client or cluster deploy mode?", "acceptedAnswer": {"@type": "Answer", "text": "Neither, in the classic sense. With Spark Connect the driver runs with the Spark Connect server and a thin client sends it unresolved logical plans over gRPC, so --deploy-mode, a classic spark-submit setting, does not apply to the client."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
