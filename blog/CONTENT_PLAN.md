@@ -71,6 +71,19 @@ Note on the Filename column: published posts are `.html` files in the
 | 7 | COPY INTO vs Auto Loader vs UI upload: the five ways data gets into Databricks (trade-off, chapter 09) | "copy into vs auto loader" | Yes | blog/copy-into-vs-auto-loader-vs-upload-databricks-ingestion.html |
 | 8 | Genie spaces for the Data Analyst exam: components, trusted assets, benchmarks and the 2026 Genie Agent rename | "databricks genie space exam" | Yes | blog/genie-spaces-databricks-data-analyst-exam.html |
 
+## Databricks Spark Developer Associate
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Spark Developer Associate certification guide (pillar) | "databricks spark developer associate certification guide" | Yes | blog/databricks-spark-developer-associate-certification-guide.html |
+| 2 | Spark Developer Associate exam guide breakdown: the seven sections and their official weights | "databricks spark associate exam sections" | Yes | blog/databricks-spark-developer-associate-exam-sections-weights.html |
+| 3 | Study plan and prep time for the Databricks Spark Developer Associate exam | "databricks spark associate study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-spark-developer-associate.html |
+| 4 | How to tell if you are ready for the Spark Developer Associate exam (readiness quiz support) | "am I ready for the databricks spark exam" | Yes | blog/am-i-ready-databricks-spark-developer-associate-exam.html |
+| 5 | repartition vs coalesce in PySpark (trade-off, chapter 29) | "repartition vs coalesce" | Yes | blog/repartition-vs-coalesce-spark.html |
+| 6 | Broadcast hash join vs sort-merge join (trade-off, chapter 28) | "broadcast join vs sort merge join spark" | Yes | blog/broadcast-hash-join-vs-sort-merge-join-spark.html |
+| 7 | Structured Streaming output modes: append vs update vs complete (trade-off, chapter 34) | "spark streaming output modes" | Yes | blog/spark-structured-streaming-output-modes-append-update-complete.html |
+| 8 | Spark deploy modes: local vs client vs cluster (trade-off, chapter 38) | "spark client vs cluster mode" | Yes | blog/spark-deploy-modes-local-client-cluster.html |
+
 ## Databricks Generative AI Engineer Associate
 
 | Priority | Topic | Search Intent | Published | Filename |
