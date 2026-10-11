@@ -419,7 +419,8 @@ Chapters:
            Unit 7 · Chapter 40. @pandas_udf with a return type, Series to
            Series, Iterator forms, applyInPandas for grouped map, the Arrow
            batch transfer that makes them faster than row-at-a-time UDFs.
-           Objective 7.2. Last chapter: NAV next is null.
+           Objective 7.2. Last chapter: it closes Unit 7, so NAV next is
+           spark-practice-exam-03 (Units 4 to 7).
 
 ===============================================================================
 Exam design
