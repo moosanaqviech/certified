@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Streaming Operations: Windows and Aggregation · Databricks Spark Developer Associate</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/databricks-apache-spark-developer-associate/lesson-35-streaming-operations-window-aggregation.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #050c0e;            /* page background */
+    --bg-tint: #0a2329;       /* ambient glow tint behind the card */
+    --accent: #67e8f9;        /* topic color: Unit 5 aqua (Structured Streaming) */
+    --accent-glow: rgba(103,232,249,0.12);  /* correct-answer fill */
+    --accent-ink: #050c0e;    /* text on top of the accent key chip */
+    --warm: #ffb703;          /* contrast case: update mode, late data, state */
+    --lav: #c4b5fd;           /* third case: complete mode, checkpoints */
+    --warn: #f87171;          /* failures: dropped rows, unbounded state */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 5 · Chapter 35 · Streaming Operations: select, filter, window and
+   aggregation
+   Objective 5.3: perform basic operations on streaming DataFrames, such as
+   selection, projection, window and aggregation.
+   Shape: cover, stateless operations, aggregation keeps state (step
+   build), event-time windows (step build: tumbling, sliding, session),
+   windowed aggregation code, quiz (which sliding windows hold a 12:07
+   event), watermarks (step build with numbers), unsupported operations
+   (step build), quiz (count() on a streaming DataFrame), recap.
+   Sources: spark.apache.org/docs/4.0.0/streaming/apis-on-dataframes-and-datasets.html
+   (basic operations: most DataFrame operations supported, select and
+   where, groupBy count as a running count; window operations on event
+   time: a 12:07 event counts toward 12:00-12:10 and 12:05-12:15 with 10
+   minute windows sliding every 5; tumbling, sliding and session windows,
+   session_window with a gap duration; watermarking: state for a window
+   ending at T is kept until max event time seen minus the threshold
+   passes T, later data starts getting dropped, the guarantee is strict
+   in one direction only; conditions: append or update mode, the
+   aggregation must use the event-time column or a window on it,
+   withWatermark on that same column and before the aggregation;
+   unsupported operations: limit and take, distinct, sorting except after
+   an aggregation in complete mode, some outer joins, count(), foreach()
+   and show() raise AnalysisException, use groupBy().count(),
+   writeStream.foreach and the console sink instead);
+   spark.apache.org/docs/4.0.0/api/python/reference/pyspark.sql/api/
+   pyspark.sql.functions.window.html (window(timeColumn, windowDuration,
+   slideDuration=None, startTime=None); start inclusive, end exclusive;
+   tumbling when slideDuration is omitted; output struct column window with
+   start and end; TimestampType required) and .../pyspark.sql.DataFrame.
+   withWatermark.html (MAX(eventTime) minus delayThreshold; at least
+   delayThreshold behind; records later than that may still be processed).
+   Cover animates (events drop onto an event-time axis into 5-minute
+   tumbling windows, each window's count ticking up as they land). Step
+   builds on card 2 (running counts), card 3 (window types), card 6
+   (watermark) and card 7 (unsupported operations).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-36-streaming-deduplication.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c35r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(103,232,249,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(103,232,249,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c35d { animation: c35drop 6s cubic-bezier(0.5,0,0.7,1) infinite; }
+      .c35d.t1 { animation-delay: 0.4s; } .c35d.t2 { animation-delay: 0.8s; } .c35d.t3 { animation-delay: 1.2s; } .c35d.t4 { animation-delay: 1.6s; } .c35d.t5 { animation-delay: 2.0s; } .c35d.t6 { animation-delay: 2.4s; }
+      @keyframes c35drop { 0% { transform: translateY(-70px); opacity: 0; } 6% { opacity: 1; } 20%, 88% { transform: translateY(0px); opacity: 1; } 96%, 100% { transform: translateY(0px); opacity: 0; } }
+      .c35w { animation: c35glow 6s ease-in-out infinite; }
+      .c35w.t1 { animation-delay: 0.4s; } .c35w.t2 { animation-delay: 0.8s; } .c35w.t3 { animation-delay: 1.2s; } .c35w.t4 { animation-delay: 1.6s; } .c35w.t5 { animation-delay: 2.0s; } .c35w.t6 { animation-delay: 2.4s; }
+      @keyframes c35glow { 0%, 18% { opacity: 0; } 22% { opacity: 0.9; } 34%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c35d { animation: none; transform: none; opacity: 1; }
+        .c35w { animation: none; opacity: 0; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="85" fill="url(#c35r)"/>
+    <text x="160" y="20" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">window("event_time", "5 minutes")</text>
+    <g fill="var(--surface-2)" stroke="var(--line)">
+      <rect x="20" y="104" width="70" height="46" rx="6"/><rect x="90" y="104" width="70" height="46" rx="6"/><rect x="160" y="104" width="70" height="46" rx="6"/><rect x="230" y="104" width="70" height="46" rx="6"/>
+    </g>
+    <g fill="rgba(103,232,249,0.18)">
+      <rect class="c35w" x="20" y="104" width="70" height="46" rx="6"/><rect class="c35w t1" x="160" y="104" width="70" height="46" rx="6"/><rect class="c35w t2" x="90" y="104" width="70" height="46" rx="6"/>
+      <rect class="c35w t3" x="230" y="104" width="70" height="46" rx="6"/><rect class="c35w t4" x="90" y="104" width="70" height="46" rx="6"/><rect class="c35w t5" x="160" y="104" width="70" height="46" rx="6"/>
+      <rect class="c35w t6" x="20" y="104" width="70" height="46" rx="6"/>
+    </g>
+    <path d="M20 150 L300 150" stroke="var(--ink-faint)"/>
+    <g fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" text-anchor="middle">
+      <text x="20" y="162">12:00</text><text x="90" y="162">12:05</text><text x="160" y="162">12:10</text><text x="230" y="162">12:15</text><text x="300" y="162">12:20</text>
+    </g>
+    <g fill="var(--accent)">
+      <circle class="c35d" cx="41" cy="140" r="4"/><circle class="c35d t1" cx="188" cy="140" r="4"/><circle class="c35d t2" cx="118" cy="140" r="4"/>
+      <circle class="c35d t3" cx="258" cy="140" r="4"/><circle class="c35d t4" cx="132" cy="128" r="4"/><circle class="c35d t5" cx="202" cy="128" r="4"/>
+      <circle class="c35d t6" cx="62" cy="128" r="4"/>
+    </g>
+    <text x="160" y="186" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Events land in the window of their own time, not arrival time.</text>
+  </svg>`,
+
+  windows: `<svg viewBox="0 0 320 170">
+    <path d="M20 150 L300 150" stroke="var(--ink-faint)"/>
+    <g fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" text-anchor="middle">
+      <text x="20" y="162">12:00</text><text x="90" y="162">12:05</text><text x="160" y="162">12:10</text><text x="230" y="162">12:15</text><text x="300" y="162">12:20</text>
+    </g>
+    <path d="M118 22 L118 150" stroke="var(--accent)" stroke-dasharray="3 2"/>
+    <circle cx="118" cy="150" r="4.5" fill="var(--accent)"/>
+    <text x="124" y="20" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8" font-weight="700">event at 12:07</text>
+    <g data-step="1">
+      <text x="8" y="44" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">tumbling</text>
+      <rect x="20" y="48" width="140" height="14" rx="3" fill="rgba(103,232,249,0.25)" stroke="var(--accent)"/>
+      <rect x="160" y="48" width="140" height="14" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="90" y="58" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">12:00-12:10</text>
+    </g>
+    <g data-step="2">
+      <text x="8" y="80" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">sliding</text>
+      <rect x="20" y="84" width="140" height="10" rx="3" fill="rgba(103,232,249,0.25)" stroke="var(--accent)"/>
+      <rect x="90" y="97" width="140" height="10" rx="3" fill="rgba(103,232,249,0.25)" stroke="var(--accent)"/>
+      <rect x="160" y="110" width="140" height="10" rx="3" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="236" y="104" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">2 windows</text>
+    </g>
+    <g data-step="3">
+      <text x="8" y="125" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">session</text>
+      <rect x="34" y="128" width="154" height="12" rx="3" fill="rgba(255,183,3,0.20)" stroke="var(--warm)"/>
+      <rect x="244" y="128" width="62" height="12" rx="3" fill="rgba(255,183,3,0.20)" stroke="var(--warm)"/>
+      <g fill="var(--warm)"><circle cx="34" cy="134" r="2.5"/><circle cx="62" cy="134" r="2.5"/><circle cx="118" cy="134" r="2.5"/><circle cx="244" cy="134" r="2.5"/></g>
+    </g>
+  </svg>`,
+
+  wm: `<svg viewBox="0 0 320 150">
+    <path d="M20 110 L300 110" stroke="var(--ink-faint)"/>
+    <g fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5" text-anchor="middle">
+      <text x="20" y="126">12:00</text><text x="90" y="126">12:10</text><text x="160" y="126">12:20</text><text x="230" y="126">12:30</text>
+    </g>
+    <rect x="20" y="70" width="70" height="40" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="90" y="70" width="70" height="40" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+    <g data-step="1">
+      <circle cx="195" cy="110" r="4" fill="var(--accent)"/>
+      <text x="195" y="94" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">max seen 12:25</text>
+      <path d="M125 30 L125 110" stroke="var(--lav)" stroke-width="1.6"/>
+      <text x="128" y="28" fill="var(--lav)" font-family="Hanken Grotesk" font-size="8" font-weight="700">watermark 12:15</text>
+      <path d="M128 40 L192 40" stroke="var(--lav)" stroke-dasharray="2 2"/>
+      <text x="160" y="50" text-anchor="middle" fill="var(--lav)" font-family="Hanken Grotesk" font-size="7">10 min threshold</text>
+    </g>
+    <g data-step="2">
+      <rect x="20" y="70" width="70" height="40" rx="4" fill="rgba(103,232,249,0.22)" stroke="var(--accent)"/>
+      <text x="55" y="87" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">final: emit,</text>
+      <text x="55" y="98" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">drop state</text>
+      <text x="143" y="86" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">still</text><text x="143" y="96" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="7.5">open</text>
+    </g>
+    <g data-step="3">
+      <circle cx="48" cy="140" r="4" fill="var(--warn)"/>
+      <text x="56" y="143" fill="var(--warn)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">12:04 arrives: too late, dropped</text>
+      <circle cx="104" cy="88" r="4" fill="var(--accent)"/>
+      <text x="168" y="143" fill="var(--accent)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">12:12 arrives late: counted</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 5 · Chapter 35</div>
+    <h1 class="reveal">Streaming operations: select, filter, window and aggregation</h1>
+    <p class="lead reveal">Most DataFrame code runs on a stream unchanged. The interesting part is what happens when a query has to remember things between micro-batches: running aggregates, time windows, and the watermark that decides when Apache Spark may forget.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: stateless operations */
+  { html: `
+    <div class="eyebrow reveal">Stateless operations</div>
+    <h2 class="reveal" style="font-size:24px">Selection and projection just work</h2>
+    <div class="codeblock reveal" style="white-space:pre">alerts = (readings
+  .<span class="al">where</span>(F.col(<span class="st">"temp_c"</span>) &gt; <span class="st">80</span>)
+  .<span class="al">select</span>(<span class="st">"device"</span>, <span class="st">"temp_c"</span>, <span class="st">"event_time"</span>)
+  .<span class="al">withColumn</span>(<span class="st">"temp_f"</span>, F.col(<span class="st">"temp_c"</span>) * <span class="st">9</span> / <span class="st">5</span> + <span class="st">32</span>))</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>Row by row, batch by batch</b><code>select</code>, <code>where</code> and <code>filter</code>, <code>withColumn</code>, <code>explode</code> and joins to a static DataFrame look only at the rows of the current micro-batch.</p></div>
+      <div class="pill"><p><b>No state to keep</b>Nothing carries over between micro-batches, so these queries run in append mode and need nothing extra to stay bounded.</p></div>
+    </div>` },
+
+  /* 2: aggregation keeps state, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Aggregation</div>
+    <h2 class="reveal" style="font-size:24px">A groupBy has to remember</h2>
+    <div class="codeblock reveal" style="white-space:pre">per_device = readings.<span class="al">groupBy</span>(<span class="st">"device"</span>).count()</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <div data-step="1" style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--ink-soft)"><b style="color:var(--ink)">After batch 1</b><br>dev-1: 4<br>dev-2: 2</div>
+      <div data-step="2" style="border:1px solid var(--accent);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--ink-soft)"><b style="color:var(--accent)">After batch 2</b><br>dev-1: <b style="color:var(--accent)">7</b><br>dev-2: 2<br>dev-3: <b style="color:var(--accent)">1</b></div>
+    </div>
+    <div class="stepcaps" style="margin-top:12px">
+      <p class="lead" data-step="0" style="font-size:14.5px">On a stream, <code>groupBy(...).count()</code> is a <strong>running</strong> count. Tap through two micro-batches.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Batch 1 produces counts, and Spark keeps them in the <strong>state store</strong>, saved with the checkpoint (Chapter 26).</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Batch 2 adds its rows to the stored counts. With no time limit, a group's state lives forever, which is fine for a few devices and a problem for an endless stream of new keys. Windows plus a watermark fix that.</p>
+    </div>` },
+
+  /* 3: event-time windows, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Event-time windows</div>
+    <h2 class="reveal" style="font-size:24px">Tumbling, sliding, session</h2>
+    <div class="art reveal">${A.windows}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A window groups rows by the time in the data (event time), not by when they arrived. Tap through the three kinds.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Tumbling:</strong> <code>window("ts", "10 minutes")</code>. Fixed, non-overlapping; each event is in exactly one window. Starts are inclusive, ends exclusive.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Sliding:</strong> <code>window("ts", "10 minutes", "5 minutes")</code>. A new 10-minute window every 5 minutes, so windows overlap and one event counts in several.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Session:</strong> <code>session_window("ts", "5 minutes")</code>. Dynamic length: a session grows while events keep arriving within the 5-minute gap and closes after a quiet gap.</p>
+    </div>` },
+
+  /* 4: windowed aggregation code */
+  { html: `
+    <div class="eyebrow reveal">Windowed aggregation</div>
+    <h2 class="reveal" style="font-size:24px">Group by a window and a key</h2>
+    <div class="codeblock reveal" style="white-space:pre"><span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> window, avg
+stats = (readings
+  .<span class="al">withWatermark</span>(<span class="st">"event_time"</span>, <span class="st">"10 minutes"</span>)
+  .groupBy(<span class="al">window</span>(<span class="st">"event_time"</span>, <span class="st">"5 minutes"</span>), <span class="st">"device"</span>)
+  .agg(avg(<span class="st">"temp_c"</span>).alias(<span class="st">"avg_temp"</span>)))</div>
+    <div class="pills reveal" style="margin-top:14px">
+      <div class="pill"><p><b>The window column</b>The result has a struct column named <code>window</code> with <code>start</code> and <code>end</code> timestamps; select <code>window.start</code> to flatten it. The time column must be a timestamp.</p></div>
+      <div class="pill"><p><b>Same code in batch</b>A window is just a grouping key, so this exact query also runs on a static DataFrame of historical readings.</p></div>
+    </div>` },
+
+  /* 5: quiz, sliding windows */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A query groups by <code>window("event_time", "10 minutes", "5 minutes")</code>. An event has <code>event_time</code> 12:07. Which windows does it count toward?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span>Only 12:00 to 12:10</button>
+      <button class="choice" data-correct="false"><span class="key">B</span>Only 12:05 to 12:15</button>
+      <button class="choice" data-correct="true"><span class="key">C</span>12:00 to 12:10 and 12:05 to 12:15</button>
+      <button class="choice" data-correct="false"><span class="key">D</span>12:07 to 12:17, a window starting at the event</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Ten-minute windows sliding every five minutes start at 12:00, 12:05, 12:10 and so on, and 12:07 falls inside both the 12:00 and 12:05 windows (start inclusive, end exclusive). Option A is the tempting one because it is the tumbling answer: drop the slide argument and each event lands in exactly one window. Windows are aligned to fixed boundaries, never to individual events, which rules out D.</div>` },
+
+  /* 6: watermarks, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Watermarks</div>
+    <h2 class="reveal" style="font-size:24px">When can a window be forgotten?</h2>
+    <div class="art reveal">${A.wm}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Late events keep updating old windows, so state could grow forever. <code>withWatermark("event_time", "10 minutes")</code> sets a limit. Tap through.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>The watermark</strong> is the latest event time seen minus the threshold: 12:25 minus 10 minutes is 12:15.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">A window that ends before the watermark is <strong>final</strong>: append mode emits it now, and its state is dropped. The 12:10 to 12:20 window stays open.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Data later than the threshold is dropped; data within it is still counted. The guarantee runs one way: nothing less than 10 minutes late is lost. Rules: call <code>withWatermark</code> on the aggregated time column, <strong>before</strong> the aggregation, in append or update mode (complete keeps all state).</p>
+    </div>` },
+
+  /* 7: unsupported operations, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Unsupported on streams</div>
+    <h2 class="reveal" style="font-size:24px">Operations that need the whole table</h2>
+    <p class="lead reveal" style="font-size:14px;margin-bottom:10px">Anything that needs all the data, or returns a single answer right now, fails with an <code>AnalysisException</code>:</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>count(), show(), foreach()</b>They run immediately. Use <code>groupBy().count()</code> for a running count, the console sink instead of <code>show()</code>, and <code>writeStream.foreach</code>.</p></div>
+      <div class="pill" data-step="2"><p><b>limit() and take()</b>No "first N rows" of an endless stream.</p></div>
+      <div class="pill" data-step="3"><p><b>distinct()</b>Not supported; use <code>dropDuplicates</code> with a watermark (Chapter 36).</p></div>
+      <div class="pill" data-step="4"><p><b>Sorting</b>Only after an aggregation, in complete mode. Sorting raw input would mean holding every row ever received.</p></div>
+    </div>` },
+
+  /* 8: quiz, count on a stream */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">To monitor a pipeline, an engineer calls <code>orders_stream.count()</code> on a streaming DataFrame and gets an <code>AnalysisException</code>. They want a continuously updated total of rows received. What should they write?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><code>orders_stream.limit(1000000).count()</code></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><code>orders_stream.collect()</code>, then <code>len()</code> on the driver</button>
+      <button class="choice" data-correct="false"><span class="key">C</span><code>orders_stream.distinct().count()</code></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><code>orders_stream.groupBy().count()</code>, started with <code>writeStream</code> in complete or update mode</button>
+    </div>
+    <div class="feedback"><b>Correct.</b> <code>count()</code> asks for one number from a table that never ends; <code>groupBy().count()</code> turns it into a streaming aggregation whose single running total updates every micro-batch. Option A is the tempting one because it looks like it bounds the problem, but <code>limit</code> is itself unsupported on streams. B and C are rejected too: <code>collect()</code> is an immediate action and <code>distinct()</code> is not supported on streaming DataFrames.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 35 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Next: removing duplicate events from a stream.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Stateless</b><code>select</code>, <code>where</code>, <code>withColumn</code> and stream-static joins work per micro-batch, unchanged.</p></div>
+      <div class="pill"><p><b>Stateful</b><code>groupBy</code> keeps running results in the state store. <code>window(col, size)</code> tumbling, <code>window(col, size, slide)</code> sliding, <code>session_window(col, gap)</code> session; a <code>window</code> struct with start and end.</p></div>
+      <div class="pill"><p><b>Watermark and limits</b>Watermark = max event time minus threshold; windows behind it are final and their state dropped. No <code>count()</code>, <code>show()</code>, <code>limit</code>, <code>distinct</code>, or sorting outside complete-mode aggregations.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
