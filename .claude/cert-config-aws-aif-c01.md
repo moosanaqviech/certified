@@ -1,8 +1,7 @@
 # Cert Config: AWS Certified AI Practitioner (AIF-C01)
 
 Per-certification settings so the frozen engine rules stay generic. Pairs with
-curriculum-index-aws-aif-c01.md (chapter placement; DRAFT until the user locks
-it, transcribed from the official exam guide PDF, version 1.1, dated April 30,
+curriculum-index-aws-aif-c01.md (chapter placement; LOCKED 11 Oct 2026, transcribed from the official exam guide PDF, version 1.1, dated April 30,
 2026, downloaded from docs.aws.amazon.com on 27 Sep 2026).
 
 ## Identity
@@ -155,7 +154,12 @@ here as each lesson ships.
                                          (threats and alarms), matching the
                                          MLA-C02 convention
 
-    Shipped accents: none yet.
+    Shipped accents (assigned 11 Oct 2026, checked against every --accent on
+    the site):
+      Unit 1 Ch 01-07  sky      #6cc4ff
+      Unit 1 Ch 08-14  cyan     #5be3f0
+      Unit 2 Ch 15-21  fuchsia  #f06ee3
+      Unit 2 Ch 22-28  magenta  #f15bc8
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.

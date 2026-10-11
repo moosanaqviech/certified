@@ -154,6 +154,23 @@ FREE_STEMS = {
         "lesson-20-validating-ai-training-data",
         "mla-c02-practice-exam-01",
     },
+    "aws-ai-practitioner": {
+        "lesson-01-ai-ml-genai-agentic-ai",
+        "lesson-02-models-training-inference",
+        "lesson-03-inference-types",
+        "lesson-04-data-types",
+        "lesson-05-learning-types",
+        "lesson-06-when-ai-adds-value",
+        "lesson-07-regression-classification-clustering",
+        "lesson-08-real-world-ai-applications",
+        "lesson-09-aws-managed-ai-services",
+        "lesson-10-traditional-ml-vs-foundation-models",
+        "lesson-11-ml-pipeline-aws-services",
+        "lesson-12-model-sources-and-hosting",
+        "lesson-13-mlops-fundamentals",
+        "lesson-14-model-and-business-metrics",
+        "aif-practice-exam-01",
+    },
 }
 
 # Free courses: every page ships. Empty since every live course gained an

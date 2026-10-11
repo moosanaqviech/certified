@@ -230,6 +230,33 @@ const COURSES: Course[] = [
       "mla-c02-practice-exam-01",
     ]),
   },
+  {
+    id: "aws-aif",
+    prefix: "/aws-ai-practitioner/",
+    title: "AWS AI Practitioner (AIF-C01)",
+    home: "/aws-ai-practitioner/",
+    blurb: "Unit 1 is free. Get lifetime access to Units 2 to 5: every lesson and all timed practice exams, one payment.",
+    price: "$9.99", was: "$30",
+    free: new Set<string>([
+      "",
+      "index",
+      "lesson-01-ai-ml-genai-agentic-ai",
+      "lesson-02-models-training-inference",
+      "lesson-03-inference-types",
+      "lesson-04-data-types",
+      "lesson-05-learning-types",
+      "lesson-06-when-ai-adds-value",
+      "lesson-07-regression-classification-clustering",
+      "lesson-08-real-world-ai-applications",
+      "lesson-09-aws-managed-ai-services",
+      "lesson-10-traditional-ml-vs-foundation-models",
+      "lesson-11-ml-pipeline-aws-services",
+      "lesson-12-model-sources-and-hosting",
+      "lesson-13-mlops-fundamentals",
+      "lesson-14-model-and-business-metrics",
+      "aif-practice-exam-01",
+    ]),
+  },
 ];
 
 function stemOf(path: string): string {

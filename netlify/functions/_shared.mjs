@@ -70,6 +70,11 @@ export const COURSES = {
     title: "AWS ML Engineer Associate (MLA-C02)",
     priceId: "STRIPE_PRICE_AWS_MLA_C02",
   },
+  "aws-aif": {
+    folder: "aws-ai-practitioner",
+    title: "AWS AI Practitioner (AIF-C01)",
+    priceId: "STRIPE_PRICE_AWS_AIF",
+  },
 };
 
 export function isCourse(id) {

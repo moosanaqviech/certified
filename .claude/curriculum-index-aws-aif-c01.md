@@ -1,7 +1,7 @@
 Curriculum Index: AWS Certified AI Practitioner (AIF-C01)
 
-Status: DRAFT, awaiting the user's confirmation to LOCK. Re-checked on 11 Oct
-2026: version 1.1 is still the current guide (no newer version found). Built on 27 Sep 2026 by
+Status: LOCKED on 11 Oct 2026 by the user. Re-checked that day: version 1.1 is
+still the current guide (no newer version found). Built on 27 Sep 2026 by
 downloading the official exam guide PDF from docs.aws.amazon.com
 (docs.aws.amazon.com/pdfs/aws-certification/latest/ai-practitioner-01/ai-practitioner-01.pdf)
 and extracting its text; every objective below is transcribed from that PDF, not
