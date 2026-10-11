@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>repartition vs coalesce in PySpark: Shuffle, Direction and the coalesce(1) Trap</title>
+<meta name="description" content="repartition shuffles every row to reach any partition count; coalesce merges existing partitions with no shuffle and only goes down. How to pick for the exam.">
+<link rel="canonical" href="https://certify.courses/blog/repartition-vs-coalesce-spark">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="repartition vs coalesce in PySpark: Shuffle, Direction and the coalesce(1) Trap">
+<meta property="og:description" content="repartition shuffles every row to reach any partition count; coalesce merges existing partitions with no shuffle and only goes down. How to pick for the exam.">
+<meta property="og:url" content="https://certify.courses/blog/repartition-vs-coalesce-spark">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-spark-developer-associate-certification-guide">Spark Developer Guide</a><span>&rsaquo;</span>
+    <span>repartition vs coalesce</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Spark Developer &middot; Trade-off</div>
+    <h1>repartition vs coalesce in PySpark: Shuffle, Direction and the coalesce(1) Trap</h1>
+    <p class="lede">In PySpark, <strong>repartition</strong> performs a full shuffle to produce any partition count you ask for, evenly sized or grouped by a column. <strong>coalesce</strong> merges partitions the DataFrame already has, with no shuffle, so it is cheaper but can only lower the count and cannot even out uneven partitions. Coalesce to reduce; repartition to increase or rebalance.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">The partition count is the parallelism of the next stage: one task per partition, one core per task. <code>repartition(n)</code> pays for a shuffle and can go up or down with even partitions. <code>coalesce(n)</code> skips the shuffle by gluing neighbors together: the cheap way down, and no way up.</p>
+    <p>This sits in Troubleshooting and Tuning, 10% of the Databricks Certified Associate Developer for Apache Spark exam per the official 30 Oct 2025 exam guide. Questions describe a symptom (idle cores, tiny files) and ask which call fixes it.</p>
+  </section>
+
+  <section id="repartition">
+    <h2>repartition: a full shuffle, any count</h2>
+<pre><code>df.repartition(64)              # exactly 64, rows dealt out evenly
+df.repartition(64, "country")   # 64, hashed on country
+df.repartition("country")       # hashed; count from spark.sql.shuffle.partitions</code></pre>
+    <p>With a number only, every row is redistributed so the new partitions come out roughly equal. With columns, rows are hash partitioned so every row with the same key lands in the same partition; with columns and no number, the count is <code>spark.sql.shuffle.partitions</code>, 200 by default. Either way it is a wide transformation: every row is written to shuffle files and read back over the network, and a new stage starts.</p>
+  </section>
+
+  <section id="coalesce">
+    <h2>coalesce: merge what is already there</h2>
+<pre><code>df.coalesce(100)   # 1000 partitions in, 100 out, no shuffle</code></pre>
+    <p>Each of the 100 new partitions claims about 10 of the existing ones. That is a narrow dependency, so nothing crosses the network. Two rules follow from it:</p>
+    <ul>
+      <li><strong>Down only.</strong> <code>df.coalesce(128)</code> on an 8 partition DataFrame leaves it at 8, silently. No error, no change.</li>
+      <li><strong>Sizes are inherited.</strong> Merged neighbors keep whatever imbalance they had. Coalesce cannot fix uneven partitions; only a shuffle can.</li>
+    </ul>
+  </section>
+
+  <section id="coalesce-one">
+    <h2>The coalesce(1) trap: it shrinks the upstream work too</h2>
+    <p>Because coalesce adds no stage boundary, the work before it runs in the same stage, in the reduced number of tasks. A heavy parse or join followed by <code>coalesce(1)</code> can end up running entirely on one core. The PySpark API reference says this directly: a drastic coalesce may run your computation on fewer nodes than you like, and calling <code>repartition()</code> instead adds a shuffle step but keeps the upstream work parallel.</p>
+    <p>So when one output file is genuinely required after heavy work, <code>repartition(1)</code> is the safer call.</p>
+  </section>
+
+  <section id="partitionby">
+    <h2>repartition by column before a partitionBy write</h2>
+    <p><code>write.partitionBy("country")</code> lays the output out as one folder per value. If rows for every country are scattered across every partition, every task writes a file into every folder, and the small files multiply. Grouping the rows first means each task writes into one folder:</p>
+<pre><code>(df.repartition("country")
+   .write.mode("overwrite")
+   .partitionBy("country")
+   .parquet("/data/output"))</code></pre>
+    <p>Coalesce cannot do this, because it takes a number only and never regroups rows by key.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">repartition</th><th>coalesce</th></tr></thead>
+      <tbody>
+        <tr><th>Shuffle</th><td class="col-h">Yes, every row</td><td>No: narrow dependency</td></tr>
+        <tr><th>Direction</th><td class="col-h">Up or down</td><td>Down only; a larger number is ignored</td></tr>
+        <tr><th>Resulting sizes</th><td class="col-h">Even, or grouped by key</td><td>Whatever the merged neighbors held</td></tr>
+        <tr><th>By column</th><td class="col-h">Yes: repartition("col")</td><td>No, a number only</td></tr>
+        <tr><th>Upstream work</th><td class="col-h">Keeps its own parallelism (new stage)</td><td>Shrinks to n tasks (same stage)</td></tr>
+        <tr><th>In explain()</th><td class="col-h">Exchange RoundRobinPartitioning or hashpartitioning</td><td>Coalesce node, no Exchange</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the PySpark API reference for DataFrame.repartition and DataFrame.coalesce and the Apache Spark SQL performance tuning guide.</p>
+  </section>
+
+  <section id="signals">
+    <h2>Decision signals</h2>
+    <ul>
+      <li><strong>Many small partitions, about to write:</strong> <code>coalesce(n)</code>, as long as the upstream work is light.</li>
+      <li><strong>Fewer partitions than cores</strong> (for example, a handful of unsplittable gzip files): <code>repartition(n)</code>. Coalesce cannot raise the count.</li>
+      <li><strong>Partitions of wildly different sizes:</strong> <code>repartition(n)</code>, since only a shuffle evens them out.</li>
+      <li><strong>Rows should be grouped by a key:</strong> <code>repartition("key")</code>, typically before <code>partitionBy("key")</code>.</li>
+      <li><strong>One output file after heavy work:</strong> <code>repartition(1)</code>, not <code>coalesce(1)</code>.</li>
+    </ul>
+    <p>To confirm which one ran, read <code>explain()</code>: an <code>Exchange</code> is a shuffle, a <code>Coalesce</code> node is not. In SQL, the <code>/*+ REPARTITION(c) */</code> and <code>/*+ COALESCE(n) */</code> hints do the same.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "without a shuffle", "cheaply reduce", "fewer output files" points at coalesce. "Idle cores", "uneven partitions", "increase parallelism", "group by key before writing" points at repartition. If an option coalesces to a number higher than the current count, it does nothing.</p></div>
+    <p>The common distractor for raising parallelism is changing <code>spark.sql.shuffle.partitions</code>. That setting only applies to a shuffle's output, so it does nothing for a stage that reads files and never shuffles. Where partition counts come from (128 MB input splits, 200 shuffle partitions) is in <a href="../databricks-apache-spark-developer-associate/lesson-07-partitions-and-shuffles.html">Chapter 07, partitions and shuffles</a>; join strategies are in the companion post on <a href="broadcast-hash-join-vs-sort-merge-join-spark">broadcast hash joins versus sort-merge joins</a>.</p>
+    <p>To check where you stand across all seven sections, take the <a href="../ready/databricks-spark-associate">readiness quiz</a> or read <a href="databricks-spark-developer-associate-exam-sections-weights">the section weights post</a>.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between repartition and coalesce in Spark?</summary><div class="fa"><p>repartition performs a full shuffle and can raise or lower the partition count, with even partitions or rows grouped by a column. coalesce merges existing partitions without a shuffle, so it is cheaper but can only lower the count.</p></div></details>
+      <details><summary>Can coalesce increase the number of partitions?</summary><div class="fa"><p>No. On a DataFrame, coalesce with a number larger than the current partition count leaves the count unchanged, with no error. Use repartition to increase the partition count.</p></div></details>
+      <details><summary>Why is coalesce(1) slow on a large DataFrame?</summary><div class="fa"><p>coalesce adds no stage boundary, so the work before it also runs in one task on one core. repartition(1) adds a shuffle but keeps the upstream work parallel, which is why the PySpark docs suggest it for a drastic reduction.</p></div></details>
+      <details><summary>Should I repartition before partitionBy when writing?</summary><div class="fa"><p>Often, yes. repartition on the same column groups each key into one partition, so each task writes into one folder instead of a small file in every folder. coalesce cannot do this because it never regroups rows by key.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>repartition versus coalesce is a trade-off chapter in Unit 4 of the Spark Developer Associate course, with the plans, the decision signals and exam-style questions built around them.</p>
+    <a href="../databricks-apache-spark-developer-associate/lesson-29-repartition-versus-coalesce.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-spark-developer-associate-certification-guide">The complete Databricks Spark Developer Associate certification guide &rarr;</a>
+    <a href="broadcast-hash-join-vs-sort-merge-join-spark">Broadcast hash join vs sort-merge join in Spark &rarr;</a>
+    <a href="databricks-spark-developer-associate-exam-sections-weights">Spark Developer Associate exam sections and weights &rarr;</a>
+    <a href="../practice/databricks-spark-associate">Spark Developer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"repartition vs coalesce in PySpark: Shuffle, Direction and the coalesce(1) Trap","description":"repartition shuffles every row to reach any partition count; coalesce merges existing partitions with no shuffle and only goes down. How to pick for the exam.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-11","dateModified":"2026-10-11","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/repartition-vs-coalesce-spark"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between repartition and coalesce in Spark?", "acceptedAnswer": {"@type": "Answer", "text": "repartition performs a full shuffle and can raise or lower the partition count, with even partitions or rows grouped by a column. coalesce merges existing partitions without a shuffle, so it is cheaper but can only lower the count."}},
+{"@type": "Question", "name": "Can coalesce increase the number of partitions?", "acceptedAnswer": {"@type": "Answer", "text": "No. On a DataFrame, coalesce with a number larger than the current partition count leaves the count unchanged, with no error. Use repartition to increase the partition count."}},
+{"@type": "Question", "name": "Why is coalesce(1) slow on a large DataFrame?", "acceptedAnswer": {"@type": "Answer", "text": "coalesce adds no stage boundary, so the work before it also runs in one task on one core. repartition(1) adds a shuffle but keeps the upstream work parallel, which is why the PySpark docs suggest it for a drastic reduction."}},
+{"@type": "Question", "name": "Should I repartition before partitionBy when writing?", "acceptedAnswer": {"@type": "Answer", "text": "Often, yes. repartition on the same column groups each key into one partition, so each task writes into one folder instead of a small file in every folder. coalesce cannot do this because it never regroups rows by key."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

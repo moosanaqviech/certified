@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadcast Hash Join vs Sort-Merge Join in Spark: Threshold, Hints and AQE</title>
+<meta name="description" content="A broadcast hash join copies the small side to every executor; a sort-merge join shuffles and sorts both. The 10 MB threshold, the hint, AQE and the plan.">
+<link rel="canonical" href="https://certify.courses/blog/broadcast-hash-join-vs-sort-merge-join-spark">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Broadcast Hash Join vs Sort-Merge Join in Spark: Threshold, Hints and AQE">
+<meta property="og:description" content="A broadcast hash join copies the small side to every executor; a sort-merge join shuffles and sorts both. The 10 MB threshold, the hint, AQE and the plan.">
+<meta property="og:url" content="https://certify.courses/blog/broadcast-hash-join-vs-sort-merge-join-spark">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-spark-developer-associate-certification-guide">Spark Developer Guide</a><span>&rsaquo;</span>
+    <span>Broadcast vs sort-merge join</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Spark Developer &middot; Trade-off</div>
+    <h1>Broadcast Hash Join vs Sort-Merge Join in Spark: Threshold, Hints and AQE</h1>
+    <p class="lede">A <strong>broadcast hash join</strong> copies the small side of a join to every executor as an in-memory hash table, so the large side is never shuffled. A <strong>sort-merge join</strong> shuffles and sorts both sides by the join key, then merges them. Spark broadcasts automatically when a side is estimated under 10 MB; otherwise sort-merge join is the default.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">An equi-join can only match two rows in the same task, so something has to move. Sort-merge join moves both sides; broadcast hash join moves only the small one. Broadcast is often the biggest speed-up in a job, and the fastest way to crash a driver when the "small" table is not small.</p>
+    <p>On the Databricks Certified Associate Developer for Apache Spark exam this spans the DataFrame API section (30% in the official exam guide) and Troubleshooting and Tuning (10%).</p>
+  </section>
+
+  <section id="smj">
+    <h2>Sort-merge join: both sides move</h2>
+    <ol>
+      <li><strong>Shuffle both.</strong> Every row of both tables is hashed on the join key into <code>spark.sql.shuffle.partitions</code> partitions (200 by default).</li>
+      <li><strong>Sort.</strong> Each task sorts its slice of both sides by the key, spilling to disk if a partition is too big.</li>
+      <li><strong>Merge.</strong> The task walks both sorted lists once and emits matches.</li>
+    </ol>
+    <p>Nothing needs to fit in memory whole, so it handles any size and every join type, including full outer. The price is shuffling and sorting both tables; when it struggles, it fails slowly.</p>
+  </section>
+
+  <section id="bhj">
+    <h2>Broadcast hash join: only the small side moves</h2>
+    <p>The small side is collected onto the driver, sent once to every executor, and built into a hash table. Each task probes it with its own partition of the large side, in place, so a 2 TB fact table never crosses the network.</p>
+    <p>The cost is memory: the whole small side must fit on the driver and on every executor. When it does not, the job fails hard, with out-of-memory errors or a broadcast timeout (<code>spark.sql.broadcastTimeout</code>, 300 seconds by default).</p>
+  </section>
+
+  <section id="choosing">
+    <h2>How Spark chooses, and how you override it</h2>
+<pre><code>from pyspark.sql.functions import broadcast
+
+sales.join(broadcast(stores), "store_id")
+sales.join(stores.hint("broadcast"), "store_id")
+spark.sql("SELECT /*+ BROADCAST(s) */ * FROM sales f JOIN stores s USING (store_id)")
+
+spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)  # automatic broadcast off</code></pre>
+    <ul>
+      <li><strong>The threshold.</strong> <code>spark.sql.autoBroadcastJoinThreshold</code> is the largest estimated size Spark broadcasts on its own: 10485760 bytes (10 MB) by default. <code>-1</code> disables automatic broadcasting.</li>
+      <li><strong>The hint wins.</strong> A hinted side is broadcast regardless of the threshold: useful when missing statistics make a known-small table look big (<code>ANALYZE TABLE ... COMPUTE STATISTICS</code> also fixes that), dangerous when the table keeps growing.</li>
+    </ul>
+  </section>
+
+  <section id="sides">
+    <h2>Which side can be broadcast, per join type</h2>
+    <p>Only the side whose unmatched rows need not be kept can be broadcast:</p>
+    <ul>
+      <li><strong>inner:</strong> either side.</li>
+      <li><strong>left</strong> (and <code>left_semi</code>, <code>left_anti</code>): only the right side.</li>
+      <li><strong>right:</strong> only the left side.</li>
+      <li><strong>full outer:</strong> neither. Not even a hint makes a full outer join a broadcast join.</li>
+    </ul>
+    <p>The how strings themselves are covered in <a href="../databricks-apache-spark-developer-associate/lesson-21-joins.html">Chapter 21 on joins</a>.</p>
+  </section>
+
+  <section id="aqe">
+    <h2>AQE can switch the strategy at runtime</h2>
+    <p>Adaptive Query Execution (AQE) is on by default since Spark 3.2. After a shuffle stage, AQE knows each side's real size; if one is under <code>spark.sql.adaptive.autoBroadcastJoinThreshold</code> (by default the same value as the regular threshold), it swaps the sort-merge join for a broadcast hash join. The sorts are saved, but the shuffle already ran, so a broadcast planned up front is usually faster.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Broadcast hash join</th><th>Sort-merge join</th></tr></thead>
+      <tbody>
+        <tr><th>Large side shuffled</th><td class="col-h">No</td><td>Yes, both sides, plus a sort</td></tr>
+        <tr><th>Memory needed</th><td class="col-h">Whole small side on the driver and every executor</td><td>One partition at a time; spills</td></tr>
+        <tr><th>Chosen when</th><td class="col-h">Estimate under 10 MB, a hint, or AQE at runtime</td><td>The default for two large sides</td></tr>
+        <tr><th>Join types</th><td class="col-h">No full outer; side limited by type</td><td>All equi-joins</td></tr>
+        <tr><th>Failure mode</th><td class="col-h">Out of memory or broadcast timeout</td><td>Slow: network, sort and spill</td></tr>
+        <tr><th>In explain()</th><td class="col-h">BroadcastHashJoin, BroadcastExchange</td><td>SortMergeJoin, Exchange hashpartitioning and Sort on both sides</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Apache Spark SQL performance tuning guide (join strategy hints, AQE) and the PySpark API reference for broadcast.</p>
+  </section>
+
+  <section id="plan">
+    <h2>Reading the plan</h2>
+    <p>Call <code>explain()</code> on the joined DataFrame. <code>BroadcastHashJoin ... BuildRight</code> means the right side was broadcast, with a <code>BroadcastExchange</code> on it and no Exchange above the large scan. <code>SortMergeJoin</code> comes with an <code>Exchange hashpartitioning(key, 200)</code> and a <code>Sort</code> under each side. With AQE the root is <code>AdaptiveSparkPlan</code>, and once <code>isFinalPlan=true</code> the final plan can show a broadcast join where the initial plan had a sort-merge join.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "a few MB lookup table" and "avoid shuffling the large table" points at <code>broadcast()</code>. "Both tables are large" or "the broadcast table grew and the driver runs out of memory" points at removing the hint and letting sort-merge join (and AQE) do the work.</p></div>
+    <p>Two distractors recur. Raising <code>spark.sql.shuffle.partitions</code> still shuffles every byte of the large side. Raising the threshold to match an oversized table changes nothing when a hint is already there. More in <a href="../databricks-apache-spark-developer-associate/lesson-31-adaptive-query-execution.html">Chapter 31 on AQE</a> and the companion post on <a href="repartition-vs-coalesce-spark">repartition versus coalesce</a>; to find weak spots, try the <a href="../ready/databricks-spark-associate">readiness quiz</a> or the <a href="../practice/databricks-spark-associate">practice hub</a>.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between a broadcast hash join and a sort-merge join?</summary><div class="fa"><p>A broadcast hash join copies the small side to every executor and joins the large side in place, with no shuffle of it. A sort-merge join shuffles and sorts both sides by the join key, which works for any size and every join type.</p></div></details>
+      <details><summary>What is the default autoBroadcastJoinThreshold in Spark?</summary><div class="fa"><p>The default is 10485760 bytes, which is 10 MB. Spark broadcasts a join side automatically when its estimated size is under that value, and setting it to -1 disables automatic broadcasting.</p></div></details>
+      <details><summary>Does the broadcast() hint ignore autoBroadcastJoinThreshold?</summary><div class="fa"><p>Yes. A side marked with broadcast() or a BROADCAST hint is broadcast regardless of the threshold, as long as the join type allows that side to be broadcast. That is why a hint on a table that keeps growing can eventually cause out-of-memory errors.</p></div></details>
+      <details><summary>Can Spark broadcast a full outer join?</summary><div class="fa"><p>No. A full outer join must keep unmatched rows from both sides, so neither side can be broadcast, even with a hint. Spark plans a sort-merge join instead.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Broadcast joins is a trade-off chapter in Unit 3 of the Spark Developer Associate course, with the plans, the threshold, the hints and exam-style questions on when each strategy is right.</p>
+    <a href="../databricks-apache-spark-developer-associate/lesson-28-broadcast-joins.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-spark-developer-associate-certification-guide">The complete Databricks Spark Developer Associate certification guide &rarr;</a>
+    <a href="repartition-vs-coalesce-spark">repartition vs coalesce in PySpark &rarr;</a>
+    <a href="am-i-ready-databricks-spark-developer-associate-exam">Am I ready for the Spark Developer Associate exam? &rarr;</a>
+    <a href="../databricks-apache-spark-developer-associate/">Spark Developer Associate course home &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Broadcast Hash Join vs Sort-Merge Join in Spark: Threshold, Hints and AQE","description":"A broadcast hash join copies the small side to every executor; a sort-merge join shuffles and sorts both. The 10 MB threshold, the hint, AQE and the plan.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-11","dateModified":"2026-10-11","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/broadcast-hash-join-vs-sort-merge-join-spark"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between a broadcast hash join and a sort-merge join?", "acceptedAnswer": {"@type": "Answer", "text": "A broadcast hash join copies the small side to every executor and joins the large side in place, with no shuffle of it. A sort-merge join shuffles and sorts both sides by the join key, which works for any size and every join type."}},
+{"@type": "Question", "name": "What is the default autoBroadcastJoinThreshold in Spark?", "acceptedAnswer": {"@type": "Answer", "text": "The default is 10485760 bytes, which is 10 MB. Spark broadcasts a join side automatically when its estimated size is under that value, and setting it to -1 disables automatic broadcasting."}},
+{"@type": "Question", "name": "Does the broadcast() hint ignore autoBroadcastJoinThreshold?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. A side marked with broadcast() or a BROADCAST hint is broadcast regardless of the threshold, as long as the join type allows that side to be broadcast. That is why a hint on a table that keeps growing can eventually cause out-of-memory errors."}},
+{"@type": "Question", "name": "Can Spark broadcast a full outer join?", "acceptedAnswer": {"@type": "Answer", "text": "No. A full outer join must keep unmatched rows from both sides, so neither side can be broadcast, even with a hint. Spark plans a sort-merge join instead."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
