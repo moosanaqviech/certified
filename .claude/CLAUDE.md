@@ -93,6 +93,12 @@ own weighted draw from the section exams. Its blog cluster is complete: eight
 posts listed in the Spark Developer Associate block of blog/CONTENT_PLAN.md,
 with the pillar guide and the quiz linked from the catalog row. The catalog
 row, catalog.json entry, pricing row and footer links are live.)
+Next up: AWS Certified AI Practitioner (AIF-C01) (see
+curriculum-index-aws-aif-c01.md and cert-config-aws-aif-c01.md; the index is
+DRAFT, transcribed from the official exam guide PDF version 1.1 dated 30 Apr
+2026 and re-checked as current on 11 Oct 2026: 58 chapters across 5 units
+covering all 69 objectives, awaiting lock. No lessons yet; they go in
+`aws-ai-practitioner/` with the `aif-practice-exam-NN.html` exam prefix).
 
 ## Site structure
 
