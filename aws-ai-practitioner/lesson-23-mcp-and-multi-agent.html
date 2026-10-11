@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Model Context Protocol and Multi-Agent Patterns · AWS AI Practitioner</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-ai-practitioner/lesson-23-mcp-and-multi-agent.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #13080f;            /* page background */
+    --bg-tint: #34142a;       /* ambient glow tint behind the card */
+    --accent: #f15bc8;        /* topic color: magenta (Unit 2, Ch 22-28) */
+    --accent-glow: rgba(241,91,200,0.12);  /* correct-answer fill */
+    --accent-ink: #13080f;    /* text on top of the accent key chip */
+    --warm: #ffb703;          /* extra, referenced by this payload */
+    --sky: #7dd3fc;          /* extra, referenced by this payload */
+    --lav: #c4b5fd;          /* extra, referenced by this payload */
+    --warn: #f87171;          /* extra, referenced by this payload */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 23 · Model Context Protocol and multi-agent patterns
+   Objective 2.1.6 (part: multi-agent system patterns, MCP and its role in
+   connecting agents to external systems, multi-agent communication
+   patterns). New in exam guide v1.1. Chapter 22 covers the single
+   agent (tools, memory, orchestration); Chapter 27 covers the AWS
+   tooling (AgentCore, Strands Agents, Kiro) in depth, so this chapter
+   names AWS services only where they anchor a concept.
+   Shape: cover, the integration problem (step build), MCP roles (step
+   build), what a server exposes, MCP on AWS, quiz (many systems, many
+   agent apps), why split into several agents, multi-agent patterns
+   (step build), communication and protocols (step build), quiz (fixed,
+   auditable sequence), recap. 11 cards, two quizzes.
+   Sources: AWS Prescriptive Guidance, MCP deployment patterns
+   (prescriptive-guidance/latest/mcp-deployment-patterns-on-aws/
+   what-is-the-model-context-protocol-mcp.html: an open protocol introduced
+   by Anthropic for connecting LLM applications to external data sources
+   and tools; servers expose tools, resources and prompts; host, client
+   and server roles); Amazon Q Developer user guide (qdev-mcp.html: each
+   client keeps a 1:1 connection with a server; stdio and HTTP
+   transports); Agentic AI frameworks guide (agentic-ai-frameworks/
+   selecting-agentic-protocols.html, agent-to-agent-protocols.html: MCP
+   and A2A, A2A as the complementary agent-to-agent standard);
+   Well-Architected Agentic AI Lens (agentops04-bp02.html: use MCP for
+   tool integration and A2A for agent-to-agent coordination;
+   agentperf05.html and agentperf05-bp02.html: supervisor-worker versus
+   peer-to-peer, supervisor-worker when a task decomposes cleanly and
+   needs central quality control, blackboard designs with a shared
+   workspace for asynchronous partial results); Agentic AI patterns
+   (multi-agent-collaboration.html); Operationalizing agentic AI, focus
+   area 2 (swarm, graph and hierarchical coordination); Strands Agents
+   guide (strands-agents.html: Swarm, Graph and Workflow built-ins, plus
+   agents as tools); Amazon Bedrock AgentCore overview and FAQs (Gateway
+   turns APIs and Lambda functions into MCP-compatible tools and connects
+   existing MCP servers; Runtime hosts A2A servers; agent cards describe
+   skills and endpoints). Kiro and Amazon Quick as MCP clients: Kiro MCP
+   configuration docs and the AWS ML blog "Integrate external tools with
+   Amazon Quick Agents using MCP". Accessed via search 11 Oct 2026 (direct
+   fetches of AWS domains were blocked in this environment). Amazon Q is
+   deliberately not named here; Chapter 27 verifies its current surfaces.
+   Cover animates (requests travel from two agents through the MCP layer
+   to three servers and results return; the agent-to-agent link pulses).
+   Step builds on card 1 (N by M versus one protocol), card 2 (host,
+   client, server), card 7 (patterns) and card 8 (communication).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-24-genai-business-metrics.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c23r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(241,91,200,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(241,91,200,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c23go { animation: c23out 3.2s cubic-bezier(0.4,0,0.2,1) infinite; opacity: 0; }
+      .c23go.d2 { animation-delay: 1.05s; } .c23go.d3 { animation-delay: 2.1s; }
+      @keyframes c23out { 0% { transform: translateX(0px); opacity: 0; } 10% { opacity: 1; } 50% { transform: translateX(92px); opacity: 1; } 60%, 100% { transform: translateX(92px); opacity: 0; } }
+      .c23bk { animation: c23back 3.2s cubic-bezier(0.4,0,0.2,1) infinite; animation-delay: 1.6s; opacity: 0; }
+      .c23bk.d2 { animation-delay: 2.65s; }
+      @keyframes c23back { 0% { transform: translateX(0px); opacity: 0; } 10% { opacity: 1; } 50% { transform: translateX(-92px); opacity: 1; } 60%, 100% { transform: translateX(-92px); opacity: 0; } }
+      .c23a2a { animation: c23dash 1.2s linear infinite; }
+      @keyframes c23dash { to { stroke-dashoffset: -12; } }
+      .c23hub { animation: c23glow 3.2s ease-in-out infinite; }
+      @keyframes c23glow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c23go, .c23bk { animation: none; opacity: 1; transform: none; }
+        .c23a2a, .c23hub { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="96" rx="155" ry="86" fill="url(#c23r)"/>
+    <rect x="10" y="28" width="82" height="50" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="51" y="50" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">agent A</text>
+    <text x="51" y="64" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">MCP client inside</text>
+    <rect x="10" y="114" width="82" height="50" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="51" y="136" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">agent B</text>
+    <text x="51" y="150" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">MCP client inside</text>
+    <path class="c23a2a" d="M51 80 L51 112" stroke="var(--lav)" stroke-width="2" stroke-dasharray="4 2"/>
+    <text x="58" y="99" fill="var(--lav)" font-family="Hanken Grotesk" font-size="7.5" font-weight="700">A2A</text>
+    <rect class="c23hub" x="112" y="24" width="20" height="144" rx="6" fill="rgba(241,91,200,0.18)" stroke="var(--accent)"/>
+    <text x="122" y="100" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700" transform="rotate(-90 122 100)">MCP</text>
+    <path d="M94 53 L112 53 M94 139 L112 139" stroke="var(--line)" stroke-width="2"/>
+    <path d="M134 44 L224 44 M134 96 L224 96 M134 148 L224 148" stroke="var(--line)" stroke-dasharray="2 4"/>
+    <rect x="226" y="30" width="86" height="28" rx="7" fill="var(--surface-2)" stroke="var(--warm)"/>
+    <text x="269" y="47.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">database server</text>
+    <rect x="226" y="82" width="86" height="28" rx="7" fill="var(--surface-2)" stroke="var(--warm)"/>
+    <text x="269" y="99.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">ticketing server</text>
+    <rect x="226" y="134" width="86" height="28" rx="7" fill="var(--surface-2)" stroke="var(--warm)"/>
+    <text x="269" y="151.5" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9" font-weight="700">file store server</text>
+    <g class="c23go"><rect x="134" y="39" width="16" height="10" rx="3" fill="rgba(125,211,252,0.3)" stroke="var(--sky)"/></g>
+    <g class="c23go d2"><rect x="134" y="91" width="16" height="10" rx="3" fill="rgba(125,211,252,0.3)" stroke="var(--sky)"/></g>
+    <g class="c23go d3"><rect x="134" y="143" width="16" height="10" rx="3" fill="rgba(125,211,252,0.3)" stroke="var(--sky)"/></g>
+    <g class="c23bk"><rect x="208" y="91" width="16" height="10" rx="3" fill="rgba(255,183,3,0.3)" stroke="var(--warm)"/></g>
+    <g class="c23bk d2"><rect x="208" y="39" width="16" height="10" rx="3" fill="rgba(255,183,3,0.3)" stroke="var(--warm)"/></g>
+    <text x="160" y="190" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">One protocol to tools and data. Another between agents.</text>
+  </svg>`,
+
+  nxm: `<svg viewBox="0 0 320 150">
+    <g data-step="1">
+      <text x="75" y="12" text-anchor="middle" fill="var(--warn)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">CUSTOM CONNECTORS</text>
+      <g fill="var(--surface-2)" stroke="var(--accent)">
+        <rect x="6" y="30" width="34" height="18" rx="5"/><rect x="6" y="66" width="34" height="18" rx="5"/><rect x="6" y="102" width="34" height="18" rx="5"/>
+      </g>
+      <g fill="var(--surface-2)" stroke="var(--warm)">
+        <rect x="110" y="22" width="34" height="16" rx="5"/><rect x="110" y="50" width="34" height="16" rx="5"/><rect x="110" y="78" width="34" height="16" rx="5"/><rect x="110" y="106" width="34" height="16" rx="5"/>
+      </g>
+      <g stroke="var(--warn)" stroke-width="0.9" opacity="0.75">
+        <path d="M40 39 L110 30 M40 39 L110 58 M40 39 L110 86 M40 39 L110 114"/>
+        <path d="M40 75 L110 30 M40 75 L110 58 M40 75 L110 86 M40 75 L110 114"/>
+        <path d="M40 111 L110 30 M40 111 L110 58 M40 111 L110 86 M40 111 L110 114"/>
+      </g>
+      <text x="75" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">3 apps x 4 systems = 12 builds</text>
+    </g>
+    <g data-step="2">
+      <text x="245" y="12" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700" letter-spacing="1">ONE PROTOCOL</text>
+      <g fill="var(--surface-2)" stroke="var(--accent)">
+        <rect x="176" y="30" width="34" height="18" rx="5"/><rect x="176" y="66" width="34" height="18" rx="5"/><rect x="176" y="102" width="34" height="18" rx="5"/>
+      </g>
+      <rect x="236" y="22" width="16" height="100" rx="5" fill="rgba(241,91,200,0.18)" stroke="var(--accent)"/>
+      <g fill="var(--surface-2)" stroke="var(--warm)">
+        <rect x="280" y="22" width="34" height="16" rx="5"/><rect x="280" y="50" width="34" height="16" rx="5"/><rect x="280" y="78" width="34" height="16" rx="5"/><rect x="280" y="106" width="34" height="16" rx="5"/>
+      </g>
+      <g stroke="var(--accent)" stroke-width="1.2">
+        <path d="M210 39 L236 39 M210 75 L236 75 M210 111 L236 111"/>
+        <path d="M252 30 L280 30 M252 58 L280 58 M252 86 L280 86 M252 114 L280 114"/>
+      </g>
+      <text x="245" y="142" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8.5">3 clients + 4 servers = 7</text>
+    </g>
+  </svg>`,
+
+  roles: `<svg viewBox="0 0 320 150">
+    <g data-step="1">
+      <rect x="6" y="8" width="150" height="134" rx="12" fill="rgba(241,91,200,0.06)" stroke="var(--accent)"/>
+      <text x="18" y="26" fill="var(--accent)" font-family="Hanken Grotesk" font-size="10" font-weight="700">host</text>
+      <text x="18" y="40" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8">the AI app: agent, assistant, IDE</text>
+      <circle cx="40" cy="92" r="20" fill="rgba(241,91,200,0.16)" stroke="var(--accent)"/>
+      <text x="40" y="95.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9" font-weight="700">LLM</text>
+    </g>
+    <g data-step="2">
+      <rect x="84" y="58" width="60" height="22" rx="6" fill="var(--surface-2)" stroke="var(--sky)"/>
+      <text x="114" y="72.5" text-anchor="middle" fill="var(--sky)" font-family="Hanken Grotesk" font-size="9" font-weight="700">client 1</text>
+      <rect x="84" y="104" width="60" height="22" rx="6" fill="var(--surface-2)" stroke="var(--sky)"/>
+      <text x="114" y="118.5" text-anchor="middle" fill="var(--sky)" font-family="Hanken Grotesk" font-size="9" font-weight="700">client 2</text>
+      <path d="M60 86 L84 70 M60 98 L84 114" stroke="var(--ink-faint)"/>
+    </g>
+    <g data-step="3">
+      <path d="M144 69 L196 50 M144 115 L196 112" stroke="var(--sky)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="170" y="86" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="7.5">1:1</text>
+      <rect x="198" y="26" width="116" height="50" rx="9" fill="var(--surface-2)" stroke="var(--warm)"/>
+      <text x="256" y="44" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">server: CRM</text>
+      <text x="256" y="60" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">tools, resources, prompts</text>
+      <rect x="198" y="88" width="116" height="50" rx="9" fill="var(--surface-2)" stroke="var(--warm)"/>
+      <text x="256" y="106" text-anchor="middle" fill="var(--warm)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">server: docs</text>
+      <text x="256" y="122" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="8">tools, resources, prompts</text>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 23</div>
+    <h1 class="reveal" style="font-size:36px">Connecting and coordinating agents</h1>
+    <p class="lead reveal">An agent built on a foundation model (FM) is only as useful as the systems it can reach. The <strong>Model Context Protocol (MCP)</strong> standardizes how agents connect to tools and data. When one agent is not enough, multi-agent patterns decide how several agents share the work and talk to each other.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the integration problem, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">The problem MCP solves</div>
+    <h2 class="reveal" style="font-size:24px">Every app, every system, one connector each</h2>
+    <div class="art" style="margin:0 0 10px;min-height:0">${A.nxm}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">Tap to see the integration problem, then the fix.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Without a standard,</strong> each AI app needs its own custom connector to each system, in each app's own format. Add an app or a system and the build count multiplies.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>MCP</strong> is an open protocol, introduced by Anthropic, for connecting large language model (LLM) applications to external tools and data. Wrap a system as an MCP server once, and any MCP-compatible app can use it.</p>
+    </div>` },
+
+  /* 2: roles, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">How MCP is wired</div>
+    <h2 class="reveal" style="font-size:24px">Host, client, server</h2>
+    <div class="art" style="margin:0 0 10px;min-height:0">${A.roles}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="1" style="font-size:14px"><strong>Host:</strong> the application that contains the LLM, such as an agent, a chat assistant or a coding IDE.</p>
+      <p class="lead" data-step="2" style="font-size:14px"><strong>Client:</strong> lives inside the host and keeps a one-to-one connection to one server.</p>
+      <p class="lead" data-step="3" style="font-size:14px"><strong>Server:</strong> wraps one system and advertises what it offers. It can run locally or remotely over HTTP.</p>
+    </div>` },
+
+  /* 3: what a server exposes */
+  { html: `
+    <div class="eyebrow reveal">What a server offers</div>
+    <h2 class="reveal" style="font-size:24px">Three kinds of capability</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b style="color:var(--warm)">Tools</b>Functions the model can invoke to take an action or fetch information: create a ticket, query a table, run a search.</p></div>
+      <div class="pill"><p><b style="color:var(--lav)">Resources</b>Data the model can read as context, such as files, documents or database records.</p></div>
+      <div class="pill"><p><b style="color:var(--sky)">Prompts</b>Reusable prompt templates the server publishes for common tasks.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Because a server describes its own capabilities, a client can discover them at connection time. New tools appear to every connected agent without rewriting the agents.</p>` },
+
+  /* 4: MCP on AWS */
+  { html: `
+    <div class="eyebrow reveal">MCP on AWS</div>
+    <h2 class="reveal" style="font-size:24px">Where the protocol shows up</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Amazon Bedrock AgentCore Gateway</b>Turns existing APIs and AWS Lambda functions into MCP-compatible tools, and connects existing MCP servers, so agents reach them through one managed entry point with authentication handled.</p></div>
+      <div class="pill"><p><b>MCP clients</b>Kiro, the agentic IDE, and Amazon Quick can connect to MCP servers to use the tools those servers expose.</p></div>
+      <div class="pill"><p><b>AWS MCP servers</b>AWS publishes open-source MCP servers, for example for AWS documentation and AWS APIs, that any MCP client can use.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Chapter 27 places these services on the full AWS agent tooling map.</p>` },
+
+  /* 5: quiz, MCP */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A company has five internal systems (CRM, ticketing, inventory, HR, wiki) and three teams each building their own agent. Today every team writes its own connector to every system. What reduces this duplicated integration work?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Fine-tune each team's FM on documentation for all five systems</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Paste each system's API reference into every agent's prompt</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>Expose each system once as an MCP server that all three agents connect to as MCP clients</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Merge the three agents into one agent so only one set of connectors is needed</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> MCP turns many custom connectors into one server per system, reusable by any MCP-compatible agent, and new tools are discovered without changing the agents. Option D is the tempting one, but merging teams' agents trades an integration problem for an overloaded agent and still leaves custom connectors. Fine-tuning and API text in the prompt teach the model about a system without giving it a way to call it.</div>` },
+
+  /* 6: why several agents */
+  { html: `
+    <div class="eyebrow reveal">Multi-agent systems</div>
+    <h2 class="reveal" style="font-size:24px">When one agent becomes too much</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b style="color:var(--warn)">The overloaded agent</b>One agent with dozens of tools and a sprawling instruction set picks the wrong tool more often and is hard to test or change.</p></div>
+      <div class="pill"><p><b style="color:var(--accent)">Specialists</b>Split the work the way an organization splits departments: each agent gets one focused role, its own instructions and only the tools that role needs.</p></div>
+      <div class="pill"><p><b style="color:var(--warm)">The cost</b>More agents mean more FM calls, more latency and more coordination to design. Add agents when the specialization pays for that.</p></div>
+    </div>` },
+
+  /* 7: patterns, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Multi-agent system patterns</div>
+    <h2 class="reveal" style="font-size:24px">Four ways to organize the team</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b style="color:var(--accent)">Supervisor (hierarchical)</b>A central agent splits the task, delegates to worker agents (often calling them like tools) and assembles the final answer. Fits work that decomposes cleanly and needs central quality control.</p></div>
+      <div class="pill" data-step="2"><p><b style="color:var(--sky)">Graph or workflow</b>The builder fixes which agent runs after which in advance. Fits a known, repeatable process where order and auditability matter.</p></div>
+      <div class="pill" data-step="3"><p><b style="color:var(--warm)">Swarm (peer-to-peer)</b>Agents hand the task directly to whichever peer fits next, with no central controller. Fits exploratory work where the best path is not known up front.</p></div>
+      <div class="pill" data-step="4"><p><b style="color:var(--lav)">Shared workspace (blackboard)</b>Agents post partial results to a shared memory that others read and build on, asynchronously.</p></div>
+    </div>` },
+
+  /* 8: communication, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Multi-agent communication</div>
+    <h2 class="reveal" style="font-size:24px">Who talks to whom, and over what</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Through a coordinator, or directly</b>In a supervisor design, messages flow up and down the hierarchy. In a swarm, agents message each other directly. In a blackboard design, they communicate through shared state.</p></div>
+      <div class="pill" data-step="2"><p><b style="color:var(--accent)">MCP: agent to tools and data</b>The standard for connecting an agent to external systems. AWS guidance: use MCP for tool integration.</p></div>
+      <div class="pill" data-step="3"><p><b style="color:var(--lav)">A2A: agent to agent</b>The Agent2Agent (A2A) protocol lets agents built on different frameworks discover each other, through an agent card describing skills and endpoint, and delegate tasks. Amazon Bedrock AgentCore Runtime can host A2A servers.</p></div>
+    </div>` },
+
+  /* 9: quiz, pattern choice */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">An insurer automates claims with three agents: intake, fraud check, payout. Regulators require the steps to run in the same order on every claim, with a clear record of which agent acted when. Which multi-agent pattern fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>A graph or workflow pattern with the agent order fixed in advance</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>A swarm, so each agent hands off to whichever peer it judges best</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>One agent with all three teams' tools and instructions combined</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A shared blackboard that agents read and write in any order</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A known process that must run in a fixed, auditable order is what a predefined graph or workflow gives. Option B is the tempting one because the agents are specialists, but a swarm's path emerges at run time and can differ per claim, the opposite of what regulators asked for. A blackboard is asynchronous and unordered, and one combined agent is the overloaded design specialists were meant to replace.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 23 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Next: proving a GenAI application is worth what it costs.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>MCP</b>Open protocol linking AI apps to tools and data. Host contains the LLM, a client per server, servers expose tools, resources and prompts. Build once, reuse everywhere.</p></div>
+      <div class="pill"><p><b>Patterns</b>Supervisor for clean decomposition with central control, graph or workflow for fixed order, swarm for exploration, blackboard for shared partial results.</p></div>
+      <div class="pill"><p><b>Communication</b>Via a coordinator, peer to peer, or through shared state. MCP for agent to tool, A2A for agent to agent.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>The Foundation Model Lifecycle · AWS AI Practitioner</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-ai-practitioner/lesson-19-fm-lifecycle.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #120812;            /* page background */
+    --bg-tint: #321532;       /* ambient glow tint behind the card */
+    --accent: #f06ee3;        /* topic color: Unit 2 fuchsia (generation) */
+    --accent-glow: rgba(240,110,227,0.12);  /* correct-answer fill */
+    --accent-ink: #120812;    /* text on top of the accent key chip */
+    --warm: #ffb703;          /* the feedback arc and the tuned model */
+    --sky: #7dd3fc;           /* raw pre-training data */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 19 · The Foundation Model Lifecycle
+   Objective 2.1.3: describe the FM lifecycle (data selection, model
+   selection, pre-training, fine-tuning, evaluation, deployment, feedback).
+   Scope: the lifecycle overview only. Ch 38 goes inside the training
+   stages, Ch 33 prices the customization options, Ch 40 teaches
+   evaluation, Ch 29 teaches model selection criteria.
+   Shape: cover, the seven stages (step build), data selection, model
+   selection and who pre-trains, pre-training vs fine-tuning (step build),
+   quiz (which stage a labeled-data training run belongs to), evaluation
+   and deployment (step build), feedback closes the loop, quiz (where
+   production complaints go), recap. 10 cards, two quizzes.
+   Sources: AIF-C01 exam guide v1.1 (objective wording and stage order);
+   docs.aws.amazon.com/wellarchitected/latest/generative-ai-lens/
+   generative-ai-lifecycle.html (lifecycle phases; model selection weighs
+   modality, size, accuracy, training data, pricing, context window,
+   inference latency); docs.aws.amazon.com/prescriptive-guidance/latest/
+   strategy-data-considerations-gen-ai/lifecycle.html (preparing text for
+   an LLM: remove duplicates, sensitive personal information, toxic or
+   irrelevant content); docs.aws.amazon.com/bedrock/latest/userguide/
+   custom-models.html and the Bedrock customization launch post on
+   aws.amazon.com/blogs/aws (fine-tuning uses labeled data, continued
+   pre-training uses unlabeled data, distillation; customer data is not
+   used to train the base models); Generative AI Lifecycle Operational
+   Excellence guidance (prescriptive guidance PDF: operationalizing is an
+   ongoing process of continuous improvement, feed real-world feedback
+   back into models and systems). Direct page fetches were blocked in
+   this environment; facts were confirmed through AWS-domain search
+   results of those pages.
+   Cover animates (a pulse travels the seven-stage loop and lights each
+   stage in turn; the feedback arc back to data selection is drawn warm).
+   Step builds on card 1 (the stages), card 4 (pre-training vs
+   fine-tuning) and card 6 (evaluation then deployment).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-20-token-based-pricing.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c19r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(240,110,227,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(240,110,227,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c19orbit { transform-origin: 160px 96px; animation: c19spin 7s linear infinite; }
+      @keyframes c19spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      .c19n { animation: c19lit 7s ease-out infinite; }
+      .c19n.d1 { animation-delay: 1s; } .c19n.d2 { animation-delay: 2s; } .c19n.d3 { animation-delay: 3s; }
+      .c19n.d4 { animation-delay: 4s; } .c19n.d5 { animation-delay: 5s; } .c19n.d6 { animation-delay: 6s; }
+      @keyframes c19lit { 0% { fill: var(--accent); } 14% { fill: var(--surface-2); } 100% { fill: var(--surface-2); } }
+      .c19fb { animation: c19glow 7s ease-in-out infinite; animation-delay: 6s; }
+      @keyframes c19glow { 0%, 100% { opacity: 0.55; } 8% { opacity: 1; } 20% { opacity: 0.55; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c19orbit, .c19fb { animation: none; }
+        .c19n { animation: none; }
+      }
+    </style>
+    <ellipse cx="160" cy="96" rx="150" ry="92" fill="url(#c19r)"/>
+    <circle cx="160" cy="96" r="70" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="3 5"/>
+    <path class="c19fb" d="M105.3 52.4 A70 70 0 0 1 160 26" fill="none" stroke="var(--warm)" stroke-width="2.5"/>
+    <g class="c19orbit"><circle cx="160" cy="26" r="4" fill="var(--accent)"/></g>
+    <g stroke="var(--accent)" stroke-width="1.6">
+      <circle class="c19n" cx="160" cy="26" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d1" cx="214.7" cy="52.4" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d2" cx="228.2" cy="111.6" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d3" cx="190.4" cy="159.1" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d4" cx="129.6" cy="159.1" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d5" cx="91.8" cy="111.6" r="7" fill="var(--surface-2)"/>
+      <circle class="c19n d6" cx="105.3" cy="52.4" r="7" fill="var(--surface-2)" stroke="var(--warm)"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="9" font-weight="600" fill="var(--ink)">
+      <text x="160" y="12" text-anchor="middle">1 Data selection</text>
+      <text x="226" y="49">2 Model selection</text>
+      <text x="240" y="115">3 Pre-training</text>
+      <text x="200" y="179" text-anchor="middle">4 Fine-tuning</text>
+      <text x="122" y="179" text-anchor="middle">5 Evaluation</text>
+      <text x="80" y="115" text-anchor="end">6 Deployment</text>
+      <text x="94" y="49" text-anchor="end" fill="var(--warm)">7 Feedback</text>
+    </g>
+    <text x="160" y="93" text-anchor="middle" fill="var(--accent)" font-family="Fraunces" font-size="17" font-weight="600">FM</text>
+    <text x="160" y="108" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">lifecycle</text>
+    <text x="160" y="196" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Seven stages, and the last one feeds the first.</text>
+  </svg>`,
+
+  tune: `<svg viewBox="0 0 320 170">
+    <g font-family="Hanken Grotesk">
+      <g data-step="1">
+        <rect x="8" y="20" width="92" height="56" rx="8" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="54" y="40" text-anchor="middle" fill="var(--sky)" font-size="9.5" font-weight="700">huge corpus</text>
+        <text x="54" y="54" text-anchor="middle" fill="var(--ink-soft)" font-size="8">broad, unlabeled</text>
+        <text x="54" y="66" text-anchor="middle" fill="var(--ink-soft)" font-size="8">text, code, images</text>
+        <path d="M102 48 L128 48" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <path d="M124 44 L130 48 L124 52" fill="none" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <rect x="132" y="24" width="64" height="48" rx="10" fill="rgba(240,110,227,0.14)" stroke="var(--accent)"/>
+        <text x="164" y="45" text-anchor="middle" fill="var(--accent)" font-size="10" font-weight="700">base FM</text>
+        <text x="164" y="59" text-anchor="middle" fill="var(--ink-soft)" font-size="8">general skills</text>
+        <text x="66" y="92" text-anchor="middle" fill="var(--ink-faint)" font-size="8">pre-training: model provider</text>
+      </g>
+      <g data-step="2">
+        <rect x="132" y="104" width="64" height="48" rx="8" fill="var(--surface-2)" stroke="var(--warm)"/>
+        <text x="164" y="124" text-anchor="middle" fill="var(--warm)" font-size="9" font-weight="700">your labeled</text>
+        <text x="164" y="137" text-anchor="middle" fill="var(--warm)" font-size="9" font-weight="700">examples</text>
+        <path d="M198 48 L226 48" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <path d="M222 44 L228 48 L222 52" fill="none" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <path d="M198 128 L212 128 L212 56" fill="none" stroke="var(--warm)" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <rect x="230" y="24" width="82" height="48" rx="10" fill="rgba(255,183,3,0.14)" stroke="var(--warm)"/>
+        <text x="271" y="45" text-anchor="middle" fill="var(--warm)" font-size="10" font-weight="700">tuned FM</text>
+        <text x="271" y="59" text-anchor="middle" fill="var(--ink-soft)" font-size="8">your task, your style</text>
+        <text x="271" y="88" text-anchor="middle" fill="var(--ink-faint)" font-size="8">fine-tuning: you</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 19</div>
+    <h1 class="reveal">The Foundation Model Lifecycle</h1>
+    <p class="lead reveal">A foundation model (FM), such as a large language model (LLM), does not appear fully formed in an app. It moves through seven stages, from choosing data to listening to users, and the exam expects each stage to be recognized by what happens in it and who usually does it.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the seven stages, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The map</div>
+    <h2 class="reveal" style="font-size:24px">Seven stages, in the exam guide's order</h2>
+    <p class="lead reveal" style="font-size:14.5px;margin-bottom:12px">Tap to walk the loop.</p>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>1 Data selection</b>Decide which data the model learns from, and later which data tunes and tests it. Data quality sets the ceiling for everything after.</p></div>
+      <div class="pill" data-step="2"><p><b>2 Model selection and 3 Pre-training</b>Pick a model to build on. Pre-training, the huge first training run that creates a base FM, is done by model providers.</p></div>
+      <div class="pill" data-step="3"><p><b>4 Fine-tuning and 5 Evaluation</b>Adapt the base model to a task with your own examples (optional), then test it (never optional).</p></div>
+      <div class="pill" data-step="4"><p><b style="color:var(--warm)">6 Deployment and 7 Feedback</b>Put the model behind an application, then feed what real use reveals back to stage 1. A loop, not a line.</p></div>
+    </div>` },
+
+  /* 2: data selection */
+  { html: `
+    <div class="eyebrow reveal">Stage 1</div>
+    <h2 class="reveal" style="font-size:24px">Data selection: what goes in decides what comes out</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Relevant and representative</b>The data should cover the domain, languages and kinds of input the model will meet in use. Gaps here show up later as weak or biased answers.</p></div>
+      <div class="pill"><p><b>Cleaned</b>AWS guidance on preparing text for an LLM lists removing duplicates, sensitive personal information, and toxic or irrelevant content.</p></div>
+      <div class="pill"><p><b>Right shape for the stage</b>Pre-training uses vast amounts of <strong>unlabeled</strong> data. Fine-tuning uses a much smaller set of <strong>labeled</strong> examples, such as prompt and ideal-response pairs.</p></div>
+      <div class="pill"><p><b>Allowed to be used</b>Licensing, privacy and governance decide which data may be used at all. Unit 5 covers the governance side.</p></div>
+    </div>` },
+
+  /* 3: model selection and who pre-trains */
+  { html: `
+    <div class="eyebrow reveal">Stages 2 and 3</div>
+    <h2 class="reveal" style="font-size:24px">Most teams select a model; few pre-train one</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Pre-training a new FM takes enormous data and compute, so it is done by model providers. A business typically picks an existing pre-trained FM, for example from Amazon Bedrock or Amazon SageMaker JumpStart.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Model selection weighs</b>Modality, size, accuracy, the model's training data, pricing, context window and inference latency, as AWS's Generative AI Lens lists them. Chapter 29 teaches these criteria in depth.</p></div>
+      <div class="pill"><p><b>Pre-training produces</b>A base model with broad, general ability: it has learned patterns of language (or images, or code) but knows nothing of your business.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Exam signal: "build a brand-new model from scratch" is almost never the cheapest or fastest answer for a business problem.</p>` },
+
+  /* 4: pre-training vs fine-tuning, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Stages 3 and 4</div>
+    <h2 class="reveal" style="font-size:24px">Pre-training builds breadth; fine-tuning adds focus</h2>
+    <div class="art reveal">${A.tune}</div>
+    <div class="stepcaps" style="margin-top:8px">
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Pre-training.</strong> The model learns general patterns from a broad, unlabeled corpus. The result is a base FM.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Fine-tuning.</strong> The same model trains further on a smaller set of labeled examples for one task. Amazon Bedrock offers fine-tuning (labeled data) and continued pre-training (unlabeled domain data), and the customer's data is not used to train the base models. Chapter 38 opens these up.</p>
+    </div>` },
+
+  /* 5: quiz, which stage */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">An insurer picks a text FM in Amazon Bedrock, then trains it further on 4,000 claim notes, each labeled with the correct claim category. Which lifecycle stage is that training run?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Pre-training, because the model is learning from the insurer's data</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>Fine-tuning, because an existing FM is adapted with labeled, task-specific examples</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Model selection, because the insurer is choosing how the model will behave</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Feedback, because the claim categories come from past human decisions</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Training an already pre-trained model on a small labeled set for one task is fine-tuning. Option A is the tempting one, but pre-training is the original broad run on vast unlabeled data that made the base model; the insurer skipped it. Model selection came before, and feedback comes after deployment.</div>` },
+
+  /* 6: evaluation and deployment, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">Stages 5 and 6</div>
+    <h2 class="reveal" style="font-size:24px">Prove it, then ship it</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Evaluation</b>Test the model against the task before users see it: benchmark datasets, human reviewers, and automated metrics. Amazon Bedrock Model Evaluation runs these checks as a managed feature (Chapters 40 and 41).</p></div>
+      <div class="pill" data-step="2"><p><b>Deployment</b>Make the model callable by an application. On Amazon Bedrock that is a managed API with no servers to run; with Amazon SageMaker AI the team hosts the model on an endpoint it configures.</p></div>
+    </div>
+    <div class="stepcaps" style="margin-top:12px">
+      <p class="lead" data-step="1" style="font-size:14.5px">Evaluation gates deployment. A model that fails it goes back to data, model choice or fine-tuning.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Deployment is not the finish line. Once real users arrive, monitoring and feedback begin.</p>
+    </div>` },
+
+  /* 7: feedback closes the loop */
+  { html: `
+    <div class="eyebrow reveal">Stage 7</div>
+    <h2 class="reveal" style="font-size:24px">Feedback turns the line into a loop</h2>
+    <p class="lead reveal" style="margin-bottom:14px">AWS guidance describes running a generative AI application as an ongoing process of continuous improvement, with real-world feedback fed back into the models and systems.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What is collected</b>User ratings (thumbs up or down), corrections, complaints, logged prompts and responses, and monitored quality, cost and latency.</p></div>
+      <div class="pill"><p><b style="color:var(--warm)">Where it goes</b>Back to stage 1: new or corrected examples for the next fine-tuning run, fresher source data, a different model, or new evaluation test cases.</p></div>
+      <div class="pill"><p><b>Human feedback in training</b>Human preferences can also train the model directly, through reinforcement learning from human feedback (RLHF). Chapter 39 covers it.</p></div>
+    </div>` },
+
+  /* 8: quiz, feedback */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A support assistant has been live for three months. Users keep rating its answers on the new returns policy as wrong, and the team logs each case. Which stage is this, and where does it lead?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Evaluation; once a model is deployed, its evaluation results are final</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Pre-training; the team should train a new base FM on its policies</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Deployment; the fix is to move the model to a larger endpoint</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Feedback; the logged cases feed the next pass, starting with data selection</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Ratings and logged failures from real use are feedback, and they flow back to the start: updated policy data, new examples, new test cases. Option B is the tempting overreaction: pre-training a new base FM is provider-scale work. A larger endpoint adds capacity, not knowledge, and evaluation repeats every pass.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 19 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Next: every token in and out of that deployed model has a price.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The loop</b>Data selection, model selection, pre-training, fine-tuning, evaluation, deployment, feedback, and back to data.</p></div>
+      <div class="pill"><p><b>Who does what</b>Providers pre-train on vast unlabeled data. Businesses select a pre-trained FM and may fine-tune it with labeled examples.</p></div>
+      <div class="pill"><p><b>Gates and loops</b>Evaluation gates deployment. Feedback from real use (ratings, logs, monitoring) starts the next pass.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

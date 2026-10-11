@@ -93,6 +93,28 @@ own weighted draw from the section exams. Its blog cluster is complete: eight
 posts listed in the Spark Developer Associate block of blog/CONTENT_PLAN.md,
 with the pillar guide and the quiz linked from the catalog row. The catalog
 row, catalog.json entry, pricing row and footer links are live.)
+In progress: AWS Certified AI Practitioner (AIF-C01) (see
+curriculum-index-aws-aif-c01.md and cert-config-aws-aif-c01.md; the index is
+LOCKED on 11 Oct 2026 against the official exam guide PDF version 1.1 dated
+30 Apr 2026: 58 chapters across 5 units covering all 69 objectives, the first
+Foundational-tier course (difficulty badge `difficulty-badge--foundational`).
+The course lives in `aws-ai-practitioner/` with the `aif-practice-exam-NN.html`
+exam prefix and is built on the v2 template. Units 1 and 2 are live: chapters
+01 to 28 plus their section exams, aif-practice-exam-01 (Unit 1, chapters 1 to
+14) and 02 (Unit 2, chapters 15 to 28), 14 questions and 28 minutes each, one
+per chapter, headers citing chapter and objective, a few select-two items, 70%
+practice target. Chapters 14 and 28 close their units, so their NAV.next is
+the unit's exam ("Practice test"). The course home lists all 58 chapters and
+shows Units 3 to 5 as "Coming soon"; the Practice toggle is disabled until a
+hub exists. Paid from launch: course id aws-aif, $9.99, Unit 1 free through
+aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
+checkout needs the Netlify env var STRIPE_PRICE_AWS_AIF set to a $9.99 Stripe
+Price. Still to come: Units 3 to 5 (chapters 29 to 58), exams 03 (Unit 3) and
+04 (Units 4 and 5), the three sealed 50-question, 90-minute mocks (05 to 07,
+10/12/14/7/7 per domain), and a practice hub at practice/aws-aif-c01. The
+engine has no ordering or matching question types; the course home says so.
+Amazon SageMaker Model Monitor is closed to new customers (30 Jul 2026), so no
+question should hinge on it.)
 
 ## Site structure
 

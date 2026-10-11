@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Models, Algorithms, Training and Inference · AWS AI Practitioner</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-ai-practitioner/lesson-02-models-training-inference.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #080d14;            /* page background */
+    --bg-tint: #11253a;       /* ambient glow tint behind the card */
+    --accent: #6cc4ff;        /* topic color: sky, Unit 1 Ch 01-07 */
+    --accent-glow: rgba(108,196,255,0.12);  /* correct-answer fill */
+    --accent-ink: #080d14;    /* text on top of the accent key chip */
+    --warm: #ffb703;
+    --sky: #7dd3fc;
+    --warn: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 02 · Models, algorithms, training, and inference
+   Objective 1.1.1 (part: model, algorithm, training and inferencing,
+   bias, fairness, fit). Bias and fairness are taught as terms only;
+   Chapter 44 treats them as responsible-AI features and Chapter 48 is
+   their home chapter (effects and detection). Inference types wait for
+   Chapter 03.
+   Shape: cover, algorithm vs model (step build), training, inference,
+   quiz (which activity is inference), fit (step build), diagnosing fit
+   from training vs new-data results (step build), bias and fairness as
+   terms, quiz (overfitting), recap. 10 cards, two quizzes, correct
+   letters C and A.
+   Sources: aws.amazon.com/what-is/inferencing (inferencing is an AI model
+   generating predictions or outputs from new data, using the learned
+   parameters from training); aws.amazon.com/what-is/ai-model (a model is
+   what training produces); docs.aws.amazon.com/prescriptive-guidance/
+   latest/gen-ai-inference-architecture-and-best-practices-on-aws/
+   challenges-of-inference-compared-to-training (training is predictable,
+   compute-bound and throughput-oriented; inference is often
+   unpredictable, memory-bound and latency sensitive);
+   docs.aws.amazon.com/marketplace/latest/userguide/ml-overview.html
+   (training produces model artifacts); aws.amazon.com/what-is/
+   supervised-learning (underfitting: a model too simple for the data;
+   overfitting: following training patterns too closely, inconsistent
+   results on new data); docs.aws.amazon.com/machine-learning/latest/dg/
+   model-fit-underfitting-vs-overfitting.html (poor on training data is
+   underfitting; good on training but poor on evaluation data is
+   overfitting); aws.amazon.com/ai/responsible-ai (fairness: considering
+   impacts on different groups of stakeholders) and docs.aws.amazon.com/
+   sagemaker/latest/dg/clarify-detect-data-bias.html (bias as an
+   imbalance in data or predictions across groups such as age or income
+   bracket, resulting from the data or the algorithm), kept at
+   definition level.
+   Cover animates (training data flows into the algorithm and a model
+   forms; then new inputs pass through the model and predictions come
+   out). Step builds on card 1 (algorithm vs model), card 5 (fit) and
+   card 6 (diagnosing fit).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-03-inference-types.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c02r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(108,196,255,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(108,196,255,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c02d { animation: c02in 4s ease-in infinite; }
+      .c02d.d2 { animation-delay: 0.5s; } .c02d.d3 { animation-delay: 1s; } .c02d.d4 { animation-delay: 1.5s; }
+      @keyframes c02in { 0% { transform: translateX(0px); opacity: 0; } 10% { opacity: 1; } 45% { transform: translateX(78px); opacity: 1; } 55%, 100% { transform: translateX(78px); opacity: 0; } }
+      .c02q { animation: c02out 4s ease-in-out infinite; animation-delay: 2s; }
+      .c02q.d2 { animation-delay: 3s; }
+      @keyframes c02out { 0% { transform: translateX(0px); opacity: 0; } 10% { opacity: 1; } 60% { transform: translateX(92px); opacity: 1; } 75%, 100% { transform: translateX(92px); opacity: 0; } }
+      .c02m { animation: c02glow 4s ease-in-out infinite; }
+      @keyframes c02glow { 0%, 40% { stroke-opacity: 0.4; } 55% { stroke-opacity: 1; } 85%, 100% { stroke-opacity: 0.4; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c02d, .c02q { animation: none; opacity: 1; transform: none; }
+        .c02m { animation: none; stroke-opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="88" fill="url(#c02r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <text x="80" y="22" fill="var(--warm)" font-size="10" font-weight="700">TRAINING</text>
+      <text x="240" y="22" fill="var(--accent)" font-size="10" font-weight="700">INFERENCE</text>
+      <path d="M160 14 L160 186" stroke="var(--line)" stroke-dasharray="3 4"/>
+      <rect x="10" y="40" width="40" height="80" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="30" y="134" fill="var(--ink-faint)" font-size="8.5">data</text>
+      <path d="M18 54 H42 M18 66 H42 M18 78 H42 M18 90 H42 M18 102 H42" stroke="var(--ink-faint)" stroke-opacity="0.6"/>
+      <rect x="104" y="58" width="44" height="44" rx="10" fill="rgba(255,183,3,0.14)" stroke="var(--warm)"/>
+      <text x="126" y="84" fill="var(--warm)" font-size="8.5" font-weight="700">algorithm</text>
+      <text x="126" y="118" fill="var(--ink-faint)" font-size="8">learns</text>
+      <g class="c02d"><circle cx="40" cy="60" r="3.5" fill="var(--ink-soft)"/></g>
+      <g class="c02d d2"><circle cx="40" cy="72" r="3.5" fill="var(--ink-soft)"/></g>
+      <g class="c02d d3"><circle cx="40" cy="84" r="3.5" fill="var(--ink-soft)"/></g>
+      <g class="c02d d4"><circle cx="40" cy="96" r="3.5" fill="var(--ink-soft)"/></g>
+      <path d="M126 104 Q126 150 196 150" fill="none" stroke="var(--warm)" stroke-dasharray="3 3"/>
+      <rect class="c02m" x="196" y="128" width="88" height="44" rx="10" fill="rgba(108,196,255,0.12)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="240" y="148" fill="var(--accent)" font-size="10.5" font-weight="700">model</text>
+      <text x="240" y="161" fill="var(--ink-faint)" font-size="8">learned parameters</text>
+      <text x="182" y="62" fill="var(--ink-soft)" font-size="8.5">new input</text>
+      <text x="298" y="62" fill="var(--ink-soft)" font-size="8.5">prediction</text>
+      <path d="M176 78 L300 78" stroke="var(--line)"/>
+      <path d="M240 82 L240 126" stroke="var(--accent)" stroke-opacity="0.5"/>
+      <g class="c02q"><rect x="172" y="71" width="16" height="14" rx="3" fill="rgba(125,211,252,0.25)" stroke="var(--sky)"/></g>
+      <g class="c02q d2"><rect x="172" y="71" width="16" height="14" rx="3" fill="rgba(125,211,252,0.25)" stroke="var(--sky)"/></g>
+    </g>
+    <text x="160" y="196" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Train once, then infer on every new request.</text>
+  </svg>`,
+
+  algo: `<svg viewBox="0 0 320 120">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g data-step="1">
+        <rect x="8" y="30" width="86" height="56" rx="10" fill="rgba(255,183,3,0.12)" stroke="var(--warm)"/>
+        <text x="51" y="54" fill="var(--warm)" font-size="10.5" font-weight="700">algorithm</text>
+        <text x="51" y="70" fill="var(--ink-faint)" font-size="8">the method</text>
+      </g>
+      <g data-step="2">
+        <rect x="117" y="10" width="86" height="34" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="160" y="31" fill="var(--ink-soft)" font-size="9.5">training data</text>
+        <path d="M160 46 L160 56" stroke="var(--line)"/>
+        <path d="M96 58 L222 58" stroke="var(--warm)" stroke-width="1.5"/><path d="M218 54 L224 58 L218 62" fill="none" stroke="var(--warm)" stroke-width="1.5"/>
+        <text x="160" y="76" fill="var(--warm)" font-size="9" font-weight="700">training</text>
+      </g>
+      <g data-step="3">
+        <rect x="226" y="30" width="86" height="56" rx="10" fill="var(--accent)"/>
+        <text x="269" y="54" fill="var(--accent-ink)" font-size="10.5" font-weight="700">model</text>
+        <text x="269" y="70" fill="var(--accent-ink)" font-size="8">the result</text>
+        <text x="269" y="106" fill="var(--ink-faint)" font-size="8.5">saved as model artifacts</text>
+      </g>
+    </g>
+  </svg>`,
+
+  fit: `<svg viewBox="0 0 320 120">
+    <g font-family="Hanken Grotesk" text-anchor="middle" font-size="9.5" font-weight="700">
+      <g fill="var(--ink-soft)">
+        <circle cx="16" cy="88" r="2.6"/><circle cx="26" cy="70" r="2.6"/><circle cx="38" cy="58" r="2.6"/><circle cx="50" cy="50" r="2.6"/><circle cx="62" cy="54" r="2.6"/><circle cx="74" cy="44" r="2.6"/><circle cx="86" cy="52" r="2.6"/><circle cx="96" cy="66" r="2.6"/>
+        <circle cx="124" cy="88" r="2.6"/><circle cx="134" cy="70" r="2.6"/><circle cx="146" cy="58" r="2.6"/><circle cx="158" cy="50" r="2.6"/><circle cx="170" cy="54" r="2.6"/><circle cx="182" cy="44" r="2.6"/><circle cx="194" cy="52" r="2.6"/><circle cx="204" cy="66" r="2.6"/>
+        <circle cx="232" cy="88" r="2.6"/><circle cx="242" cy="70" r="2.6"/><circle cx="254" cy="58" r="2.6"/><circle cx="266" cy="50" r="2.6"/><circle cx="278" cy="54" r="2.6"/><circle cx="290" cy="44" r="2.6"/><circle cx="302" cy="52" r="2.6"/><circle cx="312" cy="66" r="2.6"/>
+      </g>
+      <g data-step="1">
+        <path d="M12 64 L100 60" stroke="var(--warn)" stroke-width="2"/>
+        <text x="56" y="112" fill="var(--warn)">underfit</text>
+      </g>
+      <g data-step="2">
+        <path d="M120 92 Q150 40 180 48 Q198 52 208 70" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <text x="164" y="112" fill="var(--accent)">good fit</text>
+      </g>
+      <g data-step="3">
+        <path d="M232 88 L242 70 L254 58 L266 50 L278 54 L290 44 L302 52 L312 66" fill="none" stroke="var(--warm)" stroke-width="2"/>
+        <text x="272" y="112" fill="var(--warm)">overfit</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 02</div>
+    <h1 class="reveal">Models, algorithms, training and inference</h1>
+    <p class="lead reveal">The exam assumes a small working vocabulary: what a model is, how it differs from an algorithm, the two phases of its life, what a good fit looks like, and what bias and fairness mean. This chapter fixes each term in place.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: algorithm vs model, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Two words people swap</div>
+    <h2 class="reveal" style="font-size:25px">The algorithm is the method; the model is the result</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 12px">${A.algo}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">Tap to see how one becomes the other.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">An <strong>algorithm</strong> is a general procedure for learning, such as linear regression or a decision tree. It knows nothing about your business yet.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Run on your <strong>training data</strong>, the algorithm adjusts internal values until its outputs match the examples as closely as it can.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">What comes out is the <strong>model</strong>: those learned values (parameters), saved as artifacts you can deploy. Same algorithm, different data, different model.</p>
+    </div>` },
+
+  /* 2: training */
+  { html: `
+    <div class="eyebrow reveal">Phase one</div>
+    <h2 class="reveal" style="font-size:25px">Training: where the model learns</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What happens</b>The algorithm processes many examples and tunes the model's parameters to reduce its errors on them.</p></div>
+      <div class="pill"><p><b>What it costs</b>Training is compute-heavy but predictable: a large job run once, or again on a schedule when the model is refreshed.</p></div>
+      <div class="pill"><p><b>What it produces</b>Model artifacts: the trained model, ready to be deployed. Nothing is predicted for real users yet.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3: inference */
+  { html: `
+    <div class="eyebrow reveal">Phase two</div>
+    <h2 class="reveal" style="font-size:25px">Inference: where the model works</h2>
+    <p class="lead reveal" style="margin-bottom:14px">AWS defines <strong>inferencing</strong> as a trained model generating predictions or outputs from new data it has not seen.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Every request</b>Each fraud check, product recommendation or chatbot reply is one inference. A model is trained a few times and inferred millions of times.</p></div>
+      <div class="pill"><p><b>Different pressure</b>Inference traffic is less predictable than training and often latency sensitive, because a user or a system is waiting for the answer.</p></div>
+      <div class="pill"><p><b>Many ways to serve it</b>Real-time, batch, asynchronous or serverless: Chapter 03 is the trade-off.</p></div>
+    </div>` },
+
+  /* 4: quiz, which is inference */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A retailer built a model that predicts which customers are about to cancel their membership. Which activity is inference?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Feeding three years of past cancellations to the algorithm so it can learn</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Choosing a decision tree algorithm instead of linear regression</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>Scoring this week's active members to get each one's cancellation risk</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Saving the learned parameters as model artifacts in storage</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Inference is the trained model producing outputs on new data: this week's members were never in the training set. Option A is the tempting one because it also runs data through the system, but data with known outcomes used to adjust the model is training. B is choosing the algorithm, and D is the last step of training.</div>` },
+
+  /* 5: fit, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Fit</div>
+    <h2 class="reveal" style="font-size:25px">Too simple, about right, too eager</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 12px">${A.fit}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px"><strong>Fit</strong> is how well a model captures the real pattern in its data. The same points, three models. Tap through.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Underfitting:</strong> the model is too simple for the data, so it misses the pattern even on examples it trained on.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Good fit:</strong> it follows the general trend, so it generalizes to new data.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Overfitting:</strong> it follows the training points too exactly, noise included, and gives inconsistent results on new data.</p>
+    </div>` },
+
+  /* 6: diagnosing fit, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Telling them apart</div>
+    <h2 class="reveal" style="font-size:24px">Compare training results with new-data results</h2>
+    <div style="margin-top:2px">
+      <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 8px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Diagnosis</div><div>On training data</div><div>On new data</div>
+      </div>
+      <div data-step="1" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 8px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--warn);font-weight:600">Underfit</div><div>Poor</div><div>Poor</div>
+      </div>
+      <div data-step="2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 8px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--warm);font-weight:600">Overfit</div><div>Very good</div><div>Much worse</div>
+      </div>
+      <div data-step="3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 8px;padding:9px 4px;font-size:13px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:600">Good fit</div><div>Good</div><div>Close to training</div>
+      </div>
+    </div>
+    <p class="lead reveal" style="font-size:14.5px;margin-top:14px">The giveaway for overfitting is the <strong>gap</strong>: a model that scores far better on data it has seen than on data it has not has memorized rather than learned. That is why models are evaluated on data held back from training.</p>` },
+
+  /* 7: bias and fairness as terms */
+  { html: `
+    <div class="eyebrow reveal">Two more terms</div>
+    <h2 class="reveal" style="font-size:25px">Bias and fairness</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Bias</b>A systematic skew in a model's outputs, often inherited from training data that under-represents some people or situations. A hiring model trained mostly on one group's résumés can learn to favor that group.</p></div>
+      <div class="pill"><p><b>Fairness</b>The goal that a model's outcomes are equitable across groups, such as age, gender or region, rather than systematically worse for some of them.</p></div>
+      <div class="pill"><p><b>Where they return</b>Chapter 44 treats both as features of responsible AI; Chapter 48 covers how bias shows up and how to detect it.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 8: quiz, overfitting */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A model that predicts delivery delays is right 98% of the time on the shipments it was trained on, but only 71% of the time on shipments from the following month. What is the most likely explanation?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>The model is overfitting: it memorized the training data instead of the general pattern</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>The model is underfitting: it is too simple to capture the pattern</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>The model is biased, because its accuracy differs between two sets of data</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Inference is failing, so the model should be served on faster hardware</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Excellent results on seen data with a large drop on unseen data is the signature of overfitting. Option B is the tempting one because the new-data score is poor, but an underfit model also scores poorly on its own training data, and this one scores 98%. C misuses bias, which is about systematic skew against groups or situations, and D confuses accuracy with speed.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 02 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: the four ways to serve inference, and how to choose.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Algorithm and model</b>The algorithm is the learning method; the model is the trained result, saved as artifacts.</p></div>
+      <div class="pill"><p><b>Training and inference</b>Training learns from examples, occasionally and compute-heavy. Inference applies the model to new data on every request.</p></div>
+      <div class="pill"><p><b>Fit, bias, fairness</b>Underfit: poor everywhere. Overfit: great on training, worse on new data. Bias is systematic skew; fairness is equitable outcomes across groups.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
