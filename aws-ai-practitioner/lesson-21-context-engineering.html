@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Context Engineering · AWS AI Practitioner</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-ai-practitioner/lesson-21-context-engineering.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #120812;            /* page background */
+    --bg-tint: #321532;       /* ambient glow tint behind the card */
+    --accent: #f06ee3;        /* topic color: Unit 2 fuchsia (generation) */
+    --accent-glow: rgba(240,110,227,0.12);  /* correct-answer fill */
+    --accent-ink: #120812;    /* text on top of the accent key chip */
+    --warm: #ffb703;          /* the user question block */
+    --sky: #7dd3fc;           /* retrieved knowledge and tools */
+    --lav: #c4b5fd;           /* who the user is: profile and memory */
+    --warn: #f87171;          /* noise kept out of the window */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Chapter 21 · Context Engineering
+   Objective 2.1.5 (new in guide v1.1): describe the role of context
+   engineering in FM applications.
+   Scope: what context engineering is, what fills the context window, why
+   curating it matters (limits, cost, latency, attention), and the core
+   techniques (select, compress, order, persist outside the window).
+   Cross-links, not repeated: Ch 15 (tokens), Ch 20 (token pricing),
+   Ch 22 and 23 (agent memory, tools, MCP), Ch 31 (RAG and Amazon Bedrock
+   Knowledge Bases), Ch 34 (prompt anatomy).
+   Shape: cover, prompt vs context engineering, the layers of the window
+   (step build), why it matters (step build), quiz (assistant ignores who
+   the customer is), four techniques (step build), conversation history
+   strategies, quiz (long chat grows slow and forgetful), recap. 9 cards,
+   two quizzes.
+   Sources: AIF-C01 exam guide v1.1 (objective wording);
+   docs.aws.amazon.com/prescriptive-guidance/latest/gen-ai-lifecycle-
+   operational-excellence/dev-experimenting-context.html ("Understanding
+   context engineering for generative AI": the context window treated as a
+   dynamic workspace rather than a static input field; prompt engineering is
+   what to ask, context engineering is what to show; components: user
+   profile, memory, tools and MCP servers, knowledge bases (RAG));
+   aws.amazon.com/marketplace/build-learn/ai-agent-learning-series/
+   agent-memory-systems (the window holds system prompts, tool schemas,
+   history, retrieved documents and the generated output; windows are
+   measured in tokens and every token adds cost and latency; content at the
+   start and end is weighted more than the middle; history strategies:
+   full, windowed, rolling summary, hybrid); docs.aws.amazon.com/
+   prescriptive-guidance/latest/mcp-strategies (every tool definition
+   consumes context tokens; scope tools to workflows); docs.aws.amazon.com/
+   prescriptive-guidance/latest/agentic-ai-foundations/generative-ai-
+   agents.html (long-term memory kept in an external store, retrieved and
+   injected into the prompt context at runtime); docs.aws.amazon.com/
+   wellarchitected/latest/agentic-ai-lens/agentperf03.html (memory,
+   context and RAG optimization). Direct page fetches were blocked in this
+   environment; facts were confirmed through AWS-domain search results of
+   those pages. No AgentCore feature is named here (Ch 27 owns it).
+   Cover animates (candidate blocks slide into the context window one by
+   one while a stale, irrelevant block is struck out and left behind).
+   Step builds on card 2 (window layers), card 3 (why it matters) and
+   card 5 (techniques).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-22-ai-agents.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c21r" cx="0.6" cy="0.45" r="0.6">
+        <stop offset="0" style="stop-color:rgba(240,110,227,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(240,110,227,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c21b { animation: c21slot 9s cubic-bezier(0.4,0,0.2,1) infinite; opacity: 0.4; }
+      .c21b.d1 { animation-delay: 0.7s; } .c21b.d2 { animation-delay: 1.4s; } .c21b.d3 { animation-delay: 2.1s; }
+      .c21b.d4 { animation-delay: 2.8s; } .c21b.d5 { animation-delay: 3.5s; }
+      @keyframes c21slot { 0% { transform: translateX(0px); opacity: 0.4; } 10% { transform: translateX(166px); opacity: 1; } 78% { transform: translateX(166px); opacity: 1; } 88%, 100% { transform: translateX(0px); opacity: 0.4; } }
+      .c21x { animation: c21drop 3s ease-in-out infinite; }
+      @keyframes c21drop { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c21b { animation: none; opacity: 1; transform: translateX(166px); }
+        .c21x { animation: none; opacity: 0.7; }
+      }
+    </style>
+    <ellipse cx="196" cy="92" rx="140" ry="88" fill="url(#c21r)"/>
+    <text x="64" y="20" text-anchor="middle" fill="var(--ink-faint)" font-family="Hanken Grotesk" font-size="8.5">candidates</text>
+    <rect x="176" y="24" width="124" height="142" rx="10" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="238" y="18" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="9.5" font-weight="700">context window</text>
+    <g stroke="var(--line)" fill="none" stroke-dasharray="2 3">
+      <rect x="182" y="32" width="112" height="17" rx="4"/><rect x="182" y="53" width="112" height="17" rx="4"/>
+      <rect x="182" y="74" width="112" height="17" rx="4"/><rect x="182" y="95" width="112" height="17" rx="4"/>
+      <rect x="182" y="116" width="112" height="17" rx="4"/><rect x="182" y="137" width="112" height="17" rx="4"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="8.5" font-weight="600">
+      <g class="c21b"><rect x="16" y="32" width="112" height="17" rx="4" fill="rgba(240,110,227,0.22)" stroke="var(--accent)"/><text x="72" y="43.5" text-anchor="middle" fill="var(--ink)">instructions</text></g>
+      <g class="c21b d1"><rect x="16" y="53" width="112" height="17" rx="4" fill="rgba(196,181,253,0.2)" stroke="var(--lav)"/><text x="72" y="64.5" text-anchor="middle" fill="var(--ink)">user profile</text></g>
+      <g class="c21b d2"><rect x="16" y="74" width="112" height="17" rx="4" fill="rgba(196,181,253,0.2)" stroke="var(--lav)"/><text x="72" y="85.5" text-anchor="middle" fill="var(--ink)">memory</text></g>
+      <g class="c21b d3"><rect x="16" y="95" width="112" height="17" rx="4" fill="rgba(125,211,252,0.2)" stroke="var(--sky)"/><text x="72" y="106.5" text-anchor="middle" fill="var(--ink)">retrieved passages</text></g>
+      <g class="c21b d4"><rect x="16" y="116" width="112" height="17" rx="4" fill="rgba(125,211,252,0.2)" stroke="var(--sky)"/><text x="72" y="127.5" text-anchor="middle" fill="var(--ink)">tool definitions</text></g>
+      <g class="c21b d5"><rect x="16" y="137" width="112" height="17" rx="4" fill="rgba(255,183,3,0.2)" stroke="var(--warm)"/><text x="72" y="148.5" text-anchor="middle" fill="var(--ink)">user question</text></g>
+      <g class="c21x"><rect x="16" y="160" width="112" height="17" rx="4" fill="rgba(248,113,113,0.12)" stroke="var(--warn)" stroke-dasharray="3 2"/><text x="72" y="171.5" text-anchor="middle" fill="var(--warn)">stale, off-topic docs</text><path d="M20 168.5 L124 168.5" stroke="var(--warn)" stroke-width="1.5"/></g>
+    </g>
+    <text x="238" y="182" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9">rebuilt for every call</text>
+    <text x="160" y="196" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">The model only sees what makes it into the window.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Chapter 21</div>
+    <h1 class="reveal">Context Engineering</h1>
+    <p class="lead reveal">A foundation model (FM), such as a large language model (LLM), answers from two things only: what it learned in training and what is in its context window right now. Context engineering is the job of deciding what goes into that window on each call.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: prompt vs context engineering */
+  { html: `
+    <div class="eyebrow reveal">The idea</div>
+    <h2 class="reveal" style="font-size:24px">What to ask vs what to show</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Prompt engineering</b>Crafting the instruction: wording, examples and format. It is about <strong>what to ask</strong> (Chapters 34 and 35).</p></div>
+      <div class="pill"><p><b>Context engineering</b>Assembling everything else the model needs for this request: facts, history, user details, available tools. It is about <strong>what to show</strong>.</p></div>
+      <div class="pill"><p><b>A workspace, not a text box</b>AWS guidance describes the context window as a dynamic workspace filled with the right components for each task, not a static input field.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">The model keeps no memory between calls. Anything it should know about the user or the conversation has to be put back into the window each time.</p>` },
+
+  /* 2: layers of the window, step build */
+  { steps: 5,
+    html: `
+    <div class="eyebrow reveal">What goes in</div>
+    <h2 class="reveal" style="font-size:24px">The layers of a context window</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Instructions and the question</b>The system prompt setting role and rules, plus the user's request.</p></div>
+      <div class="pill" data-step="2"><p><b style="color:var(--lav)">User profile</b>Who is asking: plan tier, region, preferences.</p></div>
+      <div class="pill" data-step="3"><p><b style="color:var(--lav)">Memory</b>Earlier turns, plus stored facts from past sessions.</p></div>
+      <div class="pill" data-step="4"><p><b style="color:var(--sky)">Retrieved knowledge</b>Passages fetched so answers rest on current facts: Retrieval Augmented Generation (RAG), such as Amazon Bedrock Knowledge Bases (Chapter 31).</p></div>
+      <div class="pill" data-step="5"><p><b style="color:var(--sky)">Tools and their results</b>Functions the model may call, often through Model Context Protocol (MCP) servers, and what they returned (Chapters 22 and 23).</p></div>
+    </div>` },
+
+  /* 3: why it matters, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Why curate</div>
+    <h2 class="reveal" style="font-size:24px">More context is not better context</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>The window is finite</b>It is measured in tokens and holds both the input and the generated output. Overfill it and something has to be cut.</p></div>
+      <div class="pill" data-step="2"><p><b>Every token is paid for</b>Each token in the window adds cost and latency on every call (Chapter 20). Tool definitions count too: AWS guidance notes that every tool description consumes context tokens.</p></div>
+      <div class="pill" data-step="3"><p><b style="color:var(--warn)">Noise dilutes the signal</b>AWS guidance notes that models weight the start and end of the window more than the middle, so filler can bury the one fact that matters. Stale or off-topic passages can also lead to wrong answers.</p></div>
+    </div>
+    <div class="stepcaps" style="margin-top:12px">
+      <p class="lead" data-step="3" style="font-size:14px">The goal: the smallest set of context that lets the model do this task well.</p>
+    </div>` },
+
+  /* 4: quiz, missing context */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A telecom's support assistant answers every customer the same generic way. It ignores the customer's plan and forgets what they said two messages earlier, even though both are stored in the company's systems. What is the most direct fix?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Fine-tune the model on last year's support transcripts</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Raise the temperature so replies vary between customers</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Switch to a model with a larger context window</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Add the customer's profile and the recent conversation history to the context sent with each request</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The data exists but never reaches the model. Putting the profile and conversation memory into the window on each call is context engineering. Option A is the tempting one, but fine-tuning teaches general patterns; it cannot know this customer's plan or last message. A bigger window (C) helps nothing if nothing new goes in, and temperature only changes randomness.</div>` },
+
+  /* 5: techniques, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Techniques</div>
+    <h2 class="reveal" style="font-size:24px">Select, compress, order, persist</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>Select</b>Retrieve only the passages relevant to this question, and offer only the tools this workflow needs.</p></div>
+      <div class="pill" data-step="2"><p><b>Compress</b>Summarize older conversation turns and long documents instead of pasting them whole.</p></div>
+      <div class="pill" data-step="3"><p><b>Order</b>Put key instructions and facts where they carry most weight, at the start or end of the window, not lost in the middle.</p></div>
+      <div class="pill" data-step="4"><p><b>Persist outside the window</b>Keep long-term memory in an external store and retrieve only what is relevant at each step, rather than carrying everything in every call.</p></div>
+    </div>` },
+
+  /* 6: history strategies */
+  { html: `
+    <div class="eyebrow reveal">Conversation memory</div>
+    <h2 class="reveal" style="font-size:24px">Four ways to carry a chat forward</h2>
+    <div style="margin-top:4px" class="reveal">
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:0 8px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Strategy</div><div>Trade-off</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Full history</div><div>Nothing lost, but cost and latency grow every turn until the window fills.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Windowed (last N turns)</div><div>Steady size, but older details drop out completely.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Rolling summary</div><div>Compact, keeps the gist, but exact wording of early turns is lost.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:0 8px;padding:8px 4px;font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:600">Hybrid</div><div>Recent turns word for word plus a summary of older ones: bounded size, little forgotten.</div>
+      </div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">These four strategies appear in AWS's guidance on agent memory. Chapter 22 returns to memory as part of an agent.</p>` },
+
+  /* 7: quiz, growing chat */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A planning assistant resends the entire conversation on every turn. In long sessions each reply gets slower and pricier, and answers start overlooking requirements the user gave early on. Which context approach best addresses all three problems?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Keep sending the full history, but move to a model with a larger context window</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>Keep the latest turns word for word and replace older turns with a running summary that records the key requirements</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Send only the last two turns and drop everything older</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Remove the system instructions to make room for more history</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Recent turns plus a summary keep the window bounded, so cost and latency stop climbing, and the summary keeps early requirements visible. Option A is the tempting one, but a bigger window still pays for every old token and still buries details mid-window. C forgets early requirements, and D discards the rules.</div>` },
+
+  /* 8: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 21 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Next: what happens when the model can also act, not just answer.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The role</b>Context engineering decides what the model is shown on each call; prompt engineering decides what it is asked.</p></div>
+      <div class="pill"><p><b>The layers</b>Instructions and question, user profile, memory, retrieved knowledge (RAG), tool definitions and results (MCP).</p></div>
+      <div class="pill"><p><b>The discipline</b>The window is finite and every token costs, so select, compress, order, and keep long-term memory outside the window.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>

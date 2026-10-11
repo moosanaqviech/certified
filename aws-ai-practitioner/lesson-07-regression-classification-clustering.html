@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Regression, Classification or Clustering · AWS AI Practitioner</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-ai-practitioner/lesson-07-regression-classification-clustering.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #080d14;            /* page background */
+    --bg-tint: #11253a;       /* ambient glow tint behind the card */
+    --accent: #6cc4ff;        /* sky: Unit 1 chapters 01 to 07 */
+    --accent-glow: rgba(108,196,255,0.12);  /* correct-answer fill */
+    --accent-ink: #080d14;    /* text on top of the accent key chip */
+    --warm: #ffb703;          /* extra: cluster color in SVGs */
+    --lav: #c4b5fd;           /* extra: clustering and class A in SVGs */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Chapter 07 · Regression, Classification or Clustering
+   Objective 1.2.3: select the appropriate AI/ML techniques for specific
+   use cases (regression, classification, clustering).
+   Trade-off lesson (TO), fixed shape with three options: cover, shared
+   ground (start from the question being asked, step build), one card
+   each for regression, classification and clustering, side by side
+   comparison (step build), decision signals (step build), two quiz
+   cards testing opposite directions (discovering customer groups with no
+   labels: clustering over classification; routing tickets to six known,
+   already-labeled queues: classification over clustering), a third quiz
+   separating regression from classification (days until delivery), and
+   a recap. 11 cards, three quizzes.
+   Sources: docs.aws.amazon.com/sagemaker/latest/dg/algorithms-tabular.html
+   and xgboost.html (built-in tabular algorithms such as Linear Learner
+   and XGBoost handle classification or regression; Linear Learner fits a
+   linear function for regression or a linear threshold function for
+   classification; XGBoost covers regression, binary and multiclass
+   classification, and ranking); docs.aws.amazon.com/sagemaker/latest/dg/
+   algorithms-unsupervised.html (K-Means finds discrete groupings whose
+   members are as similar as possible to each other and as different as
+   possible from other groups; Random Cut Forest detects anomalous points);
+   docs.aws.amazon.com/sagemaker/latest/dg/autopilot-problem-types.html
+   (problem types regression, binary classification and multiclass
+   classification; regression metrics MSE, MAE, RMSE, R2; classification
+   metrics accuracy, precision, recall, F1, AUC). Scope from the AIF-C01
+   exam guide v1.1.
+   Cover animates (three plots: a regression line draws and a point reads
+   off a number, a new point takes a class across a boundary, grey points
+   take on cluster colors). Step builds on card 1 (shared ground), card 5
+   (side by side) and card 6 (decision signals).
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-08-real-world-ai-applications.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c07r" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" style="stop-color:rgba(108,196,255,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(108,196,255,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c07line { stroke-dasharray: 90; animation: c07draw 6s ease-in-out infinite; }
+      @keyframes c07draw { 0%, 8% { stroke-dashoffset: 90; } 35%, 88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 90; } }
+      .c07num { animation: c07show 6s ease-in-out infinite; }
+      @keyframes c07show { 0%, 38% { opacity: 0; } 48%, 88% { opacity: 1; } 96%, 100% { opacity: 0; } }
+      .c07new { animation: c07color 6s ease-in-out infinite; }
+      @keyframes c07color { 0%, 30% { fill: var(--surface-2); stroke: var(--ink-soft); } 45%, 88% { fill: var(--accent); stroke: var(--accent); } 100% { fill: var(--surface-2); stroke: var(--ink-soft); } }
+      .c07g { animation: c07tint 6s ease-in-out infinite; }
+      .c07g.k1 { --kc: var(--lav); } .c07g.k2 { --kc: var(--warm); } .c07g.k3 { --kc: var(--accent); }
+      @keyframes c07tint { 0%, 25% { fill: var(--ink-faint); } 45%, 88% { fill: var(--kc); } 100% { fill: var(--ink-faint); } }
+      .c07ring { animation: c07show 6s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        .c07line { animation: none; stroke-dashoffset: 0; }
+        .c07num, .c07ring { animation: none; opacity: 1; }
+        .c07new { animation: none; fill: var(--accent); stroke: var(--accent); }
+        .c07g { animation: none; fill: var(--kc); }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="88" fill="url(#c07r)"/>
+    <g font-family="Hanken Grotesk" font-weight="700" font-size="9.5" text-anchor="middle">
+      <text x="56" y="22" fill="var(--ink)">regression</text>
+      <text x="160" y="22" fill="var(--ink)">classification</text>
+      <text x="264" y="22" fill="var(--ink)">clustering</text>
+    </g>
+    <rect x="8" y="32" width="96" height="124" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="112" y="32" width="96" height="124" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <rect x="216" y="32" width="96" height="124" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+    <g stroke="var(--line)" stroke-width="1.2" fill="none"><path d="M20 44 V144 H96"/><path d="M124 44 V144 H200"/><path d="M228 44 V144 H304"/></g>
+    <g fill="var(--ink-soft)">
+      <circle cx="30" cy="130" r="2.6"/><circle cx="38" cy="122" r="2.6"/><circle cx="46" cy="118" r="2.6"/><circle cx="52" cy="106" r="2.6"/>
+      <circle cx="60" cy="102" r="2.6"/><circle cx="68" cy="92" r="2.6"/><circle cx="76" cy="84" r="2.6"/><circle cx="84" cy="70" r="2.6"/>
+    </g>
+    <path class="c07line" d="M26 134 L92 64" stroke="var(--accent)" stroke-width="2" fill="none"/>
+    <g class="c07num">
+      <circle cx="72" cy="85.5" r="4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+      <path d="M72 89 V144" stroke="var(--accent)" stroke-dasharray="2 2"/>
+      <rect x="28" y="50" width="38" height="16" rx="8" fill="rgba(108,196,255,0.18)" stroke="var(--accent)"/>
+      <text x="47" y="61.5" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">412.7</text>
+    </g>
+    <path d="M136 140 L196 52" stroke="var(--ink-faint)" stroke-dasharray="4 3"/>
+    <g fill="var(--lav)"><circle cx="134" cy="66" r="3"/><circle cx="144" cy="58" r="3"/><circle cx="140" cy="84" r="3"/><circle cx="152" cy="72" r="3"/><circle cx="134" cy="102" r="3"/></g>
+    <g fill="var(--accent)"><circle cx="176" cy="122" r="3"/><circle cx="190" cy="108" r="3"/><circle cx="184" cy="134" r="3"/><circle cx="196" cy="126" r="3"/><circle cx="168" cy="138" r="3"/></g>
+    <circle class="c07new" cx="180" cy="94" r="4.5" stroke-width="1.5"/>
+    <text class="c07num" x="180" y="84" text-anchor="middle" fill="var(--accent)" font-family="Hanken Grotesk" font-size="8.5" font-weight="700">class B</text>
+    <circle class="c07ring" cx="248" cy="66" r="15" fill="none" stroke="var(--lav)" stroke-dasharray="3 3"/>
+    <circle class="c07ring" cx="286" cy="80" r="14" fill="none" stroke="var(--warm)" stroke-dasharray="3 3"/>
+    <circle class="c07ring" cx="262" cy="124" r="15" fill="none" stroke="var(--accent)" stroke-dasharray="3 3"/>
+    <g>
+      <circle class="c07g k1" cx="242" cy="60" r="3"/><circle class="c07g k1" cx="254" cy="64" r="3"/><circle class="c07g k1" cx="246" cy="73" r="3"/>
+      <circle class="c07g k2" cx="282" cy="74" r="3"/><circle class="c07g k2" cx="292" cy="80" r="3"/><circle class="c07g k2" cx="284" cy="88" r="3"/>
+      <circle class="c07g k3" cx="256" cy="120" r="3"/><circle class="c07g k3" cx="268" cy="118" r="3"/><circle class="c07g k3" cx="260" cy="132" r="3"/>
+    </g>
+    <g font-family="Hanken Grotesk" font-size="8" text-anchor="middle" fill="var(--ink-faint)">
+      <text x="56" y="172">a number</text><text x="160" y="172">a known label</text><text x="264" y="172">groups, no labels</text>
+    </g>
+    <text x="160" y="194" text-anchor="middle" fill="var(--ink-soft)" font-family="Hanken Grotesk" font-size="9.5">Same kind of data, three different questions.</text>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Chapter 07</div>
+    <h1 class="reveal">Regression, classification or clustering</h1>
+    <p class="lead reveal">Three techniques cover most of the traditional ML use cases on the exam. Choosing among them does not take any math: it takes reading what the business is asking for, and whether past answers exist to learn from.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: shared ground, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal" style="font-size:24px">Start from the question being asked</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b style="color:var(--accent)">"How much?" or "how many?"</b>The answer is a number on a continuous scale. That is <strong>regression</strong>.</p></div>
+      <div class="pill" data-step="2"><p><b style="color:var(--accent)">"Which one?" or "yes or no?"</b>The answer is one of a fixed set of known categories. That is <strong>classification</strong>.</p></div>
+      <div class="pill" data-step="3"><p><b style="color:var(--lav)">"What groups are in here?"</b>Nobody knows the categories yet; the data should reveal them. That is <strong>clustering</strong>.</p></div>
+    </div>
+    <div class="stepcap-swap" style="margin-top:12px">
+      <p class="lead" data-step="0" style="font-size:14.5px">Tap through the three questions.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">Regression is supervised (Chapter 05): it learns from records with the true number attached.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">Classification is supervised too: every training record carries its correct label.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px">Clustering is unsupervised: there are no labels to learn from.</p>
+    </div>` },
+
+  /* 2: option 1, regression */
+  { html: `
+    <div class="eyebrow reveal">Option 1 of 3</div>
+    <h2 class="reveal" style="font-size:24px">Regression: predict a number</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Output</b>A continuous value: a home's sale price, next week's unit sales, a delivery's time in hours, a customer's expected spend.</p></div>
+      <div class="pill"><p><b>Learns from</b>Past records labeled with the actual number. Amazon SageMaker AI's Linear Learner and XGBoost both handle regression.</p></div>
+      <div class="pill"><p><b>Judged by</b>How far predictions land from the true values, with error metrics such as mean absolute error (MAE), root mean squared error (RMSE) and R squared.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Forecasting a value over time, such as demand per day, is a regression-style question too: the output is still a number.</p>` },
+
+  /* 3: option 2, classification */
+  { html: `
+    <div class="eyebrow reveal">Option 2 of 3</div>
+    <h2 class="reveal" style="font-size:24px">Classification: predict a category</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Output</b>One label from a set fixed in advance. <strong>Binary</strong>: fraud or not, churn or stay. <strong>Multiclass</strong>: which of six support queues, positive, neutral or negative sentiment.</p></div>
+      <div class="pill"><p><b>Learns from</b>Past records labeled with the right category. The model usually scores how likely each class is, and the top class or a threshold picks the label.</p></div>
+      <div class="pill"><p><b>Judged by</b>Accuracy, precision, recall and F1 (Chapter 14).</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Watch for numbers that are really names: risk tier 1, 2 or 3 is a category, so predicting it is classification.</p>` },
+
+  /* 4: option 3, clustering */
+  { html: `
+    <div class="eyebrow reveal">Option 3 of 3</div>
+    <h2 class="reveal" style="font-size:24px">Clustering: discover the groups</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Output</b>A group assignment for each record, where members of a group are as similar as possible and as different as possible from other groups.</p></div>
+      <div class="pill"><p><b>Learns from</b>Unlabeled data. SageMaker AI's K-Means is the built-in example: the team chooses how many groups to look for, and the algorithm finds them.</p></div>
+      <div class="pill"><p><b>Then a person</b>looks at each group and decides what it means: "weekend bargain hunters", "high-value regulars". The model never names them.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:12px">Typical uses: customer segmentation, grouping similar documents or products. Its unsupervised cousin, anomaly detection, flags records that fit no group.</p>` },
+
+  /* 5: side by side, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">Three techniques, one table</h2>
+    <div style="margin-top:4px">
+      <div class="reveal" style="display:grid;grid-template-columns:1.05fr 0.9fr 1fr 1.1fr;gap:0 6px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Technique</div><div>Labels</div><div>Output</div><div>Example</div>
+      </div>
+      <div data-step="1" style="display:grid;grid-template-columns:1.05fr 0.9fr 1fr 1.1fr;gap:0 6px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:700">Regression</div><div>Yes, numbers</div><div>A continuous value</div><div>Price, demand, duration</div>
+      </div>
+      <div data-step="2" style="display:grid;grid-template-columns:1.05fr 0.9fr 1fr 1.1fr;gap:0 6px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:700">Classifi&shy;cation</div><div>Yes, categories</div><div>A known class</div><div>Fraud, churn, queue</div>
+      </div>
+      <div data-step="3" style="display:grid;grid-template-columns:1.05fr 0.9fr 1fr 1.1fr;gap:0 6px;padding:9px 4px;font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--lav);font-weight:700">Clustering</div><div>None</div><div>New groups</div><div>Customer segments</div>
+      </div>
+    </div>
+    <p class="lead reveal" style="font-size:14px;margin-top:14px">The labels column decides the most questions: if past answers exist, the task is supervised; if they do not, clustering is the only one of the three that can run.</p>` },
+
+  /* 6: decision signals, step build */
+  { steps: 5,
+    html: `
+    <div class="eyebrow reveal">Decision signals</div>
+    <h2 class="reveal" style="font-size:24px">This wording picks that technique</h2>
+    <div class="pills">
+      <div class="pill" data-step="1"><p><b>"Estimate the price", "how many units", "how long"</b>Regression.</p></div>
+      <div class="pill" data-step="2"><p><b>"Will they churn", "is it fraud", "approve or decline"</b>Binary classification.</p></div>
+      <div class="pill" data-step="3"><p><b>"Assign to one of the existing categories", with labeled history</b>Multiclass classification, even when the scenario says "group" or "sort".</p></div>
+      <div class="pill" data-step="4"><p><b>"No labels", "discover segments", "find natural groupings"</b>Clustering.</p></div>
+      <div class="pill" data-step="5"><p><b>A number that names a tier or rating band</b>Still classification: the values are categories, not amounts.</p></div>
+    </div>` },
+
+  /* 7: quiz, clustering is right */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A streaming service has viewing histories for millions of subscribers. It has never defined audience segments and wants the data to suggest groups of viewers with similar habits, so it can design a campaign for each. Which technique fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Multiclass classification into audience segments</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Regression on total viewing hours</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>Clustering, such as K-Means</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Binary classification of active and inactive viewers</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> No segment exists yet and the goal is to discover groups from similarity, which is clustering. Option A is the tempting one because the result is "segments", but classification can only assign labels it was trained on, and no labeled segments exist. B predicts a single number, and D answers a different yes-or-no question.</div>` },
+
+  /* 8: quiz, classification is right */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A help desk has two years of tickets, each tagged by an agent with one of six existing queues, numbered 1 to 6. It wants every new ticket sent to the right queue automatically. Which technique fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>Multiclass classification trained on the tagged tickets</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Clustering the tickets into six groups</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Regression predicting the queue number</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Anomaly detection on ticket text</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The categories are known and the history is labeled with them, so this is supervised multiclass classification. Option B is the tempting one because there are six groups, but clustering ignores the labels and would find its own six groups that need not match the real queues. C treats queue numbers as amounts, yet queue 4 is not "twice" queue 2, and D finds unusual tickets rather than routing them.</div>` },
+
+  /* 9: quiz, regression is right */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A logistics company records, for every past shipment, its route, weight, carrier and the exact number of hours it took. It wants to tell customers how many hours a new shipment will take. Which technique fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Binary classification of shipments as late or on time</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Clustering shipments by route</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Multiclass classification into fast, normal and slow</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Regression on the transit time in hours</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The business wants a number of hours, and history has the true hours attached, so regression fits. Option A is the tempting one because lateness is what customers worry about, but it returns a yes or no, not the estimate the company wants to show. C loses the same detail in three bands, and B groups routes without predicting anything.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.4"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 07 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:20px">Next: real-world AI applications across vision, language and more.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Regression</b>A continuous number, learned from labeled history. Price, demand, duration.</p></div>
+      <div class="pill"><p><b>Classification</b>One of a fixed set of known categories, binary or multiclass, learned from labeled history.</p></div>
+      <div class="pill"><p><b>Clustering</b>Groups discovered in unlabeled data, then named by people. Segmentation is the classic case.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+</script>
+</body>
+</html>
