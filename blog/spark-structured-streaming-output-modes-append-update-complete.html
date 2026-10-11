@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Structured Streaming Output Modes: Append vs Update vs Complete</title>
+<meta name="description" content="Append writes each new row once, update writes only changed rows, complete rewrites the whole result. Which queries and sinks allow each Spark output mode.">
+<link rel="canonical" href="https://certify.courses/blog/spark-structured-streaming-output-modes-append-update-complete">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark Structured Streaming Output Modes: Append vs Update vs Complete">
+<meta property="og:description" content="Append writes each new row once, update writes only changed rows, complete rewrites the whole result. Which queries and sinks allow each Spark output mode.">
+<meta property="og:url" content="https://certify.courses/blog/spark-structured-streaming-output-modes-append-update-complete">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;white-space:pre;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.55;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  .tablewrap{overflow-x:auto;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-spark-developer-associate-certification-guide">Spark Developer Guide</a><span>&rsaquo;</span>
+    <span>Streaming output modes</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks Spark Developer &middot; Trade-off</div>
+    <h1>Spark Structured Streaming Output Modes: Append vs Update vs Complete</h1>
+    <p class="lede">An Apache Spark Structured Streaming output mode decides which rows of the result table reach the sink on each trigger. <strong>Append</strong>, the default, writes only new rows, each exactly once. <strong>Update</strong> writes only rows that changed since the last trigger. <strong>Complete</strong> rewrites the entire result every time and works only for aggregation queries.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <p class="answer">No aggregation: use append. A running aggregate going into a sink that can upsert: use update. A small aggregate the consumer replaces wholesale: use complete. Windowed aggregates going into files: append plus a watermark, because the file sink accepts nothing else.</p>
+  </section>
+
+  <section id="what">
+    <h2>What an output mode controls</h2>
+    <p>Structured Streaming treats a stream as an unbounded <strong>result table</strong> that grows with every micro-batch. The output mode, set with <code>writeStream.outputMode()</code>, answers one question: on each trigger, which rows of that result table does the sink receive?</p>
+    <p>Whether the query aggregates decides which modes are legal. An unsupported combination fails at <code>start()</code> with an <code>AnalysisException</code> naming the output mode, so the mistake surfaces before any data moves.</p>
+  </section>
+
+  <section id="append">
+    <h2>Append: new rows, each written once</h2>
+    <p><code>outputMode("append")</code> is the default. Only rows added to the result table since the last trigger are written, and each row is written exactly once and never revised. That suits queries whose rows never change: <code>select</code>, <code>filter</code>, <code>withColumn</code>, stream-static joins, and stream-stream joins.</p>
+    <p>An aggregation can use append only on an <strong>event-time window with a watermark</strong>. Spark emits a window's row once the watermark passes the window's end, when the count can no longer change. Without a watermark, Spark cannot know when a window is finished, so the query is rejected.</p>
+<pre><code>from pyspark.sql.functions import window
+
+counts = (clicks
+    .withWatermark("ts", "15 minutes")
+    .groupBy(window("ts", "10 minutes"))
+    .count())
+
+counts.writeStream.outputMode("append").format("parquet") \
+    .option("path", "/out/clicks").option("checkpointLocation", "/chk/clicks").start()</code></pre>
+  </section>
+
+  <section id="update">
+    <h2>Update: only the rows that changed</h2>
+    <p><code>outputMode("update")</code> writes only the result rows inserted or changed in this trigger. If Germany's total moved and France's did not, only Germany is written. Aggregates appear immediately, with or without a watermark, and with a watermark old state is cleaned up. For a query with no aggregation, update behaves exactly like append.</p>
+    <p>The catch is the sink. It receives the same key again and again, so it must be able to overwrite or upsert. The file sink cannot, which leaves Kafka, <code>foreachBatch</code> (for example a MERGE into a table) or a debugging sink.</p>
+  </section>
+
+  <section id="complete">
+    <h2>Complete: the whole result, every trigger</h2>
+    <p><code>outputMode("complete")</code> writes the entire result table on every trigger, changed or not, and the sink replaces what it had. It works for aggregation queries only, since keeping every unaggregated row would be infeasible. It is also the only mode in which a stream can be sorted, after an aggregation.</p>
+    <p>The cost: all aggregate state is kept forever. A watermark cannot drop old groups, because the full result has to be reproduced each time. Fine for a count per country, expensive for millions of growing keys.</p>
+  </section>
+
+  <section id="matrix">
+    <h2>Which query allows which mode</h2>
+    <div class="tablewrap">
+    <table class="cmp">
+      <thead><tr><th>Query</th><th class="col-h">append</th><th>update</th><th>complete</th></tr></thead>
+      <tbody>
+        <tr><th>No aggregation</th><td class="col-h">Yes</td><td>Yes (same as append)</td><td>No</td></tr>
+        <tr><th>Aggregation, no watermark</th><td class="col-h">No</td><td>Yes</td><td>Yes</td></tr>
+        <tr><th>Event-time window with watermark</th><td class="col-h">Yes, after the window closes</td><td>Yes, old state dropped</td><td>Yes, state kept</td></tr>
+        <tr><th>Stream-stream join</th><td class="col-h">Yes</td><td>No</td><td>No</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="fnote">Sourced from the output modes and supported-operations sections of the Apache Spark Structured Streaming Programming Guide.</p>
+  </section>
+
+  <section id="sinks">
+    <h2>Sink support: why files mean append</h2>
+    <ul>
+      <li><strong>File sink</strong> (<code>format("parquet")</code>, or json, csv, orc, with a <code>path</code>): append only, exactly-once. Files cannot be rewritten row by row, so update and complete are refused.</li>
+      <li><strong>Kafka sink</strong>: all three modes, at-least-once.</li>
+      <li><strong>Console and memory sinks</strong>: debugging only. Output is collected on the driver and is not fault tolerant; the memory sink's table is named by <code>queryName()</code>.</li>
+      <li><strong>foreachBatch</strong>: hands each micro-batch to your function as an ordinary DataFrame plus a unique batch ID, so any batch writer works, including several sinks or a MERGE.</li>
+    </ul>
+<pre><code>def upsert_totals(batch_df, batch_id):
+    batch_df.createOrReplaceTempView("updates")
+    batch_df.sparkSession.sql("""
+        MERGE INTO totals t USING updates u ON t.customer = u.customer
+        WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *""")
+
+(per_customer.writeStream
+    .foreachBatch(upsert_totals)
+    .outputMode("update")
+    .option("checkpointLocation", "/chk/per_customer")
+    .start())</code></pre>
+    <p>Update mode suits this: each trigger merges only the customers that changed. <code>foreachBatch</code> is at-least-once by default; use the batch ID to make writes idempotent.</p>
+  </section>
+
+  <section id="exam">
+    <h2>Decision signals for the exam</h2>
+    <p>Structured Streaming is 10% of the Databricks Certified Associate Developer for Apache Spark exam in the official guide, and its writing objective names output modes and sinks directly. These signals settle most questions:</p>
+    <ul>
+      <li><strong>Windowed aggregation into files:</strong> append with <code>withWatermark</code>.</li>
+      <li><strong>Running aggregates, sink can upsert:</strong> update.</li>
+      <li><strong>Small result the consumer replaces, or a sorted result:</strong> complete.</li>
+      <li><strong>Large or ever-growing set of keys:</strong> not complete. It rewrites, and keeps in state, every group forever.</li>
+    </ul>
+    <div class="callout"><p><strong>Exam tip:</strong> the usual trap is the right mode with the wrong setup: append on a windowed count with no watermark, or update into the file sink. Check the sink and the watermark first.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the default output mode in Spark Structured Streaming?</summary><div class="fa"><p>Append is the default output mode. It writes only the rows added to the result table since the last trigger, each exactly once, and it is the only mode the file sink accepts.</p></div></details>
+      <details><summary>What is the difference between update and complete output mode in Spark?</summary><div class="fa"><p>Update writes only the result rows that changed in the current trigger, while complete rewrites the entire result table every trigger. Complete also keeps all aggregate state forever, so it suits small results, while update suits large keyed results going into a sink that can upsert.</p></div></details>
+      <details><summary>Can I use append mode with an aggregation in Structured Streaming?</summary><div class="fa"><p>Yes, but only on an event-time window with a watermark set by withWatermark. Spark then emits each window once, after the watermark passes the window's end; without a watermark the query is rejected when it starts.</p></div></details>
+      <details><summary>Which output modes does the file sink support in Spark?</summary><div class="fa"><p>The file sink supports append mode only, with exactly-once guarantees. To write a running aggregate in update mode, use Kafka or foreachBatch, for example to MERGE each micro-batch into a table.</p></div></details>
+      <details><summary>Does a watermark reduce state in complete output mode?</summary><div class="fa"><p>No. Complete mode reproduces the whole result table on every trigger, so Spark keeps all aggregate state regardless of the watermark. A watermark only drops old state in append and update modes.</p></div></details>
+    </div>
+  </section>
+
+
+  <div class="ctacard">
+    <h2>Practice this hands-on</h2>
+    <p>Output modes and sinks are a trade-off chapter in the Spark Developer Associate course, with the support matrix stepped through card by card and two quiz cards that test opposite directions.</p>
+    <a href="../databricks-apache-spark-developer-associate/lesson-34-readstream-writestream-output-modes-sinks.html" class="cta">Open the chapter &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-spark-developer-associate-certification-guide">The complete Databricks Spark Developer Associate certification guide &rarr;</a>
+    <a href="databricks-spark-developer-associate-exam-sections-weights">The seven exam sections and their weights &rarr;</a>
+    <a href="spark-deploy-modes-local-client-cluster">Spark deploy modes: local vs client vs cluster &rarr;</a>
+    <a href="../practice/databricks-spark-associate">Drill streaming questions in the practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Spark Structured Streaming Output Modes: Append vs Update vs Complete","description":"Append writes each new row once, update writes only changed rows, complete rewrites the whole result. Which queries and sinks allow each Spark output mode.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-11","dateModified":"2026-10-11","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/spark-structured-streaming-output-modes-append-update-complete"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the default output mode in Spark Structured Streaming?", "acceptedAnswer": {"@type": "Answer", "text": "Append is the default output mode. It writes only the rows added to the result table since the last trigger, each exactly once, and it is the only mode the file sink accepts."}},
+{"@type": "Question", "name": "What is the difference between update and complete output mode in Spark?", "acceptedAnswer": {"@type": "Answer", "text": "Update writes only the result rows that changed in the current trigger, while complete rewrites the entire result table every trigger. Complete also keeps all aggregate state forever, so it suits small results, while update suits large keyed results going into a sink that can upsert."}},
+{"@type": "Question", "name": "Can I use append mode with an aggregation in Structured Streaming?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, but only on an event-time window with a watermark set by withWatermark. Spark then emits each window once, after the watermark passes the window's end; without a watermark the query is rejected when it starts."}},
+{"@type": "Question", "name": "Which output modes does the file sink support in Spark?", "acceptedAnswer": {"@type": "Answer", "text": "The file sink supports append mode only, with exactly-once guarantees. To write a running aggregate in update mode, use Kafka or foreachBatch, for example to MERGE each micro-batch into a table."}},
+{"@type": "Question", "name": "Does a watermark reduce state in complete output mode?", "acceptedAnswer": {"@type": "Answer", "text": "No. Complete mode reproduces the whole result table on every trigger, so Spark keeps all aggregate state regardless of the watermark. A watermark only drops old state in append and update modes."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

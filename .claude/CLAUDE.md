@@ -86,8 +86,13 @@ logistics and healthcare), listed in the course home's "Full-length mock
 exams" section; 175 questions in all. The mocks are a sealed pool: never
 reuse their questions in the section exams and never draw them into drills.
 The practice hub is practice/databricks-spark-associate (see the practice
-hubs paragraph below). The catalog row, catalog.json entry, pricing row and
-footer links are live.)
+hubs paragraph below). A public readiness quiz lives at
+ready/databricks-spark-associate (12 new questions, five clusters re-grouped
+from the seven sections: 20/20/30/10/20, counts 2/2/3/2/3); the hub keeps its
+own weighted draw from the section exams. Its blog cluster is complete: eight
+posts listed in the Spark Developer Associate block of blog/CONTENT_PLAN.md,
+with the pillar guide and the quiz linked from the catalog row. The catalog
+row, catalog.json entry, pricing row and footer links are live.)
 
 ## Site structure
 
