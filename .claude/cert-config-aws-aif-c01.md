@@ -160,6 +160,11 @@ here as each lesson ships.
       Unit 1 Ch 08-14  cyan     #5be3f0
       Unit 2 Ch 15-21  fuchsia  #f06ee3
       Unit 2 Ch 22-28  magenta  #f15bc8
+      Unit 3 Ch 29-33  indigo   #9690df  (assigned 14 Oct 2026: choosing,
+                                         grounding and customizing a model;
+                                         31 or more RGB units from every
+                                         --accent on the site)
+      Unit 3 Ch 34-37  violet   #cb68f3  (prompt engineering; same check)
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.
