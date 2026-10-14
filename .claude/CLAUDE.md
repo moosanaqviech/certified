@@ -104,15 +104,16 @@ exam prefix and is built on the v2 template. Units 1 and 2 are live: chapters
 14) and 02 (Unit 2, chapters 15 to 28), 14 questions and 28 minutes each, one
 per chapter, headers citing chapter and objective, a few select-two items, 70%
 practice target. Chapters 14 and 28 close their units, so their NAV.next is
-the unit's exam ("Practice test"). Unit 3 chapters 29 to 37 (FM selection,
-inference parameters, RAG, vector stores, the customization ladder and the
-four prompt engineering chapters) are live too; chapter 37 ends on "Back to
-catalog" (NAV.next null) until chapter 38 ships. The course home lists all
-58 chapters and shows the rest as "Coming soon"; the Practice toggle is disabled until a
+the unit's exam ("Practice test"). Unit 3 is live too: chapters 29 to 43
+(FM selection, inference parameters, RAG, vector stores, the customization
+ladder, prompt engineering, training and fine-tuning data, evaluation and
+business metrics) and aif-practice-exam-03 (15 questions, 30 minutes, three
+select-two items); chapter 43 closes the unit, so its NAV.next is exam 03.
+The course home lists all 58 chapters and shows the rest as "Coming soon"; the Practice toggle is disabled until a
 hub exists. Paid from launch: course id aws-aif, $9.99, Unit 1 free through
 aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
 checkout needs the Netlify env var STRIPE_PRICE_AWS_AIF set to a $9.99 Stripe
-Price. Still to come: chapters 38 to 58, exams 03 (Unit 3) and
+Price. Still to come: chapters 44 to 58, exam
 04 (Units 4 and 5), the three sealed 50-question, 90-minute mocks (05 to 07,
 10/12/14/7/7 per domain), and a practice hub at practice/aws-aif-c01. The
 engine has no ordering or matching question types; the course home says so.

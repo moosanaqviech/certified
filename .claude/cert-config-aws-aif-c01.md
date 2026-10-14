@@ -165,6 +165,10 @@ here as each lesson ships.
                                          31 or more RGB units from every
                                          --accent on the site)
       Unit 3 Ch 34-37  violet   #cb68f3  (prompt engineering; same check)
+      Unit 3 Ch 38-39  indigo   #9690df  (training and data, the
+                                         customization family again)
+      Unit 3 Ch 40-43  lilac    #b9a0e3  (evaluation; 32 or more RGB units
+                                         from every --accent on the site)
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.
