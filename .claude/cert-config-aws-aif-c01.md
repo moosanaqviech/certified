@@ -97,6 +97,10 @@ fetched before the chapter that teaches them is written.
       with pgvector), "Amazon RDS for PostgreSQL", "Amazon Neptune". Never
       "Elasticsearch Service". Amazon MemoryDB was REMOVED from the in-scope
       list in version 1.1; do not present it as an exam-relevant vector store.
+    Closed to new customers (AWS docs, checked 14 Oct 2026): Amazon
+      SageMaker Clarify (name it with that status; Amazon Bedrock Evaluations
+      replaces its FM evaluation), Amazon Augmented AI (do not teach it as a
+      current option), Amazon SageMaker Model Monitor (30 Jul 2026).
     Governance and security: "AWS Config", "Amazon Inspector", "AWS
       Artifact", "AWS CloudTrail", "AWS Trusted Advisor", "Amazon Macie",
       "AWS PrivateLink", "AWS Key Management Service (AWS KMS)", "AWS Secrets
@@ -169,6 +173,10 @@ here as each lesson ships.
                                          customization family again)
       Unit 3 Ch 40-43  lilac    #b9a0e3  (evaluation; 32 or more RGB units
                                          from every --accent on the site)
+      Unit 4 Ch 44-48  leaf     #64d65c  (fairness, data and bias; 45 or
+                                         more RGB units from every accent)
+      Unit 4 Ch 49-51  sage     #79d28e  (transparency and explainability;
+                                         44 or more)
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.

@@ -109,16 +109,23 @@ the unit's exam ("Practice test"). Unit 3 is live too: chapters 29 to 43
 ladder, prompt engineering, training and fine-tuning data, evaluation and
 business metrics) and aif-practice-exam-03 (15 questions, 30 minutes, three
 select-two items); chapter 43 closes the unit, so its NAV.next is exam 03.
+Unit 4 chapters 44 to 51 (responsible AI features, Amazon Bedrock Guardrails,
+legal risks, datasets, bias and variance, transparent vs opaque models,
+transparency tools, human-centered design) are live; Units 4 and 5 share
+exam 04, so chapter 51 ends on "Back to catalog" until chapter 52 ships.
 The course home lists all 58 chapters and shows the rest as "Coming soon"; the Practice toggle is disabled until a
 hub exists. Paid from launch: course id aws-aif, $9.99, Unit 1 free through
 aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
 checkout needs the Netlify env var STRIPE_PRICE_AWS_AIF set to a $9.99 Stripe
-Price. Still to come: chapters 44 to 58, exam
+Price. Still to come: chapters 52 to 58, exam
 04 (Units 4 and 5), the three sealed 50-question, 90-minute mocks (05 to 07,
 10/12/14/7/7 per domain), and a practice hub at practice/aws-aif-c01. The
 engine has no ordering or matching question types; the course home says so.
 Amazon SageMaker Model Monitor is closed to new customers (30 Jul 2026), so no
-question should hinge on it.)
+question should hinge on it. The same holds for Amazon SageMaker Clarify and
+Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
+pages (checked 14 Oct 2026): lessons name Clarify with that status, A2I not
+at all, and teach the practices (subgroup analysis, human review) instead.)
 
 ## Site structure
 
