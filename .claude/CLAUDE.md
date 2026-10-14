@@ -93,7 +93,7 @@ own weighted draw from the section exams. Its blog cluster is complete: eight
 posts listed in the Spark Developer Associate block of blog/CONTENT_PLAN.md,
 with the pillar guide and the quiz linked from the catalog row. The catalog
 row, catalog.json entry, pricing row and footer links are live.)
-In progress: AWS Certified AI Practitioner (AIF-C01) (see
+Complete: AWS Certified AI Practitioner (AIF-C01) (see
 curriculum-index-aws-aif-c01.md and cert-config-aws-aif-c01.md; the index is
 LOCKED on 11 Oct 2026 against the official exam guide PDF version 1.1 dated
 30 Apr 2026: 58 chapters across 5 units covering all 69 objectives, the first
@@ -116,13 +116,20 @@ minutes, three select-two items; 58 section-exam questions in all).
 Chapter 58, the last chapter, closes Unit 5, so its NAV.next is exam 04
 ("Practice test"); chapter 51 closes Unit 4 and points at chapter 52,
 since Units 4 and 5 share exam 04.
-The course home lists all 58 chapters; the Practice toggle is disabled until a
-hub exists. Paid from launch: course id aws-aif, $9.99, Unit 1 free through
+Three sealed full mocks are live too (aif-practice-exam-05 to 07: 50
+questions, 90 minutes, five select-two items each, sampled at the
+10/12/14/7/7 domain counts, one objective per question so that the three
+together reach all 69 objectives; their own scenarios: retail and finance,
+health and public sector, media, travel and industry), listed in the course
+home's "Full-length mock exams" section; 208 questions in all. The mocks are
+a sealed pool: never reuse their questions in the section exams and never
+draw them into drills. The course home lists all 58 chapters and its
+Practice toggle links the hub at practice/aws-aif-c01 (see the practice hubs
+paragraph below). Paid from launch: course id aws-aif, $9.99, Unit 1 free through
 aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
 checkout needs the Netlify env var STRIPE_PRICE_AWS_AIF set to a $9.99 Stripe
-Price. Still to come: the three sealed 50-question, 90-minute mocks (05 to 07,
-10/12/14/7/7 per domain), and a practice hub at practice/aws-aif-c01. The
-engine has no ordering or matching question types; the course home says so.
+Price. The engine has no ordering or matching question types; the course
+home says so.
 Amazon SageMaker Model Monitor is closed to new customers (30 Jul 2026), so no
 question should hinge on it. The same holds for Amazon SageMaker Clarify and
 Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
@@ -195,8 +202,9 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/aws-dea-c01.html`), GenAI Engineer Associate
 (`practice/databricks-genai-associate.html`), Data Analyst Associate
 (`practice/databricks-da-associate.html`), Spark Developer Associate
-(`practice/databricks-spark-associate.html`) and AWS MLA-C02
-(`practice/aws-mla-c02.html`) have hubs, so every live course has one.
+(`practice/databricks-spark-associate.html`), AWS MLA-C02
+(`practice/aws-mla-c02.html`) and AWS AIF-C01 (`practice/aws-aif-c01.html`)
+have hubs, so every live course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub runs its two sealed
 mocks (`mock-exam-01` and `02`: 59 questions, 120 minutes, sampled at the ten
@@ -237,7 +245,16 @@ uses the three full mocks (`04` to `06`, 45 questions, 90 minutes) as its
 mock pool, runs a weighted 12-question Readiness check from the section
 exams, and its seven bars carry the official 20/20/30/10/10/5/5 weights, so
 they read "% of exam". Its pass target is 70 (our practice target; the guide
-publishes no cut score).
+publishes no cut score). The AWS AIF-C01 hub is the MLA-C02 clone in the same AWS
+cerulean palette: it drills from the four section exams
+(`aif-practice-exam-01` to `04`, tagged by each question's `Ch NN` header
+against the chapter ranges 1-14, 15-28, 29-43, 44-51, 52-58, one per
+domain, so exam 04 feeds two domains), uses the three full mocks (`05` to
+`07`, 50 questions, 90 minutes) as its mock pool, runs a weighted
+12-question Readiness check from the section exams, and its five bars carry
+the official 20/24/28/14/14 weights, so they read "% of exam". Its pass
+target is 70 (our practice target; the real exam reports a scaled 700 of
+1,000).
 
 ## Author identity and trust pages
 
