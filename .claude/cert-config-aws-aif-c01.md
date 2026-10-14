@@ -177,6 +177,10 @@ here as each lesson ships.
                                          more RGB units from every accent)
       Unit 4 Ch 49-51  sage     #79d28e  (transparency and explainability;
                                          44 or more)
+      Unit 5 Ch 52-53, 56-58  steel #77b1c5  (security and governance; 29
+                                         or more)
+      Unit 5 Ch 54-55  rose     #eb8e99  (threats and hallucination; 36 or
+                                         more; its --warn is orange)
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.
