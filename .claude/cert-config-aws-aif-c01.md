@@ -97,6 +97,10 @@ fetched before the chapter that teaches them is written.
       with pgvector), "Amazon RDS for PostgreSQL", "Amazon Neptune". Never
       "Elasticsearch Service". Amazon MemoryDB was REMOVED from the in-scope
       list in version 1.1; do not present it as an exam-relevant vector store.
+    Closed to new customers (AWS docs, checked 14 Oct 2026): Amazon
+      SageMaker Clarify (name it with that status; Amazon Bedrock Evaluations
+      replaces its FM evaluation), Amazon Augmented AI (do not teach it as a
+      current option), Amazon SageMaker Model Monitor (30 Jul 2026).
     Governance and security: "AWS Config", "Amazon Inspector", "AWS
       Artifact", "AWS CloudTrail", "AWS Trusted Advisor", "Amazon Macie",
       "AWS PrivateLink", "AWS Key Management Service (AWS KMS)", "AWS Secrets
@@ -160,6 +164,23 @@ here as each lesson ships.
       Unit 1 Ch 08-14  cyan     #5be3f0
       Unit 2 Ch 15-21  fuchsia  #f06ee3
       Unit 2 Ch 22-28  magenta  #f15bc8
+      Unit 3 Ch 29-33  indigo   #9690df  (assigned 14 Oct 2026: choosing,
+                                         grounding and customizing a model;
+                                         31 or more RGB units from every
+                                         --accent on the site)
+      Unit 3 Ch 34-37  violet   #cb68f3  (prompt engineering; same check)
+      Unit 3 Ch 38-39  indigo   #9690df  (training and data, the
+                                         customization family again)
+      Unit 3 Ch 40-43  lilac    #b9a0e3  (evaluation; 32 or more RGB units
+                                         from every --accent on the site)
+      Unit 4 Ch 44-48  leaf     #64d65c  (fairness, data and bias; 45 or
+                                         more RGB units from every accent)
+      Unit 4 Ch 49-51  sage     #79d28e  (transparency and explainability;
+                                         44 or more)
+      Unit 5 Ch 52-53, 56-58  steel #77b1c5  (security and governance; 29
+                                         or more)
+      Unit 5 Ch 54-55  rose     #eb8e99  (threats and hallucination; 36 or
+                                         more; its --warn is orange)
 
 Trade-off lessons (TO in the index) rely on their own chapter accent; the TO
 structure, not a distinct color, marks them.
