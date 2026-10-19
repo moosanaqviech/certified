@@ -176,6 +176,7 @@ const QUESTIONS = [
 
   /* Ch 01 - Why Spark: advantages and challenges */
   {
+    ref:{chapter:1},
     q:`An analytics team processes a 400 MB CSV file once a month with pandas on one laptop, and the job finishes in under two minutes. A new hire proposes moving it to a six-node Spark cluster "to be future proof". Which assessment is correct?`,
     opts:[
       "Spark will finish faster, because it processes the file in memory across six nodes instead of one",
@@ -189,6 +190,7 @@ const QUESTIONS = [
 
   /* Ch 02 - Cluster anatomy: driver, executors, cores and memory */
   {
+    ref:{chapter:2},
     q:`A PySpark application runs on a cluster with one driver and four worker nodes. Each worker hosts one executor with 8 cores and 32 GB of memory. A stage contains 64 tasks. How many tasks run at the same time, and which component decides which executor runs each task?`,
     opts:[
       "32 tasks at once; the driver's task scheduler assigns tasks to free executor cores",
@@ -202,6 +204,7 @@ const QUESTIONS = [
 
   /* Ch 03 - DataFrames, Datasets and the SparkSession lifecycle */
   {
+    ref:{chapter:3},
     q:`A data engineer writes a standalone PySpark script that must run on a laptop during development and on a shared cluster in production, and it begins with <code>from pyspark.sql import SparkSession</code>. Which line correctly obtains the entry point, and what happens if a session already exists in the process?`,
     opts:[
       "<code>spark = SparkSession.builder.create()</code>; it raises an error if a session exists",
@@ -215,6 +218,7 @@ const QUESTIONS = [
 
   /* Ch 04 - Caching and storage levels */
   {
+    ref:{chapter:4},
     q:`A 60 GB DataFrame is produced by a join followed by several expensive transformations, and five downstream actions reuse it. Across all executors about 40 GB of memory is available for storage. The job must not recompute the join for each action. Which choice fits?`,
     opts:[
       "<code>df.persist(StorageLevel.MEMORY_ONLY)</code>, because the fastest level is always the right one for a reused DataFrame",
@@ -228,6 +232,7 @@ const QUESTIONS = [
 
   /* Ch 05 - Executor memory and garbage collection */
   {
+    ref:{chapter:5},
     q:`In the Spark UI's Executors tab an engineer sees that several executors spend over 40 percent of task time in garbage collection, and two executors were lost with OutOfMemoryError during a stage that caches a large DataFrame and then aggregates it. Which change addresses the cause rather than the symptom?`,
     opts:[
       "Reduce memory pressure on the executors: unpersist DataFrames that are no longer needed or cache at a disk-backed level, and raise the partition count so each task holds less data",
@@ -241,6 +246,7 @@ const QUESTIONS = [
 
   /* Ch 06 - The execution hierarchy */
   {
+    ref:{chapter:6},
     q:`A notebook runs <code>df = spark.read.parquet(path).filter(col("status") == "paid")</code>, then <code>df.count()</code>, then <code>df.groupBy("country").count().show()</code>. The Parquet source produces 12 input partitions and spark.sql.shuffle.partitions is at its default. How many jobs run, and what does the second job look like?`,
     opts:[
       "One job, because both actions share the same DataFrame; it has one stage of 12 tasks",
@@ -254,6 +260,7 @@ const QUESTIONS = [
 
   /* Ch 07 - Partitions and shuffles */
   {
+    ref:{chapter:7},
     q:`The final stage of a job, right after a join, runs 200 tasks although the cluster has 16 cores and the joined result is about 50 MB, so most tasks process a few kilobytes. A teammate suggests raising spark.sql.shuffle.partitions "so more executors get memory". What is the accurate reading?`,
     opts:[
       "The setting controls how many executors receive shuffle data, so raising it spreads memory across more executors",
@@ -267,6 +274,7 @@ const QUESTIONS = [
 
   /* Ch 08 - Transformations, actions and lazy evaluation */
   {
+    ref:{chapter:8},
     q:`A script runs <code>df = spark.read.parquet(src)</code>, <code>eu = df.filter(col("region") == "EU")</code>, <code>joined = eu.join(dims, "id")</code>, <code>final = joined.withColumn("total", col("qty") * col("price"))</code> and then <code>final.write.mode("overwrite").parquet(out)</code>. The first four lines return in milliseconds and the last takes twenty minutes. What explains the timing, and what does the optimizer do with the filter?`,
     opts:[
       "The first four lines each read the data and cache it, so only the Parquet write is slow",
@@ -280,6 +288,7 @@ const QUESTIONS = [
 
   /* Ch 09 - The Spark modules */
   {
+    ref:{chapter:9},
     q:`A team has three needs: run existing pandas-style code against a 3 TB dataset with minimal rewriting; keep a running count of events per minute from a Kafka topic with exactly-once output; and train a logistic regression on 500 million rows. Which Spark modules match, in that order?`,
     opts:[
       "MLlib; Spark SQL; Structured Streaming",
@@ -291,6 +300,56 @@ const QUESTIONS = [
     explain:`Pandas API on Spark runs pandas syntax on distributed DataFrames, so existing pandas code scales with the fewest changes; Structured Streaming is the stream-processing module with micro-batches, checkpoints and exactly-once sinks; MLlib is the machine learning library with distributed algorithms such as logistic regression. The RDD option is the tempting one for streaming because checkpoints exist at that level too, but Structured Streaming provides the counting, windowing and delivery guarantees built in. Spark SQL is the engine under every DataFrame, not a substitute for the pandas-style API.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "spark-assoc",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  list: {
+    1:["lesson-01-why-spark.html", "Why Spark: Advantages and Challenges"],
+    2:["lesson-02-cluster-anatomy.html", "Cluster Anatomy: Driver, Executors, Cores and Memory"],
+    3:["lesson-03-dataframes-datasets-sparksession.html", "DataFrames, Datasets and the SparkSession Lifecycle"],
+    4:["lesson-04-caching-and-storage-levels.html", "Caching and Storage Levels"],
+    5:["lesson-05-executor-memory-and-gc.html", "Executor Memory and Garbage Collection"],
+    6:["lesson-06-execution-hierarchy.html", "The Execution Hierarchy: Application, Job, Stage, Task"],
+    7:["lesson-07-partitions-and-shuffles.html", "Partitions and Shuffles"],
+    8:["lesson-08-transformations-actions-lazy-evaluation.html", "Transformations, Actions and Lazy Evaluation"],
+    9:["lesson-09-spark-modules.html", "The Spark Modules: Core, SQL, Pandas API, Streaming, MLlib"],
+    10:["lesson-10-reading-data-sources.html", "Reading Data Sources: Files and JDBC"],
+    11:["lesson-11-writing-partitionby-and-overwrite.html", "Writing: partitionBy and Overwrite"],
+    12:["lesson-12-querying-files-directly-with-sql.html", "Querying Files Directly with SQL"],
+    13:["lesson-13-save-modes.html", "Save Modes: append, overwrite, ignore, errorifexists"],
+    14:["lesson-14-persistent-tables.html", "Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting"],
+    15:["lesson-15-temporary-views.html", "Temporary and Global Temporary Views"],
+    16:["lesson-16-columns.html", "Columns: select, withColumn, withColumnRenamed, drop"],
+    17:["lesson-17-rows-filter-split-explode.html", "Rows: filter, split and explode"],
+    18:["lesson-18-deduplication-and-missing-data.html", "Deduplication and Missing Data"],
+    19:["lesson-19-aggregations.html", "Aggregations: groupBy, agg, approx_count_distinct and summary"],
+    20:["lesson-20-dates-and-timestamps.html", "Dates and Timestamps"],
+    21:["lesson-21-joins.html", "Joins: Inner, Left, Multiple Keys and Cross"],
+    22:["lesson-22-unions.html", "Unions: union, unionAll and unionByName"],
+    23:["lesson-23-explicit-schemas.html", "Reading with Explicit Schemas"],
+    24:["lesson-24-sorting-iterating-converting.html", "Sorting, Iterating and Converting"],
+    25:["lesson-25-python-udfs.html", "Python UDFs"],
+    26:["lesson-26-stateful-operators-state-stores.html", "Stateful Operators and State Stores"],
+    27:["lesson-27-broadcast-variables-accumulators.html", "Broadcast Variables and Accumulators"],
+    28:["lesson-28-broadcast-joins.html", "Broadcast Joins"],
+    29:["lesson-29-repartition-versus-coalesce.html", "repartition versus coalesce"],
+    30:["lesson-30-data-skew-and-reducing-shuffles.html", "Data Skew and Reducing Shuffles"],
+    31:["lesson-31-adaptive-query-execution.html", "Adaptive Query Execution"],
+    32:["lesson-32-logs-and-the-spark-ui.html", "Logs and the Spark UI: Diagnosing OOM and Underutilization"],
+    33:["lesson-33-structured-streaming-model.html", "The Structured Streaming Model"],
+    34:["lesson-34-readstream-writestream-output-modes-sinks.html", "readStream, writeStream, Output Modes and Sinks"],
+    35:["lesson-35-streaming-operations-window-aggregation.html", "Streaming Operations: select, filter, window and aggregation"],
+    36:["lesson-36-streaming-deduplication.html", "Streaming Deduplication"],
+    37:["lesson-37-spark-connect.html", "Spark Connect"],
+    38:["lesson-38-deployment-modes.html", "Deployment Modes: local, client, cluster"],
+    39:["lesson-39-pandas-api-on-spark.html", "Pandas API on Spark"],
+    40:["lesson-40-pandas-udfs.html", "Pandas UDFs"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -342,6 +401,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -496,7 +585,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
