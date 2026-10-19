@@ -389,14 +389,17 @@ the course index `UNITS` id); when the payload also defines a `CHAPTERS`
 table (`course`, `base`, `free`, `list:{ N:[file, title] }`, mirroring
 `UNITS` and the gate.ts free set), the post-submit review shows "Review:
 Chapter N" under the explanation, opening the lesson in a new tab with
-`?back=<quiz path>&tab=1`. Questions without `ref` render as before. DE
-Associate (the pilot), DE Professional and AWS DEA-C01 are tagged: all their
-exams, both mocks of each, their readiness quizzes and their practice hubs (each hub
+`?back=<quiz path>&tab=1`. Questions without `ref` render as before. Every
+live course is tagged (DE Associate was the pilot): all exams, all mocks,
+every readiness quiz and every practice hub (each hub
 keeps its own `CHAPTERS` and `FREE_CHAPTERS`, links in drills right after
 the answer and in the Readiness and Full mock review only, snapshots the
 session so the lesson's "Back to quiz" restores it, and buckets a question
-into a section by its `Ch NN` header, else its `ref`). Their lessons (35,
-37 and 40) carry a "Back to quiz" bar that shows only with `?back=`. The legacy
+into a section by its `Ch NN` header, else its `ref`). Every lesson
+carries a "Back to quiz" bar that shows only with `?back=`. A new exam
+question carries `ref` (its `Ch NN` header chapter) and a new exam payload
+the course's `CHAPTERS` table; a new lesson keeps the bar (copy it from a
+neighbor). The per-course tag reviews are `claude/*-refs-review.csv`. The legacy
 `cc_ui` value `1` unlocks de-assoc only, as in gate.ts.
 `scripts/validate.py` checks every ref and table. Inline recall checks are
 not tagged.

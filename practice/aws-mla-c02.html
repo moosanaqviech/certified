@@ -264,6 +264,9 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   .rev .fb{margin-top:8px}
 
   /* ---------- report a question, results footer ---------- */
+  .ref-link{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--gold-light);font-weight:600;text-decoration:none}
+  .ref-link:hover{color:var(--cream)}
+  .ref-link .ref-lock{display:inline-flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border:1px solid var(--border-2);border-radius:999px;padding:2px 8px;font-weight:600}
   .report-line{font-size:12px;color:var(--faint);margin:12px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .report-line a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border-2)}
   .report-line a:hover{color:var(--cream)}
@@ -457,6 +460,88 @@ const DOMAINS = [
     covers:"monitoring model performance and drift, A/B testing, monitoring agents, inference instance families, troubleshooting tools, dashboards and capacity, cost tools and purchasing options, FM inference costs, securing CI/CD, least privilege IAM, CloudTrail and Config, network isolation, Bedrock API keys versus IAM, and Bedrock Guardrails" }
 ];
 const DOM = n => DOMAINS.find(d => d.n === n);
+/* Course chapters by UNITS id (mirrors the course index.html UNITS array;
+   scripts/validate.py fails the hub if the two drift). A question's optional
+   ref:{chapter:N} resolves here to the "Review: Chapter N" link. */
+const CHAPTERS = {
+  1:["lesson-01-data-formats.html", "Choosing Data Formats: Parquet, ORC, JSON, and CSV by Access Pattern"],
+  2:["lesson-02-storage-decisions.html", "Storage Decisions: S3, EBS, EFS, RDS, DynamoDB, and OpenSearch by Cost and Structure"],
+  3:["lesson-03-streaming-ingestion-transformation.html", "Streaming Ingestion and Transformation: Kinesis, Managed Service for Apache Flink, Kafka, Lambda, and Spark"],
+  4:["lesson-04-merging-sources-troubleshooting.html", "Merging Sources and Troubleshooting Ingestion with AWS Glue and Spark"],
+  5:["lesson-05-vector-databases.html", "Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3"],
+  6:["lesson-06-ingesting-multimodal-data.html", "Ingesting Multimodal Data: Text, Images, and Audio"],
+  7:["lesson-07-sagemaker-feature-store.html", "SageMaker Feature Store: Ingesting and Managing Features"],
+  8:["lesson-08-feature-engineering.html", "Feature Engineering: Scaling, Binning, and Log Transforms"],
+  9:["lesson-09-encoding-features.html", "Encoding Features: One-Hot, Binary, Label, and Tokenization"],
+  10:["lesson-10-transformation-tools.html", "Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR"],
+  11:["lesson-11-embedding-models.html", "Embedding Models: Turning Text and Images into Vectors"],
+  12:["lesson-12-text-pre-processing.html", "Text Pre-Processing: Tokenization and Domain-Specific Augmentation"],
+  13:["lesson-13-preparing-documents-for-rag.html", "Preparing Documents for RAG: Chunking Strategies and Metadata Extraction"],
+  14:["lesson-14-masking-redaction-anonymization.html", "Masking, Redaction, and Anonymization"],
+  15:["lesson-15-preparing-data-for-fm-customization.html", "Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation"],
+  16:["lesson-16-cleaning-data.html", "Cleaning Data: Outliers, Missing Values, and Deduplication"],
+  17:["lesson-17-data-quality-validation.html", "Data Quality Validation with Glue Data Quality and DataBrew"],
+  18:["lesson-18-labeling-annotation.html", "Labeling and Annotation with SageMaker Ground Truth"],
+  19:["lesson-19-bias-metrics-class-imbalance.html", "Bias Metrics and Class Imbalance Across Numeric, Text, and Image Data"],
+  20:["lesson-20-validating-ai-training-data.html", "Validating AI Training Data: Prompt-Response Pairs and Content Safety Screening"],
+  21:["lesson-21-choosing-ml-approach.html", "Choosing an ML Approach: Feasibility, Algorithm Family, and Interpretability"],
+  22:["lesson-22-selecting-fm-bedrock.html", "Selecting a Foundation Model from Amazon Bedrock: Task Fit, Latency, and Cost"],
+  23:["lesson-23-custom-vs-managed-vs-pretrained-vs-fm.html", "Custom Models vs Managed Services vs Pre-Trained Models vs FMs"],
+  24:["lesson-24-fine-tuning-strategies.html", "Fine-Tuning Strategies for Pre-Trained FMs"],
+  25:["lesson-25-rag-architecture-patterns.html", "RAG Architecture Patterns and Retrieval Optimization"],
+  26:["lesson-26-aws-ai-services.html", "AWS AI Services for Business Problems: Textract, Rekognition, Comprehend, and Transcribe"],
+  27:["lesson-27-built-in-algorithms-script-mode.html", "SageMaker AI Built-In Algorithms and Script Mode"],
+  28:["lesson-28-training-mechanics.html", "Training Mechanics: Epochs, Batch Size, Early Stopping, and Distributed Training"],
+  29:["lesson-29-hyperparameter-optimization-amt.html", "Hyperparameter Optimization with SageMaker AI Automatic Model Tuning"],
+  30:["lesson-30-overfitting-underfitting-forgetting.html", "Overfitting, Underfitting, and Catastrophic Forgetting"],
+  31:["lesson-31-ensembles.html", "Ensembles: Combining Models for Accuracy or Cost"],
+  32:["lesson-32-prompt-engineering-vs-fine-tuning.html", "Prompt Engineering vs Fine-Tuning for AI Customization"],
+  33:["lesson-33-reproducible-experiments.html", "Reproducible Experiments: MLflow on SageMaker AI, Bedrock Evaluations, and Prompt Management"],
+  34:["lesson-34-baselines-shadow-variants.html", "Baselines, Drift Detection, and Shadow vs Production Variants"],
+  35:["lesson-35-classification-regression-metrics.html", "Classification and Regression Metrics: Confusion Matrix, F1, ROC AUC, and RMSE"],
+  36:["lesson-36-explaining-outputs-debugging-convergence.html", "Explaining Outputs and Debugging Convergence: Clarify and Debugger"],
+  37:["lesson-37-nlp-evaluation-metrics.html", "NLP Evaluation Metrics: BLEU, ROUGE, BERTScore, and Semantic Similarity"],
+  38:["lesson-38-human-evaluation-llm-as-a-judge.html", "Human-in-the-Loop Evaluation and LLM-as-a-Judge"],
+  39:["lesson-39-rag-system-monitoring.html", "RAG System Monitoring: Retrieval Accuracy Assessment"],
+  40:["lesson-40-inference-strategies.html", "Inference Strategies: Real-Time, Batch, Asynchronous, and Serverless"],
+  41:["lesson-41-compute-deployment-targets.html", "Compute Environments and Deployment Targets: SageMaker AI vs ECS, EKS, and Lambda"],
+  42:["lesson-42-orchestrators-multi-model.html", "Orchestrators and Multi-Model or Multi-Container Deployments"],
+  43:["lesson-43-fm-deployment-options.html", "FM Deployment Options: Bedrock On-Demand, Provisioned Throughput, and SageMaker AI Hosting"],
+  44:["lesson-44-importing-outside-models.html", "Importing Outside Models: SageMaker AI and Bedrock Custom Model Import"],
+  45:["lesson-45-deploying-agents.html", "Deploying Agents: Tasks, Tool Integration, and Communication Protocols"],
+  46:["lesson-46-on-demand-vs-provisioned.html", "On-Demand vs Provisioned Resources for Performance and Cost"],
+  47:["lesson-47-automating-provisioning-iac.html", "Automating Provisioning with CloudFormation and AWS CDK"],
+  48:["lesson-48-containers-for-ml-ai.html", "Containers for ML and AI Workloads: ECR, ECS, and EKS"],
+  49:["lesson-49-programmatic-deployment-vpc.html", "Programmatic Deployment: SageMaker AI SDK, CLI, and Boto3 inside a VPC"],
+  50:["lesson-50-auto-scaling-endpoints-gpu.html", "Auto Scaling: Endpoint Metrics and GPU Workloads"],
+  51:["lesson-51-bedrock-knowledge-bases.html", "Amazon Bedrock Knowledge Bases: Vector Stores, Indexing, Retrieval Strategies, and Reranking"],
+  52:["lesson-52-agent-state-agentic-infrastructure.html", "Agent State Management and Agentic Workflow Infrastructure"],
+  53:["lesson-53-deployment-strategies-rollback.html", "Deployment Strategies and Rollback: Blue/Green, Canary, and Linear"],
+  54:["lesson-54-cicd-code-services.html", "CI/CD with CodePipeline, CodeBuild, CodeDeploy, and CodeConnections"],
+  55:["lesson-55-automated-testing-prompt-testing.html", "Automated Testing for ML and AI Pipelines, Including Prompt Testing"],
+  56:["lesson-56-retraining-model-versioning.html", "Retraining and Model Versioning: SageMaker Model Registry, MLflow, and Fine-Tuned FMs"],
+  57:["lesson-57-prompt-management.html", "Prompt Management with Amazon Bedrock"],
+  58:["lesson-58-agent-deployment-pipelines.html", "Agent Deployment Pipelines and Agent Version Management"],
+  59:["lesson-59-rag-updates-knowledge-base-refresh.html", "Orchestrating RAG Updates and Knowledge Base Refresh Cycles"],
+  60:["lesson-60-monitoring-model-performance.html", "Monitoring Model Performance: CloudWatch Generative AI Observability, Bedrock Model Evaluation, and Drift Pipelines"],
+  61:["lesson-61-distribution-change-workflow-anomalies.html", "Detecting Data Distribution Change and Workflow Anomalies"],
+  62:["lesson-62-ab-testing-production.html", "A/B Testing in Production"],
+  63:["lesson-63-monitoring-agents.html", "Monitoring Agents: Coordination Failures, Truncated Streaming, and Tool Failures"],
+  64:["lesson-64-inference-instance-families.html", "Inference Instance Families for Performance and Cost"],
+  65:["lesson-65-troubleshooting-tools.html", "Troubleshooting Tools: CloudWatch, Bedrock AgentCore Observability, and X-Ray"],
+  66:["lesson-66-dashboards-capacity-optimization.html", "Dashboards and Capacity Optimization for Cost, Performance, and Reliability"],
+  67:["lesson-67-cost-tools-purchasing-options.html", "Cost Management Tools and Purchasing Options"],
+  68:["lesson-68-fm-inference-costs.html", "FM Inference Costs: Token Usage, Provisioned Throughput, and Usage Optimization"],
+  69:["lesson-69-ai-cost-patterns.html", "AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage"],
+  70:["lesson-70-securing-cicd-pipelines.html", "Securing CI/CD Pipelines: Amazon CodeGuru and Amazon Inspector"],
+  71:["lesson-71-least-privilege-iam.html", "Least Privilege and IAM for ML and AI Systems"],
+  72:["lesson-72-auditing-compliance.html", "Auditing and Compliance: AWS CloudTrail and AWS Config"],
+  73:["lesson-73-network-isolation.html", "Network Isolation: VPCs, Subnets, and Security Groups"],
+  74:["lesson-74-troubleshooting-security-ai-risks.html", "Troubleshooting Security and Mitigating AI Risks"],
+  75:["lesson-75-bedrock-api-keys-vs-iam.html", "Bedrock API Keys vs IAM Credentials"],
+  76:["lesson-76-bedrock-guardrails.html", "Amazon Bedrock Guardrails and Sensitive Data Protection"]
+};
+const FREE_CHAPTERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];  /* free in gate.ts */
 const unitOf = ch => { for (const d of DOMAINS) { for (const r of d.ch) { if (ch >= r[0] && ch <= r[1]) return d.n; } } return 1; };
 
 /* Question sources. The first exam is free with its unit; the other exams and
@@ -480,7 +565,7 @@ const SOURCES = [
 
 /* ---------- paywall state (same cookie contract as the course home) ---------- */
 function ccList(){ const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/); return m ? decodeURIComponent(m[1]).split(".") : []; }
-function unlocked(){ const l = ccList(); return l.indexOf(COURSE_ID) >= 0 || l.indexOf("1") >= 0; }
+function unlocked(){ const l = ccList(); return l.indexOf(COURSE_ID) >= 0; }  /* legacy "1" is de-assoc only (gate.ts) */
 function gatingOn(){ return /(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie); }
 function locked(){ return gatingOn() && !unlocked(); }
 async function openCheckout(){
@@ -552,8 +637,9 @@ function parseQuestions(text, src){
     src: src.id,
     kind: src.kind,
     unit: q.__unit,
-    ch: q.__ch || null,
-    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || ""
+    ch: q.__ch || (q.ref && CHAPTERS[q.ref.chapter] ? q.ref.chapter : null),
+    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || "",
+    ref: (q.ref && CHAPTERS[q.ref.chapter]) ? { chapter: q.ref.chapter } : null
   }));
 }
 
@@ -765,6 +851,18 @@ function renderAll(){ renderHeader(); renderReco(); renderBars(); renderPicker()
 
 const reportHref = q => "../how-lessons-are-made?course=" + encodeURIComponent(COURSE_SLUG) + "&q=" + encodeURIComponent(q.id) + "&text=" + encodeURIComponent(String(q.q).replace(/<[^>]+>/g, "").slice(0, 140)) + "#report";
 const reportLine = q => `<p class="report-line"><span>Question ${q.id}</span><a href="${reportHref(q)}" target="_blank" rel="noopener">Report a problem with this question</a></p>`;
+/* "Review: Chapter N" link under an explanation. Opens the lesson in this tab
+   with ?back= pointing at the hub; the session is snapshotted first so the
+   lesson's "Back to quiz" (or the browser back button) restores it. A paid
+   chapter is labelled Locked for visitors who have not unlocked; the link
+   still goes to the lesson URL, where the gate serves the unlock page. */
+const refLink = q => {
+  const n = q.ref && q.ref.chapter, c = n && CHAPTERS[n];
+  if (!c) return "";
+  const lock = FREE_CHAPTERS.indexOf(n) < 0 && locked();
+  const href = COURSE_DIR + c[0] + "?back=" + encodeURIComponent(location.pathname + "?resume=1");
+  return `<a class="ref-link" href="${href}" data-ref="1"><span>Review: Chapter ${n} &middot; ${c[1]}</span>${lock ? `<span class="ref-lock">${lockIcon()}Locked</span>` : ""}</a>`;
+};
 const clock = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const lockIcon = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>`;
 
@@ -876,7 +974,7 @@ function reveal(){ S.revealed[S.i] = true; renderQ(); }
 
 function showFeedback(){
   const q = S.qs[S.i], ok = sameSet(S.answers[S.i], keyOf(q));
-  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}</div>`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}${refLink(q)}</div>`;
 }
 
 function renderActions(){
@@ -929,6 +1027,7 @@ function finish(){
   STATE.lastMode = S.mode;
   saveState();
   track("practice_session_complete", { mode: S.mode, questions: S.qs.length, correct });
+  S.result = { correct, byUnit, before };
   renderSummary(correct, byUnit, before);
 }
 
@@ -949,7 +1048,7 @@ function renderSummary(correct, byUnit, before){
     return `<div class="rev">
       <div class="rq"><span class="mark ${ok ? "ok" : "no"}">${ok ? "Correct" : "Review"}</span>Q${i + 1}. ${q.q}</div>
       ${q.opts.map((o, j) => `<div class="opt ${key.includes(j) ? "correct" : mine.includes(j) ? "incorrect" : ""}"><span class="key">${KEYS[j]}</span><span>${o}${mine.includes(j) ? " · your answer" : ""}</span></div>`).join("")}
-      <div class="fb"><b>Why:</b> ${q.explain}</div>
+      <div class="fb"><b>Why:</b> ${q.explain}${refLink(q)}</div>
       ${reportLine(q)}
     </div>`;
   }).join("");
@@ -1008,9 +1107,54 @@ function togglePicker(force){
 renderAll();
 loadPool();
 
+/* ---------- resume after a "Review: Chapter N" link ----------
+   Following a chapter link leaves the page, so the live session is saved to
+   sessionStorage first. Coming back through the lesson's "Back to quiz"
+   (?resume=1) or the browser back button restores the same question, or the
+   same summary and review, at the same scroll position. */
+const RESUME_KEY = STORE_KEY + ".resume";
+const RESUME_TTL = 6 * 3600 * 1000;
+function saveResume(){
+  if (!S) return;
+  try{
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({
+      t: Date.now(), mode: S.mode, mock: S.mock, label: S.label, ids: S.qs.map(q => q.id), i: S.i,
+      explainNow: S.explainNow, timed: S.timed, answers: S.answers, revealed: S.revealed, unit: S.unit,
+      left: S.left, done: S.done, started: S.started, result: S.result || null, y: window.scrollY
+    }));
+  }catch(e){}
+}
+$("runner").addEventListener("click", e => { const a = e.target.closest && e.target.closest("a[data-ref]"); if (a) saveResume(); });
+async function tryResume(){
+  let snap = null;
+  try{ snap = JSON.parse(sessionStorage.getItem(RESUME_KEY) || "null"); sessionStorage.removeItem(RESUME_KEY); }catch(e){}
+  if (!snap || !Array.isArray(snap.ids) || Date.now() - (snap.t || 0) > RESUME_TTL) return false;
+  await loadPool();
+  const byId = {}; POOL.forEach(q => { byId[q.id] = q; });
+  const qs = snap.ids.map(id => byId[id]);
+  if (!qs.length || qs.some(q => !q)) return false;
+  S = { mode: snap.mode, mock: snap.mock || null, label: snap.label, qs, i: snap.i || 0, explainNow: !!snap.explainNow, timed: !!snap.timed,
+        answers: snap.answers, revealed: snap.revealed, unit: snap.unit, left: snap.left || 0, tick: null,
+        done: !!snap.done, started: snap.started || Date.now(), result: snap.result };
+  $("hub").hidden = true; $("session").hidden = false;
+  if (S.done && S.result) renderSummary(S.result.correct, S.result.byUnit, S.result.before);
+  else {
+    S.done = false;
+    if (S.timed) S.tick = setInterval(() => { S.left--; const t = $("runTimer"); if (t) { t.textContent = fmt(S.left); if (S.left <= 120) t.classList.add("warn"); } if (S.left <= 0) finish(); }, 1000);
+    renderQ();
+  }
+  setTimeout(() => window.scrollTo({ top: snap.y || 0, behavior: "instant" }), 60);
+  return true;
+}
+
 /* Deep links: ?mode=quick | ready | domain[&domain=N] | custom */
-(function(){
+(async function(){
   let params; try{ params = new URLSearchParams(location.search); }catch(e){ return; }
+  let nav = ""; try{ nav = (performance.getEntriesByType("navigation")[0] || {}).type || ""; }catch(e){}
+  if (params.get("resume") === "1" || nav === "back_forward") {
+    if (params.get("resume") === "1") { try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+    if (await tryResume()) return;
+  }
   const mode = params.get("mode"), n = parseInt(params.get("domain"), 10);
   if (mode === "quick") startQuick();
   else if (mode === "ready") startReady();

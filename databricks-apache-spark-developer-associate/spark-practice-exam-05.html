@@ -176,6 +176,7 @@ const QUESTIONS = [
 
   /* Ch 01 - Why Spark: advantages and challenges */
   {
+    ref:{chapter:1},
     q:`A utility moved its nightly smart-meter job (80 GB a day) from pandas to a Spark cluster. The job now finishes, but engineers report two things: a bad cast inside a <code>withColumn</code> step raises its error on the final <code>write</code> line, and a <code>groupBy("meter_id")</code> step spills to disk. How should these two observations be read?`,
     opts:[
       "Both show the cluster is misconfigured: Spark executes each line eagerly, so errors and spills should appear exactly where the code asks for them",
@@ -189,6 +190,7 @@ const QUESTIONS = [
 
   /* Ch 02 - Cluster anatomy: driver, executors, cores and memory */
   {
+    ref:{chapter:2},
     q:`A fraud team plans to <code>cache()</code> a 200 GB DataFrame of scored card transactions that several reports reuse. The driver node has 32 GB of memory, and a teammate warns that the cache will run the driver out of memory. Where do the cached partitions actually live?`,
     opts:[
       "On the driver, which keeps every cached partition so it can hand copies to executors",
@@ -202,6 +204,7 @@ const QUESTIONS = [
 
   /* Ch 03 - DataFrames, Datasets and the SparkSession lifecycle */
   {
+    ref:{chapter:3},
     q:`A team runs the same ledger-check logic two ways: as a standalone PySpark script launched nightly, and interactively in a Databricks notebook. A reviewer proposes adding <code>spark.stop()</code> as the last line of both. What is the right call?`,
     opts:[
       "Add it to the standalone script, where it stops the underlying SparkContext and releases the executors; leave it out of the notebook, where the session belongs to the attached compute",
@@ -215,6 +218,7 @@ const QUESTIONS = [
 
   /* Ch 04 - Caching and storage levels */
   {
+    ref:{chapter:4},
     q:`An eight-hour risk run reuses a 30 GB scenario DataFrame <code>scen</code> in hundreds of actions. Building it takes a 40-minute join. The executors run on spot instances that are sometimes reclaimed, and each time that happens tasks stall while the lost partitions are recomputed. Which persist call fits?`,
     opts:[
       "<code>scen.persist(StorageLevel.MEMORY_ONLY)</code>",
@@ -228,6 +232,7 @@ const QUESTIONS = [
 
   /* Ch 05 - Executor memory and garbage collection */
   {
+    ref:{chapter:5},
     q:`A sensor-analytics job caches a large lookup of device calibration data that every stage reuses. The Executors tab shows high GC time, and the team learns the collector keeps scanning those long-lived cached objects. They want Spark to keep execution and storage data outside the region the JVM garbage collector scans. Which configuration does that?`,
     opts:[
       "Set <code>spark.memory.offHeap.enabled</code> to true and give <code>spark.memory.offHeap.size</code> a value, so that data is kept off-heap",
@@ -241,6 +246,7 @@ const QUESTIONS = [
 
   /* Ch 06 - The execution hierarchy */
   {
+    ref:{chapter:6},
     q:`A notebook builds <code>daily = txns.groupBy("account_id").agg(sum("amount"))</code>, calls <code>daily.cache()</code>, runs <code>daily.count()</code>, and then runs <code>daily.filter(col("sum(amount)") &gt; 10000).show()</code>. On the second job's details page, one stage is drawn in gray and labelled skipped. What does that mean?`,
     opts:[
       "The stage failed and Spark dropped it, so the results shown are incomplete",
@@ -254,6 +260,7 @@ const QUESTIONS = [
 
   /* Ch 07 - Partitions and shuffles */
   {
+    ref:{chapter:7},
     q:`In the Stages tab, the stage before a <code>groupBy("merchant_id")</code> shows Shuffle Write of 48 GB and the stage after it shows Shuffle Read of 48 GB. A new engineer asks where those 48 GB went in between. What is the accurate description?`,
     opts:[
       "The map tasks sent the rows to the driver, which regrouped them by merchant_id and handed them back out",
@@ -267,6 +274,7 @@ const QUESTIONS = [
 
   /* Ch 08 - Transformations, actions and lazy evaluation */
   {
+    ref:{chapter:8},
     q:`A quant wants to prepare a 10-row sample of a <code>trades</code> DataFrame for a later join without starting any Spark job yet. Which call returns a DataFrame and runs nothing?`,
     opts:[
       "<code>trades.first()</code>",
@@ -280,6 +288,7 @@ const QUESTIONS = [
 
   /* Ch 09 - The Spark modules */
   {
+    ref:{chapter:9},
     q:`Two analysts compute total exposure per trading desk over the same positions table. One registers a temporary view and runs <code>spark.sql("SELECT desk, SUM(notional) FROM positions GROUP BY desk")</code>; the other writes <code>positions.groupBy("desk").sum("notional")</code>. Which statement about performance is right?`,
     opts:[
       "The SQL version is faster, because SQL text is executed natively while Python DataFrame calls are interpreted row by row",
@@ -293,6 +302,7 @@ const QUESTIONS = [
 
   /* Ch 10 - Reading data sources: files and JDBC */
   {
+    ref:{chapter:10},
     q:`A bank's landing folder <code>/Volumes/fin/raw/cards/</code> receives transaction CSV files with a header row, but the upstream system also drops <code>.done</code> marker files and <code>.json</code> manifests into the same folder. Reading the folder picks up rows from those files too. Which read keeps only the CSV files?`,
     opts:[
       "<code>spark.read.option(\"header\", True).option(\"pathGlobFilter\", \"*.csv\").csv(\"/Volumes/fin/raw/cards/\")</code>",
@@ -306,6 +316,7 @@ const QUESTIONS = [
 
   /* Ch 11 - Writing: partitionBy and overwrite */
   {
+    ref:{chapter:11},
     q:`Meter readings were written with <code>partitionBy("region")</code> to <code>/lake/readings</code>. An analyst needs only the EU rows, must keep the <code>region</code> column in the result, and wants Spark to skip the other regions' folders. Which read fits?`,
     opts:[
       "<code>spark.read.parquet(\"/lake/readings/region=EU\")</code>",
@@ -319,6 +330,7 @@ const QUESTIONS = [
 
   /* Ch 12 - Querying files directly with SQL */
   {
+    ref:{chapter:12},
     q:`A partner sends settlement records twice: as ORC files and as a CSV export with a header row. In a SQL cell, <code>SELECT * FROM orc.&#96;/Volumes/fin/raw/settle_orc/&#96;</code> returns properly named, typed columns, while the same query with the <code>csv</code> prefix returns <code>_c0</code>, <code>_c1</code> and so on, all strings. What explains the difference?`,
     opts:[
       "The ORC query infers the schema by reading the files twice, and the CSV query skips that pass",
@@ -332,6 +344,7 @@ const QUESTIONS = [
 
   /* Ch 12 - Querying files directly with SQL */
   {
+    ref:{chapter:12},
     q:`An auditor queries a Delta table's folder with <code>SELECT count(*) FROM parquet.&#96;/Volumes/fin/ext/ledger/&#96;</code> and gets far more rows than the table holds, including entries that were updated or deleted weeks ago. Which statement returns only the table's current rows?`,
     opts:[
       "<code>SELECT count(*) FROM parquet.&#96;/Volumes/fin/ext/ledger/_delta_log&#96;</code>",
@@ -345,6 +358,7 @@ const QUESTIONS = [
 
   /* Ch 13 - Save modes */
   {
+    ref:{chapter:13},
     q:`A quarterly regulatory export uses <code>report.write.mode("error").parquet(path)</code>. A reviewer asks for it to be changed to <code>mode("errorifexists")</code> "so that an accidental second run fails loudly instead of touching the existing export". What is accurate?`,
     opts:[
       "No change is needed: <code>\"error\"</code> and <code>\"errorifexists\"</code> are the same mode (the default), which raises an exception and writes nothing when the target exists",
@@ -358,6 +372,7 @@ const QUESTIONS = [
 
   /* Ch 13 - Save modes */
   {
+    ref:{chapter:13},
     q:`A utility adds a new region, and its first bronze write of meter telemetry uses <code>readings.write.mode("append").parquet("/lake/bronze/meters/region=APAC")</code>, a path that does not exist yet. A teammate insists the first run must use a different mode because "append needs something to append to". What happens on the first run?`,
     opts:[
       "It fails, because append requires an existing target; the first run must use errorifexists",
@@ -371,6 +386,7 @@ const QUESTIONS = [
 
   /* Ch 14 - Persistent tables: saveAsTable, partitioning, bucketing and sorting */
   {
+    ref:{chapter:14},
     q:`To speed up a nightly join on account_id, a bank wrote <code>trades</code> with <code>bucketBy(16, "account_id")</code> and <code>positions</code> with <code>bucketBy(64, "account_id")</code>, both through <code>saveAsTable</code>. The join plan still shows an Exchange under both sides. Why?`,
     opts:[
       "Bucketing only speeds up filters on the bucket column, never joins",
@@ -384,6 +400,7 @@ const QUESTIONS = [
 
   /* Ch 15 - Temporary and global temporary views */
   {
+    ref:{chapter:15},
     q:`A notebook registers <code>exposure</code>, the result of an expensive three-table join of trades, positions and prices, with <code>exposure.createOrReplaceTempView("exposure_v")</code>. Twelve <code>spark.sql</code> queries then hit <code>exposure_v</code>, and the Spark UI shows the full join running for every one of them. What fixes the repetition?`,
     opts:[
       "Register it with createOrReplaceGlobalTempView, which stores the view's rows in the global_temp database",
@@ -397,6 +414,7 @@ const QUESTIONS = [
 
   /* Ch 15 - Temporary and global temporary views */
   {
+    ref:{chapter:15},
     q:`A risk application builds <code>rates</code> in its main session and then opens a second session with <code>spark.newSession()</code> for an isolated configuration. Code in the second session must query rates with SQL. Nothing may be written to storage, and nothing should outlive the application. Which approach works?`,
     opts:[
       "<code>rates.createOrReplaceTempView(\"rates\")</code> in the main session, then <code>SELECT * FROM rates</code> in the second",
@@ -410,6 +428,7 @@ const QUESTIONS = [
 
   /* Ch 16 - Columns: select, withColumn, withColumnRenamed, drop */
   {
+    ref:{chapter:16},
     q:`A transactions DataFrame <code>txns</code> needs a new column <code>currency</code> holding the constant "EUR" on every row, and its column <code>amt</code> renamed to <code>amount_eur</code>. Which code does both?`,
     opts:[
       "<code>txns.withColumn(\"currency\", lit(\"EUR\")).withColumnRenamed(\"amt\", \"amount_eur\")</code>",
@@ -423,6 +442,7 @@ const QUESTIONS = [
 
   /* Ch 17 - Rows: filter, split and explode */
   {
+    ref:{chapter:17},
     q:`Each row of a telemetry DataFrame has meter_id and a map column <code>readings</code>, such as {"kwh": 451.2, "voltage": 229.8}. A report needs one row per map entry with exactly three columns: meter_id, key and value. Which code produces it?`,
     opts:[
       "<code>telemetry.select(\"meter_id\", posexplode(\"readings\"))</code>",
@@ -436,6 +456,7 @@ const QUESTIONS = [
 
   /* Ch 18 - Deduplication and missing data */
   {
+    ref:{chapter:18},
     q:`A sensor DataFrame has device_id (string), temp (double), humidity (double) and firmware (string), with nulls scattered in the last three columns. In one call, missing temp and humidity must become 0 and missing firmware must become "unknown", while device_id is left alone. Which call does it?`,
     opts:[
       "<code>readings.na.fill(0)</code>",
@@ -449,6 +470,7 @@ const QUESTIONS = [
 
   /* Ch 19 - Aggregations: groupBy, agg, approx_count_distinct and summary */
   {
+    ref:{chapter:19},
     q:`Before setting fraud thresholds, a risk analyst wants, for every numeric column of <code>txns</code>, only four statistics: the count, the minimum, the 99th percentile and the maximum, in one call. Which call returns exactly that?`,
     opts:[
       "<code>txns.describe(\"count\", \"min\", \"99%\", \"max\")</code>",
@@ -462,6 +484,7 @@ const QUESTIONS = [
 
   /* Ch 20 - Dates and timestamps */
   {
+    ref:{chapter:20},
     q:`A fraud rule must flag card transactions made on a Saturday or a Sunday. The column <code>ts</code> is a TIMESTAMP. Which filter is correct?`,
     opts:[
       "<code>txns.filter(dayofweek(\"ts\").isin(1, 7))</code>",
@@ -475,6 +498,7 @@ const QUESTIONS = [
 
   /* Ch 21 - Joins: inner, left, multiple keys and cross */
   {
+    ref:{chapter:21},
     q:`A month-end reconciliation compares the internal <code>ledger</code> with the <code>bank</code> statement. Rows match on both account_id and txn_id, and the result must keep every entry from both sides, with nulls wherever one side has no match. Which join is correct?`,
     opts:[
       "<code>ledger.join(bank, [\"account_id\", \"txn_id\"], \"left\")</code>",
@@ -488,6 +512,7 @@ const QUESTIONS = [
 
   /* Ch 22 - Unions: union, unionAll and unionByName */
   {
+    ref:{chapter:22},
     q:`Today's card-charge extract and yesterday's have the same schema. A customer was legitimately charged twice today for an identical amount, so two rows are exactly the same, and yesterday's extract already contains one copy of that row. The team needs the rows in today's extract that yesterday's does not contain, keeping duplicates. Which call fits?`,
     opts:[
       "<code>today.subtract(yesterday)</code>",
@@ -501,6 +526,7 @@ const QUESTIONS = [
 
   /* Ch 23 - Reading with explicit schemas */
   {
+    ref:{chapter:23},
     q:`A broker's trade files are CSV with a header row. amount must be an exact money type with 18 digits and 2 decimals, and trade_ts a timestamp, on every run, with no inference pass. Which read is correct?`,
     opts:[
       "<code>spark.read.schema(StructType([StructField(\"trade_id\", StringType, True), StructField(\"amount\", DecimalType, True), StructField(\"trade_ts\", TimestampType, True)])).option(\"header\", True).csv(path)</code>",
@@ -514,6 +540,7 @@ const QUESTIONS = [
 
   /* Ch 24 - Sorting, iterating and converting */
   {
+    ref:{chapter:24},
     q:`A job collects 500 flagged transactions with <code>rows = flagged.select("txn_id", "amount", "merchant").collect()</code>, where merchant is a nested struct (name, mcc). It builds payloads with <code>[r.asDict() for r in rows]</code>, but serializing them to JSON fails because each merchant value is still a Row. Which change gives plain nested dicts?`,
     opts:[
       "<code>[r.asDict(recursive=True) for r in rows]</code>",
@@ -527,6 +554,7 @@ const QUESTIONS = [
 
   /* Ch 25 - Python UDFs */
   {
+    ref:{chapter:25},
     q:`An IBAN check with no built-in equivalent is registered as <code>spark.udf.register("check_iban", check_iban, "boolean")</code>. The query <code>SELECT * FROM payments WHERE iban IS NOT NULL AND check_iban(iban)</code> still fails with a Python TypeError raised on None inside the function. Why, and what is the fix?`,
     opts:[
       "The register call needs the type IntegerType() for a boolean result",
@@ -540,6 +568,7 @@ const QUESTIONS = [
 
   /* Ch 26 - Stateful operators and state stores */
   {
+    ref:{chapter:26},
     q:`A streaming fraud model must remember, for each card_id, how many transactions it has seen at each merchant_id, across all micro-batches so far. The team writes a StatefulProcessor for <code>groupBy("card_id").transformWithStateInPandas(...)</code>. Which state variable fits?`,
     opts:[
       "A ValueState holding a single running count per card",
@@ -553,6 +582,7 @@ const QUESTIONS = [
 
   /* Ch 27 - Broadcast variables and accumulators */
   {
+    ref:{chapter:27},
     q:`A scoring job builds a 30 MB dict <code>tiers</code> of merchant risk tiers on the driver and runs <code>bc = spark.sparkContext.broadcast(tiers)</code>. Its UDF body is <code>return tiers.get(merchant_id)</code>. The Spark UI still shows large task data shipped with every one of its 3,000 tasks. Why?`,
     opts:[
       "Broadcast variables only work inside RDD map functions, not in UDFs",
@@ -566,6 +596,7 @@ const QUESTIONS = [
 
   /* Ch 28 - Broadcast joins */
   {
+    ref:{chapter:28},
     q:`An engineer joins a 2 TB <code>txns</code> table to a 6 MB <code>merchants</code> table on merchant_id and reads the physical plan: <code>BroadcastHashJoin [merchant_id], [merchant_id], Inner, BuildRight</code>, with a <code>BroadcastExchange</code> above the merchants scan and no <code>Exchange</code> above the txns scan. What does the plan say happened?`,
     opts:[
       "merchants, the right side, was copied whole to every executor as an in-memory hash table, and each task joined its own txns partition in place, so txns was never shuffled",
@@ -579,6 +610,7 @@ const QUESTIONS = [
 
   /* Ch 29 - repartition versus coalesce */
   {
+    ref:{chapter:29},
     q:`A job writes 400 partitions of card transactions with <code>txns.write.partitionBy("region").parquet(out)</code>. There are 12 regions, and every region folder ends up with hundreds of small files, because every task holds rows of every region. Which change makes each region folder receive its rows from as few tasks as possible?`,
     opts:[
       "<code>txns.coalesce(12).write.partitionBy(\"region\").parquet(out)</code>",
@@ -592,6 +624,7 @@ const QUESTIONS = [
 
   /* Ch 30 - Data skew and reducing shuffles */
   {
+    ref:{chapter:30},
     q:`A join stage on a 64-core cluster runs 400 tasks. Its summary metrics show duration min 50 s, median 55 s, max 61 s, and shuffle read median 210 MB, max 230 MB, with no spill. The stage is too slow for the reporting deadline. What is the right reading?`,
     opts:[
       "This is data skew: salt the join key so the hot key spreads over several partitions",
@@ -605,6 +638,7 @@ const QUESTIONS = [
 
   /* Ch 31 - Adaptive Query Execution */
   {
+    ref:{chapter:31},
     q:`On a busy shared cluster with AQE at its defaults, an engineer sees that after each shuffle AQE still leaves many post-shuffle partitions of only a few megabytes, far below the 64 MB advisory size, so stages run hundreds of tiny tasks. Which setting makes AQE coalesce toward the advisory size?`,
     opts:[
       "Set <code>spark.sql.adaptive.coalescePartitions.parallelismFirst</code> to false: by default AQE favors keeping tasks parallel and only enforces the 1 MB minimum",
@@ -618,6 +652,7 @@ const QUESTIONS = [
 
   /* Ch 31 - Adaptive Query Execution */
   {
+    ref:{chapter:31},
     q:`Before running a join of trades with a filtered accounts table, an engineer runs explain() and sees <code>AdaptiveSparkPlan isFinalPlan=false</code> above a SortMergeJoin. After the query runs, the SQL tab of the Spark UI shows a BroadcastHashJoin for the same query. What happened?`,
     opts:[
       "explain() ran the query once and cached the accounts table, so the second run planned differently",
@@ -631,6 +666,7 @@ const QUESTIONS = [
 
   /* Ch 32 - Logs and the Spark UI */
   {
+    ref:{chapter:32},
     q:`A nightly ledger aggregation fails. The driver log shows ExecutorLostFailure (executor 12 exited caused by one of the running tasks); executor 12's stderr ends with java.lang.OutOfMemoryError: Java heap space; and the failing stage's summary metrics show a max shuffle read of 18 GB against a median of 300 MB. What is the best first fix?`,
     opts:[
       "Raise <code>spark.driver.memory</code>, since the driver log reported the failure",
@@ -644,6 +680,7 @@ const QUESTIONS = [
 
   /* Ch 33 - The Structured Streaming model */
   {
+    ref:{chapter:33},
     q:`A meter-telemetry stream uses <code>trigger(processingTime="1 minute")</code>. During a load spike one micro-batch takes 90 seconds. What does the engine do next?`,
     opts:[
       "It starts a second micro-batch in parallel at the one-minute mark, so two batches overlap",
@@ -657,6 +694,7 @@ const QUESTIONS = [
 
   /* Ch 34 - readStream, writeStream, output modes and sinks */
   {
+    ref:{chapter:34},
     q:`A card-settlement stream must write every micro-batch to two Delta tables, a ledger and an audit copy, and a retried batch must not duplicate rows. Which design fits?`,
     opts:[
       "<code>writeStream.foreachBatch(write_both)</code>, where <code>write_both(batch_df, batch_id)</code> writes batch_df to both tables with ordinary batch writers and uses batch_id to make the writes idempotent",
@@ -670,6 +708,7 @@ const QUESTIONS = [
 
   /* Ch 35 - Streaming operations: select, filter, window and aggregation */
   {
+    ref:{chapter:35},
     q:`A stream counts card authorizations per merchant with <code>groupBy(window("ts", "15 minutes"), "merchant_id").count()</code>. One authorization is stamped exactly 14:30:00. Which window does it count toward?`,
     opts:[
       "14:15 to 14:30, because the timestamp marks the end of that window",
@@ -683,6 +722,7 @@ const QUESTIONS = [
 
   /* Ch 36 - Streaming deduplication */
   {
+    ref:{chapter:36},
     q:`A card-transaction stream deduplicates exact replicas with <code>withWatermark("event_ts", "30 minutes").dropDuplicates(["txn_id", "event_ts"])</code>. An offline terminal later uploads a batch of genuine transactions two hours late, and they never appear in the output, although none of them is a duplicate. Why?`,
     opts:[
       "dropDuplicates keeps them in state but the output mode hides rows already seen",
@@ -696,6 +736,7 @@ const QUESTIONS = [
 
   /* Ch 37 - Spark Connect */
   {
+    ref:{chapter:37},
     q:`A platform team on Spark 4.0 wants an existing classic PySpark application to run through Spark Connect without editing its code, to check it is ready for a later move to a remote server. Which setting does that?`,
     opts:[
       "<code>spark-submit --deploy-mode connect app.py</code>",
@@ -709,6 +750,7 @@ const QUESTIONS = [
 
   /* Ch 38 - Deployment modes: local, client, cluster */
   {
+    ref:{chapter:38},
     q:`A risk engineer submits <code>spark-submit --master yarn --deploy-mode cluster var_job.py</code> from a laptop. The job succeeds, but none of the script's progress lines printed with print() appear in the laptop's terminal. Where are they?`,
     opts:[
       "Nowhere: print() is suppressed for every job submitted with spark-submit",
@@ -722,6 +764,7 @@ const QUESTIONS = [
 
   /* Ch 38 - Deployment modes: local, client, cluster */
   {
+    ref:{chapter:38},
     q:`A quant runs <code>spark-submit --master local[8] backtest.py</code> on a 64-core server that is also a YARN gateway. The Spark UI shows a single executor entry, 8 task slots, and no other machines involved. What is going on?`,
     opts:[
       "<code>local[8]</code> runs the driver and the executor in one JVM on this machine, with 8 task threads; to use the cluster, submit with <code>--master yarn</code>",
@@ -735,6 +778,7 @@ const QUESTIONS = [
 
   /* Ch 39 - Pandas API on Spark */
   {
+    ref:{chapter:39},
     q:`A Spark job condenses 2 billion meter readings into a daily summary of about 5,000 rows. An analyst now wants to run that summary through several plain pandas and SciPy routines on the driver for a one-off chart. Which approach fits?`,
     opts:[
       "Never convert: <code>to_pandas()</code> always collects the full source data, so keep the summary in Pandas API on Spark and skip SciPy",
@@ -748,6 +792,7 @@ const QUESTIONS = [
 
   /* Ch 40 - Pandas UDFs */
   {
+    ref:{chapter:40},
     q:`A payments parser turns each raw gateway message into zero, one or several transaction rows, using vectorized pandas code. No grouping is needed. Which approach fits?`,
     opts:[
       "A Series to Series <code>@pandas_udf</code> applied with withColumn",
@@ -760,6 +805,56 @@ const QUESTIONS = [
   },
 
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "spark-assoc",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  list: {
+    1:["lesson-01-why-spark.html", "Why Spark: Advantages and Challenges"],
+    2:["lesson-02-cluster-anatomy.html", "Cluster Anatomy: Driver, Executors, Cores and Memory"],
+    3:["lesson-03-dataframes-datasets-sparksession.html", "DataFrames, Datasets and the SparkSession Lifecycle"],
+    4:["lesson-04-caching-and-storage-levels.html", "Caching and Storage Levels"],
+    5:["lesson-05-executor-memory-and-gc.html", "Executor Memory and Garbage Collection"],
+    6:["lesson-06-execution-hierarchy.html", "The Execution Hierarchy: Application, Job, Stage, Task"],
+    7:["lesson-07-partitions-and-shuffles.html", "Partitions and Shuffles"],
+    8:["lesson-08-transformations-actions-lazy-evaluation.html", "Transformations, Actions and Lazy Evaluation"],
+    9:["lesson-09-spark-modules.html", "The Spark Modules: Core, SQL, Pandas API, Streaming, MLlib"],
+    10:["lesson-10-reading-data-sources.html", "Reading Data Sources: Files and JDBC"],
+    11:["lesson-11-writing-partitionby-and-overwrite.html", "Writing: partitionBy and Overwrite"],
+    12:["lesson-12-querying-files-directly-with-sql.html", "Querying Files Directly with SQL"],
+    13:["lesson-13-save-modes.html", "Save Modes: append, overwrite, ignore, errorifexists"],
+    14:["lesson-14-persistent-tables.html", "Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting"],
+    15:["lesson-15-temporary-views.html", "Temporary and Global Temporary Views"],
+    16:["lesson-16-columns.html", "Columns: select, withColumn, withColumnRenamed, drop"],
+    17:["lesson-17-rows-filter-split-explode.html", "Rows: filter, split and explode"],
+    18:["lesson-18-deduplication-and-missing-data.html", "Deduplication and Missing Data"],
+    19:["lesson-19-aggregations.html", "Aggregations: groupBy, agg, approx_count_distinct and summary"],
+    20:["lesson-20-dates-and-timestamps.html", "Dates and Timestamps"],
+    21:["lesson-21-joins.html", "Joins: Inner, Left, Multiple Keys and Cross"],
+    22:["lesson-22-unions.html", "Unions: union, unionAll and unionByName"],
+    23:["lesson-23-explicit-schemas.html", "Reading with Explicit Schemas"],
+    24:["lesson-24-sorting-iterating-converting.html", "Sorting, Iterating and Converting"],
+    25:["lesson-25-python-udfs.html", "Python UDFs"],
+    26:["lesson-26-stateful-operators-state-stores.html", "Stateful Operators and State Stores"],
+    27:["lesson-27-broadcast-variables-accumulators.html", "Broadcast Variables and Accumulators"],
+    28:["lesson-28-broadcast-joins.html", "Broadcast Joins"],
+    29:["lesson-29-repartition-versus-coalesce.html", "repartition versus coalesce"],
+    30:["lesson-30-data-skew-and-reducing-shuffles.html", "Data Skew and Reducing Shuffles"],
+    31:["lesson-31-adaptive-query-execution.html", "Adaptive Query Execution"],
+    32:["lesson-32-logs-and-the-spark-ui.html", "Logs and the Spark UI: Diagnosing OOM and Underutilization"],
+    33:["lesson-33-structured-streaming-model.html", "The Structured Streaming Model"],
+    34:["lesson-34-readstream-writestream-output-modes-sinks.html", "readStream, writeStream, Output Modes and Sinks"],
+    35:["lesson-35-streaming-operations-window-aggregation.html", "Streaming Operations: select, filter, window and aggregation"],
+    36:["lesson-36-streaming-deduplication.html", "Streaming Deduplication"],
+    37:["lesson-37-spark-connect.html", "Spark Connect"],
+    38:["lesson-38-deployment-modes.html", "Deployment Modes: local, client, cluster"],
+    39:["lesson-39-pandas-api-on-spark.html", "Pandas API on Spark"],
+    40:["lesson-40-pandas-udfs.html", "Pandas UDFs"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -811,6 +906,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -965,7 +1090,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

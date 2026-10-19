@@ -176,6 +176,7 @@ const QUESTIONS = [
 
   /* Ch 10 - Reading data sources: files and JDBC */
   {
+    ref:{chapter:10},
     q:`A team reads only last week's paid orders from a 900-million-row PostgreSQL table. The reader sets <code>option("query", "SELECT * FROM orders WHERE status = 'paid' AND created &gt; now() - interval '7 days'")</code> and adds <code>partitionColumn</code>, <code>lowerBound</code>, <code>upperBound</code> and <code>numPartitions</code> so the read runs in parallel, but the read is rejected. Which change keeps both the filter and the parallel read?`,
     opts:[
       "Load the whole table with a single-partition read, then apply the filter with <code>spark.sql</code> on the resulting DataFrame",
@@ -189,6 +190,7 @@ const QUESTIONS = [
 
   /* Ch 11 - Writing: partitionBy and overwrite */
   {
+    ref:{chapter:11},
     q:`A 3 TB orders dataset is rebuilt every night as Parquet at one path. Almost every downstream query filters on <code>region</code> (eight values), and readers should skip regions they do not ask for. The nightly job must succeed when the path already exists and must not keep yesterday's rows. Which write fits?`,
     opts:[
       "<code>df.write.mode(\"overwrite\").partitionBy(\"order_id\").parquet(path)</code>",
@@ -202,6 +204,7 @@ const QUESTIONS = [
 
   /* Ch 12 - Querying files directly with SQL */
   {
+    ref:{chapter:12},
     q:`An analyst working only in a SQL cell needs to query semicolon-delimited CSV files with a header row in <code>/Volumes/main/raw/landing/</code>, without creating a table or writing any Python. Which statement returns properly named columns?`,
     opts:[
       "<code>SELECT * FROM read_files('/Volumes/main/raw/landing/', format =&gt; 'csv', header =&gt; true, sep =&gt; ';')</code>",
@@ -215,6 +218,7 @@ const QUESTIONS = [
 
   /* Ch 13 - Save modes */
   {
+    ref:{chapter:13},
     q:`A setup notebook writes a small reference table of country codes to a path. It runs at the start of every pipeline execution. The table must be created on the first run, must never be changed afterwards because other teams curate it by hand, and later runs must not fail. Which save mode should the write use?`,
     opts:[
       "<code>append</code>, so each run adds the codes only if they are missing",
@@ -228,6 +232,7 @@ const QUESTIONS = [
 
   /* Ch 14 - Persistent tables */
   {
+    ref:{chapter:14},
     q:`An engineer saves results with <code>df.write.option("path", "s3://lake/sales/orders").saveAsTable("main.sales.orders")</code>. Months later a teammate runs <code>DROP TABLE main.sales.orders</code>. What happens?`,
     opts:[
       "The table is removed from the catalog and the data files at the path stay, because a table saved with an explicit path is an external table",
@@ -241,6 +246,7 @@ const QUESTIONS = [
 
   /* Ch 15 - Temporary and global temporary views */
   {
+    ref:{chapter:15},
     q:`A notebook runs <code>spark.read.parquet("/data/prices").createOrReplaceTempView("prices")</code> at 09:00. At 11:00 another process replaces the Parquet files with new prices, and at 11:05 the same notebook session runs <code>SELECT avg(price) FROM prices</code> without registering anything again. Which prices does the query use?`,
     opts:[
       "The 09:00 prices, because a temporary view stores the rows that existed when it was registered",
@@ -254,6 +260,7 @@ const QUESTIONS = [
 
   /* Ch 16 - Columns: select, withColumn, withColumnRenamed, drop */
   {
+    ref:{chapter:16},
     q:`<code>salesDF</code> has the columns <code>sku</code>, <code>price</code> and <code>qty</code>. Which code adds a column <code>total</code> equal to price times quantity and renames <code>qty</code> to <code>quantity</code>?`,
     opts:[
       "<code>salesDF.withColumn(col(\"total\"), col(\"price\") * col(\"qty\")).withColumnRenamed(\"qty\", \"quantity\")</code>",
@@ -267,6 +274,7 @@ const QUESTIONS = [
 
   /* Ch 17 - Rows: filter, split and explode */
   {
+    ref:{chapter:17},
     q:`<code>customersDF</code> has an <code>id</code> column and a <code>tags</code> column holding comma-separated text such as "vip,eu,newsletter"; some customers have a null <code>tags</code>. A report needs one row per customer per tag, and customers with no tags must still appear once with a null tag. Which code produces it?`,
     opts:[
       "<code>customersDF.select(\"id\", explode(split(col(\"tags\"), \",\")).alias(\"tag\"))</code>",
@@ -280,6 +288,7 @@ const QUESTIONS = [
 
   /* Ch 18 - Deduplication and missing data */
   {
+    ref:{chapter:18},
     q:`A retried load wrote some rows of <code>eventsDF</code> twice, identical in every column. The same <code>customer_id</code> legitimately appears on many different events. Which call removes only the accidental copies?`,
     opts:[
       "<code>eventsDF.dropDuplicates([\"customer_id\"])</code>",
@@ -293,6 +302,7 @@ const QUESTIONS = [
 
   /* Ch 19 - Aggregations */
   {
+    ref:{chapter:19},
     q:`Before modelling, a data scientist wants the count, mean, standard deviation, minimum, maximum and the 25th, 50th and 75th percentiles of every numeric column of <code>ordersDF</code>, with one call. Which call returns all of them?`,
     opts:[
       "<code>ordersDF.summary()</code>",
@@ -306,6 +316,7 @@ const QUESTIONS = [
 
   /* Ch 20 - Dates and timestamps */
   {
+    ref:{chapter:20},
     q:`<code>clicksDF</code> stores <code>event_ts</code> as Unix epoch seconds in a long column. A CSV report needs a date string such as 2026-10-07 for each click. Which expression produces it?`,
     opts:[
       "<code>to_date(col(\"event_ts\"), \"yyyy-MM-dd\")</code>",
@@ -319,6 +330,7 @@ const QUESTIONS = [
 
   /* Ch 21 - Joins */
   {
+    ref:{chapter:21},
     q:`A marketing list needs every customer who has placed at least one order, with only the customer columns and exactly one row per customer, even when a customer has hundreds of orders. Which join produces it?`,
     opts:[
       "<code>customers.join(orders, \"customer_id\", \"inner\")</code>",
@@ -332,6 +344,7 @@ const QUESTIONS = [
 
   /* Ch 22 - Unions */
   {
+    ref:{chapter:22},
     q:`January's extract has columns <code>id</code>, <code>amount</code> and <code>region</code>. From February the source adds a <code>channel</code> column. The team must combine both months into one DataFrame, with <code>channel</code> null for January rows. Which call does it?`,
     opts:[
       "<code>jan.unionByName(feb, allowMissingColumns=True)</code>",
@@ -345,6 +358,7 @@ const QUESTIONS = [
 
   /* Ch 23 - Reading with explicit schemas */
   {
+    ref:{chapter:23},
     q:`A nightly job reads 2,000 CSV files with <code>option("header", True).option("inferSchema", True)</code>. The read is slow, and on some nights a column flips from integer to string because one file has a stray value. Which change addresses both problems?`,
     opts:[
       "Raise <code>spark.sql.shuffle.partitions</code> so the inference pass runs on more tasks",
@@ -358,6 +372,7 @@ const QUESTIONS = [
 
   /* Ch 24 - Sorting, iterating and converting */
   {
+    ref:{chapter:24},
     q:`A developer writes <code>top = scoresDF.orderBy(desc("score")).show(5)</code> and then <code>top[0]["player"]</code>, which fails with "'NoneType' object is not subscriptable". Which line gets the five highest-scoring rows as Row objects?`,
     opts:[
       "<code>top = scoresDF.orderBy(desc(\"score\")).printSchema()</code>",
@@ -371,6 +386,7 @@ const QUESTIONS = [
 
   /* Ch 25 - Python UDFs */
   {
+    ref:{chapter:25},
     q:`A data engineer writes a Python function <code>clean_sku(s)</code> with string logic that no built-in function covers, wraps it with <code>udf(clean_sku, StringType())</code>, and uses it in <code>withColumn</code>. An analyst now wants to call it from <code>spark.sql("SELECT clean_sku(sku) FROM products")</code>. What makes that work?`,
     opts:[
       "Nothing more: every function wrapped with <code>udf()</code> is visible to SQL automatically",
@@ -384,6 +400,7 @@ const QUESTIONS = [
 
   /* Ch 26 - Stateful operators and state stores */
   {
+    ref:{chapter:26},
     q:`A streaming pipeline over payment events has four requirements. Which one needs a state store?`,
     opts:[
       "Keeping a running total of each customer's spend that carries over from one micro-batch to the next",
@@ -397,6 +414,7 @@ const QUESTIONS = [
 
   /* Ch 27 - Broadcast variables and accumulators */
   {
+    ref:{chapter:27},
     q:`A developer creates <code>bad = spark.sparkContext.accumulator(0)</code>, defines a UDF that calls <code>bad.add(1)</code> for malformed rows, runs <code>checked = df.withColumn("ok", validate(col("raw")))</code>, and immediately prints <code>bad.value</code>, which shows 0 although the data has malformed rows. Why?`,
     opts:[
       "Accumulators can only be read on the executors, so the driver always sees the initial value",
@@ -410,6 +428,7 @@ const QUESTIONS = [
 
   /* Ch 28 - Broadcast joins */
   {
+    ref:{chapter:28},
     q:`To stop a large accidental broadcast, a teammate sets <code>spark.sql.autoBroadcastJoinThreshold</code> to -1. A join between a 2 TB fact table and a 4 MB country table now shows <code>SortMergeJoin</code> in <code>explain()</code>. What restores a broadcast for this one join without undoing the teammate's setting?`,
     opts:[
       "Nothing: with the threshold at -1, no join can be broadcast for the rest of the session",
@@ -421,6 +440,56 @@ const QUESTIONS = [
     explain:`-1 disables only the automatic choice based on size estimates; an explicit <code>broadcast()</code> hint still tells the planner to broadcast that side, so the 4 MB table is shipped to every executor and the 2 TB side is joined in place without a shuffle. Believing -1 bans broadcasting outright is the tempting misreading. Caching does not choose a join strategy, and more shuffle partitions only change how a sort-merge join is split, not whether the large side is shuffled.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "spark-assoc",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  list: {
+    1:["lesson-01-why-spark.html", "Why Spark: Advantages and Challenges"],
+    2:["lesson-02-cluster-anatomy.html", "Cluster Anatomy: Driver, Executors, Cores and Memory"],
+    3:["lesson-03-dataframes-datasets-sparksession.html", "DataFrames, Datasets and the SparkSession Lifecycle"],
+    4:["lesson-04-caching-and-storage-levels.html", "Caching and Storage Levels"],
+    5:["lesson-05-executor-memory-and-gc.html", "Executor Memory and Garbage Collection"],
+    6:["lesson-06-execution-hierarchy.html", "The Execution Hierarchy: Application, Job, Stage, Task"],
+    7:["lesson-07-partitions-and-shuffles.html", "Partitions and Shuffles"],
+    8:["lesson-08-transformations-actions-lazy-evaluation.html", "Transformations, Actions and Lazy Evaluation"],
+    9:["lesson-09-spark-modules.html", "The Spark Modules: Core, SQL, Pandas API, Streaming, MLlib"],
+    10:["lesson-10-reading-data-sources.html", "Reading Data Sources: Files and JDBC"],
+    11:["lesson-11-writing-partitionby-and-overwrite.html", "Writing: partitionBy and Overwrite"],
+    12:["lesson-12-querying-files-directly-with-sql.html", "Querying Files Directly with SQL"],
+    13:["lesson-13-save-modes.html", "Save Modes: append, overwrite, ignore, errorifexists"],
+    14:["lesson-14-persistent-tables.html", "Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting"],
+    15:["lesson-15-temporary-views.html", "Temporary and Global Temporary Views"],
+    16:["lesson-16-columns.html", "Columns: select, withColumn, withColumnRenamed, drop"],
+    17:["lesson-17-rows-filter-split-explode.html", "Rows: filter, split and explode"],
+    18:["lesson-18-deduplication-and-missing-data.html", "Deduplication and Missing Data"],
+    19:["lesson-19-aggregations.html", "Aggregations: groupBy, agg, approx_count_distinct and summary"],
+    20:["lesson-20-dates-and-timestamps.html", "Dates and Timestamps"],
+    21:["lesson-21-joins.html", "Joins: Inner, Left, Multiple Keys and Cross"],
+    22:["lesson-22-unions.html", "Unions: union, unionAll and unionByName"],
+    23:["lesson-23-explicit-schemas.html", "Reading with Explicit Schemas"],
+    24:["lesson-24-sorting-iterating-converting.html", "Sorting, Iterating and Converting"],
+    25:["lesson-25-python-udfs.html", "Python UDFs"],
+    26:["lesson-26-stateful-operators-state-stores.html", "Stateful Operators and State Stores"],
+    27:["lesson-27-broadcast-variables-accumulators.html", "Broadcast Variables and Accumulators"],
+    28:["lesson-28-broadcast-joins.html", "Broadcast Joins"],
+    29:["lesson-29-repartition-versus-coalesce.html", "repartition versus coalesce"],
+    30:["lesson-30-data-skew-and-reducing-shuffles.html", "Data Skew and Reducing Shuffles"],
+    31:["lesson-31-adaptive-query-execution.html", "Adaptive Query Execution"],
+    32:["lesson-32-logs-and-the-spark-ui.html", "Logs and the Spark UI: Diagnosing OOM and Underutilization"],
+    33:["lesson-33-structured-streaming-model.html", "The Structured Streaming Model"],
+    34:["lesson-34-readstream-writestream-output-modes-sinks.html", "readStream, writeStream, Output Modes and Sinks"],
+    35:["lesson-35-streaming-operations-window-aggregation.html", "Streaming Operations: select, filter, window and aggregation"],
+    36:["lesson-36-streaming-deduplication.html", "Streaming Deduplication"],
+    37:["lesson-37-spark-connect.html", "Spark Connect"],
+    38:["lesson-38-deployment-modes.html", "Deployment Modes: local, client, cluster"],
+    39:["lesson-39-pandas-api-on-spark.html", "Pandas API on Spark"],
+    40:["lesson-40-pandas-udfs.html", "Pandas UDFs"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -472,6 +541,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -626,7 +725,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

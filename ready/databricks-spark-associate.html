@@ -268,6 +268,7 @@ const QUESTIONS = [
 
   /* Q1 - Where the time goes under lazy evaluation (Ch 8) */
   {
+    ref:{chapter:8},
     domain:"c1",
     q:`A developer times each line of a job with <code>time.time()</code>. The lines that read a Parquet source, filter it and join it to a lookup table each take a few milliseconds, and the final <code>write.parquet(...)</code> line takes 20 minutes. A teammate concludes that writing the files is the slow step. What is actually going on?`,
     opts:[
@@ -282,6 +283,7 @@ const QUESTIONS = [
 
   /* Q2 - Execution evicting cached blocks in unified memory (Ch 4, 5) */
   {
+    ref:{chapter:4},
     domain:"c1",
     q:`A job persists <code>profiles</code> with <code>StorageLevel.MEMORY_ONLY</code>, and after the first action the Storage tab shows it 100% cached. A large sort-merge join then runs on the same executors, and afterwards the Storage tab shows only about 55% of <code>profiles</code> still in memory. No executor was lost. What happened, and what does it mean for later actions on <code>profiles</code>?`,
     opts:[
@@ -298,6 +300,7 @@ const QUESTIONS = [
 
   /* Q3 - Parallel connections on a JDBC write (Ch 11) */
   {
+    ref:{chapter:11},
     domain:"c2",
     q:`A job appends scored leads to PostgreSQL with <code>leads.write.jdbc(url, "crm.leads", mode="append", properties=props)</code>. The DataFrame has 400 partitions after an upstream join. During the write the DBA reports that the database hit its limit of 100 connections and refused new sessions. Which change fixes it?`,
     opts:[
@@ -312,6 +315,7 @@ const QUESTIONS = [
 
   /* Q4 - Temporary view versus persistent table (Ch 14, 15) */
   {
+    ref:{chapter:14},
     domain:"c2",
     q:`A nightly notebook computes churn scores and ends with <code>scores.createOrReplaceTempView("churn_scores")</code>. The next morning, analysts querying from a different cluster report that <code>churn_scores</code> does not exist. The scores must be queryable by name from any cluster until the next run replaces them. What should the notebook do instead?`,
     opts:[
@@ -328,6 +332,7 @@ const QUESTIONS = [
 
   /* Q5 - Parsing a day-first date string (Ch 20) */
   {
+    ref:{chapter:20},
     domain:"c3",
     q:`<code>shipments</code> has a string column <code>ship_d</code> holding day-first dates such as "07/10/2026", meaning 7 October 2026. On Spark 4.0, which expression turns it into a DATE of 2026-10-07?`,
     opts:[
@@ -342,6 +347,7 @@ const QUESTIONS = [
 
   /* Q6 - Building a complete grid with crossJoin (Ch 21, 18) */
   {
+    ref:{chapter:21},
     domain:"c3",
     q:`A monthly report must show sales for every store on every day, with 0 on days a store sold nothing. <code>stores</code> has 300 rows (<code>store_id</code>), <code>calendar</code> has 31 rows (<code>sale_date</code>), and <code>sales</code> has <code>store_id</code>, <code>sale_date</code> and <code>amount</code> only for days with sales. Which approach produces all 9,300 store-day rows?`,
     opts:[
@@ -356,6 +362,7 @@ const QUESTIONS = [
 
   /* Q7 - A broadcast hint on a side that is too big (Ch 28) */
   {
+    ref:{chapter:28},
     domain:"c3",
     q:`To avoid sorting, an engineer changes a join of a 4 TB <code>events</code> table with a 6 GB <code>customers</code> table to <code>events.join(broadcast(customers), "customer_id")</code>. The job now fails while building the broadcast, with an OutOfMemoryError on the driver. What is the right fix?`,
     opts:[
@@ -372,6 +379,7 @@ const QUESTIONS = [
 
   /* Q8 - Skewed aggregation that AQE does not split (Ch 30, 31) */
   {
+    ref:{chapter:30},
     domain:"c4",
     q:`With AQE on at its defaults, a job runs <code>clicks.groupBy("user_id").agg(F.collect_list("page"))</code>. One crawler account produces 40% of all rows, and the final stage sits for hours on a single task while the rest of the 200 tasks finished in minutes. Why did AQE not split that task, and what helps?`,
     opts:[
@@ -386,6 +394,7 @@ const QUESTIONS = [
 
   /* Q9 - Reading spill in the Stages tab (Ch 32, 7, 29) */
   {
+    ref:{chapter:32},
     domain:"c4",
     q:`A nightly aggregation runs on a 100-core cluster with <code>spark.sql.shuffle.partitions</code> at its default. In the Spark UI's Stages tab, the post-shuffle stage shows 200 tasks, a median shuffle read of about 6 GB per task with little difference between median and max, and Spill (Disk) on every task. Nothing fails, but the stage is slow. Which change addresses the cause?`,
     opts:[
@@ -402,6 +411,7 @@ const QUESTIONS = [
 
   /* Q10 - availableNow for a scheduled catch-up run (Ch 33, 34) */
   {
+    ref:{chapter:33},
     domain:"c5",
     q:`To save cost, a file-based streaming job now runs twice a day from a scheduled job instead of continuously. Between runs about 50 GB of new files arrive. The team tried <code>trigger(once=True)</code>, and the one huge micro-batch runs out of memory. Each run must process everything that arrived since the last run, pick up exactly where it stopped, and then shut down. Which trigger fits?`,
     opts:[
@@ -416,6 +426,7 @@ const QUESTIONS = [
 
   /* Q11 - The thin Spark Connect client (Ch 37) */
   {
+    ref:{chapter:37},
     domain:"c5",
     q:`A small Python service runs in a slim container image that has no Java runtime. It needs to run DataFrame queries against a shared cluster that already runs a Spark Connect server. How should the service connect?`,
     opts:[
@@ -430,6 +441,7 @@ const QUESTIONS = [
 
   /* Q12 - Iterator Pandas UDF for expensive setup (Ch 40) */
   {
+    ref:{chapter:40},
     domain:"c5",
     q:`A Pandas UDF scores a text column with a model that takes 20 seconds to load. It is written as Series to Series and loads the model at the top of the function body, and the job crawls: each task spends most of its time reloading the model. Which change removes the repeated loading?`,
     opts:[
@@ -442,6 +454,56 @@ const QUESTIONS = [
     explain:`A Series to Series Pandas UDF is called once per Arrow batch (10,000 rows by default), so setup inside it repeats for every batch; the Iterator form receives all of a task's batches as an iterator, so the model loads once and then each batch is yielded through it. Raising maxRecordsPerBatch (the trap) only reduces the number of reloads, it does not remove them, and larger batches cost more Python worker memory. A constant grouping key would push all rows into one task.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "spark-assoc",
+  base: "../databricks-apache-spark-developer-associate/",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  list: {
+    1:["lesson-01-why-spark.html", "Why Spark: Advantages and Challenges"],
+    2:["lesson-02-cluster-anatomy.html", "Cluster Anatomy: Driver, Executors, Cores and Memory"],
+    3:["lesson-03-dataframes-datasets-sparksession.html", "DataFrames, Datasets and the SparkSession Lifecycle"],
+    4:["lesson-04-caching-and-storage-levels.html", "Caching and Storage Levels"],
+    5:["lesson-05-executor-memory-and-gc.html", "Executor Memory and Garbage Collection"],
+    6:["lesson-06-execution-hierarchy.html", "The Execution Hierarchy: Application, Job, Stage, Task"],
+    7:["lesson-07-partitions-and-shuffles.html", "Partitions and Shuffles"],
+    8:["lesson-08-transformations-actions-lazy-evaluation.html", "Transformations, Actions and Lazy Evaluation"],
+    9:["lesson-09-spark-modules.html", "The Spark Modules: Core, SQL, Pandas API, Streaming, MLlib"],
+    10:["lesson-10-reading-data-sources.html", "Reading Data Sources: Files and JDBC"],
+    11:["lesson-11-writing-partitionby-and-overwrite.html", "Writing: partitionBy and Overwrite"],
+    12:["lesson-12-querying-files-directly-with-sql.html", "Querying Files Directly with SQL"],
+    13:["lesson-13-save-modes.html", "Save Modes: append, overwrite, ignore, errorifexists"],
+    14:["lesson-14-persistent-tables.html", "Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting"],
+    15:["lesson-15-temporary-views.html", "Temporary and Global Temporary Views"],
+    16:["lesson-16-columns.html", "Columns: select, withColumn, withColumnRenamed, drop"],
+    17:["lesson-17-rows-filter-split-explode.html", "Rows: filter, split and explode"],
+    18:["lesson-18-deduplication-and-missing-data.html", "Deduplication and Missing Data"],
+    19:["lesson-19-aggregations.html", "Aggregations: groupBy, agg, approx_count_distinct and summary"],
+    20:["lesson-20-dates-and-timestamps.html", "Dates and Timestamps"],
+    21:["lesson-21-joins.html", "Joins: Inner, Left, Multiple Keys and Cross"],
+    22:["lesson-22-unions.html", "Unions: union, unionAll and unionByName"],
+    23:["lesson-23-explicit-schemas.html", "Reading with Explicit Schemas"],
+    24:["lesson-24-sorting-iterating-converting.html", "Sorting, Iterating and Converting"],
+    25:["lesson-25-python-udfs.html", "Python UDFs"],
+    26:["lesson-26-stateful-operators-state-stores.html", "Stateful Operators and State Stores"],
+    27:["lesson-27-broadcast-variables-accumulators.html", "Broadcast Variables and Accumulators"],
+    28:["lesson-28-broadcast-joins.html", "Broadcast Joins"],
+    29:["lesson-29-repartition-versus-coalesce.html", "repartition versus coalesce"],
+    30:["lesson-30-data-skew-and-reducing-shuffles.html", "Data Skew and Reducing Shuffles"],
+    31:["lesson-31-adaptive-query-execution.html", "Adaptive Query Execution"],
+    32:["lesson-32-logs-and-the-spark-ui.html", "Logs and the Spark UI: Diagnosing OOM and Underutilization"],
+    33:["lesson-33-structured-streaming-model.html", "The Structured Streaming Model"],
+    34:["lesson-34-readstream-writestream-output-modes-sinks.html", "readStream, writeStream, Output Modes and Sinks"],
+    35:["lesson-35-streaming-operations-window-aggregation.html", "Streaming Operations: select, filter, window and aggregation"],
+    36:["lesson-36-streaming-deduplication.html", "Streaming Deduplication"],
+    37:["lesson-37-spark-connect.html", "Spark Connect"],
+    38:["lesson-38-deployment-modes.html", "Deployment Modes: local, client, cluster"],
+    39:["lesson-39-pandas-api-on-spark.html", "Pandas API on Spark"],
+    40:["lesson-40-pandas-udfs.html", "Pandas UDFs"]
+  }
+};
 /* =====================================================================
    READINESS PAYLOAD - END
 ===================================================================== */
@@ -726,6 +788,36 @@ function countUp(el, target, ms){
   requestAnimationFrame(frame);
 }
 
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the results review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this quiz>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
+}
+
 /* ---------- review (reused verbatim from the exam renderer) ---------- */
 function renderReview(){
   const wrap=document.getElementById("review");
@@ -741,7 +833,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  &middot;  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake quiz</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

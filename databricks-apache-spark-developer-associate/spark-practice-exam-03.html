@@ -176,6 +176,7 @@ const QUESTIONS = [
 
   /* Ch 29 - repartition versus coalesce */
   {
+    ref:{chapter:29},
     q:`A job aggregates a 2 TB table with <code>groupBy</code>; the aggregated result is about 4 GB, spread over 2,000 small, roughly even shuffle partitions. Before writing it as Parquet, the team wants about 40 output files, and wants to avoid paying for another full shuffle. Which call fits?`,
     opts:[
       "<code>df.repartition(40)</code>, because only repartition can reduce the number of partitions",
@@ -189,6 +190,7 @@ const QUESTIONS = [
 
   /* Ch 30 - Data skew and reducing shuffles */
   {
+    ref:{chapter:30},
     q:`A join between <code>clicks</code> (4 TB) and <code>pages</code> (900 GB) stalls at 199 of 200 tasks. The Spark UI's summary metrics for the stage show a median shuffle read of 1.5 GB and a max of 210 GB, and about 60% of clicks have <code>page_id = 'home'</code>. Which change is most likely to finish the stage?`,
     opts:[
       "Raise <code>spark.sql.shuffle.partitions</code> from 200 to 2,000 so each partition is smaller",
@@ -202,6 +204,7 @@ const QUESTIONS = [
 
   /* Ch 31 - Adaptive Query Execution */
   {
+    ref:{chapter:31},
     q:`On Spark 4.0 with default settings, a team plans a join of a large fact table with a dimension table that a filter shrinks to about 5 MB at runtime, although the optimizer's file-size estimate for it is 2 GB. What does Adaptive Query Execution do here?`,
     opts:[
       "Once the filtered dimension's shuffle stage finishes and reports its real size, AQE can replace the planned sort-merge join with a broadcast hash join",
@@ -215,6 +218,7 @@ const QUESTIONS = [
 
   /* Ch 32 - Logs and the Spark UI */
   {
+    ref:{chapter:32},
     q:`A nightly job fails. The driver log ends with <code>Total size of serialized results of 312 tasks (4.1 GiB) is bigger than spark.driver.maxResultSize (4.0 GiB)</code>. The job's last step is <code>rows = df.collect()</code>, followed by a Python loop that writes each row to a file. What is the best fix?`,
     opts:[
       "Give the executors more memory, since the tasks produced the oversized results",
@@ -228,6 +232,7 @@ const QUESTIONS = [
 
   /* Ch 33 - The Structured Streaming model */
   {
+    ref:{chapter:33},
     q:`A streaming job reads Kafka, aggregates, and writes to a Delta table with a <code>checkpointLocation</code>. After a crash it is restarted with the same code but a <em>new, empty</em> checkpoint directory. Which outcome should the team expect?`,
     opts:[
       "Exactly-once results continue, because the Delta sink remembers which batches it committed for every query",
@@ -241,6 +246,7 @@ const QUESTIONS = [
 
   /* Ch 34 - readStream, writeStream, output modes and sinks */
   {
+    ref:{chapter:34},
     q:`A stream counts error events per <code>service</code> with no watermark. A dashboard reads a Kafka topic and wants every service's current total on every trigger; there are about 40 services and the number never grows. Which output mode fits?`,
     opts:[
       "<code>complete</code>: rewrite the full, small result table on every trigger",
@@ -254,6 +260,7 @@ const QUESTIONS = [
 
   /* Ch 35 - Streaming operations: window and aggregation */
   {
+    ref:{chapter:35},
     q:`A stream of sensor readings computes the average temperature per sensor in 5-minute event-time windows. Readings can arrive up to 10 minutes late. Without changing the results for on-time or 10-minute-late data, the team wants the aggregation's state to stop growing forever. Which code fits?`,
     opts:[
       "<code>readings.groupBy(\"sensor\", window(\"ts\", \"5 minutes\")).avg(\"temp\")</code> with a 10-minute trigger",
@@ -267,6 +274,7 @@ const QUESTIONS = [
 
   /* Ch 36 - Streaming deduplication */
   {
+    ref:{chapter:36},
     q:`A payment stream can deliver the same <code>payment_id</code> twice. A retry may carry a different <code>event_ts</code>, up to 30 minutes after the original. Which deduplication catches those retries while keeping state bounded?`,
     opts:[
       "<code>payments.dropDuplicates([\"payment_id\"])</code> with no watermark",
@@ -280,6 +288,7 @@ const QUESTIONS = [
 
   /* Ch 37 - Spark Connect */
   {
+    ref:{chapter:37},
     q:`A platform team runs a shared Spark Connect server. One data scientist's local notebook process, connected as a Spark Connect client, crashes after its own pandas code runs out of memory on the laptop. Under Spark Connect, what happens to the other users' sessions on that server?`,
     opts:[
       "They keep running: the client is a separate process from the server's driver, so its crash takes down only that client",
@@ -293,6 +302,7 @@ const QUESTIONS = [
 
   /* Ch 38 - Deployment modes: local, client, cluster */
   {
+    ref:{chapter:38},
     q:`A developer writes unit tests for PySpark transformations that must run in a CI container with no cluster available, using all of the container's CPU cores. How should the tests create their SparkSession?`,
     opts:[
       "<code>SparkSession.builder.remote(\"sc://localhost:15002\")</code>, because tests should always use Spark Connect",
@@ -306,6 +316,7 @@ const QUESTIONS = [
 
   /* Ch 39 - Pandas API on Spark */
   {
+    ref:{chapter:39},
     q:`An analyst converts a large Spark DataFrame with <code>psdf = sdf.pandas_api()</code> and notices that operations on <code>psdf</code> spend extra computation building an index. The table already has a unique <code>order_id</code> column. What change avoids the extra work?`,
     opts:[
       "Set <code>compute.default_index_type</code> to <code>sequence</code>, which is the cheapest index type",
@@ -319,6 +330,7 @@ const QUESTIONS = [
 
   /* Ch 40 - Pandas UDFs */
   {
+    ref:{chapter:40},
     q:`A column-level calculation has no built-in function, and a row-at-a-time Python UDF is too slow. Which definition creates a Pandas UDF that can be called as <code>df.withColumn("net", net_price("price", "tax"))</code>?`,
     opts:[
       "<code>@udf(\"double\")</code> on <code>def net_price(price: float, tax: float) -&gt; float: return price * (1 - tax)</code>",
@@ -330,6 +342,56 @@ const QUESTIONS = [
     explain:`A Series to Series Pandas UDF takes pandas Series and returns a Series of the same length, receiving Arrow batches and computing on whole columns at once, so it works in <code>withColumn</code>. Option B is the tempting one because it is also a <code>@pandas_udf</code>, but its type hints return a scalar, which makes it a Series to Scalar aggregate meant for <code>groupBy().agg()</code>, not a per-row column. Option A is the row-at-a-time UDF the team wants to replace, and <code>applyInPandas</code> returns a new DataFrame per group, not a column.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "spark-assoc",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  list: {
+    1:["lesson-01-why-spark.html", "Why Spark: Advantages and Challenges"],
+    2:["lesson-02-cluster-anatomy.html", "Cluster Anatomy: Driver, Executors, Cores and Memory"],
+    3:["lesson-03-dataframes-datasets-sparksession.html", "DataFrames, Datasets and the SparkSession Lifecycle"],
+    4:["lesson-04-caching-and-storage-levels.html", "Caching and Storage Levels"],
+    5:["lesson-05-executor-memory-and-gc.html", "Executor Memory and Garbage Collection"],
+    6:["lesson-06-execution-hierarchy.html", "The Execution Hierarchy: Application, Job, Stage, Task"],
+    7:["lesson-07-partitions-and-shuffles.html", "Partitions and Shuffles"],
+    8:["lesson-08-transformations-actions-lazy-evaluation.html", "Transformations, Actions and Lazy Evaluation"],
+    9:["lesson-09-spark-modules.html", "The Spark Modules: Core, SQL, Pandas API, Streaming, MLlib"],
+    10:["lesson-10-reading-data-sources.html", "Reading Data Sources: Files and JDBC"],
+    11:["lesson-11-writing-partitionby-and-overwrite.html", "Writing: partitionBy and Overwrite"],
+    12:["lesson-12-querying-files-directly-with-sql.html", "Querying Files Directly with SQL"],
+    13:["lesson-13-save-modes.html", "Save Modes: append, overwrite, ignore, errorifexists"],
+    14:["lesson-14-persistent-tables.html", "Persistent Tables: saveAsTable, Partitioning, Bucketing and Sorting"],
+    15:["lesson-15-temporary-views.html", "Temporary and Global Temporary Views"],
+    16:["lesson-16-columns.html", "Columns: select, withColumn, withColumnRenamed, drop"],
+    17:["lesson-17-rows-filter-split-explode.html", "Rows: filter, split and explode"],
+    18:["lesson-18-deduplication-and-missing-data.html", "Deduplication and Missing Data"],
+    19:["lesson-19-aggregations.html", "Aggregations: groupBy, agg, approx_count_distinct and summary"],
+    20:["lesson-20-dates-and-timestamps.html", "Dates and Timestamps"],
+    21:["lesson-21-joins.html", "Joins: Inner, Left, Multiple Keys and Cross"],
+    22:["lesson-22-unions.html", "Unions: union, unionAll and unionByName"],
+    23:["lesson-23-explicit-schemas.html", "Reading with Explicit Schemas"],
+    24:["lesson-24-sorting-iterating-converting.html", "Sorting, Iterating and Converting"],
+    25:["lesson-25-python-udfs.html", "Python UDFs"],
+    26:["lesson-26-stateful-operators-state-stores.html", "Stateful Operators and State Stores"],
+    27:["lesson-27-broadcast-variables-accumulators.html", "Broadcast Variables and Accumulators"],
+    28:["lesson-28-broadcast-joins.html", "Broadcast Joins"],
+    29:["lesson-29-repartition-versus-coalesce.html", "repartition versus coalesce"],
+    30:["lesson-30-data-skew-and-reducing-shuffles.html", "Data Skew and Reducing Shuffles"],
+    31:["lesson-31-adaptive-query-execution.html", "Adaptive Query Execution"],
+    32:["lesson-32-logs-and-the-spark-ui.html", "Logs and the Spark UI: Diagnosing OOM and Underutilization"],
+    33:["lesson-33-structured-streaming-model.html", "The Structured Streaming Model"],
+    34:["lesson-34-readstream-writestream-output-modes-sinks.html", "readStream, writeStream, Output Modes and Sinks"],
+    35:["lesson-35-streaming-operations-window-aggregation.html", "Streaming Operations: select, filter, window and aggregation"],
+    36:["lesson-36-streaming-deduplication.html", "Streaming Deduplication"],
+    37:["lesson-37-spark-connect.html", "Spark Connect"],
+    38:["lesson-38-deployment-modes.html", "Deployment Modes: local, client, cluster"],
+    39:["lesson-39-pandas-api-on-spark.html", "Pandas API on Spark"],
+    40:["lesson-40-pandas-udfs.html", "Pandas UDFs"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -381,6 +443,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -535,7 +627,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

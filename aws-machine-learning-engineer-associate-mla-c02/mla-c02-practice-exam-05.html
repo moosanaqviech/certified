@@ -176,7 +176,7 @@ const E = {
 const QUESTIONS = [
 
   /* Ch 01 - Data Formats */
-  { q:`A daily Amazon Athena job scans 4 TB of gzipped CSV in S3 but reads only 9 of the table's 140 columns, and scanned-bytes cost keeps climbing. Which change cuts cost the most?`,
+  { ref:{chapter:1}, q:`A daily Amazon Athena job scans 4 TB of gzipped CSV in S3 but reads only 9 of the table's 140 columns, and scanned-bytes cost keeps climbing. Which change cuts cost the most?`,
     opts:[
       "Compress the CSV with Snappy instead of gzip",
       "Convert the data to Apache Parquet with an AWS Glue job",
@@ -184,10 +184,10 @@ const QUESTIONS = [
       "Split the CSV into many smaller files for more parallel readers"
     ],
     correct:1,
-    explain:`Why: Parquet is columnar, so Athena reads only the 9 requested columns and skips row groups by statistics, which is what drives scanned bytes and cost down. Changing the compression codec (A) still forces every reader to scan all 140 columns of every row, so bytes scanned barely move.` },
+    explain:`Parquet is columnar, so Athena reads only the 9 requested columns and skips row groups by statistics, which is what drives scanned bytes and cost down. Changing the compression codec (A) still forces every reader to scan all 140 columns of every row, so bytes scanned barely move.` },
 
   /* Ch 02 - Storage Decisions */
-  { q:`A recommendation service must fetch a user's profile vector by user ID in single-digit milliseconds at tens of thousands of requests per second, with no relational joins needed. Which store fits best?`,
+  { ref:{chapter:2}, q:`A recommendation service must fetch a user's profile vector by user ID in single-digit milliseconds at tens of thousands of requests per second, with no relational joins needed. Which store fits best?`,
     opts:[
       "Parquet files in S3 read at request time",
       "An Amazon RDS for PostgreSQL instance queried by primary key",
@@ -195,10 +195,10 @@ const QUESTIONS = [
       "An Amazon EFS file share mounted on the inference host"
     ],
     correct:2,
-    explain:`Why: Single-digit millisecond key lookups at very high request rates with no joins is DynamoDB's core profile. RDS (B) can do a keyed lookup but ties latency to a relational engine that competes with other queries and scales vertically, so it struggles at this throughput.` },
+    explain:`Single-digit millisecond key lookups at very high request rates with no joins is DynamoDB's core profile. RDS (B) can do a keyed lookup but ties latency to a relational engine that competes with other queries and scales vertically, so it struggles at this throughput.` },
 
   /* Ch 03 - Streaming Ingestion */
-  { q:`A team needs a 10-minute sliding-window count of events per device joined against a second stream of device metadata, with sub-second latency and exactly-once results. Which service fits?`,
+  { ref:{chapter:3}, q:`A team needs a 10-minute sliding-window count of events per device joined against a second stream of device metadata, with sub-second latency and exactly-once results. Which service fits?`,
     opts:[
       "Amazon Data Firehose with a Lambda transform and a 60-second buffer",
       "Amazon Managed Service for Apache Flink consuming both streams",
@@ -206,10 +206,10 @@ const QUESTIONS = [
       "An AWS Glue streaming job with schema detection enabled"
     ],
     correct:1,
-    explain:`Why: Sliding windows, a stream-to-stream join, durable state, and exactly-once via checkpoints are exactly what Managed Service for Apache Flink provides. Firehose (A) only buffers and delivers with an optional transform; it cannot maintain windows, join streams, or guarantee exactly-once semantics.` },
+    explain:`Sliding windows, a stream-to-stream join, durable state, and exactly-once via checkpoints are exactly what Managed Service for Apache Flink provides. Firehose (A) only buffers and delivers with an optional transform; it cannot maintain windows, join streams, or guarantee exactly-once semantics.` },
 
   /* Ch 04 - Merging and Troubleshooting Glue */
-  { q:`An AWS Glue job merges millions of tiny JSON files into Parquet. The driver's memory climbs past 50% within minutes while executors stay near 5%, and the run fails. What should the engineer change first?`,
+  { ref:{chapter:4}, q:`An AWS Glue job merges millions of tiny JSON files into Parquet. The driver's memory climbs past 50% within minutes while executors stay near 5%, and the run fails. What should the engineer change first?`,
     opts:[
       "Read the input as a DynamicFrame with groupFiles set to inPartition",
       "Add more G.1X workers so executors share the load",
@@ -217,10 +217,10 @@ const QUESTIONS = [
       "Enable job bookmarks so fewer files are read each run"
     ],
     correct:0,
-    explain:`Why: A saturated driver with idle executors means the driver is drowning in per-file task bookkeeping; file grouping lets each task read a whole group, so the driver tracks far fewer tasks. Adding workers (B) scales executors, which are not the bottleneck, so the driver still fails.` },
+    explain:`A saturated driver with idle executors means the driver is drowning in per-file task bookkeeping; file grouping lets each task read a whole group, so the driver tracks far fewer tasks. Adding workers (B) scales executors, which are not the bottleneck, so the driver still fails.` },
 
   /* Ch 05 - Vector Databases */
-  { q:`A team needs a vector store for 800 million document embeddings queried only a few hundred times a day, where sub-second latency is fine and the top priority is lowest storage and operating cost. Which option fits?`,
+  { ref:{chapter:5}, q:`A team needs a vector store for 800 million document embeddings queried only a few hundred times a day, where sub-second latency is fine and the top priority is lowest storage and operating cost. Which option fits?`,
     opts:[
       "An Amazon OpenSearch Service domain sized to hold all HNSW graphs in memory",
       "Aurora PostgreSQL with pgvector on a memory-optimized instance",
@@ -228,10 +228,10 @@ const QUESTIONS = [
       "An Amazon S3 Vectors index"
     ],
     correct:3,
-    explain:`Why: A huge corpus, infrequent queries, acceptable sub-second latency, and cost as the deciding axis is the S3 Vectors workload, since it uses pay-per-use object storage rather than always-on memory. A memory-resident OpenSearch domain (A) is fastest but pays constantly for the RAM to hold every graph, far more expensive for a few hundred daily queries.` },
+    explain:`A huge corpus, infrequent queries, acceptable sub-second latency, and cost as the deciding axis is the S3 Vectors workload, since it uses pay-per-use object storage rather than always-on memory. A memory-resident OpenSearch domain (A) is fastest but pays constantly for the RAM to hold every graph, far more expensive for a few hundred daily queries.` },
 
   /* Ch 06 - Ingesting Multimodal Data */
-  { q:`Millions of product images sit in S3 with labels in a CSV keyed by file name, and the team wants to train a SageMaker AI image classifier without a preprocessing step that joins labels to pixels. What should they build?`,
+  { ref:{chapter:6}, q:`Millions of product images sit in S3 with labels in a CSV keyed by file name, and the team wants to train a SageMaker AI image classifier without a preprocessing step that joins labels to pixels. What should they build?`,
     opts:[
       "A DynamoDB table mapping file names to labels queried by the training script",
       "A Parquet table with image bytes stored in a binary column",
@@ -239,10 +239,10 @@ const QUESTIONS = [
       "A folder per label with each image copied into its label folder"
     ],
     correct:2,
-    explain:`Why: The augmented manifest is SageMaker AI's mechanism for attaching metadata to S3 objects at training time: the job follows each ref URI and passes the listed attributes to the algorithm with no join step. Copying images into label folders (D) works but duplicates millions of objects to encode one column the manifest carries for free.` },
+    explain:`The augmented manifest is SageMaker AI's mechanism for attaching metadata to S3 objects at training time: the job follows each ref URI and passes the listed attributes to the algorithm with no join step. Copying images into label folders (D) works but duplicates millions of objects to encode one column the manifest carries for free.` },
 
   /* Ch 07 - SageMaker Feature Store */
-  { q:`A real-time model reads features from an online-and-offline SageMaker Feature Store feature group. What does the online store hold per record identifier?`,
+  { ref:{chapter:7}, q:`A real-time model reads features from an online-and-offline SageMaker Feature Store feature group. What does the online store hold per record identifier?`,
     opts:[
       "Only the record with the latest event time per identifier",
       "Every historical record, queryable by event time range",
@@ -250,10 +250,10 @@ const QUESTIONS = [
       "Only records written since the last offline sync"
     ],
     correct:0,
-    explain:`Why: The online store keeps only the latest-event-time record per identifier for low-latency inference lookups, while full history lives in the offline store in S3. Keeping every historical record (B) describes the offline store, not the online one, which retains a single current value per identifier.` },
+    explain:`The online store keeps only the latest-event-time record per identifier for low-latency inference lookups, while full history lives in the offline store in S3. Keeping every historical record (B) describes the offline store, not the online one, which retains a single current value per identifier.` },
 
   /* Ch 08 - Feature Engineering */
-  { q:`A linear model uses a purchase-amount feature that is heavily right-skewed: most values under 40 but a few near 150,000, and the model underfits the typical range. Which transform should come first?`,
+  { ref:{chapter:8}, q:`A linear model uses a purchase-amount feature that is heavily right-skewed: most values under 40 but a few near 150,000, and the model underfits the typical range. Which transform should come first?`,
     opts:[
       "One-hot encode the purchase amount",
       "Min-max scale the amount to 0 to 1",
@@ -261,10 +261,10 @@ const QUESTIONS = [
       "Clip every amount above the 90th percentile"
     ],
     correct:2,
-    explain:`Why: A log compresses the long tail so the typical range is no longer squeezed into a sliver, and the following standardization gives the linear model a well-behaved input. Min-max scaling (B) is the trap: with a 150,000 maximum, ordinary purchases collapse to nearly zero, the very compression the team is suffering.` },
+    explain:`A log compresses the long tail so the typical range is no longer squeezed into a sliver, and the following standardization gives the linear model a well-behaved input. Min-max scaling (B) is the trap: with a 150,000 maximum, ordinary purchases collapse to nearly zero, the very compression the team is suffering.` },
 
   /* Ch 09 - Encoding Features */
-  { q:`A gradient-boosted tree model uses a US state column with 50 distinct values. The engineer wants a compact numeric encoding that does not imply a false ordering. Which encoding fits?`,
+  { ref:{chapter:9}, q:`A gradient-boosted tree model uses a US state column with 50 distinct values. The engineer wants a compact numeric encoding that does not imply a false ordering. Which encoding fits?`,
     opts:[
       "One-hot encoding, one binary column per state",
       "Ordinal encoding with states numbered alphabetically",
@@ -272,10 +272,10 @@ const QUESTIONS = [
       "Hashing the state name into a 4-bit integer"
     ],
     correct:0,
-    explain:`Why: One-hot encoding gives each of the 50 states its own binary column, so no ordering is implied and 50 categories is well within a manageable width. Ordinal encoding (B) assigns 0 to 49 by alphabet, injecting a false magnitude order that a model can wrongly treat as meaningful.` },
+    explain:`One-hot encoding gives each of the 50 states its own binary column, so no ordering is implied and 50 categories is well within a manageable width. Ordinal encoding (B) assigns 0 to 49 by alphabet, injecting a false magnitude order that a model can wrongly treat as meaningful.` },
 
   /* Ch 10 - Transformation Tools */
-  { q:`Marketing analysts receive a new CSV each week with inconsistent dates, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically every week with a quality profile. Which tool fits?`,
+  { ref:{chapter:10}, q:`Marketing analysts receive a new CSV each week with inconsistent dates, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically every week with a quality profile. Which tool fits?`,
     opts:[
       "A Spark job on EMR scheduled with Amazon EventBridge",
       "A SageMaker Data Wrangler flow rerun in Studio each week",
@@ -283,10 +283,10 @@ const QUESTIONS = [
       "An Amazon Athena CTAS query the analysts edit each week"
     ],
     correct:2,
-    explain:`Why: DataBrew is built for non-coders: a recipe captures the cleanup once, a scheduled recipe job reapplies it weekly, and profile jobs report quality. The Data Wrangler flow (B) can do the transforms but is a SageMaker AI tool for ML practitioners, and these analysts have no model to feed or Studio environment.` },
+    explain:`DataBrew is built for non-coders: a recipe captures the cleanup once, a scheduled recipe job reapplies it weekly, and profile jobs report quality. The Data Wrangler flow (B) can do the transforms but is a SageMaker AI tool for ML practitioners, and these analysts have no model to feed or Studio environment.` },
 
   /* Ch 11 - Embedding Models */
-  { q:`A team embeds a knowledge base and its user questions with Amazon Titan Text Embeddings, but retrieval quality is poor because documents and queries use different vector spaces after a model swap. What is the fix?`,
+  { ref:{chapter:11}, q:`A team embeds a knowledge base and its user questions with Amazon Titan Text Embeddings, but retrieval quality is poor because documents and queries use different vector spaces after a model swap. What is the fix?`,
     opts:[
       "Increase the vector index dimension to improve recall",
       "Store the raw text alongside vectors so retrieval can fall back to keywords",
@@ -294,10 +294,10 @@ const QUESTIONS = [
       "Embed both the stored documents and the queries with the same embedding model"
     ],
     correct:3,
-    explain:`Why: Similarity search only works when documents and queries live in the same vector space, so both must be embedded with the identical model and version. Raising temperature (C) affects generation randomness, not retrieval, so it does nothing for the mismatched embedding spaces causing the poor matches.` },
+    explain:`Similarity search only works when documents and queries live in the same vector space, so both must be embedded with the identical model and version. Raising temperature (C) affects generation randomness, not retrieval, so it does nothing for the mismatched embedding spaces causing the poor matches.` },
 
   /* Ch 12 - Text Pre-Processing */
-  { q:`An application builds prompts from retrieved documents and intermittently fails with input-too-long errors on one Bedrock model but not another. The team wants to fix it without guessing at limits. What should they do?`,
+  { ref:{chapter:12}, q:`An application builds prompts from retrieved documents and intermittently fails with input-too-long errors on one Bedrock model but not another. The team wants to fix it without guessing at limits. What should they do?`,
     opts:[
       "Lowercase and strip whitespace to reduce token count",
       "Call the Amazon Bedrock CountTokens API for the target model and trim retrieved text to fit",
@@ -305,10 +305,10 @@ const QUESTIONS = [
       "Set both models to use the same tokenizer in the request body"
     ],
     correct:1,
-    explain:`Why: Tokenization is model-specific, and CountTokens returns the exact count a given model would charge, so the app can trim to the real per-model limit. The four-characters-per-token estimate (C) is fine for rough planning but is exactly the guess that produces intermittent failures near the boundary.` },
+    explain:`Tokenization is model-specific, and CountTokens returns the exact count a given model would charge, so the app can trim to the real per-model limit. The four-characters-per-token estimate (C) is fine for rough planning but is exactly the guess that produces intermittent failures near the boundary.` },
 
   /* Ch 13 - Preparing Documents for RAG (MULTI) */
-  { q:`A legal RAG system retrieves the right clause but answers wrong because clauses depend on definitions elsewhere in the document. Which TWO chunking changes help most? (Select TWO.)`,
+  { ref:{chapter:13}, q:`A legal RAG system retrieves the right clause but answers wrong because clauses depend on definitions elsewhere in the document. Which TWO chunking changes help most? (Select TWO.)`,
     opts:[
       "Use hierarchical chunking so matched child chunks return their larger parent chunk",
       "Add overlap between adjacent chunks so boundary context is preserved",
@@ -317,10 +317,10 @@ const QUESTIONS = [
       "Disable the vector index and rely on keyword search only"
     ],
     correct:[0,1],
-    explain:`Why: Hierarchical chunking returns surrounding context via the parent chunk, and overlap keeps definitions that straddle a boundary inside the retrieved text, both fixing the missing-context problem. Single-sentence chunks (D) do the opposite, stripping away the neighboring definitions the answer needs.` },
+    explain:`Hierarchical chunking returns surrounding context via the parent chunk, and overlap keeps definitions that straddle a boundary inside the retrieved text, both fixing the missing-context problem. Single-sentence chunks (D) do the opposite, stripping away the neighboring definitions the answer needs.` },
 
   /* Ch 14 - Masking, Redaction, Anonymization */
-  { q:`A dataset of customer records must be shared with analysts so that no one can recover the original email addresses by any means, yet rows for the same customer must still join across tables. Which technique fits?`,
+  { ref:{chapter:14}, q:`A dataset of customer records must be shared with analysts so that no one can recover the original email addresses by any means, yet rows for the same customer must still join across tables. Which technique fits?`,
     opts:[
       "Deterministic encryption of the email with a stored key",
       "Reversible tokenization with a lookup vault",
@@ -328,10 +328,10 @@ const QUESTIONS = [
       "A deterministic cryptographic hash of the email"
     ],
     correct:3,
-    explain:`Why: A deterministic hash produces the same irreversible output for the same email, so joins still work and the original value cannot be recovered. Deterministic encryption (A) also preserves joins but is designed to be decrypted by a key holder, so it is pseudonymization, not true anonymization.` },
+    explain:`A deterministic hash produces the same irreversible output for the same email, so joins still work and the original value cannot be recovered. Deterministic encryption (A) also preserves joins but is designed to be decrypted by a key holder, so it is pseudonymization, not true anonymization.` },
 
   /* Ch 15 - Preparing Data for FM Customization */
-  { q:`A firm has 300 GB of internal manuals and a base model that misuses the firm's terminology. Labeling instruction examples is not feasible. Which dataset should the engineer prepare first?`,
+  { ref:{chapter:15}, q:`A firm has 300 GB of internal manuals and a base model that misuses the firm's terminology. Labeling instruction examples is not feasible. Which dataset should the engineer prepare first?`,
     opts:[
       "A cleaned, deduplicated input-only corpus for continued pre-training",
       "A prompt-and-completion instruction set for supervised fine-tuning",
@@ -339,10 +339,10 @@ const QUESTIONS = [
       "A metadata sidecar per manual for a knowledge base"
     ],
     correct:0,
-    explain:`Why: Absorbing domain language with no labels is the continued pre-training case: cleaned passages in an input-only format, in volume. A supervised fine-tuning set (B) requires labeled prompt-and-completion pairs, which the team said it cannot produce, so it is not viable here.` },
+    explain:`Absorbing domain language with no labels is the continued pre-training case: cleaned passages in an input-only format, in volume. A supervised fine-tuning set (B) requires labeled prompt-and-completion pairs, which the team said it cannot produce, so it is not viable here.` },
 
   /* Ch 16 - Cleaning Data */
-  { q:`A model trained on scraped reviews scores 0.97 on its test set but 0.72 in production. Many reviews appear two or three times across the file. What went wrong and what fixes it?`,
+  { ref:{chapter:16}, q:`A model trained on scraped reviews scores 0.97 on its test set but 0.72 in production. Many reviews appear two or three times across the file. What went wrong and what fixes it?`,
     opts:[
       "The learning rate was too high; lower it and retrain",
       "The test set was too small; raise its share to 40%",
@@ -350,10 +350,10 @@ const QUESTIONS = [
       "Missing values were mean-imputed; switch to median imputation"
     ],
     correct:2,
-    explain:`Why: When duplicates are present and the split happens afterward, copies land on both sides, so the model is tested on rows it trained on and the score inflates, exactly the train-versus-production gap. Enlarging the test set (B) changes the ratio but still lets duplicates straddle the split, so the leak persists.` },
+    explain:`When duplicates are present and the split happens afterward, copies land on both sides, so the model is tested on rows it trained on and the score inflates, exactly the train-versus-production gap. Enlarging the test set (B) changes the ratio but still lets duplicates straddle the split, so the leak persists.` },
 
   /* Ch 17 - Data Quality Validation */
-  { q:`A nightly ETL pipeline must refuse to load a batch when more than 1% of customer IDs are null or any ID is duplicated, and it must identify the failing rows, all before the data lands in the lake. Which approach fits?`,
+  { ref:{chapter:17}, q:`A nightly ETL pipeline must refuse to load a batch when more than 1% of customer IDs are null or any ID is duplicated, and it must identify the failing rows, all before the data lands in the lake. Which approach fits?`,
     opts:[
       "A DataBrew profile job scheduled to run after the load completes",
       "AWS Glue Data Quality rules inside the ETL job with completeness and uniqueness checks",
@@ -361,10 +361,10 @@ const QUESTIONS = [
       "SageMaker Clarify pre-training bias metrics on the batch"
     ],
     correct:1,
-    explain:`Why: Glue Data Quality evaluates DQDL rules within the ETL job before the data lands and can flag the exact failing records, which is precisely the gate described. A DataBrew profile job (A) reports quality but running after the load means the bad batch is already in the lake.` },
+    explain:`Glue Data Quality evaluates DQDL rules within the ETL job before the data lands and can flag the exact failing records, which is precisely the gate described. A DataBrew profile job (A) reports quality but running after the load means the bad batch is already in the lake.` },
 
   /* Ch 18 - Labeling with Ground Truth */
-  { q:`A hospital needs 250,000 confidential medical images labeled with bounding boxes on a limited budget, and the images cannot leave its control. How should the SageMaker Ground Truth job be configured?`,
+  { ref:{chapter:18}, q:`A hospital needs 250,000 confidential medical images labeled with bounding boxes on a limited budget, and the images cannot leave its control. How should the SageMaker Ground Truth job be configured?`,
     opts:[
       "Amazon Mechanical Turk workforce with automated data labeling",
       "A vendor workforce with a single annotator per image",
@@ -372,10 +372,10 @@ const QUESTIONS = [
       "A private workforce with automated data labeling enabled"
     ],
     correct:3,
-    explain:`Why: Confidential medical data rules out any public crowd, so a private workforce is required, and automated data labeling (active learning) cuts cost on a large bounding-box job. Mechanical Turk (A) is cheapest but exposes protected images to an anonymous public workforce, which is disqualifying.` },
+    explain:`Confidential medical data rules out any public crowd, so a private workforce is required, and automated data labeling (active learning) cuts cost on a large bounding-box job. Mechanical Turk (A) is cheapest but exposes protected images to an anonymous public workforce, which is disqualifying.` },
 
   /* Ch 21 - Choosing an ML Approach */
-  { q:`A bank must predict loan default and, by regulation, explain each individual decision to the applicant. Accuracy matters but every prediction must be defensible. Which approach best fits?`,
+  { ref:{chapter:21}, q:`A bank must predict loan default and, by regulation, explain each individual decision to the applicant. Accuracy matters but every prediction must be defensible. Which approach best fits?`,
     opts:[
       "A regularized logistic regression or decision-tree model whose coefficients or splits are interpretable",
       "A large deep neural network trained on all applicant features",
@@ -383,10 +383,10 @@ const QUESTIONS = [
       "An ensemble of thousands of boosted trees tuned only for AUC"
     ],
     correct:0,
-    explain:`Why: A hard requirement to explain each decision favors an inherently interpretable model like logistic regression or a shallow tree, whose weights or splits map directly to reasons. A deep neural network (B) can be accurate but is opaque, so satisfying the per-decision explanation rule is far harder.` },
+    explain:`A hard requirement to explain each decision favors an inherently interpretable model like logistic regression or a shallow tree, whose weights or splits map directly to reasons. A deep neural network (B) can be accurate but is opaque, so satisfying the per-decision explanation rule is far harder.` },
 
   /* Ch 22 - Selecting an FM from Bedrock */
-  { q:`A team must pick a Bedrock foundation model for a high-volume chat feature that needs low latency and low per-token cost, with only moderate reasoning depth required. What should drive the choice?`,
+  { ref:{chapter:22}, q:`A team must pick a Bedrock foundation model for a high-volume chat feature that needs low latency and low per-token cost, with only moderate reasoning depth required. What should drive the choice?`,
     opts:[
       "Always choose the largest available model for best quality",
       "Choose a smaller, faster model that meets the quality bar, since latency and cost dominate",
@@ -394,10 +394,10 @@ const QUESTIONS = [
       "Choose the newest model regardless of its price or latency"
     ],
     correct:1,
-    explain:`Why: When latency and per-token cost dominate and only moderate reasoning is needed, a smaller model that clears the quality bar is the right fit, since it is cheaper and faster at high volume. Always choosing the largest model (A) overpays and adds latency for capability the task does not require.` },
+    explain:`When latency and per-token cost dominate and only moderate reasoning is needed, a smaller model that clears the quality bar is the right fit, since it is cheaper and faster at high volume. Always choosing the largest model (A) overpays and adds latency for capability the task does not require.` },
 
   /* Ch 23 - Custom vs Managed vs Pre-Trained vs FM */
-  { q:`A team needs to extract text and key-value pairs from scanned invoices and wants to ship in weeks with minimal ML work. Which build-or-buy choice fits?`,
+  { ref:{chapter:23}, q:`A team needs to extract text and key-value pairs from scanned invoices and wants to ship in weeks with minimal ML work. Which build-or-buy choice fits?`,
     opts:[
       "Train a custom object-detection model from scratch on labeled invoices",
       "Fine-tune a foundation model on thousands of invoice images",
@@ -405,10 +405,10 @@ const QUESTIONS = [
       "Use Amazon Textract, a managed service purpose-built for document extraction"
     ],
     correct:3,
-    explain:`Why: Textract is a managed AI service purpose-built to pull text and key-value pairs from documents, so the team ships fast with no model training. Training a custom detector from scratch (A) demands large labeled datasets and weeks of ML engineering for a problem an existing service already solves.` },
+    explain:`Textract is a managed AI service purpose-built to pull text and key-value pairs from documents, so the team ships fast with no model training. Training a custom detector from scratch (A) demands large labeled datasets and weeks of ML engineering for a problem an existing service already solves.` },
 
   /* Ch 24 - Fine-Tuning Strategies */
-  { q:`A support team wants a foundation model to answer in the company's specific tone and follow its response templates, and it has 4,000 curated question-and-answer examples. Which customization path fits best?`,
+  { ref:{chapter:24}, q:`A support team wants a foundation model to answer in the company's specific tone and follow its response templates, and it has 4,000 curated question-and-answer examples. Which customization path fits best?`,
     opts:[
       "Continued pre-training on unlabeled support transcripts",
       "Retrieval-augmented generation with no model changes",
@@ -416,10 +416,10 @@ const QUESTIONS = [
       "Model distillation into a smaller student model"
     ],
     correct:2,
-    explain:`Why: Teaching a consistent tone and template behavior from labeled input-output examples is the supervised fine-tuning case, and 4,000 curated pairs is a workable dataset. Continued pre-training (A) uses unlabeled text to absorb domain knowledge and does not directly teach the desired response format.` },
+    explain:`Teaching a consistent tone and template behavior from labeled input-output examples is the supervised fine-tuning case, and 4,000 curated pairs is a workable dataset. Continued pre-training (A) uses unlabeled text to absorb domain knowledge and does not directly teach the desired response format.` },
 
   /* Ch 25 - RAG Patterns (MULTI) */
-  { q:`A RAG system must improve answer relevance over a large corpus. Which TWO changes help most? (Select TWO.)`,
+  { ref:{chapter:25}, q:`A RAG system must improve answer relevance over a large corpus. Which TWO changes help most? (Select TWO.)`,
     opts:[
       "Add a reranking step after retrieval",
       "Tune chunk size and overlap for the content",
@@ -428,10 +428,10 @@ const QUESTIONS = [
       "Disable vector indexing to force full scans"
     ],
     correct:[0,1],
-    explain:`Why: Reranking reorders retrieved passages by true relevance, and right-sized chunking improves what is retrievable, both lifting answer relevance. Raising temperature (C) adds randomness to generation, not relevance to retrieval, so it does not fix the underlying retrieval quality.` },
+    explain:`Reranking reorders retrieved passages by true relevance, and right-sized chunking improves what is retrievable, both lifting answer relevance. Raising temperature (C) adds randomness to generation, not relevance to retrieval, so it does not fix the underlying retrieval quality.` },
 
   /* Ch 26 - AWS AI Services */
-  { q:`A call center wants to transcribe recorded calls to text and then detect the sentiment and key entities in each transcript, using managed services. Which combination fits?`,
+  { ref:{chapter:26}, q:`A call center wants to transcribe recorded calls to text and then detect the sentiment and key entities in each transcript, using managed services. Which combination fits?`,
     opts:[
       "Amazon Transcribe for speech-to-text, then Amazon Comprehend for sentiment and entities",
       "Amazon Rekognition for the audio, then Amazon Textract for entities",
@@ -439,10 +439,10 @@ const QUESTIONS = [
       "Amazon Textract for the audio, then Amazon Comprehend for sentiment"
     ],
     correct:0,
-    explain:`Why: Transcribe converts speech to text and Comprehend then extracts sentiment and entities from that text, a standard managed pipeline. Rekognition (B) analyzes images and video, not audio transcription, so it cannot turn the calls into text.` },
+    explain:`Transcribe converts speech to text and Comprehend then extracts sentiment and entities from that text, a standard managed pipeline. Rekognition (B) analyzes images and video, not audio transcription, so it cannot turn the calls into text.` },
 
   /* Ch 27 - Built-In Algorithms and Script Mode */
-  { q:`A team has a working scikit-learn training script and wants to run it on SageMaker AI managed training without rewriting it as a Docker image. Which approach fits?`,
+  { ref:{chapter:27}, q:`A team has a working scikit-learn training script and wants to run it on SageMaker AI managed training without rewriting it as a Docker image. Which approach fits?`,
     opts:[
       "Rewrite the model using a SageMaker built-in algorithm",
       "Use script mode with the managed scikit-learn framework container",
@@ -450,10 +450,10 @@ const QUESTIONS = [
       "Package a fully custom container from scratch and push it to ECR"
     ],
     correct:1,
-    explain:`Why: Script mode lets SageMaker AI run your existing framework script inside a managed container (here the scikit-learn container) with no custom image to build. Rewriting to a built-in algorithm (A) throws away the working script and forces the model into a fixed algorithm's input format.` },
+    explain:`Script mode lets SageMaker AI run your existing framework script inside a managed container (here the scikit-learn container) with no custom image to build. Rewriting to a built-in algorithm (A) throws away the working script and forces the model into a fixed algorithm's input format.` },
 
   /* Ch 28 - Training Mechanics */
-  { q:`During training, validation loss keeps falling for 40 epochs and then rises for the next 20 while training loss keeps dropping. The team wants the best-generalizing model without wasting compute. What should they enable?`,
+  { ref:{chapter:28}, q:`During training, validation loss keeps falling for 40 epochs and then rises for the next 20 while training loss keeps dropping. The team wants the best-generalizing model without wasting compute. What should they enable?`,
     opts:[
       "A larger batch size to smooth the loss curve",
       "A higher learning rate to escape the plateau",
@@ -461,10 +461,10 @@ const QUESTIONS = [
       "More epochs so training loss reaches zero"
     ],
     correct:2,
-    explain:`Why: Rising validation loss while training loss falls is overfitting, and early stopping halts at the best validation point, saving compute and keeping the most generalizable weights. Adding more epochs (D) drives training loss to zero but deepens the overfitting the validation curve already shows.` },
+    explain:`Rising validation loss while training loss falls is overfitting, and early stopping halts at the best validation point, saving compute and keeping the most generalizable weights. Adding more epochs (D) drives training loss to zero but deepens the overfitting the validation curve already shows.` },
 
   /* Ch 29 - Hyperparameter Optimization */
-  { q:`A team wants SageMaker AI Automatic Model Tuning to find good hyperparameters in fewer training jobs by learning from earlier results rather than sampling blindly. Which tuning strategy fits?`,
+  { ref:{chapter:29}, q:`A team wants SageMaker AI Automatic Model Tuning to find good hyperparameters in fewer training jobs by learning from earlier results rather than sampling blindly. Which tuning strategy fits?`,
     opts:[
       "Bayesian optimization",
       "Random search",
@@ -472,10 +472,10 @@ const QUESTIONS = [
       "Manual trial and error"
     ],
     correct:0,
-    explain:`Why: Bayesian optimization builds a probabilistic model of the objective and uses past trials to choose the next promising configuration, converging in fewer jobs. Random search (B) samples independently and ignores prior results, so it typically needs more jobs to reach comparable quality.` },
+    explain:`Bayesian optimization builds a probabilistic model of the objective and uses past trials to choose the next promising configuration, converging in fewer jobs. Random search (B) samples independently and ignores prior results, so it typically needs more jobs to reach comparable quality.` },
 
   /* Ch 30 - Overfitting/Underfitting/Forgetting */
-  { q:`After fine-tuning a general chat model on a narrow support dataset, the model answers support questions well but has lost much of its earlier general ability. What is this and how is it reduced?`,
+  { ref:{chapter:30}, q:`After fine-tuning a general chat model on a narrow support dataset, the model answers support questions well but has lost much of its earlier general ability. What is this and how is it reduced?`,
     opts:[
       "Underfitting; train for more epochs on the support data",
       "Data leakage; remove overlapping rows and retrain",
@@ -483,10 +483,10 @@ const QUESTIONS = [
       "Catastrophic forgetting; use a lower learning rate and mix in general examples"
     ],
     correct:3,
-    explain:`Why: Losing prior general skills after narrow fine-tuning is catastrophic forgetting, mitigated by a gentler learning rate and blending some general data back into the fine-tuning set. Training more epochs on only the support data (A) is the opposite move and worsens the forgetting.` },
+    explain:`Losing prior general skills after narrow fine-tuning is catastrophic forgetting, mitigated by a gentler learning rate and blending some general data back into the fine-tuning set. Training more epochs on only the support data (A) is the opposite move and worsens the forgetting.` },
 
   /* Ch 31 - Ensembles */
-  { q:`A team wants to reduce the variance of a high-variance decision-tree model by training many trees on bootstrap samples and averaging their predictions. Which ensemble technique is this?`,
+  { ref:{chapter:31}, q:`A team wants to reduce the variance of a high-variance decision-tree model by training many trees on bootstrap samples and averaging their predictions. Which ensemble technique is this?`,
     opts:[
       "Boosting, which trains models sequentially on residual errors",
       "Bagging, which trains models on bootstrap samples and averages them",
@@ -494,10 +494,10 @@ const QUESTIONS = [
       "Distillation, which compresses one model into a smaller one"
     ],
     correct:1,
-    explain:`Why: Bagging trains models independently on bootstrap resamples and averages them, which directly reduces variance, the described goal. Boosting (A) instead trains models sequentially to correct prior errors and mainly reduces bias, not the variance problem stated here.` },
+    explain:`Bagging trains models independently on bootstrap resamples and averages them, which directly reduces variance, the described goal. Boosting (A) instead trains models sequentially to correct prior errors and mainly reduces bias, not the variance problem stated here.` },
 
   /* Ch 32 - Prompt Engineering vs Fine-Tuning */
-  { q:`A team needs a foundation model to follow a new output format and can iterate in hours, with no labeled dataset and a small, quickly changing set of rules. Which approach should they try first?`,
+  { ref:{chapter:32}, q:`A team needs a foundation model to follow a new output format and can iterate in hours, with no labeled dataset and a small, quickly changing set of rules. Which approach should they try first?`,
     opts:[
       "Prompt engineering with clear instructions and few-shot examples",
       "Supervised fine-tuning on a labeled dataset",
@@ -505,10 +505,10 @@ const QUESTIONS = [
       "Training a custom model from scratch"
     ],
     correct:0,
-    explain:`Why: With no labeled data, fast iteration, and frequently changing rules, prompt engineering with few-shot examples is the right first step, since it costs nothing to train and updates instantly. Supervised fine-tuning (B) needs a labeled dataset and a training cycle, which is overkill for rules that keep changing.` },
+    explain:`With no labeled data, fast iteration, and frequently changing rules, prompt engineering with few-shot examples is the right first step, since it costs nothing to train and updates instantly. Supervised fine-tuning (B) needs a labeled dataset and a training cycle, which is overkill for rules that keep changing.` },
 
   /* Ch 33 - Reproducible Experiments */
-  { q:`A team runs dozens of training experiments and cannot reproduce which parameters and metrics produced their best model. Which tool addresses this on SageMaker AI?`,
+  { ref:{chapter:33}, q:`A team runs dozens of training experiments and cannot reproduce which parameters and metrics produced their best model. Which tool addresses this on SageMaker AI?`,
     opts:[
       "Amazon CloudWatch alarms on training jobs",
       "AWS CloudTrail logs of the training API calls",
@@ -516,10 +516,10 @@ const QUESTIONS = [
       "Amazon S3 versioning on the model bucket"
     ],
     correct:2,
-    explain:`Why: MLflow tracking (available managed on SageMaker AI) records parameters, metrics, and artifacts for each run so any result is reproducible and comparable. CloudTrail (B) logs who called which API for audit, not the hyperparameters and metrics needed to reproduce an experiment.` },
+    explain:`MLflow tracking (available managed on SageMaker AI) records parameters, metrics, and artifacts for each run so any result is reproducible and comparable. CloudTrail (B) logs who called which API for audit, not the hyperparameters and metrics needed to reproduce an experiment.` },
 
   /* Ch 34 - Baselines/Drift/Shadow Variants */
-  { q:`Before sending live traffic to a new model version, a team wants to see how it would respond to real production requests without affecting customer responses. What should they use?`,
+  { ref:{chapter:34}, q:`Before sending live traffic to a new model version, a team wants to see how it would respond to real production requests without affecting customer responses. What should they use?`,
     opts:[
       "A canary deployment sending 5% of live responses to customers",
       "A shadow variant that receives copied live traffic but returns nothing to callers",
@@ -527,10 +527,10 @@ const QUESTIONS = [
       "A blue-green cutover of all traffic at once"
     ],
     correct:1,
-    explain:`Why: A shadow variant receives a copy of real production traffic and logs its outputs while the production variant still serves customers, so behavior is validated with zero customer impact. A canary (A) already returns the new model's responses to a fraction of real users, which is exactly the customer exposure the team wants to avoid.` },
+    explain:`A shadow variant receives a copy of real production traffic and logs its outputs while the production variant still serves customers, so behavior is validated with zero customer impact. A canary (A) already returns the new model's responses to a fraction of real users, which is exactly the customer exposure the team wants to avoid.` },
 
   /* Ch 35 - Classification and Regression Metrics */
-  { q:`A fraud classifier on a dataset with 2% positives shows 98% accuracy but misses most fraud. Which metric best reflects its true performance on the rare positive class?`,
+  { ref:{chapter:35}, q:`A fraud classifier on a dataset with 2% positives shows 98% accuracy but misses most fraud. Which metric best reflects its true performance on the rare positive class?`,
     opts:[
       "Overall accuracy",
       "Mean squared error",
@@ -538,10 +538,10 @@ const QUESTIONS = [
       "F1 score (or recall) on the positive class"
     ],
     correct:3,
-    explain:`Why: With a 2% positive rate, accuracy is dominated by the majority class, so F1 or recall on the positive class exposes how much fraud is actually caught. Overall accuracy (A) is exactly the misleading metric here, since predicting all-negative scores 98% while catching no fraud.` },
+    explain:`With a 2% positive rate, accuracy is dominated by the majority class, so F1 or recall on the positive class exposes how much fraud is actually caught. Overall accuracy (A) is exactly the misleading metric here, since predicting all-negative scores 98% while catching no fraud.` },
 
   /* Ch 36 - Explaining Outputs and Debugging */
-  { q:`A team must report which input features most influenced a deployed model's predictions to satisfy an internal audit. Which SageMaker AI capability fits?`,
+  { ref:{chapter:36}, q:`A team must report which input features most influenced a deployed model's predictions to satisfy an internal audit. Which SageMaker AI capability fits?`,
     opts:[
       "SageMaker Clarify feature attribution using SHAP values",
       "SageMaker Debugger tensor collections",
@@ -549,10 +549,10 @@ const QUESTIONS = [
       "SageMaker Automatic Model Tuning"
     ],
     correct:0,
-    explain:`Why: Clarify computes SHAP-based feature attributions that quantify each feature's contribution to predictions, which is what the audit needs. Debugger (B) captures tensors to diagnose training issues like vanishing gradients, not per-feature importance for explaining outputs.` },
+    explain:`Clarify computes SHAP-based feature attributions that quantify each feature's contribution to predictions, which is what the audit needs. Debugger (B) captures tensors to diagnose training issues like vanishing gradients, not per-feature importance for explaining outputs.` },
 
   /* Ch 40 - Inference Strategies */
-  { q:`A pipeline must score 50 million records once each night with no latency requirement, and the endpoint should not run or cost anything between runs. Which inference option fits?`,
+  { ref:{chapter:40}, q:`A pipeline must score 50 million records once each night with no latency requirement, and the endpoint should not run or cost anything between runs. Which inference option fits?`,
     opts:[
       "A real-time endpoint kept always on",
       "A serverless endpoint with provisioned concurrency",
@@ -560,10 +560,10 @@ const QUESTIONS = [
       "An asynchronous endpoint polled continuously"
     ],
     correct:2,
-    explain:`Why: A large, scheduled, latency-tolerant scoring run is the batch transform case: it spins up, processes the whole dataset, and shuts down, so nothing runs between nightly runs. An always-on real-time endpoint (A) bills continuously for capacity that sits idle 23 hours a day.` },
+    explain:`A large, scheduled, latency-tolerant scoring run is the batch transform case: it spins up, processes the whole dataset, and shuts down, so nothing runs between nightly runs. An always-on real-time endpoint (A) bills continuously for capacity that sits idle 23 hours a day.` },
 
   /* Ch 41 - Compute Environments */
-  { q:`A team wants managed model hosting with built-in autoscaling, model versioning, and monitoring, without managing Kubernetes or task definitions. Which target fits best?`,
+  { ref:{chapter:41}, q:`A team wants managed model hosting with built-in autoscaling, model versioning, and monitoring, without managing Kubernetes or task definitions. Which target fits best?`,
     opts:[
       "An Amazon EKS cluster running the model in pods",
       "A SageMaker AI real-time endpoint",
@@ -571,10 +571,10 @@ const QUESTIONS = [
       "An AWS Lambda function packaging the model"
     ],
     correct:1,
-    explain:`Why: A SageMaker AI endpoint provides managed hosting with autoscaling, variants for versioning, and Model Monitor integration, with no cluster to run. EKS (A) can host the model but forces the team to operate Kubernetes and build the scaling and monitoring themselves.` },
+    explain:`A SageMaker AI endpoint provides managed hosting with autoscaling, variants for versioning, and Model Monitor integration, with no cluster to run. EKS (A) can host the model but forces the team to operate Kubernetes and build the scaling and monitoring themselves.` },
 
   /* Ch 42 - Orchestrators and Multi-Model */
-  { q:`A team hosts 400 small per-customer models that are each invoked rarely and wants to serve them cost-effectively behind one endpoint, loading models on demand. Which capability fits?`,
+  { ref:{chapter:42}, q:`A team hosts 400 small per-customer models that are each invoked rarely and wants to serve them cost-effectively behind one endpoint, loading models on demand. Which capability fits?`,
     opts:[
       "One dedicated real-time endpoint per model",
       "A serverless endpoint per model",
@@ -582,10 +582,10 @@ const QUESTIONS = [
       "A SageMaker AI multi-model endpoint that loads models from S3 on demand"
     ],
     correct:3,
-    explain:`Why: A multi-model endpoint hosts many models behind one endpoint and loads each from S3 into memory on demand, ideal for many rarely used models sharing infrastructure. One endpoint per model (A) means 400 sets of always-on instances, which is far more expensive for infrequently invoked models.` },
+    explain:`A multi-model endpoint hosts many models behind one endpoint and loads each from S3 into memory on demand, ideal for many rarely used models sharing infrastructure. One endpoint per model (A) means 400 sets of always-on instances, which is far more expensive for infrequently invoked models.` },
 
   /* Ch 43 - FM Deployment Options */
-  { q:`A company runs steady, high-volume Bedrock inference with a strict latency and throughput guarantee for a specific model. Which deployment option fits?`,
+  { ref:{chapter:43}, q:`A company runs steady, high-volume Bedrock inference with a strict latency and throughput guarantee for a specific model. Which deployment option fits?`,
     opts:[
       "Provisioned Throughput for the model with reserved capacity",
       "On-demand invocation billed per token",
@@ -593,10 +593,10 @@ const QUESTIONS = [
       "A batch inference job submitted each hour"
     ],
     correct:0,
-    explain:`Why: Provisioned Throughput reserves model capacity to guarantee throughput and consistent latency for steady high-volume workloads. On-demand invocation (B) is billed per token with no reserved capacity, so it cannot guarantee the throughput or latency floor the company requires.` },
+    explain:`Provisioned Throughput reserves model capacity to guarantee throughput and consistent latency for steady high-volume workloads. On-demand invocation (B) is billed per token with no reserved capacity, so it cannot guarantee the throughput or latency floor the company requires.` },
 
   /* Ch 44 - Importing Outside Models */
-  { q:`A team trained a Llama-architecture model with custom weights outside AWS and wants to serve it through the Amazon Bedrock API alongside other models. Which feature fits?`,
+  { ref:{chapter:44}, q:`A team trained a Llama-architecture model with custom weights outside AWS and wants to serve it through the Amazon Bedrock API alongside other models. Which feature fits?`,
     opts:[
       "SageMaker AI script mode training",
       "Bedrock Provisioned Throughput on a base model",
@@ -604,10 +604,10 @@ const QUESTIONS = [
       "AWS Lambda hosting the model weights"
     ],
     correct:2,
-    explain:`Why: Bedrock Custom Model Import brings weights from a supported architecture (such as Llama) into Bedrock so they are served through the same unified API. Provisioned Throughput on a base model (B) reserves capacity for an existing Bedrock model but does not import the team's own custom weights.` },
+    explain:`Bedrock Custom Model Import brings weights from a supported architecture (such as Llama) into Bedrock so they are served through the same unified API. Provisioned Throughput on a base model (B) reserves capacity for an existing Bedrock model but does not import the team's own custom weights.` },
 
   /* Ch 45 - Deploying Agents */
-  { q:`A team is building a Bedrock agent that must look up order status by calling an existing internal REST API during a conversation. How should the agent reach that API?`,
+  { ref:{chapter:45}, q:`A team is building a Bedrock agent that must look up order status by calling an existing internal REST API during a conversation. How should the agent reach that API?`,
     opts:[
       "Embed the API responses in the system prompt ahead of time",
       "Define an action group whose tool the agent invokes, backed by a Lambda function that calls the API",
@@ -615,10 +615,10 @@ const QUESTIONS = [
       "Store all possible order statuses in the knowledge base"
     ],
     correct:1,
-    explain:`Why: Agents call external systems through action groups: the model decides to invoke the tool, and a backing Lambda function calls the REST API and returns results. Embedding responses in the prompt ahead of time (A) cannot handle live, per-order lookups that depend on the current conversation.` },
+    explain:`Agents call external systems through action groups: the model decides to invoke the tool, and a backing Lambda function calls the REST API and returns results. Embedding responses in the prompt ahead of time (A) cannot handle live, per-order lookups that depend on the current conversation.` },
 
   /* Ch 46 - On-Demand vs Provisioned */
-  { q:`A training team runs many fault-tolerant, checkpointed experiments and wants the lowest compute cost, accepting that instances may be reclaimed. Which purchasing option fits?`,
+  { ref:{chapter:46}, q:`A training team runs many fault-tolerant, checkpointed experiments and wants the lowest compute cost, accepting that instances may be reclaimed. Which purchasing option fits?`,
     opts:[
       "Amazon EC2 Spot Instances via SageMaker AI managed spot training",
       "On-Demand instances for guaranteed availability",
@@ -626,10 +626,10 @@ const QUESTIONS = [
       "Dedicated Hosts for isolation"
     ],
     correct:0,
-    explain:`Why: Fault-tolerant, checkpointed training that tolerates interruption is the Spot case, and managed spot training can cut cost substantially versus On-Demand. On-Demand (B) guarantees availability but at full price, giving up the savings the interruption-tolerant workload could capture.` },
+    explain:`Fault-tolerant, checkpointed training that tolerates interruption is the Spot case, and managed spot training can cut cost substantially versus On-Demand. On-Demand (B) guarantees availability but at full price, giving up the savings the interruption-tolerant workload could capture.` },
 
   /* Ch 47 - Automating Provisioning */
-  { q:`A team must define its SageMaker AI endpoints, roles, and networking as version-controlled, repeatable infrastructure that can be deployed identically across accounts. Which approach fits?`,
+  { ref:{chapter:47}, q:`A team must define its SageMaker AI endpoints, roles, and networking as version-controlled, repeatable infrastructure that can be deployed identically across accounts. Which approach fits?`,
     opts:[
       "Click through the SageMaker console and document the steps",
       "Write a shell script of AWS CLI commands run manually",
@@ -637,10 +637,10 @@ const QUESTIONS = [
       "Define the resources in AWS CloudFormation or the AWS CDK templates"
     ],
     correct:3,
-    explain:`Why: CloudFormation or CDK captures the resources as declarative, version-controlled templates that deploy identically across accounts, the definition of infrastructure as code. A manual CLI script (B) is imperative and drift-prone, so it does not reliably reproduce the same stack everywhere.` },
+    explain:`CloudFormation or CDK captures the resources as declarative, version-controlled templates that deploy identically across accounts, the definition of infrastructure as code. A manual CLI script (B) is imperative and drift-prone, so it does not reliably reproduce the same stack everywhere.` },
 
   /* Ch 48 - Containers for ML */
-  { q:`A team built a custom inference container image and needs a secure, managed registry to store and version it for SageMaker AI and ECS to pull. Which service fits?`,
+  { ref:{chapter:48}, q:`A team built a custom inference container image and needs a secure, managed registry to store and version it for SageMaker AI and ECS to pull. Which service fits?`,
     opts:[
       "Amazon S3 with the image saved as a tar file",
       "Amazon Elastic Container Registry (ECR)",
@@ -648,10 +648,10 @@ const QUESTIONS = [
       "Amazon EFS shared across hosts"
     ],
     correct:1,
-    explain:`Why: ECR is the managed Docker registry that stores, versions, and secures container images for SageMaker AI, ECS, and EKS to pull. Saving a tar file in S3 (A) is not a container registry, so it lacks image tagging, pull integration, and vulnerability scanning.` },
+    explain:`ECR is the managed Docker registry that stores, versions, and secures container images for SageMaker AI, ECS, and EKS to pull. Saving a tar file in S3 (A) is not a container registry, so it lacks image tagging, pull integration, and vulnerability scanning.` },
 
   /* Ch 49 - Programmatic Deployment in a VPC (MULTI) */
-  { q:`A team deploys a SageMaker AI endpoint from Boto3 and must keep all traffic to S3 and the endpoint off the public internet. Which TWO configurations achieve this? (Select TWO.)`,
+  { ref:{chapter:49}, q:`A team deploys a SageMaker AI endpoint from Boto3 and must keep all traffic to S3 and the endpoint off the public internet. Which TWO configurations achieve this? (Select TWO.)`,
     opts:[
       "Pass VpcConfig with private subnets and security groups when creating the model",
       "Create VPC endpoints (interface and gateway) for the required AWS services",
@@ -660,10 +660,10 @@ const QUESTIONS = [
       "Disable IAM and rely on network isolation alone"
     ],
     correct:[0,1],
-    explain:`Why: Supplying VpcConfig places the endpoint's network interfaces in private subnets, and VPC endpoints let it reach S3 and other AWS services without traversing the internet. Attaching a public IP (C) does the opposite, exposing the endpoint to the public internet the team must avoid.` },
+    explain:`Supplying VpcConfig places the endpoint's network interfaces in private subnets, and VPC endpoints let it reach S3 and other AWS services without traversing the internet. Attaching a public IP (C) does the opposite, exposing the endpoint to the public internet the team must avoid.` },
 
   /* Ch 50 - Auto Scaling */
-  { q:`A real-time endpoint sees traffic that spikes during business hours and is quiet overnight. The team wants it to add instances under load and scale back when idle. What should they configure?`,
+  { ref:{chapter:50}, q:`A real-time endpoint sees traffic that spikes during business hours and is quiet overnight. The team wants it to add instances under load and scale back when idle. What should they configure?`,
     opts:[
       "A fixed instance count sized for the peak",
       "Manual scaling changed by an operator each morning",
@@ -671,10 +671,10 @@ const QUESTIONS = [
       "A larger single instance type with no scaling"
     ],
     correct:2,
-    explain:`Why: Target-tracking auto scaling adds and removes instances to hold a chosen load metric near a target, matching capacity to the spiky demand automatically. A fixed peak-sized count (A) wastes money overnight when traffic is low, since it never scales in.` },
+    explain:`Target-tracking auto scaling adds and removes instances to hold a chosen load metric near a target, matching capacity to the spiky demand automatically. A fixed peak-sized count (A) wastes money overnight when traffic is low, since it never scales in.` },
 
   /* Ch 51 - Bedrock Knowledge Bases */
-  { q:`A team building a Bedrock knowledge base wants the initial retrieval to be fast over millions of chunks and then a second pass to reorder the top results by true relevance before generation. Which pipeline fits?`,
+  { ref:{chapter:51}, q:`A team building a Bedrock knowledge base wants the initial retrieval to be fast over millions of chunks and then a second pass to reorder the top results by true relevance before generation. Which pipeline fits?`,
     opts:[
       "Vector retrieval followed by a reranking model on the top candidates",
       "Keyword search only, with no vector index",
@@ -682,10 +682,10 @@ const QUESTIONS = [
       "Retrieval that returns every chunk to the model"
     ],
     correct:0,
-    explain:`Why: Fast vector retrieval narrows millions of chunks to a candidate set, and a reranking model then reorders those candidates by relevance before generation, the standard two-stage pattern. Returning every chunk to the model (D) blows past the context window and buries the relevant passages.` },
+    explain:`Fast vector retrieval narrows millions of chunks to a candidate set, and a reranking model then reorders those candidates by relevance before generation, the standard two-stage pattern. Returning every chunk to the model (D) blows past the context window and buries the relevant passages.` },
 
   /* Ch 52 - Agent State Management */
-  { q:`A multi-turn agent must remember earlier turns in a conversation across separate stateless invocations. Where should the conversational state be kept?`,
+  { ref:{chapter:52}, q:`A multi-turn agent must remember earlier turns in a conversation across separate stateless invocations. Where should the conversational state be kept?`,
     opts:[
       "Only in the model's weights",
       "In a local variable inside the Lambda handler",
@@ -693,10 +693,10 @@ const QUESTIONS = [
       "In an external durable store such as a session table keyed by conversation ID"
     ],
     correct:3,
-    explain:`Why: Because invocations are stateless, conversational memory must live in an external durable store keyed by conversation ID so any invocation can read the prior turns. A local variable in the Lambda handler (B) does not survive across separate invocations, so context would be lost each turn.` },
+    explain:`Because invocations are stateless, conversational memory must live in an external durable store keyed by conversation ID so any invocation can read the prior turns. A local variable in the Lambda handler (B) does not survive across separate invocations, so context would be lost each turn.` },
 
   /* Ch 53 - Deployment Strategies and Rollback */
-  { q:`A team wants to release a new model to a small slice of live traffic, watch its error metrics, and automatically roll back if they breach a threshold before full rollout. Which strategy fits?`,
+  { ref:{chapter:53}, q:`A team wants to release a new model to a small slice of live traffic, watch its error metrics, and automatically roll back if they breach a threshold before full rollout. Which strategy fits?`,
     opts:[
       "An all-at-once replacement of the old model",
       "A canary deployment with a CloudWatch alarm that triggers automatic rollback",
@@ -704,10 +704,10 @@ const QUESTIONS = [
       "A shadow variant that never serves customers"
     ],
     correct:1,
-    explain:`Why: A canary sends a small percentage of live traffic to the new version, and a CloudWatch alarm on error metrics can trigger automatic rollback before wider exposure. An all-at-once replacement (A) shifts every user immediately, so a bad model reaches everyone with no gradual safety check.` },
+    explain:`A canary sends a small percentage of live traffic to the new version, and a CloudWatch alarm on error metrics can trigger automatic rollback before wider exposure. An all-at-once replacement (A) shifts every user immediately, so a bad model reaches everyone with no gradual safety check.` },
 
   /* Ch 54 - CI/CD */
-  { q:`A team wants a pipeline that, on each commit to its Git repository, builds a container, runs tests, and deploys the model endpoint, using AWS-managed services. Which combination fits?`,
+  { ref:{chapter:54}, q:`A team wants a pipeline that, on each commit to its Git repository, builds a container, runs tests, and deploys the model endpoint, using AWS-managed services. Which combination fits?`,
     opts:[
       "Run all steps by hand from a developer laptop",
       "Use cron on an EC2 instance to poll for changes",
@@ -715,10 +715,10 @@ const QUESTIONS = [
       "Schedule a nightly Lambda that redeploys regardless of commits"
     ],
     correct:2,
-    explain:`Why: CodePipeline orchestrates the stages, CodeBuild builds and tests, CodeDeploy handles the deployment, and CodeConnections wires in the Git source, a fully managed CI/CD chain triggered per commit. A nightly Lambda (D) redeploys on a timer and is not tied to commits, so it neither tests nor gates changes as they land.` },
+    explain:`CodePipeline orchestrates the stages, CodeBuild builds and tests, CodeDeploy handles the deployment, and CodeConnections wires in the Git source, a fully managed CI/CD chain triggered per commit. A nightly Lambda (D) redeploys on a timer and is not tied to commits, so it neither tests nor gates changes as they land.` },
 
   /* Ch 55 - Automated Testing for ML Pipelines */
-  { q:`A team wants its ML pipeline to fail automatically when a newly trained model scores below a minimum accuracy on a held-out set before it can be deployed. What should they add?`,
+  { ref:{chapter:55}, q:`A team wants its ML pipeline to fail automatically when a newly trained model scores below a minimum accuracy on a held-out set before it can be deployed. What should they add?`,
     opts:[
       "A model evaluation step with a quality gate that stops the pipeline if the metric is below threshold",
       "A manual review meeting after each training run",
@@ -726,10 +726,10 @@ const QUESTIONS = [
       "A larger endpoint instance so inference is faster"
     ],
     correct:0,
-    explain:`Why: An automated evaluation step with a conditional quality gate compares the metric to a threshold and halts deployment when the model underperforms, exactly the safeguard described. A manual review meeting (B) is not automated and does not deterministically block a bad model from shipping.` },
+    explain:`An automated evaluation step with a conditional quality gate compares the metric to a threshold and halts deployment when the model underperforms, exactly the safeguard described. A manual review meeting (B) is not automated and does not deterministically block a bad model from shipping.` },
 
   /* Ch 60 - Monitoring Model Performance */
-  { q:`A deployed tabular model's accuracy has quietly degraded over months as the incoming feature distribution shifted away from the training data. Which capability detects this automatically?`,
+  { ref:{chapter:60}, q:`A deployed tabular model's accuracy has quietly degraded over months as the incoming feature distribution shifted away from the training data. Which capability detects this automatically?`,
     opts:[
       "Amazon CloudTrail API logging",
       "SageMaker AI Model Monitor comparing live data against a training baseline",
@@ -737,10 +737,10 @@ const QUESTIONS = [
       "Amazon Inspector vulnerability scans"
     ],
     correct:1,
-    explain:`Why: Model Monitor captures a baseline from training data and continuously compares live traffic against it to flag data quality and drift, catching the gradual distribution shift. CloudTrail (A) records API activity for audit and has no view into feature distributions or model quality.` },
+    explain:`Model Monitor captures a baseline from training data and continuously compares live traffic against it to flag data quality and drift, catching the gradual distribution shift. CloudTrail (A) records API activity for audit and has no view into feature distributions or model quality.` },
 
   /* Ch 61 - Detecting Distribution Change */
-  { q:`A team wants an automated signal when the statistical distribution of an input feature in production diverges significantly from the training distribution. Which is the right concept and tool?`,
+  { ref:{chapter:61}, q:`A team wants an automated signal when the statistical distribution of an input feature in production diverges significantly from the training distribution. Which is the right concept and tool?`,
     opts:[
       "A billing alert in AWS Budgets",
       "A CloudTrail lookup for unusual API calls",
@@ -748,10 +748,10 @@ const QUESTIONS = [
       "A security group rule change alert"
     ],
     correct:2,
-    explain:`Why: A shift in the input feature distribution versus training is data drift, which Model Monitor's data quality monitoring detects by comparing live statistics to the baseline. A CloudTrail lookup (B) surfaces unusual API activity, not statistical changes in feature values.` },
+    explain:`A shift in the input feature distribution versus training is data drift, which Model Monitor's data quality monitoring detects by comparing live statistics to the baseline. A CloudTrail lookup (B) surfaces unusual API activity, not statistical changes in feature values.` },
 
   /* Ch 62 - A/B Testing in Production */
-  { q:`A team wants to compare two model versions on live traffic by splitting requests between them and measuring business metrics before choosing a winner. Which SageMaker AI capability fits?`,
+  { ref:{chapter:62}, q:`A team wants to compare two model versions on live traffic by splitting requests between them and measuring business metrics before choosing a winner. Which SageMaker AI capability fits?`,
     opts:[
       "Production variants on one endpoint with weighted traffic split between the two models",
       "Two separate batch transform jobs on last week's data",
@@ -759,10 +759,10 @@ const QUESTIONS = [
       "A single variant with all traffic on the new model"
     ],
     correct:0,
-    explain:`Why: Production variants on one endpoint let you assign traffic weights across model versions and compare their live metrics, which is how A/B testing is run on SageMaker AI. Batch transform on historical data (B) is offline and cannot measure live business outcomes across concurrent users.` },
+    explain:`Production variants on one endpoint let you assign traffic weights across model versions and compare their live metrics, which is how A/B testing is run on SageMaker AI. Batch transform on historical data (B) is offline and cannot measure live business outcomes across concurrent users.` },
 
   /* Ch 63 - Monitoring Agents */
-  { q:`An agentic application intermittently returns incomplete answers, and the team suspects a downstream tool is timing out mid-response. Which monitoring signal most directly confirms this?`,
+  { ref:{chapter:63}, q:`An agentic application intermittently returns incomplete answers, and the team suspects a downstream tool is timing out mid-response. Which monitoring signal most directly confirms this?`,
     opts:[
       "The total number of tokens billed per day",
       "The endpoint's CPU utilization graph",
@@ -770,10 +770,10 @@ const QUESTIONS = [
       "Tool invocation error and latency metrics showing failed or timed-out tool calls"
     ],
     correct:3,
-    explain:`Why: Tracking each tool invocation's errors and latency directly reveals timed-out or failed tool calls that leave a response incomplete. Daily token billing (A) reflects overall usage and cost but says nothing about which specific tool call failed during a response.` },
+    explain:`Tracking each tool invocation's errors and latency directly reveals timed-out or failed tool calls that leave a response incomplete. Daily token billing (A) reflects overall usage and cost but says nothing about which specific tool call failed during a response.` },
 
   /* Ch 64 - Inference Instance Families */
-  { q:`A team serves a large deep-learning model that needs GPU acceleration for acceptable real-time latency. Which SageMaker AI instance family should the endpoint use?`,
+  { ref:{chapter:64}, q:`A team serves a large deep-learning model that needs GPU acceleration for acceptable real-time latency. Which SageMaker AI instance family should the endpoint use?`,
     opts:[
       "The compute-optimized C family with no accelerator",
       "The general-purpose T burstable family",
@@ -781,10 +781,10 @@ const QUESTIONS = [
       "An accelerated family such as G or P instances with GPUs"
     ],
     correct:3,
-    explain:`Why: Large deep-learning inference that needs GPU acceleration should run on an accelerated family such as G or P, which include GPUs. The compute-optimized C family (A) has strong CPUs but no GPU, so latency for a large neural model would be far worse.` },
+    explain:`Large deep-learning inference that needs GPU acceleration should run on an accelerated family such as G or P, which include GPUs. The compute-optimized C family (A) has strong CPUs but no GPU, so latency for a large neural model would be far worse.` },
 
   /* Ch 65 - Troubleshooting Tools */
-  { q:`A request through an application, its Lambda, and a downstream model endpoint is slow, and the team needs to see where the time is spent across those hops. Which tool fits?`,
+  { ref:{chapter:65}, q:`A request through an application, its Lambda, and a downstream model endpoint is slow, and the team needs to see where the time is spent across those hops. Which tool fits?`,
     opts:[
       "AWS Config to inspect resource configuration history",
       "Amazon Macie to scan for sensitive data",
@@ -792,10 +792,10 @@ const QUESTIONS = [
       "Amazon GuardDuty threat detection"
     ],
     correct:2,
-    explain:`Why: X-Ray traces a request across services and shows latency at each hop, pinpointing where the time is spent. AWS Config (A) records configuration state and changes for compliance, giving no per-request latency breakdown across the call path.` },
+    explain:`X-Ray traces a request across services and shows latency at each hop, pinpointing where the time is spent. AWS Config (A) records configuration state and changes for compliance, giving no per-request latency breakdown across the call path.` },
 
   /* Ch 66 - Dashboards and Capacity Optimization */
-  { q:`An operations team wants a single, always-current view combining endpoint latency, invocation counts, and error rates to spot problems and tune capacity. What should they build?`,
+  { ref:{chapter:66}, q:`An operations team wants a single, always-current view combining endpoint latency, invocation counts, and error rates to spot problems and tune capacity. What should they build?`,
     opts:[
       "An Amazon CloudWatch dashboard of the endpoint metrics",
       "A one-time screenshot emailed each morning",
@@ -803,10 +803,10 @@ const QUESTIONS = [
       "A manual spreadsheet updated by an engineer"
     ],
     correct:0,
-    explain:`Why: A CloudWatch dashboard aggregates live endpoint metrics like latency, invocations, and errors into one continuously updated view for monitoring and capacity tuning. A daily screenshot (B) is stale the moment it is taken and cannot support real-time troubleshooting.` },
+    explain:`A CloudWatch dashboard aggregates live endpoint metrics like latency, invocations, and errors into one continuously updated view for monitoring and capacity tuning. A daily screenshot (B) is stale the moment it is taken and cannot support real-time troubleshooting.` },
 
   /* Ch 67 - Cost Management Tools */
-  { q:`A team runs steady, predictable SageMaker AI inference around the clock and wants to lower cost through a usage commitment rather than paying full on-demand rates. Which option fits?`,
+  { ref:{chapter:67}, q:`A team runs steady, predictable SageMaker AI inference around the clock and wants to lower cost through a usage commitment rather than paying full on-demand rates. Which option fits?`,
     opts:[
       "Spot Instances for the always-on endpoint",
       "Paying on-demand and reviewing the bill monthly",
@@ -814,10 +814,10 @@ const QUESTIONS = [
       "A SageMaker Savings Plan committing to a steady hourly spend"
     ],
     correct:3,
-    explain:`Why: Steady, predictable usage is the Savings Plan case: committing to an hourly spend for a term lowers the rate versus on-demand. Spot Instances (A) are cheap but can be reclaimed, which is unsuitable for an always-on real-time endpoint that must stay available.` },
+    explain:`Steady, predictable usage is the Savings Plan case: committing to an hourly spend for a term lowers the rate versus on-demand. Spot Instances (A) are cheap but can be reclaimed, which is unsuitable for an always-on real-time endpoint that must stay available.` },
 
   /* Ch 68 - FM Inference Costs */
-  { q:`A team's Bedrock bill is driven by an application that resends a large, unchanging instruction block in every request. Which change most directly reduces token cost?`,
+  { ref:{chapter:68}, q:`A team's Bedrock bill is driven by an application that resends a large, unchanging instruction block in every request. Which change most directly reduces token cost?`,
     opts:[
       "Raise the temperature to shorten responses",
       "Enable prompt caching (or trim the repeated context) so the large fixed block is not re-billed in full each call",
@@ -825,10 +825,10 @@ const QUESTIONS = [
       "Increase the max output tokens setting"
     ],
     correct:1,
-    explain:`Why: FM cost scales with input and output tokens, so caching or trimming the large repeated instruction block stops paying full price for the same context on every call. Switching to a larger model (C) raises the per-token price, increasing cost rather than reducing it.` },
+    explain:`FM cost scales with input and output tokens, so caching or trimming the large repeated instruction block stops paying full price for the same context on every call. Switching to a larger model (C) raises the per-token price, increasing cost rather than reducing it.` },
 
   /* Ch 69 - AI Cost Patterns */
-  { q:`A team's costs for a RAG system are climbing because it re-embeds the entire corpus on every content update, even when only a few documents changed. Which change cuts the embedding compute cost?`,
+  { ref:{chapter:69}, q:`A team's costs for a RAG system are climbing because it re-embeds the entire corpus on every content update, even when only a few documents changed. Which change cuts the embedding compute cost?`,
     opts:[
       "Re-embed the whole corpus more frequently to stay current",
       "Increase the embedding model dimension for better recall",
@@ -836,10 +836,10 @@ const QUESTIONS = [
       "Store the vectors in a more expensive in-memory database"
     ],
     correct:2,
-    explain:`Why: Embedding compute is billed per processed token, so incrementally embedding only changed documents avoids re-paying for unchanged content on every update. Re-embedding the whole corpus more often (A) multiplies the very compute cost the team is trying to reduce.` },
+    explain:`Embedding compute is billed per processed token, so incrementally embedding only changed documents avoids re-paying for unchanged content on every update. Re-embedding the whole corpus more often (A) multiplies the very compute cost the team is trying to reduce.` },
 
   /* Ch 70 - Securing CI/CD */
-  { q:`A team wants its pipeline to automatically flag insecure code patterns and hardcoded secrets in application source and scan built container images for known CVEs before deployment. Which services fit?`,
+  { ref:{chapter:70}, q:`A team wants its pipeline to automatically flag insecure code patterns and hardcoded secrets in application source and scan built container images for known CVEs before deployment. Which services fit?`,
     opts:[
       "Amazon CodeGuru for code review findings and Amazon Inspector for image vulnerability scanning",
       "Amazon CloudWatch and AWS Config",
@@ -847,10 +847,10 @@ const QUESTIONS = [
       "AWS X-Ray and AWS CloudTrail"
     ],
     correct:0,
-    explain:`Why: CodeGuru reviews source for security and quality issues and Inspector scans container images for known vulnerabilities, covering both pre-deployment checks. Macie and GuardDuty (C) address sensitive-data discovery and threat detection, not source-code review or image CVE scanning in the pipeline.` },
+    explain:`CodeGuru reviews source for security and quality issues and Inspector scans container images for known vulnerabilities, covering both pre-deployment checks. Macie and GuardDuty (C) address sensitive-data discovery and threat detection, not source-code review or image CVE scanning in the pipeline.` },
 
   /* Ch 71 - Least Privilege and IAM (MULTI) */
-  { q:`A team must apply least privilege to a training job's IAM role that reads one S3 bucket and writes model artifacts to another. Which TWO practices fit? (Select TWO.)`,
+  { ref:{chapter:71}, q:`A team must apply least privilege to a training job's IAM role that reads one S3 bucket and writes model artifacts to another. Which TWO practices fit? (Select TWO.)`,
     opts:[
       "Scope the policy to the specific buckets and actions the job needs",
       "Use an IAM role assumed by the job rather than long-lived access keys",
@@ -859,10 +859,10 @@ const QUESTIONS = [
       "Grant s3:* on all buckets to simplify future changes"
     ],
     correct:[0,1],
-    explain:`Why: Least privilege means scoping the policy to only the required buckets and actions and having the job assume a role instead of using static keys. Attaching AdministratorAccess (C) grants far more than the job needs, the opposite of least privilege and a broad blast radius if the role is compromised.` },
+    explain:`Least privilege means scoping the policy to only the required buckets and actions and having the job assume a role instead of using static keys. Attaching AdministratorAccess (C) grants far more than the job needs, the opposite of least privilege and a broad blast radius if the role is compromised.` },
 
   /* Ch 72 - Auditing and Compliance */
-  { q:`A compliance team must produce a record of every API call that created, updated, or deleted SageMaker AI resources over the past year, including who made each call. Which service provides this?`,
+  { ref:{chapter:72}, q:`A compliance team must produce a record of every API call that created, updated, or deleted SageMaker AI resources over the past year, including who made each call. Which service provides this?`,
     opts:[
       "Amazon CloudWatch metrics",
       "AWS X-Ray traces",
@@ -870,10 +870,10 @@ const QUESTIONS = [
       "AWS CloudTrail event history"
     ],
     correct:3,
-    explain:`Why: CloudTrail records management API calls with the identity, time, and parameters, giving the audit trail of who did what across SageMaker AI resources. CloudWatch metrics (A) track performance data like latency and invocations, not the identity and history of individual API calls.` },
+    explain:`CloudTrail records management API calls with the identity, time, and parameters, giving the audit trail of who did what across SageMaker AI resources. CloudWatch metrics (A) track performance data like latency and invocations, not the identity and history of individual API calls.` },
 
   /* Ch 73 - Network Isolation */
-  { q:`A team must ensure a SageMaker AI endpoint reaches Amazon S3 without its traffic ever traversing the public internet. Which configuration achieves this?`,
+  { ref:{chapter:73}, q:`A team must ensure a SageMaker AI endpoint reaches Amazon S3 without its traffic ever traversing the public internet. Which configuration achieves this?`,
     opts:[
       "Assign the endpoint a public IP and restrict it with a security group",
       "Place the endpoint in private subnets and use a VPC endpoint for S3",
@@ -881,10 +881,10 @@ const QUESTIONS = [
       "Enable S3 bucket public access and rely on bucket policies"
     ],
     correct:1,
-    explain:`Why: Running the endpoint in private subnets and adding a VPC endpoint for S3 keeps that traffic on the AWS private network, never touching the internet. Assigning a public IP (A) exposes the endpoint to the internet, the exact path the requirement forbids.` },
+    explain:`Running the endpoint in private subnets and adding a VPC endpoint for S3 keeps that traffic on the AWS private network, never touching the internet. Assigning a public IP (A) exposes the endpoint to the internet, the exact path the requirement forbids.` },
 
   /* Ch 74 - Troubleshooting Security and AI Risks */
-  { q:`A public-facing generative AI assistant sometimes produces disallowed content and leaks personally identifiable information in its responses. Which control most directly mitigates both risks?`,
+  { ref:{chapter:74}, q:`A public-facing generative AI assistant sometimes produces disallowed content and leaks personally identifiable information in its responses. Which control most directly mitigates both risks?`,
     opts:[
       "Increase the model's max output tokens",
       "Move the endpoint to a larger instance type",
@@ -892,9 +892,95 @@ const QUESTIONS = [
       "Switch the model to a higher temperature for variety"
     ],
     correct:2,
-    explain:`Why: Bedrock Guardrails enforce content policies and detect and redact PII on both prompts and responses, directly addressing the harmful-content and data-leak risks. A larger instance type (B) affects latency and throughput but does nothing to filter unsafe content or protect PII.` }
+    explain:`Bedrock Guardrails enforce content policies and detect and redact PII on both prompts and responses, directly addressing the harmful-content and data-leak risks. A larger instance type (B) affects latency and throughput but does nothing to filter unsafe content or protect PII.` }
 
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "aws-mla-c02",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+  list: {
+    1:["lesson-01-data-formats.html", "Choosing Data Formats: Parquet, ORC, JSON, and CSV by Access Pattern"],
+    2:["lesson-02-storage-decisions.html", "Storage Decisions: S3, EBS, EFS, RDS, DynamoDB, and OpenSearch by Cost and Structure"],
+    3:["lesson-03-streaming-ingestion-transformation.html", "Streaming Ingestion and Transformation: Kinesis, Managed Service for Apache Flink, Kafka, Lambda, and Spark"],
+    4:["lesson-04-merging-sources-troubleshooting.html", "Merging Sources and Troubleshooting Ingestion with AWS Glue and Spark"],
+    5:["lesson-05-vector-databases.html", "Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3"],
+    6:["lesson-06-ingesting-multimodal-data.html", "Ingesting Multimodal Data: Text, Images, and Audio"],
+    7:["lesson-07-sagemaker-feature-store.html", "SageMaker Feature Store: Ingesting and Managing Features"],
+    8:["lesson-08-feature-engineering.html", "Feature Engineering: Scaling, Binning, and Log Transforms"],
+    9:["lesson-09-encoding-features.html", "Encoding Features: One-Hot, Binary, Label, and Tokenization"],
+    10:["lesson-10-transformation-tools.html", "Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR"],
+    11:["lesson-11-embedding-models.html", "Embedding Models: Turning Text and Images into Vectors"],
+    12:["lesson-12-text-pre-processing.html", "Text Pre-Processing: Tokenization and Domain-Specific Augmentation"],
+    13:["lesson-13-preparing-documents-for-rag.html", "Preparing Documents for RAG: Chunking Strategies and Metadata Extraction"],
+    14:["lesson-14-masking-redaction-anonymization.html", "Masking, Redaction, and Anonymization"],
+    15:["lesson-15-preparing-data-for-fm-customization.html", "Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation"],
+    16:["lesson-16-cleaning-data.html", "Cleaning Data: Outliers, Missing Values, and Deduplication"],
+    17:["lesson-17-data-quality-validation.html", "Data Quality Validation with Glue Data Quality and DataBrew"],
+    18:["lesson-18-labeling-annotation.html", "Labeling and Annotation with SageMaker Ground Truth"],
+    19:["lesson-19-bias-metrics-class-imbalance.html", "Bias Metrics and Class Imbalance Across Numeric, Text, and Image Data"],
+    20:["lesson-20-validating-ai-training-data.html", "Validating AI Training Data: Prompt-Response Pairs and Content Safety Screening"],
+    21:["lesson-21-choosing-ml-approach.html", "Choosing an ML Approach: Feasibility, Algorithm Family, and Interpretability"],
+    22:["lesson-22-selecting-fm-bedrock.html", "Selecting a Foundation Model from Amazon Bedrock: Task Fit, Latency, and Cost"],
+    23:["lesson-23-custom-vs-managed-vs-pretrained-vs-fm.html", "Custom Models vs Managed Services vs Pre-Trained Models vs FMs"],
+    24:["lesson-24-fine-tuning-strategies.html", "Fine-Tuning Strategies for Pre-Trained FMs"],
+    25:["lesson-25-rag-architecture-patterns.html", "RAG Architecture Patterns and Retrieval Optimization"],
+    26:["lesson-26-aws-ai-services.html", "AWS AI Services for Business Problems: Textract, Rekognition, Comprehend, and Transcribe"],
+    27:["lesson-27-built-in-algorithms-script-mode.html", "SageMaker AI Built-In Algorithms and Script Mode"],
+    28:["lesson-28-training-mechanics.html", "Training Mechanics: Epochs, Batch Size, Early Stopping, and Distributed Training"],
+    29:["lesson-29-hyperparameter-optimization-amt.html", "Hyperparameter Optimization with SageMaker AI Automatic Model Tuning"],
+    30:["lesson-30-overfitting-underfitting-forgetting.html", "Overfitting, Underfitting, and Catastrophic Forgetting"],
+    31:["lesson-31-ensembles.html", "Ensembles: Combining Models for Accuracy or Cost"],
+    32:["lesson-32-prompt-engineering-vs-fine-tuning.html", "Prompt Engineering vs Fine-Tuning for AI Customization"],
+    33:["lesson-33-reproducible-experiments.html", "Reproducible Experiments: MLflow on SageMaker AI, Bedrock Evaluations, and Prompt Management"],
+    34:["lesson-34-baselines-shadow-variants.html", "Baselines, Drift Detection, and Shadow vs Production Variants"],
+    35:["lesson-35-classification-regression-metrics.html", "Classification and Regression Metrics: Confusion Matrix, F1, ROC AUC, and RMSE"],
+    36:["lesson-36-explaining-outputs-debugging-convergence.html", "Explaining Outputs and Debugging Convergence: Clarify and Debugger"],
+    37:["lesson-37-nlp-evaluation-metrics.html", "NLP Evaluation Metrics: BLEU, ROUGE, BERTScore, and Semantic Similarity"],
+    38:["lesson-38-human-evaluation-llm-as-a-judge.html", "Human-in-the-Loop Evaluation and LLM-as-a-Judge"],
+    39:["lesson-39-rag-system-monitoring.html", "RAG System Monitoring: Retrieval Accuracy Assessment"],
+    40:["lesson-40-inference-strategies.html", "Inference Strategies: Real-Time, Batch, Asynchronous, and Serverless"],
+    41:["lesson-41-compute-deployment-targets.html", "Compute Environments and Deployment Targets: SageMaker AI vs ECS, EKS, and Lambda"],
+    42:["lesson-42-orchestrators-multi-model.html", "Orchestrators and Multi-Model or Multi-Container Deployments"],
+    43:["lesson-43-fm-deployment-options.html", "FM Deployment Options: Bedrock On-Demand, Provisioned Throughput, and SageMaker AI Hosting"],
+    44:["lesson-44-importing-outside-models.html", "Importing Outside Models: SageMaker AI and Bedrock Custom Model Import"],
+    45:["lesson-45-deploying-agents.html", "Deploying Agents: Tasks, Tool Integration, and Communication Protocols"],
+    46:["lesson-46-on-demand-vs-provisioned.html", "On-Demand vs Provisioned Resources for Performance and Cost"],
+    47:["lesson-47-automating-provisioning-iac.html", "Automating Provisioning with CloudFormation and AWS CDK"],
+    48:["lesson-48-containers-for-ml-ai.html", "Containers for ML and AI Workloads: ECR, ECS, and EKS"],
+    49:["lesson-49-programmatic-deployment-vpc.html", "Programmatic Deployment: SageMaker AI SDK, CLI, and Boto3 inside a VPC"],
+    50:["lesson-50-auto-scaling-endpoints-gpu.html", "Auto Scaling: Endpoint Metrics and GPU Workloads"],
+    51:["lesson-51-bedrock-knowledge-bases.html", "Amazon Bedrock Knowledge Bases: Vector Stores, Indexing, Retrieval Strategies, and Reranking"],
+    52:["lesson-52-agent-state-agentic-infrastructure.html", "Agent State Management and Agentic Workflow Infrastructure"],
+    53:["lesson-53-deployment-strategies-rollback.html", "Deployment Strategies and Rollback: Blue/Green, Canary, and Linear"],
+    54:["lesson-54-cicd-code-services.html", "CI/CD with CodePipeline, CodeBuild, CodeDeploy, and CodeConnections"],
+    55:["lesson-55-automated-testing-prompt-testing.html", "Automated Testing for ML and AI Pipelines, Including Prompt Testing"],
+    56:["lesson-56-retraining-model-versioning.html", "Retraining and Model Versioning: SageMaker Model Registry, MLflow, and Fine-Tuned FMs"],
+    57:["lesson-57-prompt-management.html", "Prompt Management with Amazon Bedrock"],
+    58:["lesson-58-agent-deployment-pipelines.html", "Agent Deployment Pipelines and Agent Version Management"],
+    59:["lesson-59-rag-updates-knowledge-base-refresh.html", "Orchestrating RAG Updates and Knowledge Base Refresh Cycles"],
+    60:["lesson-60-monitoring-model-performance.html", "Monitoring Model Performance: CloudWatch Generative AI Observability, Bedrock Model Evaluation, and Drift Pipelines"],
+    61:["lesson-61-distribution-change-workflow-anomalies.html", "Detecting Data Distribution Change and Workflow Anomalies"],
+    62:["lesson-62-ab-testing-production.html", "A/B Testing in Production"],
+    63:["lesson-63-monitoring-agents.html", "Monitoring Agents: Coordination Failures, Truncated Streaming, and Tool Failures"],
+    64:["lesson-64-inference-instance-families.html", "Inference Instance Families for Performance and Cost"],
+    65:["lesson-65-troubleshooting-tools.html", "Troubleshooting Tools: CloudWatch, Bedrock AgentCore Observability, and X-Ray"],
+    66:["lesson-66-dashboards-capacity-optimization.html", "Dashboards and Capacity Optimization for Cost, Performance, and Reliability"],
+    67:["lesson-67-cost-tools-purchasing-options.html", "Cost Management Tools and Purchasing Options"],
+    68:["lesson-68-fm-inference-costs.html", "FM Inference Costs: Token Usage, Provisioned Throughput, and Usage Optimization"],
+    69:["lesson-69-ai-cost-patterns.html", "AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage"],
+    70:["lesson-70-securing-cicd-pipelines.html", "Securing CI/CD Pipelines: Amazon CodeGuru and Amazon Inspector"],
+    71:["lesson-71-least-privilege-iam.html", "Least Privilege and IAM for ML and AI Systems"],
+    72:["lesson-72-auditing-compliance.html", "Auditing and Compliance: AWS CloudTrail and AWS Config"],
+    73:["lesson-73-network-isolation.html", "Network Isolation: VPCs, Subnets, and Security Groups"],
+    74:["lesson-74-troubleshooting-security-ai-risks.html", "Troubleshooting Security and Mitigating AI Risks"],
+    75:["lesson-75-bedrock-api-keys-vs-iam.html", "Bedrock API Keys vs IAM Credentials"],
+    76:["lesson-76-bedrock-guardrails.html", "Amazon Bedrock Guardrails and Sensitive Data Protection"]
+  }
+};
 /* ===== EXAM PAYLOAD - END ===== */
 /* =====================================================================
    EXAM PAYLOAD - END
@@ -947,6 +1033,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -1101,7 +1217,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
