@@ -718,6 +718,36 @@ function countUp(el, target, ms){
   requestAnimationFrame(frame);
 }
 
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the results review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this quiz>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
+}
+
 /* ---------- review (reused verbatim from the exam renderer) ---------- */
 function renderReview(){
   const wrap=document.getElementById("review");
@@ -733,7 +763,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  &middot;  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake quiz</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
