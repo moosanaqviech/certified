@@ -152,6 +152,7 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 /* ---------- questions ---------- */
 const QUESTIONS = [
   {
+    ref:{chapter:11},
     q:`A data engineer must retain ingested source data in its <em>original</em> form so pipelines can be replayed after transformation logic changes, then expose a cleaned, deduplicated version for analysts. Which Medallion flow is correct?`,
     opts:[
       "Write cleaned data to Bronze, raw data to Silver",
@@ -163,6 +164,7 @@ const QUESTIONS = [
     explain:`Bronze holds raw, as-ingested, append-only data - that's what makes replay possible. Silver is where cleaning, deduplication, and conforming happen for analyst consumption.`
   },
   {
+    ref:{chapter:31},
     q:`An external table's data resides in the company's own S3 bucket. A developer runs <code>DROP TABLE sales</code>. What happens?`,
     opts:[
       "Both the data files and the metadata are permanently deleted",
@@ -174,6 +176,7 @@ const QUESTIONS = [
     explain:`For an external table, Unity Catalog owns only the metadata pointer. Dropping it removes the table definition, but the underlying files stay put in your own cloud storage.`
   },
   {
+    ref:{chapter:1},
     q:`Which capability does a lakehouse add <em>on top of</em> cheap cloud object storage that a traditional data lake lacks?`,
     opts:[
       "The ability to store unstructured files",
@@ -185,6 +188,7 @@ const QUESTIONS = [
     explain:`Cheap storage, open formats, and unstructured data already come from the lake side. The lakehouse contribution is warehouse-grade reliability - ACID transactions and governance (via Delta Lake + Unity Catalog).`
   },
   {
+    ref:{chapter:31},
     q:`A team wants the simplest setup where Databricks fully manages the storage location and applies automatic optimizations, and the data does not need to be read by external tools. Which table type fits best?`,
     opts:[
       "External table",
@@ -196,6 +200,7 @@ const QUESTIONS = [
     explain:`Managed tables are the default when you don't need data in a specific external location or shared outside Databricks - Unity Catalog owns the files and handles layout and optimization for you.`
   },
   {
+    ref:{chapter:11},
     q:`Analysts need a denormalized, aggregated table of monthly revenue by region to power a BI dashboard. In a Medallion architecture this object belongs in which layer?`,
     opts:[
       "Bronze, stored as raw events",
@@ -207,6 +212,7 @@ const QUESTIONS = [
     explain:`Gold holds aggregated, business-specific objects built for direct consumption (dashboards, KPIs). Silver would hold the clean per-transaction records the aggregate is built from.`
   },
   {
+    ref:{chapter:31},
     q:`Compliance requires that raw data persist <em>independently</em> of the catalog, so a team stores Bronze data as an external table in their own cloud storage. If someone later runs <code>DROP TABLE</code> on that Bronze table, what is true?`,
     opts:[
       "The raw compliance data is deleted, violating the requirement",
@@ -218,6 +224,7 @@ const QUESTIONS = [
     explain:`Because it's external, dropping the table removes only metadata - the files survive in cloud storage, which is exactly why an external table satisfies a "raw data must persist" compliance rule.`
   },
   {
+    ref:{chapter:1},
     q:`An organization copies data nightly from a data lake into a separate data warehouse for BI, causing stale reports and duplicated storage cost. Which approach best addresses the root problem?`,
     opts:[
       "Increase the copy frequency from nightly to hourly",
@@ -229,6 +236,7 @@ const QUESTIONS = [
     explain:`The root issue is running two systems and copying between them. A lakehouse unifies them - BI runs directly on governed data in cheap storage, eliminating the copy, the staleness, and the duplicate cost.`
   },
   {
+    ref:{chapter:11},
     q:`Which set of operations is most characteristic of producing a <em>Silver</em> table from Bronze?`,
     opts:[
       "Aggregating data into business-level KPIs",
@@ -240,6 +248,7 @@ const QUESTIONS = [
     explain:`Silver is the cleaning and conforming layer: dedupe, validate, fix types, join. Storing data unchanged is Bronze; aggregating into KPIs is Gold.`
   },
   {
+    ref:{chapter:31},
     q:`Which statement about managed and external tables in Unity Catalog is correct?`,
     opts:[
       "Unity Catalog manages metadata for managed tables only",
@@ -251,6 +260,7 @@ const QUESTIONS = [
     explain:`Unity Catalog owns the metadata for both types. The distinction is purely about the data files - managed tables live in UC's managed location, external tables point to your own storage. (Option D is reversed.)`
   },
   {
+    ref:{chapter:1},
     q:`A startup wants one governed platform to run SQL BI, ML, and streaming on the same data without maintaining separate systems, while keeping raw data replayable and serving aggregated marts to analysts. Which design best fits?`,
     opts:[
       "A data warehouse with nightly exports from a lake",
@@ -262,6 +272,51 @@ const QUESTIONS = [
     explain:`The lakehouse provides one governed platform for all workloads; the Medallion architecture organizes the data so raw stays replayable (Bronze), data is cleaned (Silver), and aggregated marts serve analysts (Gold). This is the capstone combination.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-assoc",
+  base: "",
+  free: [1, 2, 3, 4],
+  list: {
+    1:["lesson-01-lakehouse.html", "The Lakehouse"],
+    2:["lesson-02-delta-lake.html", "Delta Lake essentials"],
+    3:["lesson-03-unity-catalog.html", "Unity Catalog overview"],
+    4:["lesson-04-compute-cost.html", "Compute options &amp; cost models"],
+    5:["lesson-05-ingestion-patterns.html", "Ingestion patterns: batch / streaming / incremental"],
+    6:["lesson-06-copy-into.html", "COPY INTO"],
+    7:["lesson-07-auto-loader.html", "Auto Loader: schema enforcement &amp; evolution"],
+    8:["lesson-08-autoloader-vs-copyinto.html", "Auto Loader vs. COPY INTO"],
+    9:["lesson-09-lakeflow-connect.html", "Lakeflow Connect: standard vs. managed connectors"],
+    10:["lesson-10-choosing-ingestion.html", "Choosing an ingestion method"],
+    11:["medallion-lesson.html", "Bronze → Silver cleaning"],
+    12:["lesson-12-joins.html", "Joins (inner / left / broadcast / cross)"],
+    13:["lesson-13-column-row-manipulation.html", "Column & row manipulation"],
+    14:["lesson-14-deduplication-aggregations.html", "Deduplication & aggregations"],
+    15:["lesson-15-spark-tuning-parameters.html", "Spark tuning parameters"],
+    16:["lesson-16-gold-layer-objects.html", "Gold-layer objects (views / MVs / streaming tables)"],
+    17:["lesson-17-data-quality.html", "Data quality checks & validation"],
+    18:["lesson-18-anatomy-of-a-job.html", "Anatomy of a Job: tasks & the DAG"],
+    19:["lesson-19-control-flow.html", "Control flow: retries, branching, looping"],
+    20:["lesson-20-trigger-types.html", "Trigger types"],
+    21:["lesson-21-time-based-vs-data-driven.html", "Time-based vs. data-driven triggers"],
+    22:["lesson-22-git-folders.html", "Git Folders: branches, commits, PRs"],
+    23:["lesson-23-automation-bundles.html", "Automation Bundles"],
+    24:["lesson-24-environment-promotion.html", "Environment promotion (dev → test → prod)"],
+    25:["lesson-25-databricks-cli.html", "The Databricks CLI"],
+    26:["lesson-26-job-health.html", "Reading job health (Lakeflow Jobs UI)"],
+    27:["lesson-27-spark-bottlenecks.html", "Spotting bottlenecks (Spark UI): skew, shuffle, spill"],
+    28:["lesson-28-liquid-clustering.html", "Liquid Clustering & predictive optimization"],
+    29:["lesson-29-diagnosing-cluster-failures.html", "Diagnosing cluster failures"],
+    30:["lesson-30-performance-trends-baselines.html", "Performance trends & baselines"],
+    31:["managed-vs-external-lesson.html", "Managed vs. external tables"],
+    32:["lesson-32-converting-managed-external.html", "Converting between managed & external"],
+    33:["lesson-33-access-control-grants.html", "Access control: GRANT / REVOKE / DENY"],
+    34:["lesson-34-column-masking-row-security.html", "Column masking & row-level security"],
+    35:["lesson-35-abac-policies.html", "ABAC policies"]
+  }
+};
 
 const PASS = 70;                 // DE Associate passing ≈ 70%
 const SECONDS = 20 * 60;         // 20 min, proportional to real exam pace
