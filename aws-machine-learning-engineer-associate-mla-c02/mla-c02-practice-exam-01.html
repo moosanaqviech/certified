@@ -176,7 +176,7 @@ const E = {
 const QUESTIONS = [
 
   /* Ch 01 - Choosing Data Formats */
-  { q:`A 6 TB clickstream table lives in S3 as gzipped CSV. Analysts and a daily feature job query 8 of its 180 columns through Amazon Athena, and scanned-bytes costs keep rising. What is the most effective change?`,
+  { ref:{chapter:1}, q:`A 6 TB clickstream table lives in S3 as gzipped CSV. Analysts and a daily feature job query 8 of its 180 columns through Amazon Athena, and scanned-bytes costs keep rising. What is the most effective change?`,
     opts:[
       "Split the CSV into thousands of smaller gzip files to increase parallelism",
       "Convert the data to Apache Parquet with an AWS Glue job or an Athena CTAS query",
@@ -187,7 +187,7 @@ const QUESTIONS = [
     explain:`Why: Parquet is columnar, so Athena reads only the requested columns and skips blocks by statistics, which is what drives scanned bytes and cost down. Splitting the CSV (A) adds parallelism but every reader still scans all 180 columns of every row, so bytes scanned barely change.` },
 
   /* Ch 02 - Storage Decisions */
-  { q:`A fraud model needs each customer's last ten transactions at inference time, looked up by customer ID in under 10 milliseconds at high request rates. Where should this data live?`,
+  { ref:{chapter:2}, q:`A fraud model needs each customer's last ten transactions at inference time, looked up by customer ID in under 10 milliseconds at high request rates. Where should this data live?`,
     opts:[
       "Parquet files in S3, read with Fast File mode",
       "An Amazon RDS read replica queried with SQL by customer ID",
@@ -198,7 +198,7 @@ const QUESTIONS = [
     explain:`Why: Single-digit millisecond reads by key at any scale is DynamoDB's core profile, the usual online store for inference-time features. The RDS replica (B) can do a keyed lookup but ties latency to a relational engine sized for transactions and competes with application traffic. S3 (A) is for training scans, not per-request lookups.` },
 
   /* Ch 03 - Streaming Ingestion and Transformation */
-  { q:`A fraud feature needs the count of transactions per card over a 5-minute sliding window, joined against a second stream of card-status updates, with sub-second latency and exactly-once results. Which service fits?`,
+  { ref:{chapter:3}, q:`A fraud feature needs the count of transactions per card over a 5-minute sliding window, joined against a second stream of card-status updates, with sub-second latency and exactly-once results. Which service fits?`,
     opts:[
       "A Lambda function using tumbling windows on the transaction stream",
       "Amazon Managed Service for Apache Flink consuming both streams",
@@ -209,7 +209,7 @@ const QUESTIONS = [
     explain:`Why: Sliding windows, a stream-to-stream join, durable state, and exactly-once via checkpoints are exactly what Managed Service for Apache Flink provides. Lambda tumbling windows (A) aggregate per shard but cannot slide or join a second stream. Glue with schema detection cannot join streaming data and its 100-second micro-batches miss the latency target.` },
 
   /* Ch 04 - Merging Sources and Troubleshooting */
-  { q:`An AWS Glue job converts two million small JSON files from S3 into Parquet. The driver's memory climbs past 50% within minutes while executors stay below 5%, and the run fails with Exit Code 1. What should the ML engineer change?`,
+  { ref:{chapter:4}, q:`An AWS Glue job converts two million small JSON files from S3 into Parquet. The driver's memory climbs past 50% within minutes while executors stay below 5%, and the run fails with Exit Code 1. What should the ML engineer change?`,
     opts:[
       "Read the input as a DynamicFrame with groupFiles set to inPartition",
       "Double the number of G.1X workers so more executors share the files",
@@ -220,7 +220,7 @@ const QUESTIONS = [
     explain:`Why: Idle executors and a saturated driver mean the driver is drowning in per-file bookkeeping; file grouping lets each task read a whole group, so the driver tracks far fewer tasks. Adding workers (B) scales executors, which are not the bottleneck. A bigger worker (D) postpones the same task-per-file failure.` },
 
   /* Ch 05 - Vector Databases for AI */
-  { q:`A legal team wants an Amazon Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day, sub-second answers are acceptable, and the main requirement is lowest storage and operating cost. Which vector store fits?`,
+  { ref:{chapter:5}, q:`A legal team wants an Amazon Bedrock knowledge base over 600 million contract chunks. Analysts run a few hundred queries a day, sub-second answers are acceptable, and the main requirement is lowest storage and operating cost. Which vector store fits?`,
     opts:[
       "An Amazon OpenSearch Service domain sized so all HNSW graphs fit in memory",
       "An Amazon OpenSearch Serverless vector collection with the OCU minimum raised",
@@ -231,7 +231,7 @@ const QUESTIONS = [
     explain:`Why: Infrequent queries, a huge corpus (S3 Vectors indexes hold up to 2 billion vectors), acceptable sub-second latency, and cost as the deciding axis is exactly the S3 Vectors workload, and Knowledge Bases supports it directly. A Serverless collection (B) still pays for OCUs and memory whenever it serves, far more than pay-per-use object storage.` },
 
   /* Ch 06 - Ingesting Multimodal Data */
-  { q:`Two million product photos sit in S3 and their labels sit in a CSV keyed by file name. The team wants to train a SageMaker AI image classifier without a preprocessing job that joins labels to pixels. What should they build?`,
+  { ref:{chapter:6}, q:`Two million product photos sit in S3 and their labels sit in a CSV keyed by file name. The team wants to train a SageMaker AI image classifier without a preprocessing job that joins labels to pixels. What should they build?`,
     opts:[
       "A Glue job that copies each image into a folder named after its label",
       "A Parquet table with the image bytes stored in a binary column",
@@ -242,7 +242,7 @@ const QUESTIONS = [
     explain:`Why: The augmented manifest is SageMaker AI's mechanism for attaching metadata to S3 objects at training time: the job follows each -ref URI and passes the listed attributes to the algorithm, no join step. Copying images into label folders (A) works but duplicates two million objects to encode one column a manifest line carries for free.` },
 
   /* Ch 07 - SageMaker Feature Store (MULTI) */
-  { q:`A team uses an online-and-offline SageMaker Feature Store feature group for a real-time model. Which TWO statements are correct? (Select TWO.)`,
+  { ref:{chapter:7}, q:`A team uses an online-and-offline SageMaker Feature Store feature group for a real-time model. Which TWO statements are correct? (Select TWO.)`,
     opts:[
       "The online store keeps every historical record per identifier",
       "The online store keeps only the record with the latest event time per identifier",
@@ -253,7 +253,7 @@ const QUESTIONS = [
     explain:`Why: The online store retains only the latest-event-time record per identifier, and the offline store appends all history to S3 within about 15 minutes. The online store does not keep full history (A), and an earlier event time is ignored, not written (C), which is the semantics that trips up backfills.` },
 
   /* Ch 08 - Feature Engineering */
-  { q:`A logistic regression model uses transaction amount as a feature. Amounts are heavily right-skewed: most under 50, a few near 200,000, and the model underfits the typical range. Which transform should come first?`,
+  { ref:{chapter:8}, q:`A logistic regression model uses transaction amount as a feature. Amounts are heavily right-skewed: most under 50, a few near 200,000, and the model underfits the typical range. Which transform should come first?`,
     opts:[
       "Min-max scale the amount to the range 0 to 1",
       "One-hot encode the amount",
@@ -264,7 +264,7 @@ const QUESTIONS = [
     explain:`Why: A log compresses the long tail so the typical range stops being squeezed into a sliver, and the following standardization gives the linear model a well-behaved input. Min-max (A) is the trap: with a 200,000 maximum, ordinary transactions land within a fraction of a percent of zero, the very compression the team is suffering.` },
 
   /* Ch 09 - Encoding Features */
-  { q:`A payments model uses a merchant-name column with 40,000 distinct values, many misspelled variants of the same merchant, feeding a logistic regression. How should the column be encoded?`,
+  { ref:{chapter:9}, q:`A payments model uses a merchant-name column with 40,000 distinct values, many misspelled variants of the same merchant, feeding a logistic regression. How should the column be encoded?`,
     opts:[
       "Similarity encoding, so typo variants map to nearby vectors at fixed width",
       "One-hot encoding with one column per merchant",
@@ -275,7 +275,7 @@ const QUESTIONS = [
     explain:`Why: Similarity encoding tokenizes each name into character 3-grams and min-hashes them into a low-dimensional embedding, so misspellings land close together and 40,000 values become about 30 columns. One-hot (B) is order-free but produces 40,000 sparse columns and treats every misspelling as an unrelated merchant.` },
 
   /* Ch 10 - Transformation Tools */
-  { q:`Marketing analysts get a new CSV every Monday with inconsistent dates, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up?`,
+  { ref:{chapter:10}, q:`Marketing analysts get a new CSV every Monday with inconsistent dates, nulls, and typos in region names. They cannot write code and want the same cleanup applied automatically each week, with a data quality profile. Which tool should the ML engineer set up?`,
     opts:[
       "A Spark job on EMR scheduled weekly with Amazon EventBridge",
       "A SageMaker Data Wrangler flow the analysts rerun in Studio each week",
@@ -286,7 +286,7 @@ const QUESTIONS = [
     explain:`Why: DataBrew is built for non-coders: a recipe captures the cleanup once, a scheduled recipe job reapplies it, and profile jobs report quality. The Data Wrangler flow (B) can do the transforms but is a SageMaker AI tool for ML practitioners, and the analysts have no model to feed and no SageMaker environment.` },
 
   /* Ch 11 - Embedding Models */
-  { q:`A team embeds a knowledge base with Cohere Embed using input_type "classification" for every call, then embeds user questions the same way. Retrieval returns weak matches. What should change?`,
+  { ref:{chapter:11}, q:`A team embeds a knowledge base with Cohere Embed using input_type "classification" for every call, then embeds user questions the same way. Retrieval returns weak matches. What should change?`,
     opts:[
       "Set truncate to NONE so long documents are not cut",
       "Switch to int8 embeddings to reduce noise",
@@ -297,7 +297,7 @@ const QUESTIONS = [
     explain:`Why: Cohere's input_type prepends tokens that shape the vector for its job; the documented retrieval pairing is search_document for stored content and search_query for queries. Truncation (A) can lose tails but would not cause uniformly weak matches, and the dimension (D) is fixed at 1,024 by the model.` },
 
   /* Ch 12 - Text Pre-Processing */
-  { q:`An application builds prompts from retrieved documents and intermittently fails with input-too-long errors on one Bedrock model but not another. The team wants to fix it without guessing at limits. What should they do?`,
+  { ref:{chapter:12}, q:`An application builds prompts from retrieved documents and intermittently fails with input-too-long errors on one Bedrock model but not another. The team wants to fix it without guessing at limits. What should they do?`,
     opts:[
       "Cap prompts at 4 characters per token times the context limit",
       "Call the Bedrock CountTokens API for the target model and trim retrieved text to fit",
@@ -308,7 +308,7 @@ const QUESTIONS = [
     explain:`Why: Tokenization is model-specific, and CountTokens returns the exact count a model would charge, free of charge, so the app trims to the real per-model limit. The characters-per-token estimate (A) is fine for planning dataset size but is the guess that produces intermittent failures. Tokenizers are not a request parameter (D).` },
 
   /* Ch 13 - Preparing Documents for RAG */
-  { q:`A legal knowledge base built with default chunking retrieves the right clause, but answers are wrong because the clause depends on definitions two paragraphs earlier. Which chunking change fixes this?`,
+  { ref:{chapter:13}, q:`A legal knowledge base built with default chunking retrieves the right clause, but answers are wrong because the clause depends on definitions two paragraphs earlier. Which chunking change fixes this?`,
     opts:[
       "Hierarchical chunking, so matched child chunks are returned as their larger parent chunks",
       "Semantic chunking with a low breakpoint threshold to create more chunks",
@@ -319,7 +319,7 @@ const QUESTIONS = [
     explain:`Why: Hierarchical chunking keeps retrieval precise with small child chunks and delivers surrounding definitions via the parent chunk. No chunking (C) also returns context but a whole contract as one embedding matches poorly and drops page numbers from citations. A lower semantic threshold (B) makes chunks smaller, the opposite of what is needed.` },
 
   /* Ch 14 - Masking, Redaction, and Anonymization (MULTI) */
-  { q:`A dataset must be anonymized so that analysts cannot recover the original values by any means. Which TWO DataBrew techniques are irreversible? (Select TWO.)`,
+  { ref:{chapter:14}, q:`A dataset must be anonymized so that analysts cannot recover the original values by any means. Which TWO DataBrew techniques are irreversible? (Select TWO.)`,
     opts:[
       "CRYPTOGRAPHIC_HASH on the column",
       "DETERMINISTIC_ENCRYPT with a stored key",
@@ -330,7 +330,7 @@ const QUESTIONS = [
     explain:`Why: Hashing and shuffling cannot be reversed to the original values, so they truly anonymize. Both encryption options (B and D) are designed to be decrypted by a key holder, which makes them pseudonymization, not anonymization; deterministic encryption is the common trap because it preserves joins but is still reversible.` },
 
   /* Ch 15 - Preparing Data for FM Customization */
-  { q:`An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?`,
+  { ref:{chapter:15}, q:`An engineering firm has 200 GB of internal technical manuals and a base model that misuses the firm's terminology. Labeling examples is not feasible. Which dataset should the ML engineer prepare first?`,
     opts:[
       "A distillation prompt set generated from manual headings",
       "A messages-format fine-tuning set with the manuals as assistant turns",
@@ -341,7 +341,7 @@ const QUESTIONS = [
     explain:`Why: Domain language with no labels is the continued pre-training case: cleaned passages with an input field only, in volume. A knowledge base (C) exposes the manuals at retrieval time but hands the model passages at runtime and does not change how the model itself uses the terminology.` },
 
   /* Ch 16 - Cleaning Data */
-  { q:`A model trained on scraped reviews scores 0.98 on its test set but 0.71 in production. Investigation shows many reviews appear two or three times across the file. What went wrong and what fixes it?`,
+  { ref:{chapter:16}, q:`A model trained on scraped reviews scores 0.98 on its test set but 0.71 in production. Investigation shows many reviews appear two or three times across the file. What went wrong and what fixes it?`,
     opts:[
       "Duplicates put the same review in train and test; deduplicate before splitting",
       "The learning rate is too high; lower it and retrain",
@@ -352,7 +352,7 @@ const QUESTIONS = [
     explain:`Why: When duplicates are split after the fact, copies land on both sides, so the model is tested on rows it trained on and the score inflates, exactly the train-versus-production gap. Enlarging the test set (C) changes the ratio but still lets duplicates straddle the split, so the leak remains.` },
 
   /* Ch 17 - Data Quality Validation */
-  { q:`A nightly ETL pipeline must refuse to load a batch into the data lake when more than 1% of customer IDs are null or any ID is duplicated, and it must record exactly which rows failed. Which approach fits?`,
+  { ref:{chapter:17}, q:`A nightly ETL pipeline must refuse to load a batch into the data lake when more than 1% of customer IDs are null or any ID is duplicated, and it must record exactly which rows failed. Which approach fits?`,
     opts:[
       "A DataBrew profile job scheduled to run after the load",
       "AWS Glue Data Quality rules in the ETL job, with completeness and uniqueness checks",
@@ -363,7 +363,7 @@ const QUESTIONS = [
     explain:`Why: Glue Data Quality in an ETL job evaluates DQDL rules before the data lands and can identify the exact failing records, which is precisely the gate described. A DataBrew profile job (A) reports quality but running after the load means the bad batch is already in the lake, and profiling does not itself block the pipeline.` },
 
   /* Ch 18 - Labeling and Annotation */
-  { q:`A hospital needs 300,000 unreleased medical images labeled with bounding boxes on a limited budget, and the images cannot leave its control. How should the Ground Truth job be configured?`,
+  { ref:{chapter:18}, q:`A hospital needs 300,000 unreleased medical images labeled with bounding boxes on a limited budget, and the images cannot leave its control. How should the Ground Truth job be configured?`,
     opts:[
       "Mechanical Turk workforce with automated data labeling",
       "Private workforce with every image labeled by a human",
@@ -374,7 +374,7 @@ const QUESTIONS = [
     explain:`Why: Confidential medical data rules out the public crowd, so a private workforce is required, and 300,000 bounding-box images (a supported task type) is where active learning cuts cost. Mechanical Turk (A) is cheapest but exposes protected images to an anonymous public workforce, which is disqualifying.` },
 
   /* Ch 19 - Bias Metrics and Class Imbalance (MULTI) */
-  { q:`A fraud model has 1.5% positive cases and catches almost no fraud despite 98.5% accuracy. Which TWO changes address the class imbalance? (Select TWO.)`,
+  { ref:{chapter:19}, q:`A fraud model has 1.5% positive cases and catches almost no fraud despite 98.5% accuracy. Which TWO changes address the class imbalance? (Select TWO.)`,
     opts:[
       "Apply SMOTE to the training split to synthesize minority examples",
       "Balance the test set so accuracy reflects both classes",
@@ -385,7 +385,7 @@ const QUESTIONS = [
     explain:`Why: SMOTE gives the model varied minority examples and F1 or recall replaces the misleading accuracy metric, the two levers for class imbalance. Balancing the test set (B) makes the number look better but must mirror the real 1.5% rate or it lies. DPL (D) measures facet fairness, a different problem.` },
 
   /* Ch 20 - Validating AI Training Data */
-  { q:`Before fine-tuning a customer-service model, a team must remove training examples containing hate speech or harassment from a large JSONL corpus of prompt-response pairs. Which service fits?`,
+  { ref:{chapter:20}, q:`Before fine-tuning a customer-service model, a team must remove training examples containing hate speech or harassment from a large JSONL corpus of prompt-response pairs. Which service fits?`,
     opts:[
       "Amazon Bedrock Guardrails attached to the training bucket",
       "Amazon Macie sensitive data discovery on the corpus",
@@ -396,6 +396,92 @@ const QUESTIONS = [
     explain:`Why: Comprehend's DetectToxicContent scores text across hate, harassment, and other categories, the content-safety screen for a training corpus. Bedrock Guardrails (B) filter prompts and responses at inference for a deployed app, not files in a bucket. Macie finds PII and Clarify measures fairness, neither is toxicity.` }
 
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "aws-mla-c02",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+  list: {
+    1:["lesson-01-data-formats.html", "Choosing Data Formats: Parquet, ORC, JSON, and CSV by Access Pattern"],
+    2:["lesson-02-storage-decisions.html", "Storage Decisions: S3, EBS, EFS, RDS, DynamoDB, and OpenSearch by Cost and Structure"],
+    3:["lesson-03-streaming-ingestion-transformation.html", "Streaming Ingestion and Transformation: Kinesis, Managed Service for Apache Flink, Kafka, Lambda, and Spark"],
+    4:["lesson-04-merging-sources-troubleshooting.html", "Merging Sources and Troubleshooting Ingestion with AWS Glue and Spark"],
+    5:["lesson-05-vector-databases.html", "Vector Databases for AI: OpenSearch Service, RDS with pgvector, and Amazon S3"],
+    6:["lesson-06-ingesting-multimodal-data.html", "Ingesting Multimodal Data: Text, Images, and Audio"],
+    7:["lesson-07-sagemaker-feature-store.html", "SageMaker Feature Store: Ingesting and Managing Features"],
+    8:["lesson-08-feature-engineering.html", "Feature Engineering: Scaling, Binning, and Log Transforms"],
+    9:["lesson-09-encoding-features.html", "Encoding Features: One-Hot, Binary, Label, and Tokenization"],
+    10:["lesson-10-transformation-tools.html", "Transformation Tools: Data Wrangler vs Glue DataBrew vs Spark on EMR"],
+    11:["lesson-11-embedding-models.html", "Embedding Models: Turning Text and Images into Vectors"],
+    12:["lesson-12-text-pre-processing.html", "Text Pre-Processing: Tokenization and Domain-Specific Augmentation"],
+    13:["lesson-13-preparing-documents-for-rag.html", "Preparing Documents for RAG: Chunking Strategies and Metadata Extraction"],
+    14:["lesson-14-masking-redaction-anonymization.html", "Masking, Redaction, and Anonymization"],
+    15:["lesson-15-preparing-data-for-fm-customization.html", "Preparing Data for FM Fine-Tuning, Continued Pre-Training, and Distillation"],
+    16:["lesson-16-cleaning-data.html", "Cleaning Data: Outliers, Missing Values, and Deduplication"],
+    17:["lesson-17-data-quality-validation.html", "Data Quality Validation with Glue Data Quality and DataBrew"],
+    18:["lesson-18-labeling-annotation.html", "Labeling and Annotation with SageMaker Ground Truth"],
+    19:["lesson-19-bias-metrics-class-imbalance.html", "Bias Metrics and Class Imbalance Across Numeric, Text, and Image Data"],
+    20:["lesson-20-validating-ai-training-data.html", "Validating AI Training Data: Prompt-Response Pairs and Content Safety Screening"],
+    21:["lesson-21-choosing-ml-approach.html", "Choosing an ML Approach: Feasibility, Algorithm Family, and Interpretability"],
+    22:["lesson-22-selecting-fm-bedrock.html", "Selecting a Foundation Model from Amazon Bedrock: Task Fit, Latency, and Cost"],
+    23:["lesson-23-custom-vs-managed-vs-pretrained-vs-fm.html", "Custom Models vs Managed Services vs Pre-Trained Models vs FMs"],
+    24:["lesson-24-fine-tuning-strategies.html", "Fine-Tuning Strategies for Pre-Trained FMs"],
+    25:["lesson-25-rag-architecture-patterns.html", "RAG Architecture Patterns and Retrieval Optimization"],
+    26:["lesson-26-aws-ai-services.html", "AWS AI Services for Business Problems: Textract, Rekognition, Comprehend, and Transcribe"],
+    27:["lesson-27-built-in-algorithms-script-mode.html", "SageMaker AI Built-In Algorithms and Script Mode"],
+    28:["lesson-28-training-mechanics.html", "Training Mechanics: Epochs, Batch Size, Early Stopping, and Distributed Training"],
+    29:["lesson-29-hyperparameter-optimization-amt.html", "Hyperparameter Optimization with SageMaker AI Automatic Model Tuning"],
+    30:["lesson-30-overfitting-underfitting-forgetting.html", "Overfitting, Underfitting, and Catastrophic Forgetting"],
+    31:["lesson-31-ensembles.html", "Ensembles: Combining Models for Accuracy or Cost"],
+    32:["lesson-32-prompt-engineering-vs-fine-tuning.html", "Prompt Engineering vs Fine-Tuning for AI Customization"],
+    33:["lesson-33-reproducible-experiments.html", "Reproducible Experiments: MLflow on SageMaker AI, Bedrock Evaluations, and Prompt Management"],
+    34:["lesson-34-baselines-shadow-variants.html", "Baselines, Drift Detection, and Shadow vs Production Variants"],
+    35:["lesson-35-classification-regression-metrics.html", "Classification and Regression Metrics: Confusion Matrix, F1, ROC AUC, and RMSE"],
+    36:["lesson-36-explaining-outputs-debugging-convergence.html", "Explaining Outputs and Debugging Convergence: Clarify and Debugger"],
+    37:["lesson-37-nlp-evaluation-metrics.html", "NLP Evaluation Metrics: BLEU, ROUGE, BERTScore, and Semantic Similarity"],
+    38:["lesson-38-human-evaluation-llm-as-a-judge.html", "Human-in-the-Loop Evaluation and LLM-as-a-Judge"],
+    39:["lesson-39-rag-system-monitoring.html", "RAG System Monitoring: Retrieval Accuracy Assessment"],
+    40:["lesson-40-inference-strategies.html", "Inference Strategies: Real-Time, Batch, Asynchronous, and Serverless"],
+    41:["lesson-41-compute-deployment-targets.html", "Compute Environments and Deployment Targets: SageMaker AI vs ECS, EKS, and Lambda"],
+    42:["lesson-42-orchestrators-multi-model.html", "Orchestrators and Multi-Model or Multi-Container Deployments"],
+    43:["lesson-43-fm-deployment-options.html", "FM Deployment Options: Bedrock On-Demand, Provisioned Throughput, and SageMaker AI Hosting"],
+    44:["lesson-44-importing-outside-models.html", "Importing Outside Models: SageMaker AI and Bedrock Custom Model Import"],
+    45:["lesson-45-deploying-agents.html", "Deploying Agents: Tasks, Tool Integration, and Communication Protocols"],
+    46:["lesson-46-on-demand-vs-provisioned.html", "On-Demand vs Provisioned Resources for Performance and Cost"],
+    47:["lesson-47-automating-provisioning-iac.html", "Automating Provisioning with CloudFormation and AWS CDK"],
+    48:["lesson-48-containers-for-ml-ai.html", "Containers for ML and AI Workloads: ECR, ECS, and EKS"],
+    49:["lesson-49-programmatic-deployment-vpc.html", "Programmatic Deployment: SageMaker AI SDK, CLI, and Boto3 inside a VPC"],
+    50:["lesson-50-auto-scaling-endpoints-gpu.html", "Auto Scaling: Endpoint Metrics and GPU Workloads"],
+    51:["lesson-51-bedrock-knowledge-bases.html", "Amazon Bedrock Knowledge Bases: Vector Stores, Indexing, Retrieval Strategies, and Reranking"],
+    52:["lesson-52-agent-state-agentic-infrastructure.html", "Agent State Management and Agentic Workflow Infrastructure"],
+    53:["lesson-53-deployment-strategies-rollback.html", "Deployment Strategies and Rollback: Blue/Green, Canary, and Linear"],
+    54:["lesson-54-cicd-code-services.html", "CI/CD with CodePipeline, CodeBuild, CodeDeploy, and CodeConnections"],
+    55:["lesson-55-automated-testing-prompt-testing.html", "Automated Testing for ML and AI Pipelines, Including Prompt Testing"],
+    56:["lesson-56-retraining-model-versioning.html", "Retraining and Model Versioning: SageMaker Model Registry, MLflow, and Fine-Tuned FMs"],
+    57:["lesson-57-prompt-management.html", "Prompt Management with Amazon Bedrock"],
+    58:["lesson-58-agent-deployment-pipelines.html", "Agent Deployment Pipelines and Agent Version Management"],
+    59:["lesson-59-rag-updates-knowledge-base-refresh.html", "Orchestrating RAG Updates and Knowledge Base Refresh Cycles"],
+    60:["lesson-60-monitoring-model-performance.html", "Monitoring Model Performance: CloudWatch Generative AI Observability, Bedrock Model Evaluation, and Drift Pipelines"],
+    61:["lesson-61-distribution-change-workflow-anomalies.html", "Detecting Data Distribution Change and Workflow Anomalies"],
+    62:["lesson-62-ab-testing-production.html", "A/B Testing in Production"],
+    63:["lesson-63-monitoring-agents.html", "Monitoring Agents: Coordination Failures, Truncated Streaming, and Tool Failures"],
+    64:["lesson-64-inference-instance-families.html", "Inference Instance Families for Performance and Cost"],
+    65:["lesson-65-troubleshooting-tools.html", "Troubleshooting Tools: CloudWatch, Bedrock AgentCore Observability, and X-Ray"],
+    66:["lesson-66-dashboards-capacity-optimization.html", "Dashboards and Capacity Optimization for Cost, Performance, and Reliability"],
+    67:["lesson-67-cost-tools-purchasing-options.html", "Cost Management Tools and Purchasing Options"],
+    68:["lesson-68-fm-inference-costs.html", "FM Inference Costs: Token Usage, Provisioned Throughput, and Usage Optimization"],
+    69:["lesson-69-ai-cost-patterns.html", "AI Cost Patterns: Agent Consumption, Embedding Compute, and Vector Storage"],
+    70:["lesson-70-securing-cicd-pipelines.html", "Securing CI/CD Pipelines: Amazon CodeGuru and Amazon Inspector"],
+    71:["lesson-71-least-privilege-iam.html", "Least Privilege and IAM for ML and AI Systems"],
+    72:["lesson-72-auditing-compliance.html", "Auditing and Compliance: AWS CloudTrail and AWS Config"],
+    73:["lesson-73-network-isolation.html", "Network Isolation: VPCs, Subnets, and Security Groups"],
+    74:["lesson-74-troubleshooting-security-ai-risks.html", "Troubleshooting Security and Mitigating AI Risks"],
+    75:["lesson-75-bedrock-api-keys-vs-iam.html", "Bedrock API Keys vs IAM Credentials"],
+    76:["lesson-76-bedrock-guardrails.html", "Amazon Bedrock Guardrails and Sensitive Data Protection"]
+  }
+};
 /* ===== EXAM PAYLOAD - END ===== */
 /* =====================================================================
    EXAM PAYLOAD - END
@@ -448,6 +534,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -602,7 +718,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
