@@ -171,6 +171,7 @@ const E = {
 const QUESTIONS = [
   /* Ch 01 - DABs Project Structure for Scalable Python */
   {
+    ref:{chapter:1},
     q:`A bundle defines a staging target with mode: production, run_as a service principal. Two engineers each deploy to staging the same afternoon and, unlike on the dev target, both land at the exact same fixed path with no per-user prefixing. Why does staging behave differently from dev here?`,
     opts:[
       `mode: production always deploys to one fixed path, typically run_as a service principal, with no per-user prefixing, unlike mode: development`,
@@ -182,6 +183,7 @@ const QUESTIONS = [
     explain:`mode: production deploys to a single fixed path, typically run_as a service principal, regardless of the target's name, which is exactly why staging behaves like prod here rather than like dev. Nothing falls back to development mode automatically, and the second deploy is not rejected, it simply lands at the same shared path as the first.`
   },
   {
+    ref:{chapter:1},
     q:`A developer wants to add a new SQL query to a job and considers two options: embedding the full query text as a default parameter value inside resources/jobs.yml, or saving it as a .sql file in src/ and referencing its path. Which is the better practice, and why?`,
     opts:[
       `Embedding it in resources/jobs.yml, since parameters are the intended place for any per-job configuration, including query text`,
@@ -194,6 +196,7 @@ const QUESTIONS = [
   },
   /* Ch 02 - Libraries and Dependencies: PyPI, Wheels, Source Archives */
   {
+    ref:{chapter:2},
     q:`A shared utility library is used across five jobs. One job pins it to exactly 1.2.0; a second leaves it unpinned. After the library publishes a breaking 1.3.0 release, only the second job starts failing on its next scheduled run. What does this demonstrate?`,
     opts:[
       `That pinned dependencies always break first, since they never receive security patches`,
@@ -205,6 +208,7 @@ const QUESTIONS = [
     explain:`This is exactly what pinning protects against: the unpinned job resolved to the new, breaking 1.3.0 release on its next install, while the pinned job kept using the known-good 1.2.0. Pinning does not block security patches, it blocks unintended version drift, and nothing here points to a cluster difference or a PyPI-versus-wheel issue, both jobs use the same package.`
   },
   {
+    ref:{chapter:2},
     q:`A team builds their internal transformation package once into a .whl and references it by file path, instead of having each job clone and install it fresh from a source URL on every run. What does the wheel approach avoid that the fresh-source-install approach does not?`,
     opts:[
       `It avoids needing any environment spec at all in databricks.yml`,
@@ -217,6 +221,7 @@ const QUESTIONS = [
   },
   /* Ch 03 - Python and Pandas UDFs */
   {
+    ref:{chapter:3},
     q:`A pipeline defines a Python UDF that formats a numeric column into a currency string, duplicating what Spark's built-in format_number() already does. What is the strongest argument for removing the UDF?`,
     opts:[
       `format_number() runs inside Catalyst's optimized path with no Python process involved, while any UDF pays serialization overhead crossing that boundary`,
@@ -228,6 +233,7 @@ const QUESTIONS = [
     explain:`Reaching for a UDF only makes sense when nothing built-in covers the case; format_number() already does, and it runs entirely inside Catalyst's optimized path, while any UDF, plain or pandas, pays a serialization cost the built-in never incurs. UDFs can format numbers fine, a later join does not change this trade-off, and a UDF is never compiled into the same optimized plan as a built-in function.`
   },
   {
+    ref:{chapter:3},
     q:`A pandas UDF loads a 3 GB geocoding lookup table from disk inside the function body, and that load dominates runtime because it repeats on every batch. Which function signature fixes this without changing what the UDF computes?`,
     opts:[
       `A scalar Series -> Series pandas UDF, since scalar signatures never reload state between calls`,
@@ -240,6 +246,7 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
   {
+    ref:{chapter:4},
     q:`An engineer copies a working bronze table's configuration to create a second bronze table for a different source, but forgets to point cloudFiles.schemaLocation at a new, distinct path. What is the likely consequence?`,
     opts:[
       `Nothing; schemaLocation is optional and has no effect on correctness`,
@@ -251,6 +258,7 @@ const QUESTIONS = [
     explain:`schemaLocation is where Auto Loader persists the inferred schema and its evolution history; two tables pointed at the same path share that checkpoint, so one table's schema changes can bleed into the other's history in confusing ways. schemaLocation is required, not optional, for cloudFiles-based tables, and Auto Loader does not detect or resolve this collision automatically, the engineer has to set a distinct path.`
   },
   {
+    ref:{chapter:4},
     q:`A platinum_summary table's function body calls dlt.read("gold_orders"). An engineer wants to add an explicit orchestration step to guarantee gold_orders finishes first, believing the pipeline cannot infer this on its own. Is that step necessary?`,
     opts:[
       `Yes, since Lakeflow Declarative Pipelines have no built-in way to sequence tables`,
@@ -263,6 +271,7 @@ const QUESTIONS = [
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
+    ref:{chapter:5},
     q:`A production incident requires rolling a job's configuration back to exactly what it was a week ago. The team can do this instantly for jobs deployed via bundles, but not for one job that has only ever been edited through the workspace UI. What explains the difference?`,
     opts:[
       `Bundle-deployed jobs are defined in version-controlled YAML, so any prior commit can be redeployed; UI edits are not commits and leave no such history to roll back to`,
@@ -274,6 +283,7 @@ const QUESTIONS = [
     explain:`A bundle-deployed job's configuration lives in version control, so rolling back means redeploying an older commit, a fast and repeatable action. A UI-edited job was never committed anywhere, so there is no prior state to redeploy to, though a rollback might still be possible by manually recreating the old settings if someone remembers them. The REST API and serverless compute are unrelated to whether history exists to roll back to.`
   },
   {
+    ref:{chapter:5},
     q:`A support engineer wants to re-run a job's underlying notebook once with an adjusted lookback window, purely as a diagnostic, and does not want a new permanent job definition left behind. Which API call fits?`,
     opts:[
       `jobs/create, followed by a manual delete once the diagnostic run finishes`,
@@ -286,6 +296,7 @@ const QUESTIONS = [
   },
   /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
   {
+    ref:{chapter:6},
     q:`A bronze table ingests sensor calibration readings via Auto Loader. Every reading is a new, immutable measurement; nothing already landed is ever edited or removed. Which table type fits, and what would a materialized view cost here unnecessarily?`,
     opts:[
       `A materialized view, since calibration data should always default to the safer option`,
@@ -297,6 +308,7 @@ const QUESTIONS = [
     explain:`When a source only ever appends, a streaming table's incremental, process-once semantics fit exactly, with lower latency and nothing lost. A materialized view would still work, but it pays a recompute or incremental-maintenance cost to guard against upstream changes this strictly append-only source never produces. Streaming tables commonly read from Auto Loader, that is one of their most typical sources.`
   },
   {
+    ref:{chapter:6},
     q:`A daily order-status summary is built from a silver table that gets amended whenever a return is processed against an existing order (an existing row is updated, not just appended). Which table type keeps the summary correct after a return, and why would a streaming table fall short?`,
     opts:[
       `A streaming table, since it processes new order events with the lowest latency`,
@@ -309,6 +321,7 @@ const QUESTIONS = [
   },
   /* Ch 07 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`An inventory-adjustment CDC feed is replicated across regions, and a change for sku_id 8842 occasionally arrives out of order due to replication lag, with an older sequence value landing after a newer one already applied. What keeps the target table correct despite the out-of-order arrival?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied for that key, and only lets a genuinely newer change through`,
@@ -320,6 +333,7 @@ const QUESTIONS = [
     explain:`sequence_by is what lets apply_changes decide which of several changes to the same key actually wins; it compares the incoming value against what was already applied and lets a change through only if it is genuinely newer, so a late-arriving older change is correctly ignored rather than applied. Arrival order at the pipeline plays no role, and apply_changes does not fail or blanket-ignore records just because they arrive out of order.`
   },
   {
+    ref:{chapter:7},
     q:`HR needs to answer "who was this employee's manager as of any date in the past," not just the current manager. Which apply_changes configuration provides that, and what does it add to the target table?`,
     opts:[
       `stored_as_scd_type=1, the default, since it needs the least configuration`,
@@ -332,6 +346,7 @@ const QUESTIONS = [
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A pipeline reads Kafka and must write enriched events into an external Elasticsearch cluster for full-text search, with no Delta table involved in that hop at all. Which approach fits, and what single fact decides it?`,
     opts:[
       `A Lakeflow streaming table, since it processes incrementally with the lowest latency`,
@@ -343,6 +358,7 @@ const QUESTIONS = [
     explain:`The deciding fact is the sink: Lakeflow Declarative Pipelines produce streaming tables and materialized views inside Unity Catalog, never arbitrary external writes, so Elasticsearch rules it out regardless of latency. Raw Structured Streaming with foreachBatch can write to any external system per micro-batch, which is exactly what is needed. Materialized views remain Delta objects in Unity Catalog, not a general external-write mechanism, and sharing an engine underneath does not make the two approaches interchangeable when the target differs.`
   },
   {
+    ref:{chapter:8},
     q:`A team building their first bronze-silver-gold pipeline wants checkpoint management, retries, and data-quality checks to come out of the box rather than hand-built, and their output is Delta tables in Unity Catalog. What is the strongest recommendation?`,
     opts:[
       `Build it on raw Structured Streaming, since medallion pipelines require foreachBatch for correctness`,
@@ -355,6 +371,7 @@ const QUESTIONS = [
   },
   /* Ch 09 - Control Flow and Task Configuration in Jobs */
   {
+    ref:{chapter:9},
     q:`A job's deploy task feeds a rollback_check task that must run once deploy finishes, whether it succeeded or failed, so a failed deploy is always evaluated for rollback. Which run_if setting on rollback_check is correct?`,
     opts:[
       `ALL_DONE, so it runs once deploy finishes, regardless of outcome`,
@@ -366,6 +383,7 @@ const QUESTIONS = [
     explain:`ALL_DONE fires once the dependency has finished, pass or fail, which is exactly what "always evaluated for rollback" requires. ALL_SUCCESS (the default) would skip the check after the exact failure it needs to catch, and AT_LEAST_ONE_FAILED happens to fire on failure here too, but would also skip running after a success, which this scenario says should still be evaluated. For Each iterates over list elements to repeat a task, it does not encode conditional logic like this.`
   },
   {
+    ref:{chapter:9},
     q:`A multi-tenant SaaS platform must run the same nightly ETL notebook once per tenant for 40 tenants, with no more than 8 running at once to respect a shared database connection limit. What configuration achieves this with one task definition?`,
     opts:[
       `Forty separate tasks, one hardcoded per tenant, all depending on the same upstream task`,
@@ -378,6 +396,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
   {
+    ref:{chapter:10},
     q:`A test compares actual and expected DataFrames holding identical rows, but a UNION step reordered them, and a separately computed average reads 15.000000000000002 against an expected 15.0. Using assertDataFrameEqual with default settings, what happens?`,
     opts:[
       `The row-order comparison fails, and the average comparison passes, since only whole numbers get float tolerance`,
@@ -389,6 +408,7 @@ const QUESTIONS = [
     explain:`assertDataFrameEqual is built to forgive exactly these two situations by default: it compares rows independent of order, so a UNION-driven reshuffle is not a failure, and it applies rtol and atol tolerances, so a tiny floating-point rounding difference passes while a genuinely wrong value would still fail loudly. There is no special-casing based on whether a float happens to be whole, both get the same tolerance treatment.`
   },
   {
+    ref:{chapter:10},
     q:`A transformation passes every unit test on hand-built sample rows, but produces visibly wrong output only on a specific production partition that is heavily null in one column. What is the fastest way to find where the logic actually diverges?`,
     opts:[
       `Keep adding more assertDataFrameEqual cases with small samples until one happens to reproduce it`,
@@ -401,6 +421,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-Format Ingestion: Files, Message Buses, Cloud Storage */
   {
+    ref:{chapter:11},
     q:`A fleet of temperature sensors publishes readings continuously through an MQTT-to-Kafka bridge, and a safety system must react within seconds of an out-of-range reading, with no requirement that readings ever land as files first. Which ingestion path fits, and why do both Auto Loader modes fall short?`,
     opts:[
       `Structured Streaming reading directly from the Kafka topic with format("kafka"); both Auto Loader modes discover files that have already landed, and no file is ever written here`,
@@ -412,6 +433,7 @@ const QUESTIONS = [
     explain:`Kafka, Kinesis, and Event Hubs are read directly with Structured Streaming's format("kafka"), removing the file hop entirely and keeping latency low. Both Auto Loader discovery modes and COPY INTO all assume data has already landed as files in cloud storage; file notification only changes how new files are discovered once they exist, it does not remove the requirement that a file exists in the first place.`
   },
   {
+    ref:{chapter:11},
     q:`A bronze table ingests JSON where a small fraction of records carry a price field encoded as a currency-formatted string like "$19.99" instead of a plain number, which does not fit the inferred schema. With Auto Loader's default behavior, what happens to those specific values?`,
     opts:[
       `They are silently dropped from the row, while the rest of the row's columns load normally`,
@@ -424,6 +446,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-Only Pipelines: Batch and Streaming on Delta */
   {
+    ref:{chapter:12},
     q:`A downstream dashboard reads a Delta table with readStream.table(). A separate backfill job runs an OVERWRITE against historical partitions of that same table to correct a data error. What happens to the dashboard's stream on its next micro-batch?`,
     opts:[
       `It silently skips the corrected partitions and continues streaming only the newest appends`,
@@ -435,6 +458,7 @@ const QUESTIONS = [
     explain:`Structured Streaming assumes an append-only source and throws by default the moment an UPDATE, DELETE, MERGE, or OVERWRITE touches the table it is reading, exactly what a backfill OVERWRITE does. Skipping past that safely is an explicit opt-in like skipChangeCommits, not silent default behavior, and the stream does not auto-restart from scratch. readStream.table() reacts to any commit in the table's log, batch or streaming, which is exactly why a batch OVERWRITE still breaks it.`
   },
   {
+    ref:{chapter:12},
     q:`A partner uploads an export file via SFTP-to-storage once every few hours at inconsistent times, with no requirement for continuous processing and no appetite for a cluster sitting idle between uploads. Which write pattern is the better operational fit?`,
     opts:[
       `A continuously running Structured Streaming job with outputMode("append")`,
@@ -447,6 +471,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced Transformations: Window Functions, Joins, Aggregations */
   {
+    ref:{chapter:13},
     q:`A report must flag each user's most recent login while still showing every historical login row in the output. A colleague proposes GROUP BY user_id with MAX(login_time). Why is that the wrong tool, and what should replace it?`,
     opts:[
       `RANK() OVER (PARTITION BY user_id ORDER BY login_time DESC) instead, since window functions add a computed rank without collapsing any row`,
@@ -458,6 +483,7 @@ const QUESTIONS = [
     explain:`RANK() OVER (PARTITION BY user_id ORDER BY login_time DESC) computes a per-user recency rank while leaving every login row intact, so both the most recent login and the full history stay visible, distinguished by the rank column. GROUP BY collapses each user down to one summary row, which is the opposite of what is needed, and DISTINCT does not compute or preserve any ranking at all.`
   },
   {
+    ref:{chapter:13},
     q:`A join between a 500 GB clickstream fact table and a 4 MB campaign lookup table runs a full shuffle instead of the expected broadcast, and profiling shows Spark's own size estimate for the lookup table is wrong. What is the direct fix?`,
     opts:[
       `Repartition the clickstream table by campaign_id before joining`,
@@ -470,6 +496,7 @@ const QUESTIONS = [
   },
   /* Ch 14 - Quarantining Bad Data with Expectations */
   {
+    ref:{chapter:14},
     q:`A required customer_email column starts arriving with malformed values for about 2% of rows from a newly onboarded signup form. The team wants those rows kept out of the production table, but still queryable later for investigation. Which expectation setup fits?`,
     opts:[
       `@dp.expect on customer_email, which logs failures as a warning but still writes the rows to the target table`,
@@ -481,6 +508,7 @@ const QUESTIONS = [
     explain:`Plain expect would let malformed rows into production, which the team explicitly does not want, and expect_or_fail would halt the entire update over a partial, non-blocking issue from one form. expect_or_drop keeps production clean, and a companion dataset selecting everything the same condition rejects preserves those rows for later investigation, which a delete-after-the-fact query would not.`
   },
   {
+    ref:{chapter:14},
     q:`A silver table's user_id column feeds a foreign-key join used across a dozen downstream tables. A null or duplicate value there would silently corrupt every one of those joins. Which expectation severity matches the blast radius here?`,
     opts:[
       `Plain @dp.expect, so the issue stays visible in monitoring without blocking anything`,
@@ -493,6 +521,7 @@ const QUESTIONS = [
   },
   /* Ch 15 - Delta Sharing: D2D vs Open Protocol (TO) */
   {
+    ref:{chapter:15},
     q:`Two partner firms both run Unity Catalog-enabled Databricks workspaces and want a shared table with dynamic views filtered per recipient region. Which Delta Sharing protocol fits, and what does the alternative lack that rules it out?`,
     opts:[
       `Databricks-to-Databricks (D2D) sharing; the open protocol's scope is tabular Delta or Iceberg data only, with no support for dynamic, per-recipient views`,
@@ -504,6 +533,7 @@ const QUESTIONS = [
     explain:`Per-recipient dynamic views for row and column filtering are only available through D2D sharing. The open protocol's shareable scope is limited to tabular Delta or Iceberg data, so it could not express the per-region filtering this scenario needs, and D2D does support this pattern directly.`
   },
   {
+    ref:{chapter:15},
     q:`An external client connects to a shared table using Tableau over ODBC, with no Databricks account of any kind. Which protocol fits, and what authenticates the recipient instead of Databricks identity?`,
     opts:[
       `Databricks-to-Databricks sharing, authenticated through the client's own Databricks identity`,
@@ -516,6 +546,7 @@ const QUESTIONS = [
   },
   /* Ch 16 - Lakehouse Federation */
   {
+    ref:{chapter:16},
     q:`A frequently refreshed executive dashboard runs the same aggregation against a federated MySQL replica that is already close to its connection capacity. What is the biggest operational risk of leaving this federated instead of ingesting the data?`,
     opts:[
       `Unity Catalog permissions will not apply to a federated table the way they apply to a managed one`,
@@ -527,6 +558,7 @@ const QUESTIONS = [
     explain:`Federation has no local copy and no caching by default, so every dashboard refresh is a live round trip to MySQL, adding directly to a database already near capacity; ingesting the data once would remove that repeated load. Unity Catalog governance and standard SQL both work fine against a foreign catalog, and federation does not silently cache anything, every query genuinely re-runs against the source.`
   },
   {
+    ref:{chapter:16},
     q:`A team queries a federated Oracle table through Unity Catalog and wants to confirm column masks configured on it behave the same as they would on a managed Delta table. What is actually true here?`,
     opts:[
       `Column masks only apply to federated tables if the mask logic is also duplicated inside Oracle itself`,
@@ -539,6 +571,7 @@ const QUESTIONS = [
   },
   /* Ch 17 - System Tables: Cost, Audit, Utilization */
   {
+    ref:{chapter:17},
     q:`A finance operations team wants an actual dollar breakdown of spend per job over the last quarter, not just raw compute hours consumed. Which system tables answer this?`,
     opts:[
       `system.billing.usage joined with system.billing.list_prices, turning raw consumption into a priced figure`,
@@ -550,6 +583,7 @@ const QUESTIONS = [
     explain:`usage records what was consumed but not its price; list_prices holds the rate per SKU, and joining the two is what turns consumption into an actual dollar figure. compute.clusters describes configuration and utilization, not spend, access.audit tracks who did what rather than cost, and system.lakeflow tracks job runs and tasks, not pricing.`
   },
   {
+    ref:{chapter:17},
     q:`A security team is investigating who dropped a production table last week and when. Which system table answers this directly?`,
     opts:[
       `system.billing.usage, since it records every account action with a timestamp`,
@@ -562,6 +596,7 @@ const QUESTIONS = [
   },
   /* Ch 18 - Query Profiler and Spark UI */
   {
+    ref:{chapter:18},
     q:`A dashboard query against a SQL warehouse runs slower than expected, and an analyst wants to see which operator in the query plan is consuming the most time. Where should they look first?`,
     opts:[
       `The Executors tab of the Spark UI`,
@@ -573,6 +608,7 @@ const QUESTIONS = [
     explain:`A SQL warehouse query's native, most direct diagnostic view is Query Profile, which breaks the query into a graph of operators annotated with time, rows, and memory, and highlights the longest ones. The Spark UI, including its Executors and Stages tabs, is the execution view for classic clusters running Spark applications, not the default view for a SQL warehouse query, and the compute system table describes configuration and utilization, not a single query's plan.`
   },
   {
+    ref:{chapter:18},
     q:`A notebook job running on a classic all-purpose cluster has one stage where task durations vary wildly, with a handful of tasks taking far longer than the rest. Which Spark UI signal points directly at this, and what does it usually indicate?`,
     opts:[
       `The Jobs tab's overall run duration, which flags any job running longer than its historical average`,
@@ -585,6 +621,7 @@ const QUESTIONS = [
   },
   /* Ch 19 - Monitoring Jobs and Pipelines: Event Logs, REST API, CLI */
   {
+    ref:{chapter:19},
     q:`An internal status-page service needs to display whether any job across the entire account failed in the last 24 hours, refreshed automatically with no human opening the Databricks UI. What should it query?`,
     opts:[
       `The Jobs REST API, or system.lakeflow for an account-wide view spanning every job`,
@@ -596,6 +633,7 @@ const QUESTIONS = [
     explain:`An automated service needs a programmatic, account-wide answer, not a UI panel a human opens or scrapes. The Jobs REST API answers this per job, and system.lakeflow answers it across the whole account in a single query, exactly the "any job, anywhere" scope this service needs. Scraping the UI is brittle and not a real API, checking jobs one at a time does not scale to "any job", and a CLI run by a person defeats the "no human involved" requirement.`
   },
   {
+    ref:{chapter:19},
     q:`A nightly CI pipeline needs to confirm a specific job's last run succeeded before proceeding to the next stage, using only command-line tooling with no custom HTTP client code. What accomplishes this?`,
     opts:[
       `Opening the Jobs & Pipelines UI in a headless browser and parsing the rendered page`,
@@ -608,6 +646,7 @@ const QUESTIONS = [
   },
   /* Ch 20 - Alerting: SQL Alerts and Job Notifications */
   {
+    ref:{chapter:20},
     q:`A nightly job completes successfully every run, but the percentage of null values in a required column has quietly climbed to 40% over the past week. What catches this, and why do job notifications not?`,
     opts:[
       `A job notification on the failure event, since a data quality regression should eventually cause the job to fail`,
@@ -619,6 +658,7 @@ const QUESTIONS = [
     explain:`The job is succeeding every run, so failure, duration, and backlog notifications never fire, none of them are watching the data itself. A SQL alert runs a query against the actual result and evaluates it against a threshold, which is the only mechanism here that notices a job can succeed while quietly producing degraded data.`
   },
   {
+    ref:{chapter:20},
     q:`A job-level failure notification is configured on a multi-task job. One task fails, automatically retries, and succeeds on the retry, so the overall job run ends up successful. Does the job-level notification fire for that initial task failure?`,
     opts:[
       `Yes, job-level notifications always fire for every individual task failure regardless of retries`,
@@ -630,6 +670,53 @@ const QUESTIONS = [
     explain:`A job-level failure notification reflects the overall run outcome, and since the retried task ultimately succeeded, the job itself succeeded, so the job-level notification does not fire for that transient failure; a task-level notification is needed to catch it specifically. This has nothing to do with which cluster the retry ran on, and task-level notifications do exist precisely to surface this kind of event that job-level ones miss.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -681,6 +768,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -835,7 +952,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

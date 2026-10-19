@@ -185,6 +185,7 @@ const QUESTIONS = [
      Unit 10 Data Modelling                         3  Ch 35, 36, 37 */
   /* Ch 14 - Quarantining bad data with expectations */
   {
+    ref:{chapter:14},
     q:`A hospital network's silver_claims table carries <code>@dp.expect_or_fail("has_member", "member_id IS NOT NULL")</code>. Last night's update processed a batch of two million claim rows, twelve of which had a null member_id, and the update failed. In the post-incident review the operations lead asks how many of the two million rows reached silver_claims. What is the correct answer?`,
     opts:[
       "1,999,988: the twelve failing rows were held back and every other row in the batch was committed before the failure was raised",
@@ -197,6 +198,7 @@ const QUESTIONS = [
   },
   /* Ch 22 - Deletion vectors and Liquid Clustering */
   {
+    ref:{chapter:22},
     q:`A media company's quarterly cost target includes trimming storage. An engineer deleted about 40% of the rows from a 12 TB ad-impressions table that has deletion vectors enabled; the DELETE finished in seconds. Two weeks later the storage bill for the table has not moved. Why, and what completes the job?`,
     opts:[
       "Deletion vectors marked the rows as removed without rewriting the Parquet files, so the bytes are still there until OPTIMIZE rewrites the affected files and VACUUM removes the superseded ones",
@@ -209,6 +211,7 @@ const QUESTIONS = [
   },
   /* Ch 7 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`A gaming studio maintains silver_player_profiles with <code>apply_changes</code>, using <code>keys=["player_id"]</code> and <code>sequence_by="ingest_ts"</code>, the timestamp at which bronze received each change message. After a six-hour Kafka consumer outage, the buffered messages were replayed. Many profiles now show display names that had already been superseded before the outage. What went wrong, and what is the fix?`,
     opts:[
       "Replayed messages bypass sequence_by entirely because apply_changes treats a redelivery as a brand-new insert, so stale rows accumulate; add apply_as_deletes to clear the superseded rows after each replay",
@@ -221,6 +224,7 @@ const QUESTIONS = [
   },
   /* Ch 31 - The UC permission inheritance model */
   {
+    ref:{chapter:31},
     q:`A hospital network's <code>clinical</code> catalog carries SELECT granted to <code>all_clinicians</code>, deliberately, across hundreds of tables. A new table of genomic consent records must be readable only by a five-person ethics group, and revoking the catalog grant would disrupt every clinician. Where should the table be created, and why?`,
     opts:[
       "In clinical.research, followed by DENY SELECT ON TABLE genomic_consent TO all_clinicians, which Unity Catalog evaluates ahead of any inherited grant",
@@ -233,6 +237,7 @@ const QUESTIONS = [
   },
   /* Ch 17 - System tables: cost, audit, utilization */
   {
+    ref:{chapter:17},
     q:`A hospital network's finance analyst is asked to build a monthly cost report from <code>system.billing.usage</code>. Every query she runs returns a permission error, while the platform administrator runs the same SQL successfully. The workspace is Unity Catalog enabled and system tables are clearly populated. What is the fix?`,
     opts:[
       "Grant her the standard chain for any table: USE CATALOG on system, USE SCHEMA on system.billing and SELECT on the usage table, ideally through a finance group",
@@ -245,6 +250,7 @@ const QUESTIONS = [
   },
   /* Ch 1 - DABs project structure */
   {
+    ref:{chapter:1},
     q:`A gaming studio's new engineer opens a pull request that changes the bundle's <code>prod</code> target from <code>mode: production</code> to <code>mode: development</code>, explaining that "prod deploys will be quicker to test". If it merges, what happens the next time two different engineers each run <code>databricks bundle deploy -t prod</code>?`,
     opts:[
       "Both deploys land at the fixed production path, because the mode setting only controls how verbose bundle validate output is and has no effect on where resources go",
@@ -257,6 +263,7 @@ const QUESTIONS = [
   },
   /* Ch 25 - Diagnosing bottlenecks with Query Profile */
   {
+    ref:{chapter:23},
     q:`A media company's daily ad-revenue query has tripled in cost over a quarter. Query Profile shows the scan node reading every file of the 6 TB impressions table with 0% pruned, even though the table is Liquid Clustered on <code>event_ts</code> and the query asks for one day. The predicate reads <code>WHERE date_format(event_ts, 'yyyy-MM-dd') = '2026-10-03'</code>. The team proposes doubling the warehouse size. What is the cheapest effective fix?`,
     opts:[
       "Double the warehouse size as proposed, since a scan that reads every file is I/O-bound and more nodes read the same files in parallel",
@@ -269,6 +276,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-format ingestion */
   {
+    ref:{chapter:11},
     q:`A media company starts a new Structured Streaming job against a Kafka topic that retains seven days of ad-click events, expecting the first run to load the whole backlog. The bronze table only ever contains events produced after the job started. Why?`,
     opts:[
       "Kafka only retains data for consumer groups that were subscribed when it was produced, so a brand-new consumer group can never read events that arrived before its first poll",
@@ -281,6 +289,7 @@ const QUESTIONS = [
   },
   /* Ch 33 - Job repair and parameter overrides */
   {
+    ref:{chapter:33},
     q:`A manufacturing plant's nightly job has five tasks: extract, then parse, then enrich (which depends on parse), then publish (which depends on enrich), plus archive, which depends only on parse. Last night extract, parse and archive succeeded, enrich failed on a bad lookup, and publish was never started. The fix is in place and the on-call clicks Repair Run. Which tasks run?`,
     opts:[
       "Only enrich; publish stays in its skipped state and has to be started afterwards with a separate Run Now",
@@ -293,6 +302,7 @@ const QUESTIONS = [
   },
   /* Ch 27 - Row filters and column masks */
   {
+    ref:{chapter:27},
     q:`A hospital network bound a row filter to its <code>encounters</code> table so that caseworkers see only their own facility's rows. That night the aggregation job, which runs as the service principal <code>svc-reporting</code>, produced zero rows for every facility. What explains it, and what is the fix?`,
     opts:[
       "The filter applies to every query, the service principal's included; the function must return true for svc-reporting, for instance via a group membership check, or the job sees nothing",
@@ -305,6 +315,7 @@ const QUESTIONS = [
   },
   /* Ch 9 - Control flow and task configuration */
   {
+    ref:{chapter:9},
     q:`An energy utility runs five pipelines, each a separate job. All five end with the same three tasks: refresh a dashboard, write a lineage record and notify the data-governance channel. Each job carries its own copy of the three tasks, and when the notification format changed last month only three of the five copies were updated. Which job design removes the duplication?`,
     opts:[
       "Merge the five jobs into one job with five parallel branches so that a single copy of the three closing tasks sits at the end of the combined graph",
@@ -317,6 +328,7 @@ const QUESTIONS = [
   },
   /* Ch 36 - Liquid Clustering vs partitioning vs Z-Order (TO) */
   {
+    ref:{chapter:36},
     q:`An energy company's unpartitioned smart-meter readings table was Z-Ordered on <code>(meter_id, read_date)</code> two years ago, with <code>OPTIMIZE ... ZORDER BY</code> scheduled weekly. Query performance now sags noticeably by Friday, and a new engineer's pull request changes the schedule to nightly. What should the reviewer recommend instead?`,
     opts:[
       "Approve the nightly schedule: Z-Order is the right layout for a two-column access pattern and simply needs to be rerun more often as data lands",
@@ -329,6 +341,7 @@ const QUESTIONS = [
   },
   /* Ch 20 - Alerting: SQL alerts and job notifications */
   {
+    ref:{chapter:20},
     q:`A gaming studio's match-telemetry streaming task fell forty minutes behind during a launch weekend. The job stayed in a running state the whole time, nobody was notified, and the lag was discovered only when a dashboard went stale. Which notification would have caught it while it was happening?`,
     opts:[
       "A job-level failure notification, since lag of that size eventually makes the streaming task fail and the failure event fires then",
@@ -341,6 +354,7 @@ const QUESTIONS = [
   },
   /* Ch 3 - Python and pandas UDFs */
   {
+    ref:{chapter:3},
     q:`An advertising platform filters its clustered impressions table with <code>WHERE is_billable(status, bid_cents)</code>, a pandas UDF that a reviewer requested "for consistency with the scoring code". The same rule is expressible as <code>status = 'won' AND bid_cents > 0</code>. Query Profile shows the scan now reads every file where it used to prune most of them. Why, and what should change?`,
     opts:[
       "The pandas UDF is being invoked once per row instead of once per Arrow batch, which disables pruning; declaring it with the Iterator of Series shape restores the batching and with it the file skipping",
@@ -353,6 +367,7 @@ const QUESTIONS = [
   },
   /* Ch 29 - Purging and retention: VACUUM and right to be forgotten */
   {
+    ref:{chapter:29},
     q:`A healthcare analytics team believes its erasure process is complete: patients who request deletion are flagged <code>is_erased = true</code> in the patients table, and a nightly <code>VACUUM patients</code> job runs. A compliance deadline review asks whether those patients' data has left storage. What is the correct assessment?`,
     opts:[
       "No. VACUUM removes only files the current version no longer references, and the flagged rows are live rows in current files; the row must be deleted first, then VACUUM removes the old file after the retention window",
@@ -365,6 +380,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced transformations: window functions, joins, aggregations */
   {
+    ref:{chapter:13},
     q:`An energy utility's new engineer submits a pull request computing each meter's day-over-day consumption change as <code>reading_kwh - LAG(reading_kwh, 1) OVER (PARTITION BY meter_id)</code>, with no ORDER BY in the window. What happens when it runs?`,
     opts:[
       "It runs and returns the previous row in arrival order, which is correct as long as the source table is append-only and readings arrive chronologically",
@@ -377,6 +393,7 @@ const QUESTIONS = [
   },
   /* Ch 21 - UC managed tables and reduced ops overhead */
   {
+    ref:{chapter:21},
     q:`A manufacturing company's quality-inspection images and their metadata table are written by a vendor's vision system into a specific cloud storage bucket that the vendor's own tooling also reads from. The platform team's standard is "managed tables everywhere" and a new engineer plans to migrate the metadata table into managed storage. What is the right call?`,
     opts:[
       "Keep it external: data that must live in a specific bucket for another team's or tool's use is a legitimate reason to register it in place, accepting the manual maintenance that follows",
@@ -389,6 +406,7 @@ const QUESTIONS = [
   },
   /* Ch 6 - Streaming tables vs materialized views (TO) */
   {
+    ref:{chapter:6},
     q:`A utility's Lakeflow Spark Declarative Pipeline maintains <code>silver_accounts</code> with <code>apply_changes</code> as a current-state (type 1) table, so rows are updated in place as customers switch tariffs. A gold table counting accounts per tariff is defined with <code>spark.readStream.table("silver_accounts")</code>, and its counts drift further from the source every week. What should the gold table be, and why?`,
     opts:[
       "A streaming table with apply_as_deletes configured, so that a tariff switch is applied as a delete of the old row followed by an insert of the new one, which keeps the incremental count correct",
@@ -401,6 +419,7 @@ const QUESTIONS = [
   },
   /* Ch 19 - Monitoring jobs and pipelines: event logs, REST API, CLI */
   {
+    ref:{chapter:19},
     q:`A gaming studio's on-call engineer is asked to find out, for a healthy nightly job that has grown from one hour to three over a month, which of its twelve tasks is responsible and whether tasks are waiting on dependencies. She wants a quick visual answer, not a script. Where should she look?`,
     opts:[
       "The job's matrix view in the Jobs & Pipelines UI, which colour-codes each run as success, failure, skipped or retry waiting",
@@ -413,6 +432,7 @@ const QUESTIONS = [
   },
   /* Ch 34 - Deploying with DABs and Git-based CI/CD */
   {
+    ref:{chapter:34},
     q:`A manufacturing company's post-incident review finds that production ran a version of a transformation that exists in no commit: an engineer had fixed a bug locally, run <code>databricks bundle deploy -t prod</code> from a laptop and never pushed. The next CI deploy overwrote the fix and the bug returned. Which change addresses the root cause?`,
     opts:[
       "Require every engineer to run bundle validate before a laptop deploy, since validate refuses to deploy a working tree that has uncommitted changes",
@@ -425,6 +445,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-only pipelines: batch and streaming on Delta */
   {
+    ref:{chapter:12},
     q:`A manufacturing plant's nightly job runs <code>COPY INTO plant.quality_checks FROM '/Volumes/raw/qc/' FILEFORMAT = CSV</code>. A scheduling mistake triggered the job twice last night, twenty minutes apart, and both runs succeeded. A reviewer asks whether the table now holds every file's rows twice. What is the correct answer?`,
     opts:[
       "Yes: COPY INTO appends unconditionally on every invocation, so the second run reloaded every file in the folder and a deduplication MERGE is now required",
@@ -437,6 +458,7 @@ const QUESTIONS = [
   },
   /* Ch 28 - Anonymization and PII masking pipelines */
   {
+    ref:{chapter:28},
     q:`A gaming studio's privacy review flags raw client IP addresses in the session table. The team checks every downstream consumer: dashboards, models and the fraud team all work from a separate geo-region column, and nothing reads the IP itself. Which technique fits?`,
     opts:[
       "Hash the addresses with sha2 so sessions from the same address can still be grouped if a future analysis needs it",
@@ -449,6 +471,7 @@ const QUESTIONS = [
   },
   /* Ch 4 - Production pipelines: Lakeflow Declarative Pipelines and Auto Loader */
   {
+    ref:{chapter:4},
     q:`A utility's Lakeflow Spark Declarative Pipeline update failed in the silver flow with a cast error after the bronze Auto Loader flow had already committed nine thousand new files. The cast is fixed. In the post-incident call, one engineer wants to delete the bronze rows and move the nine thousand files back so "nothing is counted twice" when the pipeline reruns. What is the right call?`,
     opts:[
       "Run a full refresh of the bronze table first, because a failed update leaves Auto Loader's checkpoint pointing at an offset from before the commit",
@@ -461,6 +484,7 @@ const QUESTIONS = [
   },
   /* Ch 23 - Data skipping and file pruning */
   {
+    ref:{chapter:23},
     q:`A gaming studio's legacy <code>player_events</code> table is partitioned by <code>event_date</code>. A new analyst assumes that any query filtering only on <code>player_level</code>, which is not the partition column, must read every file in every partition. Query Profile for such a query shows most files skipped. What explains it?`,
     opts:[
       "Partition pruning applies to every column once a table is partitioned on any of them, so the player_level filter prunes partitions too",
@@ -473,6 +497,7 @@ const QUESTIONS = [
   },
   /* Ch 16 - Lakehouse Federation */
   {
+    ref:{chapter:16},
     q:`An energy utility's analysts need a two-week, one-off investigation into a vendor's PostgreSQL maintenance database: ad hoc queries, low volume, nothing scheduled, and no need to change the data. Engineering proposes a three-week project to build an ingestion pipeline into Delta first. What is the better fit?`,
     opts:[
       "Create a connection and a foreign catalog with Lakehouse Federation, so the analysts query the live tables through Unity Catalog with no pipeline to build",
@@ -485,6 +510,7 @@ const QUESTIONS = [
   },
   /* Ch 30 - Metadata, tags and discoverability */
   {
+    ref:{chapter:30},
     q:`A media company has four hundred gold tables and almost none carry a comment. Analysts guess at column meanings, and the table owners say documenting everything from scratch would take weeks they do not have. What is the cheapest path to useful descriptions?`,
     opts:[
       "Apply a domain tag to each table, which Catalog Explorer expands into a human-readable description automatically whenever a user opens the table",
@@ -497,6 +523,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing pipelines */
   {
+    ref:{chapter:10},
     q:`A healthcare team's new engineer submits a pull request in which a single 200-line function reads a DataFrame, applies six cleaning steps in sequence and returns the result. A defect sits somewhere in the fourth step, and the only existing test checks the final output of all six. What refactor makes the defect testable in isolation?`,
     opts:[
       "Add a display() call after each step inside the function and run it on a cluster to inspect the intermediate output visually, removing the calls once the defect is found",
@@ -509,6 +536,7 @@ const QUESTIONS = [
   },
   /* Ch 24 - CDF for streaming limitations and latency */
   {
+    ref:{chapter:24},
     q:`An energy utility feeds a downstream <code>daily_consumption</code> table from <code>silver_readings</code> through a <code>readChangeFeed</code> stream, summing <code>kwh</code> from every change row. Since meter corrections began arriving as UPDATEs, corrected readings are counted twice in the daily totals. What is the cause, and the fix?`,
     opts:[
       "CDF emits every update twice by design as a safety measure, so the consumer should deduplicate the change rows on _commit_version and _commit_timestamp before summing them into the daily totals",
@@ -521,6 +549,7 @@ const QUESTIONS = [
   },
   /* Ch 14 - Quarantining bad data with expectations */
   {
+    ref:{chapter:14},
     q:`A healthcare pipeline validates silver_lab_results with one expectation, <code>@dp.expect_or_drop("valid", "patient_id IS NOT NULL AND result_value >= 0 AND unit IN ('mg/dL','mmol/L')")</code>. The event log shows about 900 rows dropped per update, but nobody can tell which of the three rules is responsible, and the lab vendor wants specifics. What change gives per-rule visibility without changing what is dropped?`,
     opts:[
       "Split the condition into three named rules in a dictionary and apply them with @dp.expect_all_or_drop, so the event log reports pass and fail counts for each rule separately",
@@ -533,6 +562,7 @@ const QUESTIONS = [
   },
   /* Ch 32 - Troubleshooting: Spark UI, cluster logs, event logs */
   {
+    ref:{chapter:32},
     q:`A gaming studio's nightly leaderboard job died. Spark UI shows every stage completed successfully before the application ended abruptly, and the driver log ends with <code>java.lang.OutOfMemoryError</code> immediately after a <code>.toPandas()</code> call on a 20 GB DataFrame. How should the on-call read this?`,
     opts:[
       "An executor ran out of memory, and Spark will retry the lost tasks on another executor automatically, so a Repair Run completes the job without any code change or cluster change being needed",
@@ -545,6 +575,7 @@ const QUESTIONS = [
   },
   /* Ch 2 - Libraries and dependencies */
   {
+    ref:{chapter:2},
     q:`An energy company's bundle declares its own package as <code>dist/etl-0.3.0-py3-none-any.whl</code> in the job's environment spec, and that wheel file is committed to the repository. A pull request changes a transformation in <code>src/</code>, passes review, and is deployed, yet production keeps producing the old results. What is the most likely cause, and the fix?`,
     opts:[
       "Wheels are cached per cluster by filename, so the new code is installed only after the job cluster is terminated and recreated by hand",
@@ -557,6 +588,7 @@ const QUESTIONS = [
   },
   /* Ch 18 - Query Profiler and Spark UI */
   {
+    ref:{chapter:18},
     q:`A manufacturing company's PySpark notebook job on a classic job cluster has one stage that is slow on most nights. The engineer suspects the work is landing unevenly across the cluster: one machine doing most of the shuffle writing while the others idle. Which view confirms it directly?`,
     opts:[
       "Query Profile from Query History, whose operator graph annotates each node with the memory and shuffle bytes attributed to each executor in the cluster",
@@ -569,6 +601,7 @@ const QUESTIONS = [
   },
   /* Ch 15 - Delta Sharing: D2D vs open protocol (TO) */
   {
+    ref:{chapter:15},
     q:`A hospital network's imaging vendor runs its own Unity Catalog-enabled Databricks workspace. The vendor needs a table of study metadata, a volume holding the de-identified DICOM files and the hospital's registered segmentation model. An engineer proposes the open sharing protocol with a bearer token "because it works everywhere". What is the correct response?`,
     opts:[
       "The open protocol is right: volumes and models are shared as Delta tables once they have been registered in Unity Catalog, so a single bearer token covers all three assets and no Databricks identity is needed",
@@ -581,6 +614,7 @@ const QUESTIONS = [
   },
   /* Ch 9 - Control flow and task configuration */
   {
+    ref:{chapter:9},
     q:`A media company's new engineer adds four independent ingestion tasks to a job, one per content source, each reading its own files and writing its own bronze table. The pull request chains them with <code>depends_on</code>: source_b depends on source_a, source_c on source_b, source_d on source_c, "so the run order is predictable". The job now takes four times longer than the longest single task. What should the reviewer ask for?`,
     opts:[
       "Keep the chain but add run_if: ALL_DONE to each task so that a failure in one source no longer blocks the next one in the sequence, which recovers most of the lost time",
@@ -593,6 +627,7 @@ const QUESTIONS = [
   },
   /* Ch 26 - ACLs and least privilege */
   {
+    ref:{chapter:26},
     q:`An energy company's platform team creates a brand-new catalog, <code>grid_ops</code>, owned by a platform service principal. An analytics team lead who holds SELECT on several other catalogs runs <code>GRANT USE CATALOG ON CATALOG grid_ops TO analytics</code> for her team and the statement is refused. Why?`,
     opts:[
       "USE CATALOG can be granted only by account administrators, because it controls workspace-level access rather than data access",
@@ -605,6 +640,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced transformations: window functions, joins, aggregations */
   {
+    ref:{chapter:13},
     q:`A gaming studio wants, for every play session, the number of minutes until that same player's next session, with every session row kept in the output and NULL for a player's most recent session. Which construct fits?`,
     opts:[
       "LEAD(session_start, 1) OVER (PARTITION BY player_id ORDER BY session_start), with the current session_start subtracted from it to give the gap in minutes for every session row",
@@ -617,6 +653,7 @@ const QUESTIONS = [
   },
   /* Ch 35 - Scalable data models with Delta */
   {
+    ref:{chapter:35},
     q:`A manufacturing company's two gold tables, equipment effectiveness by production line and scrap rate by shift, disagree about how many units were produced yesterday. Each gold query deduplicates the raw PLC messages its own way because the silver <code>machine_events</code> table holds the messages exactly as received, duplicates included. Where does the fix belong?`,
     opts:[
       "Add a reconciliation gold table that averages the two figures, so the dashboards built on them agree with each other",
@@ -629,6 +666,7 @@ const QUESTIONS = [
   },
   /* Ch 7 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`A manufacturing team keeps a current-state parts dimension in Unity Catalog by running a Structured Streaming job whose <code>foreachBatch</code> executes a hand-written MERGE against the change feed. The MERGE has been patched three times: once for out-of-order changes, once for deletes arriving as records, once for duplicate deliveries. Each patch introduced a new bug. What should replace it?`,
     opts:[
       "apply_changes in a Lakeflow Spark Declarative Pipeline with keys, sequence_by and apply_as_deletes, which handles ordering, deletes and duplicates without a hand-written MERGE",
@@ -641,6 +679,7 @@ const QUESTIONS = [
   },
   /* Ch 25 - Diagnosing bottlenecks with Query Profile */
   {
+    ref:{chapter:25},
     q:`A media company's dashboard query runs about three hundred times a day. Query Profile shows a join whose output is 4.1 billion rows although its inputs are 210 million impressions and 9,000 campaigns, followed by a DISTINCT that shrinks the result back down; the join and the DISTINCT dominate the time. What is the most cost-effective next step?`,
     opts:[
       "Fix the join itself: the campaigns side carries duplicate keys, so the join explodes and the DISTINCT pays to undo it; deduplicate campaigns or join on the full key",
@@ -653,6 +692,7 @@ const QUESTIONS = [
   },
   /* Ch 20 - Alerting: SQL alerts and job notifications */
   {
+    ref:{chapter:20},
     q:`A media company's platform team cancels about thirty scheduled job runs every Sunday during a four-hour maintenance window. Each cancellation pages the on-call engineer through the job-level failure notification, and the team has started ignoring pages on Sundays. What is the right change?`,
     opts:[
       "Delete the failure notifications on the Sunday jobs and rely on a Monday SQL alert over system.lakeflow to list what did not run, which also catches genuine failures a day later",
@@ -665,6 +705,7 @@ const QUESTIONS = [
   },
   /* Ch 8 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A gaming studio is designing a new bronze-to-gold pipeline from Kafka into Unity Catalog Delta tables. One architect insists on raw Structured Streaming jobs because, in her words, "streaming tables do not checkpoint, so a failure replays events twice". The other proposes a Lakeflow Spark Declarative Pipeline. Who is right, and what decides it?`,
     opts:[
       "The first architect: only raw Structured Streaming checkpoints its progress, so exactly-once results after a failure are available only through the raw API",
@@ -677,6 +718,7 @@ const QUESTIONS = [
   },
   /* Ch 17 - System tables: cost, audit, utilization */
   {
+    ref:{chapter:17},
     q:`A manufacturing company's capacity plan needs three years of month-by-month DBU consumption per workspace to model growth. The platform team queries <code>system.billing.usage</code> and finds history reaching back roughly a year and no further. What should they do?`,
     opts:[
       "Request a retention extension on the system catalog from Databricks support, after which billing records are kept indefinitely for the account at no extra charge to the account",
@@ -689,6 +731,7 @@ const QUESTIONS = [
   },
   /* Ch 29 - Purging and retention: VACUUM and right to be forgotten */
   {
+    ref:{chapter:29},
     q:`A gaming studio's engineer, chasing a quarter-end storage target, disabled the retention safety check and ran <code>VACUUM match_events RETAIN 0 HOURS</code>. Within the hour a long-running leaderboard job failed with missing-file errors, and the next day a request to <code>RESTORE</code> the table to the previous day's version also failed. How should the post-incident review read the two failures?`,
     opts:[
       "Both failures are unrelated to the VACUUM: RETAIN 0 HOURS removes only files left behind by aborted transactions, never files that any version references",
@@ -701,6 +744,7 @@ const QUESTIONS = [
   },
   /* Ch 31 - The UC permission inheritance model */
   {
+    ref:{chapter:31},
     q:`A hospital network's new platform engineer proposes <code>GRANT SELECT ON CATALOG analytics TO all_employees</code> "to stop the flood of access tickets", noting that only two of the catalog's thirty schemas are sensitive and "we can lock those two down afterwards". What is the reviewer's strongest objection?`,
     opts:[
       "Inheritance reaches every current and future object under the catalog and there is no DENY, so the two schemas cannot be locked down later without revoking and re-granting schema by schema",
@@ -713,6 +757,7 @@ const QUESTIONS = [
   },
   /* Ch 5 - Automating jobs: UI, API and CLI */
   {
+    ref:{chapter:5},
     q:`A gaming studio's engineer deploys a bundle to the dev target and wants to trigger the deployed <code>rebuild_leaderboards</code> job. He copies a job id from a colleague's chat message into <code>databricks jobs run-now --job-id 8841</code>, and the production leaderboards are rebuilt mid-afternoon. In the post-incident review, which practice prevents the mistake?`,
     opts:[
       "Trigger dev jobs only from the Jobs UI, where the workspace banner shows which environment is active before a run is started",
@@ -725,6 +770,7 @@ const QUESTIONS = [
   },
   /* Ch 24 - CDF for streaming limitations and latency */
   {
+    ref:{chapter:24},
     q:`An energy regulator asks a utility for every insert, update and delete applied to its <code>tariff_rates</code> table between the end of September and the audit date, as a single extract, with each change labelled. Change Data Feed has been enabled on the table for a year. What produces the extract?`,
     opts:[
       "A time-travel query of the table VERSION AS OF the audit date, compared row by row against VERSION AS OF the end of September, with each difference labelled by hand as an insert, update or delete",
@@ -737,6 +783,7 @@ const QUESTIONS = [
   },
   /* Ch 14 - Quarantining bad data with expectations */
   {
+    ref:{chapter:14},
     q:`A gaming studio's Lakeflow Spark Declarative Pipeline feeds two silver tables from one bronze events table: <code>silver_matches</code> uses <code>@dp.expect_or_drop</code> on a validity rule, while <code>silver_chat</code> uses only a plain <code>@dp.expect</code> on its own rule. A new engineer argues that the strict rule on silver_matches "protects the pipeline", so silver_chat is covered too. Is that right?`,
     opts:[
       "No: expectations attach to the specific dataset they decorate, so silver_chat's rows are governed only by its own plain expect, which logs failures and still writes the rows",
@@ -749,6 +796,7 @@ const QUESTIONS = [
   },
   /* Ch 33 - Job repair and parameter overrides */
   {
+    ref:{chapter:33},
     q:`A manufacturing plant's single-task job (one notebook) failed because the <code>shift_date</code> parameter was wrong. The engineer opens the failed run looking for Repair Run so she can override the parameter, and the option is not offered. Why, and what should she do?`,
     opts:[
       "Repair Run is reserved for workspace administrators, so she should ask an admin to repair the run with the corrected parameter on her behalf",
@@ -761,6 +809,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-format ingestion */
   {
+    ref:{chapter:11},
     q:`A manufacturing engineer "fixed" an Auto Loader stream that had stalled on a corrupt sensor file by deleting the stream's checkpoint directory and restarting it. The stream recovered, but the bronze table's row count has since doubled and the duplicates are still growing. What happened?`,
     opts:[
       "Deleting the checkpoint also deleted schemaLocation, so Auto Loader re-inferred a wider schema and is now writing each record twice, once per schema version it knows about",
@@ -773,6 +822,7 @@ const QUESTIONS = [
   },
   /* Ch 25 - Diagnosing bottlenecks with Query Profile */
   {
+    ref:{chapter:25},
     q:`A media company's weekly reach report joins 2 TB of impression rows to a 400 GB <code>users</code> table on <code>user_id</code>, then groups by the user's country to count impressions. Query Profile shows the join shuffling about 2.4 TB with spill flagged on the join node; the final result is 190 rows. The team has asked for a larger warehouse. What is the cheaper fix?`,
     opts:[
       "Aggregate the impressions per user_id first, which collapses billions of rows into one row per user, then join that small result to users and group by country",
@@ -785,6 +835,7 @@ const QUESTIONS = [
   },
   /* Ch 37 - Dimensional modelling for analytics */
   {
+    ref:{chapter:37},
     q:`A gaming studio's <code>dim_player</code> holds <code>display_name</code>, which players change often. Every report wants the player's current name beside their historical match facts, and nobody has ever asked what a name was at the time of a match. A new engineer proposes keeping full history with start and end dates "to be safe". What should the reviewer recommend?`,
     opts:[
       "Agree: history should always be preserved in a dimension because the question might be asked one day, and reports can simply filter to the row whose end date is null to get the current name",
@@ -797,6 +848,7 @@ const QUESTIONS = [
   },
   /* Ch 34 - Deploying with DABs and Git-based CI/CD */
   {
+    ref:{chapter:34},
     q:`An energy company's bundle lives in GitHub and CI deploys it on every merge, but its notebook tasks point at notebooks stored in a plain workspace folder outside any repository. An analyst edited one of those notebooks directly in the workspace, and production behaviour changed with no pull request, no review and no commit. Which change fixes the root cause?`,
     opts:[
       "Grant the analyst read-only permission on the workspace folder and keep editing rights to the engineers who own the bundle",
@@ -809,6 +861,7 @@ const QUESTIONS = [
   },
   /* Ch 27 - Row filters and column masks */
   {
+    ref:{chapter:27},
     q:`A hospital network keeps one <code>encounters</code> table for all facilities. Care coordinators may see only their own facility's encounters, and even within those, the <code>diagnosis_notes</code> column must appear as a placeholder unless the user belongs to <code>clinical_staff</code>. The team wants no per-facility copies and no view per audience. What fits?`,
     opts:[
       "A column mask on facility_id that returns NULL for other facilities, plus a second column mask on diagnosis_notes, since masks can hide rows when the masked column is a key the query filters on",
@@ -821,6 +874,7 @@ const QUESTIONS = [
   },
   /* Ch 16 - Lakehouse Federation */
   {
+    ref:{chapter:16},
     q:`At a manufacturing company, a dozen analysts query the MES vendor's SQL Server from notebooks using a JDBC connection string with the database password pasted into each notebook. A security review wants the password out of notebooks and the reads governed and audited, while the analysts keep querying from Databricks. What is the least disruptive change?`,
     opts:[
       "Move the password into a notebook widget so that each analyst types it at run time instead of storing it in the notebook source",
@@ -833,6 +887,7 @@ const QUESTIONS = [
   },
   /* Ch 30 - Metadata, tags and discoverability */
   {
+    ref:{chapter:30},
     q:`A media company's quarterly cost review proposes retiring unused gold tables, but the owners disagree about which of the two hundred tables anyone still uses. The platform lead wants evidence per table rather than opinions. Which Catalog Explorer capability answers it?`,
     opts:[
       "Semantic search, which ranks tables by how closely they match analysts' recent questions and so reveals the ones in demand",
@@ -845,6 +900,7 @@ const QUESTIONS = [
   },
   /* Ch 32 - Troubleshooting: Spark UI, cluster logs, event logs */
   {
+    ref:{chapter:32},
     q:`A manufacturing company's batch job failed overnight. Spark UI shows stage 14 failed, and the failed task carries a stack trace: a <code>NumberFormatException</code> parsing <code>batch_weight</code>, pointing at a specific line of the transformation. The new on-call engineer begins by downloading the cluster's driver and worker logs. What is the better order of work?`,
     opts:[
       "Start with the failed task in Spark UI: its stack trace already names the line and the bad value, so the cluster logs add nothing for a failure Spark itself recorded",
@@ -857,6 +913,7 @@ const QUESTIONS = [
   },
   /* Ch 4 - Production pipelines: Lakeflow Declarative Pipelines and Auto Loader */
   {
+    ref:{chapter:4},
     q:`A utility's bronze table receives about twenty meter-export files a day. A new engineer configured Auto Loader in file notification mode, which required a cloud queue, event subscriptions and extra permissions, and the team now spends time keeping that plumbing working. Was the extra setup necessary?`,
     opts:[
       "Yes: file notification is the only discovery mode that guarantees each file is processed exactly once, since directory listing can miss files that land between two triggers and never revisit them",
@@ -869,6 +926,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-only pipelines: batch and streaming on Delta */
   {
+    ref:{chapter:12},
     q:`An energy utility's <code>meter_reads</code> table is written continuously by a Structured Streaming job in append mode, and three downstream jobs read it with <code>readStream</code>. A calibration fault means two months of readings for 500 meters must be corrected. Which approach corrects the data while keeping the downstream streams healthy?`,
     opts:[
       "Append correction records carrying the corrected value, a correction flag and a later timestamp, and have consumers apply latest-wins, so every writer stays append-only",
@@ -881,6 +939,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced transformations: window functions, joins, aggregations */
   {
+    ref:{chapter:13},
     q:`A manufacturing company joins a 4 TB production-events fact to a 30 MB <code>suppliers</code> dimension on default settings. The physical plan shows a sort-merge join shuffling both sides. The engineer expected the small side to be broadcast automatically. Why was it not, and what should she do?`,
     opts:[
       "Dimension tables are never broadcast automatically; broadcasting always requires an explicit hint whatever the table size",
@@ -892,6 +951,53 @@ const QUESTIONS = [
     explain:`Spark broadcasts the smaller side automatically only when it is under the threshold, 10 MB by default, so a 30 MB dimension is shuffled like any other table unless a hint forces the broadcast or the threshold is raised. Reading the fallback as caused by the fact table (the tempting explanation) misses that only the small side has to fit; the fact side is never broadcast in either strategy.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -943,6 +1049,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -1097,7 +1233,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

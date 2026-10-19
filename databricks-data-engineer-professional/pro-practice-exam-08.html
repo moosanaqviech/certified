@@ -164,13 +164,14 @@ const E = {
   badge: "Databricks DE Professional",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
   coverage: "Covers all 31 chapters across Units 1-8: Developing Code with Python and SQL through Data Governance.",
-  minutes: 120,
+  minutes: 148,
   pass: 70
 };
 
 const QUESTIONS = [
   /* Ch 01 - DABs Project Structure for Scalable Python */
   {
+    ref:{chapter:1},
     q:`A semiconductor fab's bundle defines a "qual-line" target with mode: production, run_as a service principal. Two engineers deploying there the same day land at the identical fixed path, unlike their separate dev deploys. Why?`,
     opts:[
       `mode: production always deploys to one fixed path, typically run_as a service principal, regardless of the target's name`,
@@ -182,6 +183,7 @@ const QUESTIONS = [
     explain:`mode: production deploys to a single fixed path, typically run_as a service principal, no matter what the target is called. Nothing falls back to development mode automatically, and the second deploy is not rejected.`
   },
   {
+    ref:{chapter:1},
     q:`A fab reviewer sees a yield-threshold calculation hardcoded as a job parameter default inside resources/jobs.yml, instead of a reference to a tested function. What is the concern?`,
     opts:[
       `None; resources/*.yml can carry any computed default`,
@@ -194,6 +196,7 @@ const QUESTIONS = [
   },
   /* Ch 02 - Libraries and Dependencies: PyPI, Wheels, Source Archives */
   {
+    ref:{chapter:2},
     q:`A dairy farm's herd-analytics pipeline broke on a scheduled run after a shared dependency, declared with no version pin, resolved to a newer release with a breaking change. What is the direct cause, and the fix?`,
     opts:[
       `PyPI itself is unreliable for this kind of package; switch to a source archive instead`,
@@ -205,6 +208,7 @@ const QUESTIONS = [
     explain:`Leaving a dependency unpinned lets a later install silently resolve to a breaking version; pinning an exact version makes every install reproducible.`
   },
   {
+    ref:{chapter:2},
     q:`A dairy cooperative's job cluster image has no C compiler. A required package ships only a source distribution for the cluster's Python version, no wheel. What is the likely outcome, and the safer fix?`,
     opts:[
       `Nothing breaks; source distributions never need a compiler`,
@@ -217,6 +221,7 @@ const QUESTIONS = [
   },
   /* Ch 03 - Python and Pandas UDFs */
   {
+    ref:{chapter:3},
     q:`An EV charging network's pipeline defines a Python UDF calling .lower() on a station-code column, duplicating Spark's built-in lower(). What is the strongest argument for removing the UDF?`,
     opts:[
       `lower() runs inside Catalyst's optimized path with no Python process involved; any UDF pays serialization overhead the built-in never incurs`,
@@ -228,6 +233,7 @@ const QUESTIONS = [
     explain:`Reaching for a UDF only makes sense when nothing built-in covers the case; lower() already does, running entirely inside Catalyst's optimized path.`
   },
   {
+    ref:{chapter:3},
     q:`An EV network's pandas UDF loads a 3 GB battery-degradation model from disk inside the function body, and that load dominates runtime because it repeats every batch. Which signature fixes this?`,
     opts:[
       `A scalar Series -> Series pandas UDF, since scalar signatures never reload state`,
@@ -240,6 +246,7 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
   {
+    ref:{chapter:4},
     q:`A parcel logistics bronze table ingests scan-event JSON via Auto Loader. A carrier adds a new field mid-quarter, and the pipeline keeps running, with the field showing up automatically. What made that possible?`,
     opts:[
       `Auto Loader ignores schema changes entirely`,
@@ -251,6 +258,7 @@ const QUESTIONS = [
     explain:`schemaLocation checkpoints the inferred schema and its evolution history, letting a genuinely new column be added automatically instead of breaking the stream.`
   },
   {
+    ref:{chapter:4},
     q:`A logistics engineer insists a separate orchestrator is required to guarantee bronze_scans finishes before silver_scans runs in a Lakeflow Declarative Pipeline. Is that necessary?`,
     opts:[
       `Yes, Lakeflow Declarative Pipelines have no concept of dependency ordering on their own`,
@@ -263,6 +271,7 @@ const QUESTIONS = [
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
+    ref:{chapter:5},
     q:`A radio broadcaster wants every job deployed through repeatable, scripted automation with no manual UI steps anywhere. Which interface do they need, and why is the UI unsuitable?`,
     opts:[
       `The CLI or the REST API it wraps; the UI requires a human clicking through it, which breaks unattended automation`,
@@ -274,6 +283,7 @@ const QUESTIONS = [
     explain:`Unattended automation needs something scriptable, which the CLI and REST API both are, while the UI fundamentally requires a person clicking through it.`
   },
   {
+    ref:{chapter:5},
     q:`A broadcaster's traffic analyst wants to test an ad-scheduling notebook once against an adjusted slot parameter, with no permanent job left behind. Which API call fits?`,
     opts:[
       `jobs/run-now, since it accepts one-time overrides on any job`,
@@ -286,6 +296,7 @@ const QUESTIONS = [
   },
   /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
   {
+    ref:{chapter:6},
     q:`A museum archive's bronze table ingests artifact-cataloging events via Auto Loader. Every entry is new and immutable; nothing already landed is edited. Which table type fits, and what would a materialized view cost unnecessarily?`,
     opts:[
       `A materialized view, since archive data should default to the safer option`,
@@ -297,6 +308,7 @@ const QUESTIONS = [
     explain:`When a source only ever appends, a streaming table's incremental semantics fit exactly, with lower latency and no downside.`
   },
   {
+    ref:{chapter:6},
     q:`A museum's exhibit-attendance gold table is built from a silver table corrected whenever a ticket-scan reconciliation error is found (existing rows updated, not appended). Which table type keeps the summary accurate?`,
     opts:[
       `A streaming table, since it processes corrections with the lowest latency`,
@@ -309,6 +321,7 @@ const QUESTIONS = [
   },
   /* Ch 07 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`A solar farm's inverter-status CDC feed replicates across two regional gateways, and a change occasionally arrives out of order, with an older sequence value landing after a newer one already applied. What keeps the target table correct?`,
     opts:[
       `sequence_by compares the incoming change's sequence value to what has already been applied, and only lets a genuinely newer change through`,
@@ -320,6 +333,7 @@ const QUESTIONS = [
     explain:`sequence_by decides which of several changes to the same key wins by comparing the incoming value against what was already applied, ignoring stale ones.`
   },
   {
+    ref:{chapter:7},
     q:`A solar operator's compliance team needs to know an inverter's approved firmware version as of any past date, not just today. Which apply_changes configuration provides that?`,
     opts:[
       `stored_as_scd_type=1, the default`,
@@ -332,6 +346,7 @@ const QUESTIONS = [
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A coffee roaster's pipeline reads roast-sensor events from Kafka and must push scorch alerts to an external plant-control API within seconds, with no Delta table in that hop. Which approach fits, and what single fact decides it?`,
     opts:[
       `A Lakeflow streaming table, since it processes incrementally with the lowest latency`,
@@ -343,6 +358,7 @@ const QUESTIONS = [
     explain:`Lakeflow Declarative Pipelines produce streaming tables and materialized views inside Unity Catalog, never arbitrary external calls, so an external API rules it out.`
   },
   {
+    ref:{chapter:8},
     q:`A coffee roasting company building their first bronze-silver-gold quality pipeline wants checkpoint management and data-quality checks out of the box, and their output is Delta tables in Unity Catalog. What is the strongest recommendation?`,
     opts:[
       `Build it on raw Structured Streaming, since medallion pipelines require foreachBatch`,
@@ -355,6 +371,7 @@ const QUESTIONS = [
   },
   /* Ch 09 - Control Flow and Task Configuration in Jobs */
   {
+    ref:{chapter:9},
     q:`A ski resort's lift-usage job has a compute_stats task feeding two parallel tasks, publish and archive. A final audit_log task must run once both finish, whether they succeeded or failed. Which run_if setting fits audit_log?`,
     opts:[
       `ALL_DONE, so it runs once both upstream tasks finish, regardless of outcome`,
@@ -366,6 +383,7 @@ const QUESTIONS = [
     explain:`ALL_DONE fires once every dependency has finished, pass or fail, matching "log every run regardless of outcome."`
   },
   {
+    ref:{chapter:9},
     q:`The same lift-inspection notebook must run once for each of 18 lifts listed in a config value, with no more than 4 running at once due to a shared SCADA connection limit. What achieves this with one task definition?`,
     opts:[
       `Eighteen separate tasks, one hardcoded per lift`,
@@ -378,6 +396,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
   {
+    ref:{chapter:10},
     q:`An aquarium's test compares actual and expected DataFrames holding the same rows, but a window-function step reordered them, and a separately computed average tank temperature reads 24.500000000002 against an expected 24.5. Using assertDataFrameEqual with defaults, what happens?`,
     opts:[
       `Both comparisons fail, since exact order and float equality are required by default`,
@@ -389,6 +408,7 @@ const QUESTIONS = [
     explain:`assertDataFrameEqual forgives both by default: unordered row comparison, and rtol/atol tolerance for floating-point differences.`
   },
   {
+    ref:{chapter:10},
     q:`An aquarium water-quality transformation passes every unit test on hand-built sample rows, but produces wrong output only for readings from one specific tank sensor in production. What is the fastest way to find the divergence?`,
     opts:[
       `Keep writing more assertDataFrameEqual cases until one happens to reproduce it`,
@@ -401,6 +421,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-Format Ingestion: Files, Message Buses, Cloud Storage */
   {
+    ref:{chapter:11},
     q:`A zoo's enclosure sensors publish animal-activity events continuously through a Kafka bridge, and a welfare-monitoring service must react within seconds, with no requirement that readings ever land as files first. Which ingestion path fits, and why do both Auto Loader modes fall short?`,
     opts:[
       `Structured Streaming reading directly from the Kafka topic with format("kafka"); both Auto Loader modes discover files that have already landed`,
@@ -412,6 +433,7 @@ const QUESTIONS = [
     explain:`Kafka is read directly with format("kafka"), removing the file hop entirely; both Auto Loader modes assume data has already landed as files.`
   },
   {
+    ref:{chapter:11},
     q:`A zoo's bronze table ingests JSON where a small fraction of records carry an enclosure-temperature reading as a unit-suffixed string like "72F" instead of a number, which does not fit the inferred schema. What happens to those values?`,
     opts:[
       `They are silently dropped from the row`,
@@ -424,6 +446,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-Only Pipelines: Batch and Streaming on Delta */
   {
+    ref:{chapter:12},
     q:`A winery's dashboard reads a fermentation-log Delta table with readStream.table(). A separate audit job runs an OVERWRITE against historical partitions to correct a sensor calibration error. What happens to the dashboard's stream on its next micro-batch?`,
     opts:[
       `It silently skips the corrected partitions and continues streaming only the newest appends`,
@@ -435,6 +458,7 @@ const QUESTIONS = [
     explain:`Structured Streaming throws by default the moment an OVERWRITE touches the table it is reading, since it assumes an append-only source.`
   },
   {
+    ref:{chapter:12},
     q:`A winery's grape-supplier partner uploads a harvest file via SFTP once every few hours at inconsistent times, with no need for continuous processing and no appetite for an idle cluster between uploads. Which write pattern fits better?`,
     opts:[
       `A continuously running Structured Streaming job with outputMode("append")`,
@@ -447,6 +471,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced Transformations: Window Functions, Joins, Aggregations */
   {
+    ref:{chapter:13},
     q:`A symphony orchestra's report must flag each musician's highest-attendance season while still showing every historical season row. A colleague proposes GROUP BY musician_id with MAX(attendance). Why is that wrong here?`,
     opts:[
       `RANK() OVER (PARTITION BY musician_id ORDER BY attendance DESC) instead, since window functions add a rank without collapsing rows`,
@@ -458,6 +483,7 @@ const QUESTIONS = [
     explain:`A window function computes a per-musician rank while leaving every season row intact; GROUP BY collapses each musician into one row, the opposite of what's needed.`
   },
   {
+    ref:{chapter:13},
     q:`A join between a 300 GB ticket-sales fact table and a 4 MB venue-metadata lookup table runs a full shuffle instead of the expected broadcast, and Spark's own size estimate for the lookup table is wrong. What is the direct fix?`,
     opts:[
       `Repartition the fact table by venue_id before joining`,
@@ -470,6 +496,7 @@ const QUESTIONS = [
   },
   /* Ch 14 - Quarantining Bad Data with Expectations */
   {
+    ref:{chapter:14},
     q:`A textile manufacturer's required fabric_batch_id column starts arriving malformed for about 3% of rows from a newly onboarded mill. The team wants those rows kept out of production but still queryable later for investigation. Which expectation setup fits?`,
     opts:[
       `@dp.expect on fabric_batch_id, which logs failures as a warning but still writes the rows`,
@@ -481,6 +508,7 @@ const QUESTIONS = [
     explain:`expect_or_drop keeps production clean, and a companion quarantine dataset preserves the rejected rows for later investigation.`
   },
   {
+    ref:{chapter:14},
     q:`A textile manufacturer's silver table's supplier_id column feeds a foreign-key join used across a dozen procurement reports. A null or duplicate value there would silently corrupt every one. Which expectation severity matches the blast radius?`,
     opts:[
       `Plain @dp.expect, so the issue stays visible without blocking anything`,
@@ -493,6 +521,7 @@ const QUESTIONS = [
   },
   /* Ch 15 - Delta Sharing: D2D vs Open Protocol (TO) */
   {
+    ref:{chapter:15},
     q:`A 3D-printing materials consortium's two member companies both run Unity Catalog-enabled Databricks workspaces and want a shared print-test table with dynamic views filtered per member. Which protocol fits, and what does the alternative lack?`,
     opts:[
       `Databricks-to-Databricks (D2D) sharing; the open protocol's scope is tabular data only, with no dynamic, per-recipient views`,
@@ -504,6 +533,7 @@ const QUESTIONS = [
     explain:`Per-recipient dynamic views are only available through D2D sharing; the open protocol's scope is limited to tabular Delta or Iceberg data.`
   },
   {
+    ref:{chapter:15},
     q:`An external lab connects to a shared print-defect table using a plain open-source Spark client, with no Databricks account. Which protocol fits, and what authenticates the lab instead of Databricks identity?`,
     opts:[
       `Databricks-to-Databricks sharing, authenticated through the lab's own Databricks identity`,
@@ -516,6 +546,7 @@ const QUESTIONS = [
   },
   /* Ch 16 - Lakehouse Federation */
   {
+    ref:{chapter:16},
     q:`A satellite imagery provider's dashboard refreshes every few minutes against a federated PostgreSQL tasking database that is already under heavy transactional load. What is the biggest operational risk of leaving it federated?`,
     opts:[
       `Unity Catalog permissions will not apply to the federated table`,
@@ -527,6 +558,7 @@ const QUESTIONS = [
     explain:`Federation has no local copy and no caching by default, so every refresh is a live round trip to Postgres, adding directly to its load.`
   },
   {
+    ref:{chapter:16},
     q:`A satellite imagery team queries a federated Oracle tasking table through Unity Catalog and wants to confirm row filters configured on it behave the same as on a managed Delta table. What is actually true here?`,
     opts:[
       `Row filters only apply if the filter logic is also duplicated inside Oracle itself`,
@@ -539,6 +571,7 @@ const QUESTIONS = [
   },
   /* Ch 17 - System Tables: Cost, Audit, Utilization */
   {
+    ref:{chapter:17},
     q:`A wildlife conservation nonprofit's operations team wants an actual dollar breakdown of spend per field-research project last quarter, not just raw compute hours. Which system tables answer this?`,
     opts:[
       `system.billing.usage joined with system.billing.list_prices, turning raw consumption into a priced figure`,
@@ -550,6 +583,7 @@ const QUESTIONS = [
     explain:`usage records what was consumed but not its price; list_prices holds the rate per SKU, and joining the two turns consumption into an actual dollar figure.`
   },
   {
+    ref:{chapter:17},
     q:`A conservation nonprofit's security lead is investigating who dropped a tracking-collar data table last week and when. Which system table answers this directly?`,
     opts:[
       `system.billing.usage, since it records every account action with a timestamp`,
@@ -562,6 +596,7 @@ const QUESTIONS = [
   },
   /* Ch 18 - Query Profiler and Spark UI */
   {
+    ref:{chapter:18},
     q:`A credit union's fraud-review dashboard query against a SQL warehouse runs slower than expected, and an analyst wants to see which operator is consuming the most time. Where should they look first?`,
     opts:[
       `The Executors tab of the Spark UI`,
@@ -573,6 +608,7 @@ const QUESTIONS = [
     explain:`A SQL warehouse query's native diagnostic view is Query Profile, breaking the query into an operator graph with time, rows, and memory.`
   },
   {
+    ref:{chapter:18},
     q:`A credit union's risk-scoring job on a classic all-purpose cluster has one stage where task durations vary wildly, a handful taking far longer than the rest. Which Spark UI signal points at this, and what does it indicate?`,
     opts:[
       `The Jobs tab's overall run duration, flagging any job running longer than its historical average`,
@@ -585,6 +621,7 @@ const QUESTIONS = [
   },
   /* Ch 19 - Monitoring Jobs and Pipelines: Event Logs, REST API, CLI */
   {
+    ref:{chapter:19},
     q:`A dental clinic chain's internal ops dashboard needs to display whether any job across the account failed in the last 24 hours, refreshed automatically with no human opening the Databricks UI. What should it query?`,
     opts:[
       `The Jobs REST API, or system.lakeflow for an account-wide view spanning every job`,
@@ -596,6 +633,7 @@ const QUESTIONS = [
     explain:`An automated service needs a programmatic, account-wide answer; the Jobs REST API answers per job, and system.lakeflow answers across the account.`
   },
   {
+    ref:{chapter:19},
     q:`A dental clinic chain's nightly CI pipeline needs to confirm a specific job's last run succeeded before proceeding, using only command-line tooling with no custom HTTP client code. What accomplishes this?`,
     opts:[
       `Opening the Jobs & Pipelines UI in a headless browser and parsing the rendered page`,
@@ -608,6 +646,7 @@ const QUESTIONS = [
   },
   /* Ch 20 - Alerting: SQL Alerts and Job Notifications */
   {
+    ref:{chapter:20},
     q:`An HVAC service company's nightly job completes successfully every run, but the percentage of null values in a required technician-id column has quietly climbed to 25% over the past week. What catches this, and why do job notifications not?`,
     opts:[
       `A job notification on the failure event, since a data quality regression should eventually cause the job to fail`,
@@ -619,6 +658,7 @@ const QUESTIONS = [
     explain:`The job is succeeding every run, so failure, duration, and backlog notifications never fire. A SQL alert watches the actual data against a threshold.`
   },
   {
+    ref:{chapter:20},
     q:`An HVAC company's job-level failure notification is configured on a multi-task dispatch job. One task fails, automatically retries, and succeeds on the retry, so the overall job run ends up successful. Does the job-level notification fire for the initial failure?`,
     opts:[
       `Yes, job-level notifications always fire for every individual task failure regardless of retries`,
@@ -631,6 +671,7 @@ const QUESTIONS = [
   },
   /* Ch 21 - UC Managed Tables and Reduced Ops Overhead */
   {
+    ref:{chapter:21},
     q:`A bike share operator's ride-log table has been growing steadily for months with no scheduled maintenance job, yet queries stay fast and small-file counts stay low. What is the most likely reason?`,
     opts:[
       `It is a managed table with Predictive Optimization running OPTIMIZE and ANALYZE on its own`,
@@ -642,6 +683,7 @@ const QUESTIONS = [
     explain:`That kind of upkeep without a visible job is the signature of Predictive Optimization on a managed table.`
   },
   {
+    ref:{chapter:21},
     q:`A bike share operator drops an external table pointing at a GPS-trace dataset in a shared storage bucket used by another team's tooling. What happens to the underlying files?`,
     opts:[
       `Databricks schedules them for deletion after a 7-day recovery window, same as a managed table`,
@@ -654,6 +696,7 @@ const QUESTIONS = [
   },
   /* Ch 22 - Delta Optimization: Deletion Vectors and Liquid Clustering */
   {
+    ref:{chapter:22},
     q:`A toll road authority's clustering key changes from highway_id to (highway_id, toll_date) after three years of transaction data has already landed. What should run next to get the full benefit of the new key?`,
     opts:[
       `Nothing; new writes will pick up the new key automatically`,
@@ -665,6 +708,7 @@ const QUESTIONS = [
     explain:`A routine OPTIMIZE is incremental and only touches drifted data; OPTIMIZE FULL forces a complete recluster against the new key.`
   },
   {
+    ref:{chapter:22},
     q:`A toll authority runs frequent UPDATE statements to correct misread license plates on a high-traffic transactions table. Two concurrent corrections touch different rows in the same file. What makes it unlikely these transactions collide?`,
     opts:[
       `Liquid Clustering automatically serializes all UPDATE statements`,
@@ -677,6 +721,7 @@ const QUESTIONS = [
   },
   /* Ch 23 - Data Skipping and File Pruning */
   {
+    ref:{chapter:23},
     q:`A grocery delivery platform's query filters on WHERE order_value > 200. A file's stored max for order_value is 45. What happens to that file at query time?`,
     opts:[
       `It is skipped entirely without being opened, since its max makes a match mathematically impossible`,
@@ -688,6 +733,7 @@ const QUESTIONS = [
     explain:`Data skipping compares the filter against a file's own min/max before opening it; a max of 45 makes a match impossible, so the file is never opened.`
   },
   {
+    ref:{chapter:23},
     q:`A grocery delivery platform's external table collects statistics on its first 32 columns by default, and a dashboard starts filtering heavily on column 39, a delivery-zone field added later. What is the effect on skipping for that filter?`,
     opts:[
       `Column 39 gets full skipping benefit automatically`,
@@ -700,6 +746,7 @@ const QUESTIONS = [
   },
   /* Ch 24 - CDF for Streaming Limitations and Latency */
   {
+    ref:{chapter:24},
     q:`A laundry service chain's silver table needs to propagate a corrected pickup address downstream the moment it changes upstream, without reprocessing the whole table. What enables this?`,
     opts:[
       `A plain readStream against the source table`,
@@ -711,6 +758,7 @@ const QUESTIONS = [
     explain:`A plain stream only sees new rows; CDF surfaces the update as an update_preimage/update_postimage pair via an incremental read.`
   },
   {
+    ref:{chapter:24},
     q:`A laundry service enables Change Data Feed on a table that is strictly append-only, since new orders are the only rows it ever receives. What is the practical effect of enabling CDF here?`,
     opts:[
       `It meaningfully speeds up downstream streaming reads`,
@@ -723,6 +771,7 @@ const QUESTIONS = [
   },
   /* Ch 25 - Diagnosing Bottlenecks with Query Profile */
   {
+    ref:{chapter:25},
     q:`Query Profile on an event-ticketing platform's demand-forecast query shows one operator responsible for 80% of total query time, with a spill-to-disk warning on that node. What is the most cost-effective next step?`,
     opts:[
       `Investigate why that operator's intermediate data doesn't fit in memory, and fix the query or join strategy causing it`,
@@ -734,6 +783,7 @@ const QUESTIONS = [
     explain:`Spill means extra, avoidable work writing and reading from disk; scaling the cluster masks the inefficiency at a higher price instead of fixing it.`
   },
   {
+    ref:{chapter:25},
     q:`A ticketing platform's query's Query Profile shows one task in a stage taking far longer than every other task, while the rest of the stage sits idle waiting. What does this pattern usually indicate, and what is the typical fix?`,
     opts:[
       `Network latency to the storage layer, fixed by moving the cluster to a different region`,
@@ -746,6 +796,7 @@ const QUESTIONS = [
   },
   /* Ch 26 - ACLs and Least Privilege */
   {
+    ref:{chapter:26},
     q:`A language-learning app's new analyst needs to run SELECT queries against exactly one schema for their next project. What is the correct grant?`,
     opts:[
       `GRANT USE CATALOG ON CATALOG prod TO the analyst's user`,
@@ -757,6 +808,7 @@ const QUESTIONS = [
     explain:`Least privilege means the schema-level SELECT that satisfies the actual need; the other options all open far more than one project requires.`
   },
   {
+    ref:{chapter:26},
     q:`A language-learning app needs to transfer ownership of a shared view from a departing engineer to their replacement. Who is allowed to perform that transfer?`,
     opts:[
       `Any user with SELECT on the view`,
@@ -769,6 +821,7 @@ const QUESTIONS = [
   },
   /* Ch 27 - Row Filters and Column Masks */
   {
+    ref:{chapter:27},
     q:`A tutoring platform's session-notes table needs coordinators to see every session row, but with the student-phone column always shown as a masked placeholder unless they're in the safeguarding_team group. What mechanism fits?`,
     opts:[
       `A column mask on student_phone, checking group membership`,
@@ -780,6 +833,7 @@ const QUESTIONS = [
     explain:`The requirement is to keep every row visible while reshaping one column, which is exactly what a column mask does.`
   },
   {
+    ref:{chapter:27},
     q:`A tutoring platform needs disciplinary-flag rows to be completely invisible to any user outside the compliance team, while all other session data stays fully visible to coordinators. Which mechanism fits?`,
     opts:[
       `A column mask on the disciplinary-flag column, checking compliance team membership`,
@@ -792,6 +846,7 @@ const QUESTIONS = [
   },
   /* Ch 28 - Anonymization and PII Masking Pipelines */
   {
+    ref:{chapter:28},
     q:`A meal-kit delivery pipeline needs a fraud-style investigation team to be able to look up a customer's real address from an anonymized ID when a case is escalated. Which technique supports this?`,
     opts:[
       `Hashing with sha2, since it is deterministic`,
@@ -803,6 +858,7 @@ const QUESTIONS = [
     explain:`Hashing is deliberately one-way and suppression removes the value outright; tokenization is the only technique built to be reversed through a controlled lookup.`
   },
   {
+    ref:{chapter:28},
     q:`A meal-kit pipeline needs to join and group records by customer across two different regional systems, but must never be able to recover the original customer identifier again. Which technique fits?`,
     opts:[
       `Tokenization, backed by a secure lookup vault`,
@@ -815,6 +871,7 @@ const QUESTIONS = [
   },
   /* Ch 29 - Purging and Retention: VACUUM and Right to Be Forgotten */
   {
+    ref:{chapter:29},
     q:`A grocery delivery company's compliance team ran DELETE FROM customers WHERE customer_id = 9931 yesterday and considers a right-to-be-forgotten request closed. Is the customer's data actually gone from storage?`,
     opts:[
       `No, the file is still referenced by older log versions and reachable via time travel until VACUUM removes it`,
@@ -826,6 +883,7 @@ const QUESTIONS = [
     explain:`DELETE only changes what the current version of the log points to; the underlying file is still reachable via time travel until VACUUM removes it.`
   },
   {
+    ref:{chapter:29},
     q:`A grocery delivery company wants to close deletion requests faster by shortening delta.deletedFileRetentionDuration well below the 7-day default. What is the trade-off they are accepting?`,
     opts:[
       `None; shortening retention has no downside beyond faster request closure`,
@@ -838,6 +896,7 @@ const QUESTIONS = [
   },
   /* Ch 30 - Metadata, Tags, and Discoverability */
   {
+    ref:{chapter:30},
     q:`A power grid operator wants every table across the account tagged contains_pii so a downstream policy can find them all at once. What accomplishes this without changing any table's schema?`,
     opts:[
       `Adding a comment mentioning PII to each table`,
@@ -850,6 +909,7 @@ const QUESTIONS = [
   },
   /* Ch 31 - The UC Permission Inheritance Model */
   {
+    ref:{chapter:31},
     q:`A power grid operator's catalog-level SELECT grant reaches a table containing sensitive substation data that one group should never see. What is the correct way to stop just that group?`,
     opts:[
       `Grant a DENY SELECT on that table to the group`,
@@ -859,8 +919,228 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`There is no DENY privilege in Unity Catalog, and a table owner cannot override a grant made higher up. The only real fix is adjusting the grant at the level it was made.`
+  },
+
+  /* ---------- Drill extension: Unit 8 (added for the practice hub) ---------- */
+
+  /* Ch 30 - Metadata, Tags, and Discoverability */
+  {
+    ref:{chapter:30},
+    q:`A logistics company's data stewards have tagged dozens of tables <code>domain=finance</code>. A new engineer opens Catalog Explorer, types <code>domain=finance</code> into its filter field, and gets no matches. How should the engineer find every table carrying that tag?`,
+    opts:[
+      "Use the workspace search bar at the top of the page and enter <code>tag:domain:finance</code>, since tag search runs there with the exact key and value",
+      "Keep using the Catalog Explorer filter field but switch it to semantic mode, which interprets key-value pairs as tags",
+      "Run <code>SHOW TABLES</code> in each schema with a <code>LIKE '%finance%'</code> pattern, because tags are stored as part of the table name",
+      "Ask a metastore admin to re-index the catalog, because newly applied tags are not searchable until the next index rebuild"
+    ],
+    correct:0,
+    explain:`Tag search is done from the workspace search bar using <code>tag:&lt;key&gt;</code> or <code>tag:&lt;key&gt;:&lt;value&gt;</code> with the exact term; the Catalog Explorer filter field cannot search by tag. The <code>SHOW TABLES</code> pattern fails because a tag is a label attached to the object, not part of its name, which is exactly why tags exist instead of naming conventions.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A bank's compliance team needs a nightly report listing every column in the <code>core</code> catalog tagged <code>contains_pii</code>, with its schema and table, written to a Delta table by a scheduled SQL task. What is the most direct source for that report?`,
+    opts:[
+      "A loop that runs <code>DESCRIBE TABLE EXTENDED</code> on every table and parses the tag section out of the text output",
+      "An export of workspace search results for <code>tag:contains_pii</code>, saved as CSV and loaded each night",
+      "A query against <code>core.information_schema.column_tags</code>, filtered on the tag name",
+      "A query against <code>core.information_schema.table_privileges</code>, joined to the column list of each table"
+    ],
+    correct:2,
+    explain:`Each catalog's information schema exposes tag views (<code>catalog_tags</code>, <code>schema_tags</code>, <code>table_tags</code>, <code>column_tags</code>), so a single SQL query returns every tagged column and fits a scheduled task. Workspace tag search is a UI tool and does not cover columns at all, so exporting its results would both be manual and miss the very objects the report needs.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A retailer's data steward holds <code>USE CATALOG</code>, <code>USE SCHEMA</code> and <code>SELECT</code> on <code>sales.gold.orders</code>, but does not own it. Running <code>SET TAG ON TABLE sales.gold.orders sensitivity = internal</code> fails with a permission error. What grant does the steward need?`,
+    opts:[
+      "<code>MODIFY</code> on the table, because applying a tag rewrites the table's Delta files",
+      "<code>APPLY TAG</code> on the table, which allows adding and editing its tags (and its columns' tags)",
+      "<code>CREATE TABLE</code> on the schema, because tags are stored as a schema-level property",
+      "Nothing further: the table owner must run the command, since only owners can tag objects"
+    ],
+    correct:1,
+    explain:`Tagging a table requires <code>APPLY TAG</code> on it, plus <code>USE SCHEMA</code> and <code>USE CATALOG</code> on its parents, unless the user owns the object; on a table it also covers column tags. <code>MODIFY</code> is the tempting pick, but tags change metadata only, not data files, and the owner-only option is wrong because <code>APPLY TAG</code> exists precisely so non-owners can tag.`
+  },
+  {
+    ref:{chapter:30},
+    q:`An insurer's governance lead finds that the <code>sensitivity</code> tag has drifted into a dozen spellings (<code>Restricted</code>, <code>restrict</code>, <code>high</code>) because anyone with tagging rights types a free-form value. She wants only <code>public</code>, <code>internal</code> and <code>restricted</code> to be accepted, and only named stewards able to assign the tag. What should she set up?`,
+    opts:[
+      "A documented naming convention in the column comments, with a weekly job that reports nonconforming values",
+      "A <code>CHECK</code> constraint on each table that rejects rows whose sensitivity value is outside the three allowed values",
+      "A plain tag on each catalog, relying on tag inheritance to force the same value onto every table and column",
+      "A governed tag whose tag policy defines the three allowed values, with the <code>ASSIGN</code> permission granted only to the stewards"
+    ],
+    correct:3,
+    explain:`Governed tags are backed by a tag policy that restricts the allowed values, and assigning one requires the <code>ASSIGN</code> permission on that tag, so both the vocabulary and the people are controlled. A <code>CHECK</code> constraint governs row data, not object metadata, and a comment convention only reports drift after the fact instead of preventing it.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A healthcare analytics team's table owner wrote a <code>COMMENT</code> on <code>claims_gold</code> using markdown: a bulleted list of sources and a bold warning about late-arriving adjustments. An analyst who runs <code>DESCRIBE TABLE EXTENDED claims_gold</code> sees raw asterisks and dashes and reports the comment as corrupted. What is happening?`,
+    opts:[
+      "Nothing is wrong: markdown in a comment is rendered in the Catalog Explorer UI, but <code>DESCRIBE</code> returns the raw text",
+      "The comment was saved with an unsupported encoding and must be rewritten as plain text to display anywhere",
+      "Markdown comments are only supported on catalogs and schemas, so the table comment was stored without formatting",
+      "The analyst lacks <code>BROWSE</code> on the table, so <code>DESCRIBE</code> shows a redacted version of the comment"
+    ],
+    correct:0,
+    explain:`Comments accept basic markdown, which Catalog Explorer renders, while <code>DESCRIBE</code> statements return the comment as raw text without styling. The comment is intact and readable where analysts browse; the unsupported-encoding option misreads expected behavior as damage, and markdown comments work on tables and columns, not just containers.`
+  },
+  {
+    ref:{chapter:30},
+    q:`An energy trading firm's engineer proposes documenting the <code>settle_px</code> column by adding a tag whose value is a three-sentence explanation of how the settlement price is derived and when it is revised, so that "everything lives in tags". Analysts browsing the table in Catalog Explorer are the audience. What is the better choice?`,
+    opts:[
+      "Keep the tag, but split the explanation across several tags so each value stays short enough to be searchable",
+      "A column <code>COMMENT</code> holding the explanation, keeping tags for short labels that policies and searches filter on",
+      "Rename the column to <code>settle_px_daily_revised_t1</code> so the derivation is visible wherever the column appears",
+      "Store the explanation in a separate documentation table joined to the column name, since comments are not shown in Catalog Explorer"
+    ],
+    correct:1,
+    explain:`A comment is the place for human-readable context: it is shown, with markdown, right where analysts read the column in Catalog Explorer and is matched by search. Tags are machine-filterable labels for grouping and policy, so splitting prose across tags misuses them, and the documentation-table option rests on the false premise that comments are not displayed.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A media company's steward plans to open Catalog Explorer at 10:00 on a weekday and accept AI-generated comments, after review, on forty gold tables that production Lakeflow Jobs write to throughout the day. A platform engineer asks her to wait. What is the documented reason to schedule the work?`,
+    opts:[
+      "AI-generated comments are written to the table's Delta files, so saving them rewrites every data file in the table",
+      "AI-generated comments lock the table for reads until a human reviewer approves them in a separate workflow",
+      "Accepting an AI-generated comment automatically applies matching tags, which can trigger ABAC policies on live queries",
+      "Saving a comment runs an <code>ALTER</code> command on the object, which can disrupt pipelines and jobs that are using it"
+    ],
+    correct:3,
+    explain:`Databricks notes that saving comments triggers an <code>ALTER</code> SQL command, which can disrupt running pipelines and jobs, so bulk updates on busy tables belong in a quiet window. Comments are metadata, not data, so nothing rewrites the Delta files; the review step is the owner's own editing before saving, not a read lock.`
+  },
+  /* Ch 31 - The UC Permission Inheritance Model */
+  {
+    ref:{chapter:31},
+    q:`A telecom's <code>network</code> catalog has 22 schemas, and new ones are added most months. The <code>noc_analysts</code> group already holds <code>USE CATALOG</code> and <code>SELECT</code> on the catalog, yet they file a ticket every time a new schema appears because they cannot open it. Which single grant ends the tickets?`,
+    opts:[
+      "<code>GRANT USE CATALOG ON CATALOG network TO noc_analysts</code> again, since it carries down to every schema",
+      "<code>GRANT BROWSE ON CATALOG network TO noc_analysts</code>, which provides the path into each schema",
+      "<code>GRANT USE SCHEMA ON CATALOG network TO noc_analysts</code>, which applies to all current and future schemas",
+      "A <code>USE SCHEMA</code> grant on each schema, because usage privileges are never inherited"
+    ],
+    correct:2,
+    explain:`Granting <code>USE SCHEMA</code> on a catalog applies it to every current and future schema in that catalog, and combined with the inherited <code>SELECT</code> it opens the full path. <code>USE CATALOG</code> is the gate on the catalog itself and does not stand in for <code>USE SCHEMA</code>, and <code>BROWSE</code> exposes metadata only, not a path to read data.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A pharmaceutical company's admin runs <code>REVOKE SELECT ON TABLE trials.results.unblinded FROM contractors</code>. The command succeeds, but contractors can still query the table an hour later. The group holds <code>USE CATALOG</code> on <code>trials</code> and <code>USE SCHEMA</code> and <code>SELECT</code> on <code>trials.results</code>. Why does access persist?`,
+    opts:[
+      "Unity Catalog caches grants for up to 24 hours, so the revoke takes effect the next day",
+      "The schema-level <code>SELECT</code> still reaches the table; the access must be removed where it was granted, at the schema",
+      "A table-level revoke is only advisory; a <code>DENY SELECT</code> on the table is needed to override the schema grant",
+      "Only the table owner can revoke access, so the admin's revoke was recorded but not enforced"
+    ],
+    correct:1,
+    explain:`The group's access is inherited from the schema-level grant, and revoking a table-level grant that may never have existed does nothing to that inheritance. Unity Catalog has no <code>DENY</code> on <code>SELECT</code>, so the fix is to revoke or narrow the schema grant, or move the table to a schema it does not reach.`
+  },
+  {
+    ref:{chapter:31},
+    q:`An airline's external auditors need <code>SELECT</code> on <code>ops.safety.incident_log</code> today. The table's owner is on leave for two weeks. The owner of the <code>ops.safety</code> schema, who does not own the table, is available. What can happen?`,
+    opts:[
+      "The schema owner can grant <code>SELECT</code> on the table directly, because owners of a parent schema can manage privileges on its objects",
+      "The schema owner must first transfer the table's ownership to themselves, since only an object's owner can grant on it",
+      "Only a metastore admin can grant on a table whose owner is unavailable, so the request must be escalated",
+      "The auditors must wait, because a table owner's control over its grants cannot be overridden by anyone"
+    ],
+    correct:0,
+    explain:`The owner of the catalog or schema that contains an object can grant and manage privileges on it, so the schema owner can issue the grant without owning the table. Ownership transfer is unnecessary, and the claim that a table owner's control cannot be overridden reverses the model: container owners keep control over what is inside their container.`
+  },
+  {
+    ref:{chapter:31},
+    q:`At a logistics firm, Priya owns the schema <code>fleet.telemetry</code>. A colleague creates and owns <code>fleet.telemetry.engine_faults</code>. Priya, holding <code>USE CATALOG</code> on <code>fleet</code>, queries the new table and gets a permission error, which surprises her because she "owns the schema". What is true?`,
+    opts:[
+      "She cannot reach the table until the colleague transfers its ownership, because table owners outrank schema owners",
+      "Schema ownership makes her the co-owner of every table, so the error must come from a missing <code>USE SCHEMA</code> grant",
+      "Owning the schema does not automatically give her privileges on its tables, but she can grant herself <code>SELECT</code> on this one",
+      "Schema owners are limited to metadata, so only a catalog owner could give her read access"
+    ],
+    correct:2,
+    explain:`A schema owner does not automatically hold all privileges on the tables in the schema, and does not become their owner, but can grant privileges on them, including to herself. Ownership does not flow down to children, so the co-owner option is wrong, and the table owner cannot block her because control at the container level is a boundary a lower-level owner cannot cross.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A university's security team wants a data steward to handle all access requests for the tables in the <code>research.grants</code> schema, granting and revoking as needed, including on tables created later. The steward must not own the schema and must not be able to read the data. The steward already holds <code>USE CATALOG</code> on <code>research</code>. What should be granted?`,
+    opts:[
+      "<code>ALL PRIVILEGES</code> on the schema, which includes the right to grant to others",
+      "Ownership of each table, transferred as tables are created",
+      "<code>SELECT</code> with a grant option on the schema, so the steward can pass access on",
+      "<code>MANAGE</code> on the schema, which flows to all child objects and does not by itself grant data access"
+    ],
+    correct:3,
+    explain:`<code>MANAGE</code> lets a principal grant and revoke privileges on an object without owning it, it is inherited by every current and future child when granted on a container, and it does not include data access. <code>ALL PRIVILEGES</code> would hand the steward <code>SELECT</code> as well, breaking the no-read requirement, and per-table ownership transfers miss tables created later.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A compliance script at a fintech calls the Unity Catalog permissions endpoint that lists the grants on <code>payments.ledger.transfers</code> and reports that the <code>finance_ops</code> group has no access. Yet members of <code>finance_ops</code> query the table every day. What explains the discrepancy?`,
+    opts:[
+      "The group's access is inherited from a grant on the schema or catalog, which the plain list does not include; the effective permissions endpoint shows inherited grants",
+      "Group members are reading a cached copy of the table, which is not subject to Unity Catalog permissions",
+      "Unity Catalog stores group grants separately from user grants, so the script must query each member individually",
+      "The table is shared through Delta Sharing to the same workspace, which bypasses the grants on the table"
+    ],
+    correct:0,
+    explain:`A grant on a parent catalog or schema applies to every current and future child, and the list-permissions endpoint returns only grants made directly on the securable. The effective permissions endpoint includes privileges inherited from parent securables, so an audit of who can actually read a table must use it. Querying members one by one would not help, because the access comes from the parent grant, not from anything recorded on the table.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A manufacturer wants every employee to see which tables exist in the <code>plant</code> catalog, with their names, comments and columns, so they can request access to the right one. Employees must not be able to read any rows until a request is approved. Which grant fits?`,
+    opts:[
+      "<code>USE CATALOG</code> and <code>USE SCHEMA</code> on the catalog, which reveal metadata but block reads",
+      "<code>BROWSE</code> on the catalog, which allows discovering and viewing metadata for all its objects without data access",
+      "<code>SELECT</code> on the catalog with a row filter that returns no rows until access is approved",
+      "A tag <code>access=request</code> on the catalog, which makes every table in it visible in workspace search to all users"
+    ],
+    correct:1,
+    explain:`<code>BROWSE</code> on a catalog lets a user discover and view metadata for every object in it and does not grant data access, which is exactly a request-access catalog. The usage privileges are gates on the path, not a metadata view, and the <code>SELECT</code>-plus-filter option grants a privilege that inheritance carries to every current and future table, so one filter mistake exposes data.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -912,6 +1192,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -1066,7 +1376,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;

@@ -171,6 +171,7 @@ const E = {
 const QUESTIONS = [
   /* Ch 01 - DABs Project Structure for Scalable Python */
   {
+    ref:{chapter:1},
     q:`A developer adds a new scheduled job by editing <code>resources/jobs.yml</code>, but forgets to write the actual transformation logic. Where should that logic go, and why can it not just live inside <code>resources/jobs.yml</code>?`,
     opts:[
       `Inline inside <code>resources/jobs.yml</code>, since YAML supports embedded Python blocks for exactly this`,
@@ -183,6 +184,7 @@ const QUESTIONS = [
   },
   /* Ch 02 - Libraries and Dependencies */
   {
+    ref:{chapter:2},
     q:`A job cluster has no C compiler installed. A required PyPI dependency's newest patch release ships only a source distribution for the cluster's Python version, no wheel. What is the most likely outcome, and the safer fix going forward?`,
     opts:[
       `Nothing breaks; source distributions never need a compiler on Databricks`,
@@ -195,6 +197,7 @@ const QUESTIONS = [
   },
   /* Ch 03 - Python and Pandas UDFs */
   {
+    ref:{chapter:3},
     q:`A pipeline uses a Python UDF to compute <code>date_add(order_date, 7)</code> instead of Spark's built-in function. A separate transform uses a pandas UDF to call a third-party sentiment model on a text column, since one row at a time is too slow. Which change most improves performance?`,
     opts:[
       `Replace the date_add UDF with the built-in function; leave the sentiment model as a pandas UDF, since no built-in covers it`,
@@ -207,6 +210,7 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow + Auto Loader */
   {
+    ref:{chapter:4},
     q:`A bronze table built with Auto Loader has run for months. An engineer notices the cluster now spends unusually long re-scanning file metadata at the start of every run, and finds <code>cloudFiles.schemaLocation</code> was accidentally deleted from the pipeline config. What connects the two symptoms?`,
     opts:[
       `The missing schemaLocation reset the streaming checkpoint, so every file is being reprocessed from scratch`,
@@ -219,6 +223,7 @@ const QUESTIONS = [
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
+    ref:{chapter:5},
     q:`A platform team wants every job change to go through a pull request and stay identical across dev, staging, and prod. An engineer proposes standardizing on editing jobs directly in the workspace UI, arguing it is faster to iterate. What is the strongest argument against that plan?`,
     opts:[
       `The UI cannot trigger a job at all, only the CLI and REST API can start a run`,
@@ -231,6 +236,7 @@ const QUESTIONS = [
   },
   /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
   {
+    ref:{chapter:6},
     q:`A gold table joins a slowly changing customer tier dimension (occasionally corrected after the fact) against a silver fact table to compute tier-level totals. Which signal should decide whether this table is a streaming table or a materialized view?`,
     opts:[
       `Whether the fact table is large; streaming tables scale better on large sources regardless of update patterns`,
@@ -243,6 +249,7 @@ const QUESTIONS = [
   },
   /* Ch 07 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`A CDC pipeline uses <code>apply_changes</code> with <code>keys=["order_id"]</code> and <code>sequence_by="lsn"</code>. During a brief network partition, a batch of updates for order_id 900 is delivered twice, once as a retry and once as the original, both carrying the same lsn value. What happens to the target table?`,
     opts:[
       `The target ends up correct regardless of which duplicate is applied first, since both share the same key and sequence value`,
@@ -255,6 +262,7 @@ const QUESTIONS = [
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A team's pipeline reads Kafka events, deduplicates them with a custom stateful operator that has no equivalent in Lakeflow Declarative Pipelines, and lands the result in a Delta table in Unity Catalog. Which approach fits, and what decides it?`,
     opts:[
       `Lakeflow Declarative Pipelines, because the output is a Delta table in Unity Catalog, which always overrides any other signal`,
@@ -267,6 +275,7 @@ const QUESTIONS = [
   },
   /* Ch 09 - Control Flow and Task Configuration in Jobs */
   {
+    ref:{chapter:9},
     q:`A job has tasks extract, load_warehouse, and load_lake, where both load tasks depend on extract and run in parallel. A final notify_ops task must alert if either load task failed, but stay silent if both succeeded. Which run_if rule on notify_ops achieves this?`,
     opts:[
       `ALL_DONE, so notify_ops always runs once both load tasks finish, regardless of outcome`,
@@ -279,6 +288,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
   {
+    ref:{chapter:10},
     q:`A test calls <code>assertDataFrameEqual(actual, expected)</code> where both have the same schema and the same set of rows, but actual came from a groupBy() aggregation, so its rows land in a different order. A second test compares a computed average of 12.000000000000002 against an expected 12.0. What happens in each case, by default?`,
     opts:[
       `The first test fails on row order; the second passes, since integer-like floats are compared exactly`,
@@ -290,6 +300,53 @@ const QUESTIONS = [
     explain:`assertDataFrameEqual is built to forgive exactly these two situations: it treats the two DataFrames as unordered by default, so a groupBy reshuffling rows is not a failure, and it applies rtol and atol tolerances, so a floating-point rounding difference like this passes while a genuinely wrong value would still fail loudly. Neither symptom described here causes a failure on its own.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
@@ -341,6 +398,36 @@ function setProgress(){
     pbar.style.width = (answered/QUESTIONS.length*100)+"%";
   } else if(state.screen==="results"){ pbar.style.width="100%"; }
   else pbar.style.width="0%";
+}
+
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the post-submit review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this exam>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  /* the pre-multi-course cookie "1" grants de-assoc only, as in gate.ts */
+  return l.indexOf(CHAP.course)<0 && !(CHAP.course==="de-assoc" && l.indexOf("1")>=0);
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
 }
 
 /* ---------- render ---------- */
@@ -495,7 +582,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCDEF"[j]}</span><span>${o}${mine.includes(j)?'  ·  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake exam</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
