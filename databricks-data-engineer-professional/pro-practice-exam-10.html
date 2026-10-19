@@ -164,7 +164,7 @@ const E = {
   badge: "Databricks DE Professional",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer. Full syllabus coverage.",
   coverage: "Full coverage: all 37 chapters across all 10 units, from Developing Code with Python and SQL through Data Modelling.",
-  minutes: 120,
+  minutes: 154,
   pass: 70
 };
 
@@ -925,6 +925,216 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`Overwriting the dimension would make last year's sales appear to have always belonged to South, which is exactly wrong. Preserving the historical value as a slowly changing dimension keeps a past fact joined to the district it actually happened under.`
+  },
+
+  /* ---------- Drill extension: Unit 10 (added for the practice hub) ---------- */
+
+  /* Ch 35 - Scalable Data Models with Delta */
+  {
+    ref:{chapter:35},
+    q:`A payments processor receives a regulator's request to show the exact webhook payloads a partner sent on a given day last year, including fields the pipeline has never used. The silver <code>transactions</code> table holds cleaned, typed, deduplicated rows, and gold holds daily settlement totals. Which layer is designed to answer this request?`,
+    opts:[
+      `Silver, because schema enforcement guarantees every field the partner sent was validated and stored`,
+      `Bronze, because it keeps the source data in its original state with little or no cleanup, which is what supports auditing and reprocessing`,
+      `Gold, because the settlement totals are the business-aligned record a regulator expects to see`,
+      `None of them: Delta tables cannot hold payloads in their original form, so a separate file archive is required`
+    ],
+    correct:1,
+    explain:`Bronze retains the raw state of the source, unused fields included, which is exactly what an audit of what was actually received needs. Silver is the tempting pick, but it has already been cleaned, cast and deduplicated against its declared schema, so fields outside that schema and the original form of each payload are no longer there.`
+  },
+  {
+    ref:{chapter:35},
+    q:`A logistics company's nightly job appends a batch to the silver <code>shipments</code> table, whose <code>weight_kg</code> column is declared <code>DOUBLE</code>. A partner starts sending weights as text such as <code>"12 kg"</code>, the cast cannot be made safely, and the job fails. The on-call engineer worries the table is now half loaded. What actually happened?`,
+    opts:[
+      `The rows that could be cast were committed and the others were written to a rescued data column`,
+      `Delta silently converted the unsafe values to null so the rest of the batch could land`,
+      `The column type was widened to <code>STRING</code> automatically, and the failure was only a warning`,
+      `Schema enforcement rejected the write at write time and the transaction failed as a whole, so the table is unchanged`
+    ],
+    correct:3,
+    explain:`Delta checks incoming data against the table's declared schema at write time and throws an error when a value cannot be safely cast, and because writes are atomic the failed batch leaves no partial data behind. The rescued data column is a real feature, but it belongs to Auto Loader ingestion, not to a plain append into an existing silver table.`
+  },
+  {
+    ref:{chapter:35},
+    q:`A streaming platform's batch job appends viewing events to a Delta table. The upstream team adds a new <code>device_type</code> column, and the append now fails with a schema mismatch. The data team wants the column kept and future appends to succeed. What is the most direct fix on the write?`,
+    opts:[
+      `Set the <code>mergeSchema</code> option to true on the append, so the new source column is added to the end of the target schema`,
+      `Drop and recreate the table with the new schema, then reload its full history`,
+      `Turn schema enforcement off for the table so any incoming shape is accepted`,
+      `Select only the existing columns before writing, so the append matches the current schema`
+    ],
+    correct:0,
+    explain:`Enabling <code>mergeSchema</code> on the write turns on schema evolution, adding columns that exist in the source but not the target, appended at the end of the schema. Selecting only the old columns would make the append succeed, but it discards <code>device_type</code>, which is the opposite of keeping the model alive as the source changes.`
+  },
+  {
+    ref:{chapter:35},
+    q:`A bank's fraud analysts investigate suspicious activity by pulling individual card transactions and slicing them many different ways. Gold only offers <code>daily_spend_by_merchant</code>, and bronze holds the raw feed with duplicates and unparsed fields. Which layer should the analysts query?`,
+    opts:[
+      `Bronze, because the raw feed is the most complete version and nothing has been lost`,
+      `Gold, after adding one aggregate table for each new question the analysts raise`,
+      `Silver, because it holds cleaned, deduplicated, row-level records that are trustworthy without being shaped for one question`,
+      `Gold, by adding the transaction-level columns onto the merchant aggregate`
+    ],
+    correct:2,
+    explain:`Silver is the validated, non-aggregated layer meant for general analytics work, so open-ended investigation of individual transactions belongs there. Bronze is tempting because it is complete, but it still carries duplicates and unparsed fields, so every analyst would repeat the cleaning that silver already does once.`
+  },
+  {
+    ref:{chapter:35},
+    q:`A hospital network declares <code>patient_id</code> as <code>NOT NULL</code> on its silver <code>admissions</code> Delta table. One incoming batch of 40,000 rows contains three rows with a null <code>patient_id</code>. What happens when the batch is appended?`,
+    opts:[
+      `The write fails with a constraint violation and none of the 40,000 rows are added`,
+      `The 39,997 valid rows are committed and the three null rows are dropped with a warning`,
+      `All rows are written, and the null rows are flagged in the table history for later cleanup`,
+      `The constraint is informational only, so the batch lands unchanged`
+    ],
+    correct:0,
+    explain:`A <code>NOT NULL</code> constraint on a Delta table is enforced: a violating write raises an error, and since the transaction succeeds or fails as a whole, no rows from the batch are added. The informational option describes primary and foreign key constraints, which are not enforced, not <code>NOT NULL</code>.`
+  },
+  {
+    ref:{chapter:35},
+    q:`A retailer ingests point-of-sale JSON files into bronze with Auto Loader, using a schema location and the default schema evolution mode. A store firmware update adds a <code>loyalty_tier</code> field, and the stream stops with an <code>UnknownFieldException</code>. What should the team expect, and how should the stream be run?`,
+    opts:[
+      `The stream is corrupted: the checkpoint must be deleted and every file reingested before the new field can appear`,
+      `This is expected: Auto Loader has already merged the new column into the schema location, so restarting the stream (ideally as a job that restarts automatically) picks it up`,
+      `The new field is lost for good, because the default mode records unexpected fields only in the rescued data column`,
+      `The stream will stay stopped until someone edits the schema by hand to add <code>loyalty_tier</code>`
+    ],
+    correct:1,
+    explain:`In the default <code>addNewColumns</code> mode, Auto Loader saves the merged schema to the schema location before stopping with <code>UnknownFieldException</code>, and the restarted stream uses the evolved schema, which is why Databricks recommends running it in a job that restarts automatically. Capturing new fields only in the rescued data column describes <code>rescue</code> mode, and waiting for a manual schema change describes <code>failOnNewColumns</code>.`
+  },
+  /* Ch 36 - Liquid Clustering vs Partitioning vs Z-Order */
+  {
+    ref:{chapter:36},
+    q:`An e-commerce team is designing a new <code>orders</code> table. Today most queries filter on <code>order_date</code>, but the roadmap says filtering by <code>region</code> and <code>seller_id</code> will dominate within a year. An engineer proposes <code>PARTITIONED BY (order_date)</code> now. What layout decision fits these signals?`,
+    opts:[
+      `Partition by <code>order_date</code> now and repartition by <code>region</code> when the roadmap lands`,
+      `Partition by <code>order_date</code> and run <code>OPTIMIZE ZORDER BY (region, seller_id)</code> on a schedule`,
+      `Partition by all three columns so every future filter is covered from the start`,
+      `Use Liquid Clustering on <code>order_date</code>, then change the keys with <code>ALTER TABLE ... CLUSTER BY</code> when the access pattern shifts, without rewriting existing data`
+    ],
+    correct:3,
+    explain:`An access pattern that is expected to change is the signal for Liquid Clustering, whose keys can be redefined at any time without rewriting the data already in the table. Repartitioning later sounds manageable, but changing a partition key means rewriting the entire table, which is exactly the rigidity a changing workload should avoid.`
+  },
+  {
+    ref:{chapter:36},
+    q:`A SaaS company plans a new 300 GB <code>user_sessions</code> table and an engineer proposes <code>PARTITIONED BY (user_id)</code> because most queries filter on a single user. There are about two million users. What should the design review recommend?`,
+    opts:[
+      `Approve it: partitioning on the column used in the most frequent filter always maximizes data skipping`,
+      `Partition by <code>user_id</code>, then Z-Order each partition by <code>session_start</code> to recover performance`,
+      `Use Liquid Clustering on <code>user_id</code>: a table this size should not be partitioned, and a high-cardinality key would create a huge number of tiny partitions`,
+      `Partition by a hash bucket of <code>user_id</code> so each partition holds roughly 1 GB`
+    ],
+    correct:2,
+    explain:`Databricks advises not partitioning tables under 1 TB and partitioning only when each partition will hold at least 1 GB, and a two-million-value key on 300 GB breaks both, producing many small files and poor performance. Liquid Clustering on <code>user_id</code> gives the same data skipping benefit without the rigid directory layout. The hash bucket idea still builds a static, hand-tuned partition scheme where the recommended default already solves the problem.`
+  },
+  {
+    ref:{chapter:36},
+    q:`An engineer creates a new <code>telemetry</code> table with <code>CLUSTER BY (device_id, event_time)</code>, then copies an old maintenance notebook that runs <code>OPTIMIZE telemetry ZORDER BY (device_id, event_time)</code> every night. What happens?`,
+    opts:[
+      `Both layouts apply: Liquid Clustering handles new files and Z-Order re-sorts the older ones each night`,
+      `The <code>ZORDER BY</code> clause is rejected, because Z-Order cannot be used on a table with Liquid Clustering; a plain <code>OPTIMIZE</code> is what maintains the clustering`,
+      `The Z-Order run silently replaces Liquid Clustering, and the table reverts to an unclustered layout`,
+      `The nightly Z-Order converts the table to partitioning on <code>device_id</code>`
+    ],
+    correct:1,
+    explain:`Liquid Clustering is not compatible with partitioning or Z-Order, and <code>OPTIMIZE</code> does not accept <code>ZORDER BY</code> on a liquid clustered table; a plain <code>OPTIMIZE</code> incrementally clusters the data on the declared keys. Running both side by side is the tempting misreading, but Liquid Clustering replaces Z-Order as the layout rather than stacking on top of it.`
+  },
+  {
+    ref:{chapter:36},
+    q:`Before a layout cleanup, a platform team lists four tables, three existing and one planned. For which one is keeping the current layout, rather than redesigning it around Liquid Clustering, the recommended call?`,
+    opts:[
+      `A 400 TB firewall log archive partitioned by <code>country_code</code> (about 40 values that never change), filtered by country in nearly every query`,
+      `A 60 GB <code>customers</code> table partitioned by <code>customer_id</code>, with thousands of tiny files`,
+      `A 5 TB <code>orders</code> table Z-Ordered on columns that analysts stopped filtering on last year`,
+      `A planned new <code>invoices</code> table that copies the partitioning scheme of the old warehouse`
+    ],
+    correct:0,
+    explain:`Partitioning's narrow fit is a very large table with a stable, low-cardinality key that almost never changes, which is exactly the firewall archive, so its rigidity costs nothing real. The small <code>customers</code> table is the clearest anti-pattern (under 1 TB and a high-cardinality key), and the Z-Ordered table and the new <code>invoices</code> table are both cases where Liquid Clustering is the starting point.`
+  },
+  {
+    ref:{chapter:36},
+    q:`A media company is creating a new Unity Catalog managed table for a content analytics team. Nobody can yet say which columns the team's queries will filter on, and the platform team wants Databricks to choose and adjust the clustering keys from actual query usage. Which design meets this?`,
+    opts:[
+      `Partition by <code>ingest_date</code>, since date is the safest default when query patterns are unknown`,
+      `Leave the table unclustered and schedule <code>OPTIMIZE ZORDER BY</code> once usage becomes clear`,
+      `Pick the three most likely columns for <code>CLUSTER BY</code> and revisit them every quarter by hand`,
+      `Create it with <code>CLUSTER BY AUTO</code> and predictive optimization enabled, so keys are selected from observed usage`
+    ],
+    correct:3,
+    explain:`Automatic liquid clustering, declared with <code>CLUSTER BY AUTO</code> on a Unity Catalog managed table with predictive optimization, selects clustering keys from actual usage patterns and can change them as usage changes. Choosing keys by hand is still valid Liquid Clustering, but it does not meet the requirement that Databricks pick and adjust the keys itself.`
+  },
+  {
+    ref:{chapter:36},
+    q:`A ride-hailing company changes its liquid clustered <code>trips</code> table from <code>CLUSTER BY (city)</code> to <code>CLUSTER BY (driver_id, pickup_date)</code> with <code>ALTER TABLE</code>. The next day, queries on recent trips skip well but queries on last year's trips by <code>driver_id</code> show no improvement. What explains this, and what is the fix?`,
+    opts:[
+      `The key change failed silently because a liquid clustered table cannot change its keys; recreate the table`,
+      `Liquid Clustering only works on data written after the table was created; nothing can improve older files`,
+      `Changing keys does not recluster data already written; run <code>OPTIMIZE trips FULL</code> to recluster existing data on the new keys`,
+      `The new keys need a nightly <code>OPTIMIZE ZORDER BY (driver_id)</code> to reach older files`
+    ],
+    correct:2,
+    explain:`Redefining clustering keys is cheap precisely because existing data is not rewritten: new writes and routine <code>OPTIMIZE</code> runs follow the new keys, and <code>OPTIMIZE ... FULL</code> forces the older data to be reclustered. Z-Order is not an option here, since it cannot be used on a liquid clustered table.`
+  },
+  /* Ch 37 - Dimensional Modelling for Analytics */
+  {
+    ref:{chapter:37},
+    q:`A hotel group's gold <code>fact_bookings</code> table repeats the guest's name, email, loyalty tier and home city on every booking row next to <code>nights</code> and <code>room_revenue</code>. It is wide, slow to scan, and a loyalty tier change means updating millions of rows. What dimensional design fixes this?`,
+    opts:[
+      `Partition <code>fact_bookings</code> by loyalty tier so tier changes only rewrite one partition`,
+      `Split the measures into a separate fact table per loyalty tier`,
+      `Keep the columns but add a materialized view that removes the guest attributes for dashboards`,
+      `Move the guest attributes into a <code>dim_guest</code> table and keep the fact narrow: a key pointing to the guest plus the numeric measures`
+    ],
+    correct:3,
+    explain:`A fact table should be narrow and tall, mostly keys plus measures, while descriptive attributes live once per guest in a dimension the fact joins to. A view that hides the columns only changes what one consumer sees, leaving the wide table and the costly attribute updates in place.`
+  },
+  {
+    ref:{chapter:37},
+    q:`A telecom's gold pipeline assigns <code>customer_sk</code> in <code>dim_customer</code> by running <code>row_number()</code> over the whole incoming batch on every load, and keys from different days have started to collide. The team wants Delta to generate unique surrogate keys automatically on insert. Which approach fits?`,
+    opts:[
+      `Declare <code>customer_sk BIGINT GENERATED ALWAYS AS IDENTITY</code>, so each inserted row gets a unique value, accepting that values may have gaps`,
+      `Use the source system's customer number as <code>customer_sk</code>, since it is already unique`,
+      `Keep <code>row_number()</code> but sort by customer name first so keys repeat consistently`,
+      `Declare <code>customer_sk</code> as a <code>PRIMARY KEY</code> so Unity Catalog rejects duplicate values`
+    ],
+    correct:0,
+    explain:`An identity column (a <code>BIGINT</code> declared <code>GENERATED ALWAYS AS IDENTITY</code>) assigns a unique value to every inserted row; the values are not guaranteed to be contiguous, which does not matter for a surrogate key. The <code>PRIMARY KEY</code> option fails because primary key constraints on Databricks are informational and not enforced, and reusing the source's natural key gives up the insulation a surrogate key exists to provide.`
+  },
+  {
+    ref:{chapter:37},
+    q:`An insurer's Lakeflow Spark Declarative Pipelines build <code>dim_policyholder</code> from a CDC feed with the APPLY CHANGES API (named AUTO CDC in current Databricks docs). Actuaries need claims from past years to stay tied to the risk band a policyholder had at the time, even after the band changes. Which way of defining the dimension meets this?`,
+    opts:[
+      `An <code>APPLY CHANGES</code> flow with the default <code>STORED AS SCD TYPE 1</code>, so each change updates the row in place`,
+      `A materialized view that reads the latest snapshot of the policyholder source each night`,
+      `An <code>APPLY CHANGES</code> flow with <code>STORED AS SCD TYPE 2</code>, which keeps a row per version with <code>__START_AT</code> and <code>__END_AT</code>`,
+      `Copy the risk band onto every claims fact row and keep the dimension as SCD Type 1`
+    ],
+    correct:2,
+    explain:`SCD Type 2 keeps every version of a record, with <code>__START_AT</code> and <code>__END_AT</code> marking when each version was valid (a null <code>__END_AT</code> is the current one), so past claims can join to the band in force at the time. SCD Type 1, the default, overwrites the row, so every past claim would appear to belong to the current band.`
+  },
+  {
+    ref:{chapter:37},
+    q:`A grocery chain's BI team must join <code>fact_sales</code> to <code>dim_product</code>, then to <code>dim_subcategory</code>, then <code>dim_category</code>, then <code>dim_department</code> just to group revenue by department. Dashboards are slow and analysts keep getting the join chain wrong. What modelling change fits the analytics use case best?`,
+    opts:[
+      `Normalize further by splitting <code>dim_product</code> into brand and packaging subdimensions`,
+      `Flatten the hierarchy into <code>dim_product</code> (subcategory, category and department as columns), giving a star schema where the fact joins directly to each dimension`,
+      `Copy department, category and subcategory names onto every <code>fact_sales</code> row`,
+      `Replace the dimensions with one gold aggregate table of revenue by department`
+    ],
+    correct:1,
+    explain:`A star schema puts one fact at the center with its dimensions joined directly around it, the pattern BI tools optimize for and analysts can trace without a multi-hop chain; the subdimension chain is a snowflake schema. Copying the hierarchy onto the fact is tempting because it removes joins, but it widens the fact table with descriptive attributes that belong in the dimension.`
+  },
+  {
+    ref:{chapter:37},
+    q:`A retailer declares <code>PRIMARY KEY (store_sk)</code> on gold <code>dim_store</code> and a <code>FOREIGN KEY</code> from <code>fact_sales.store_sk</code> to it in Unity Catalog. A faulty load later inserts duplicate <code>store_sk</code> values into <code>dim_store</code>, and the inserts succeed. Why?`,
+    opts:[
+      `The constraints only take effect after <code>OPTIMIZE</code> runs on both tables`,
+      `Primary keys are enforced only on tables with Liquid Clustering enabled`,
+      `Primary and foreign key constraints on Databricks are informational: they document the star schema and can help the optimizer, but they are not enforced on write`,
+      `The foreign key overrode the primary key, so uniqueness is checked only on the fact table`
+    ],
+    correct:2,
+    explain:`Unity Catalog primary and foreign key constraints are informational and not enforced, so they describe the fact-to-dimension relationships (and, declared with <code>RELY</code>, can enable query optimizations) while uniqueness must still be guaranteed by the pipeline. Enforced constraints on Databricks are <code>NOT NULL</code> and <code>CHECK</code>, which is why the duplicate load was not stopped.`
   }
 ];
 

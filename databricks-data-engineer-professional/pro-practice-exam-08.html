@@ -164,7 +164,7 @@ const E = {
   badge: "Databricks DE Professional",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
   coverage: "Covers all 31 chapters across Units 1-8: Developing Code with Python and SQL through Data Governance.",
-  minutes: 120,
+  minutes: 148,
   pass: 70
 };
 
@@ -919,6 +919,179 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`There is no DENY privilege in Unity Catalog, and a table owner cannot override a grant made higher up. The only real fix is adjusting the grant at the level it was made.`
+  },
+
+  /* ---------- Drill extension: Unit 8 (added for the practice hub) ---------- */
+
+  /* Ch 30 - Metadata, Tags, and Discoverability */
+  {
+    ref:{chapter:30},
+    q:`A logistics company's data stewards have tagged dozens of tables <code>domain=finance</code>. A new engineer opens Catalog Explorer, types <code>domain=finance</code> into its filter field, and gets no matches. How should the engineer find every table carrying that tag?`,
+    opts:[
+      "Use the workspace search bar at the top of the page and enter <code>tag:domain:finance</code>, since tag search runs there with the exact key and value",
+      "Keep using the Catalog Explorer filter field but switch it to semantic mode, which interprets key-value pairs as tags",
+      "Run <code>SHOW TABLES</code> in each schema with a <code>LIKE '%finance%'</code> pattern, because tags are stored as part of the table name",
+      "Ask a metastore admin to re-index the catalog, because newly applied tags are not searchable until the next index rebuild"
+    ],
+    correct:0,
+    explain:`Tag search is done from the workspace search bar using <code>tag:&lt;key&gt;</code> or <code>tag:&lt;key&gt;:&lt;value&gt;</code> with the exact term; the Catalog Explorer filter field cannot search by tag. The <code>SHOW TABLES</code> pattern fails because a tag is a label attached to the object, not part of its name, which is exactly why tags exist instead of naming conventions.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A bank's compliance team needs a nightly report listing every column in the <code>core</code> catalog tagged <code>contains_pii</code>, with its schema and table, written to a Delta table by a scheduled SQL task. What is the most direct source for that report?`,
+    opts:[
+      "A loop that runs <code>DESCRIBE TABLE EXTENDED</code> on every table and parses the tag section out of the text output",
+      "An export of workspace search results for <code>tag:contains_pii</code>, saved as CSV and loaded each night",
+      "A query against <code>core.information_schema.column_tags</code>, filtered on the tag name",
+      "A query against <code>core.information_schema.table_privileges</code>, joined to the column list of each table"
+    ],
+    correct:2,
+    explain:`Each catalog's information schema exposes tag views (<code>catalog_tags</code>, <code>schema_tags</code>, <code>table_tags</code>, <code>column_tags</code>), so a single SQL query returns every tagged column and fits a scheduled task. Workspace tag search is a UI tool and does not cover columns at all, so exporting its results would both be manual and miss the very objects the report needs.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A retailer's data steward holds <code>USE CATALOG</code>, <code>USE SCHEMA</code> and <code>SELECT</code> on <code>sales.gold.orders</code>, but does not own it. Running <code>SET TAG ON TABLE sales.gold.orders sensitivity = internal</code> fails with a permission error. What grant does the steward need?`,
+    opts:[
+      "<code>MODIFY</code> on the table, because applying a tag rewrites the table's Delta files",
+      "<code>APPLY TAG</code> on the table, which allows adding and editing its tags (and its columns' tags)",
+      "<code>CREATE TABLE</code> on the schema, because tags are stored as a schema-level property",
+      "Nothing further: the table owner must run the command, since only owners can tag objects"
+    ],
+    correct:1,
+    explain:`Tagging a table requires <code>APPLY TAG</code> on it, plus <code>USE SCHEMA</code> and <code>USE CATALOG</code> on its parents, unless the user owns the object; on a table it also covers column tags. <code>MODIFY</code> is the tempting pick, but tags change metadata only, not data files, and the owner-only option is wrong because <code>APPLY TAG</code> exists precisely so non-owners can tag.`
+  },
+  {
+    ref:{chapter:30},
+    q:`An insurer's governance lead finds that the <code>sensitivity</code> tag has drifted into a dozen spellings (<code>Restricted</code>, <code>restrict</code>, <code>high</code>) because anyone with tagging rights types a free-form value. She wants only <code>public</code>, <code>internal</code> and <code>restricted</code> to be accepted, and only named stewards able to assign the tag. What should she set up?`,
+    opts:[
+      "A documented naming convention in the column comments, with a weekly job that reports nonconforming values",
+      "A <code>CHECK</code> constraint on each table that rejects rows whose sensitivity value is outside the three allowed values",
+      "A plain tag on each catalog, relying on tag inheritance to force the same value onto every table and column",
+      "A governed tag whose tag policy defines the three allowed values, with the <code>ASSIGN</code> permission granted only to the stewards"
+    ],
+    correct:3,
+    explain:`Governed tags are backed by a tag policy that restricts the allowed values, and assigning one requires the <code>ASSIGN</code> permission on that tag, so both the vocabulary and the people are controlled. A <code>CHECK</code> constraint governs row data, not object metadata, and a comment convention only reports drift after the fact instead of preventing it.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A healthcare analytics team's table owner wrote a <code>COMMENT</code> on <code>claims_gold</code> using markdown: a bulleted list of sources and a bold warning about late-arriving adjustments. An analyst who runs <code>DESCRIBE TABLE EXTENDED claims_gold</code> sees raw asterisks and dashes and reports the comment as corrupted. What is happening?`,
+    opts:[
+      "Nothing is wrong: markdown in a comment is rendered in the Catalog Explorer UI, but <code>DESCRIBE</code> returns the raw text",
+      "The comment was saved with an unsupported encoding and must be rewritten as plain text to display anywhere",
+      "Markdown comments are only supported on catalogs and schemas, so the table comment was stored without formatting",
+      "The analyst lacks <code>BROWSE</code> on the table, so <code>DESCRIBE</code> shows a redacted version of the comment"
+    ],
+    correct:0,
+    explain:`Comments accept basic markdown, which Catalog Explorer renders, while <code>DESCRIBE</code> statements return the comment as raw text without styling. The comment is intact and readable where analysts browse; the unsupported-encoding option misreads expected behavior as damage, and markdown comments work on tables and columns, not just containers.`
+  },
+  {
+    ref:{chapter:30},
+    q:`An energy trading firm's engineer proposes documenting the <code>settle_px</code> column by adding a tag whose value is a three-sentence explanation of how the settlement price is derived and when it is revised, so that "everything lives in tags". Analysts browsing the table in Catalog Explorer are the audience. What is the better choice?`,
+    opts:[
+      "Keep the tag, but split the explanation across several tags so each value stays short enough to be searchable",
+      "A column <code>COMMENT</code> holding the explanation, keeping tags for short labels that policies and searches filter on",
+      "Rename the column to <code>settle_px_daily_revised_t1</code> so the derivation is visible wherever the column appears",
+      "Store the explanation in a separate documentation table joined to the column name, since comments are not shown in Catalog Explorer"
+    ],
+    correct:1,
+    explain:`A comment is the place for human-readable context: it is shown, with markdown, right where analysts read the column in Catalog Explorer and is matched by search. Tags are machine-filterable labels for grouping and policy, so splitting prose across tags misuses them, and the documentation-table option rests on the false premise that comments are not displayed.`
+  },
+  {
+    ref:{chapter:30},
+    q:`A media company's steward plans to open Catalog Explorer at 10:00 on a weekday and accept AI-generated comments, after review, on forty gold tables that production Lakeflow Jobs write to throughout the day. A platform engineer asks her to wait. What is the documented reason to schedule the work?`,
+    opts:[
+      "AI-generated comments are written to the table's Delta files, so saving them rewrites every data file in the table",
+      "AI-generated comments lock the table for reads until a human reviewer approves them in a separate workflow",
+      "Accepting an AI-generated comment automatically applies matching tags, which can trigger ABAC policies on live queries",
+      "Saving a comment runs an <code>ALTER</code> command on the object, which can disrupt pipelines and jobs that are using it"
+    ],
+    correct:3,
+    explain:`Databricks notes that saving comments triggers an <code>ALTER</code> SQL command, which can disrupt running pipelines and jobs, so bulk updates on busy tables belong in a quiet window. Comments are metadata, not data, so nothing rewrites the Delta files; the review step is the owner's own editing before saving, not a read lock.`
+  },
+  /* Ch 31 - The UC Permission Inheritance Model */
+  {
+    ref:{chapter:31},
+    q:`A telecom's <code>network</code> catalog has 22 schemas, and new ones are added most months. The <code>noc_analysts</code> group already holds <code>USE CATALOG</code> and <code>SELECT</code> on the catalog, yet they file a ticket every time a new schema appears because they cannot open it. Which single grant ends the tickets?`,
+    opts:[
+      "<code>GRANT USE CATALOG ON CATALOG network TO noc_analysts</code> again, since it carries down to every schema",
+      "<code>GRANT BROWSE ON CATALOG network TO noc_analysts</code>, which provides the path into each schema",
+      "<code>GRANT USE SCHEMA ON CATALOG network TO noc_analysts</code>, which applies to all current and future schemas",
+      "A <code>USE SCHEMA</code> grant on each schema, because usage privileges are never inherited"
+    ],
+    correct:2,
+    explain:`Granting <code>USE SCHEMA</code> on a catalog applies it to every current and future schema in that catalog, and combined with the inherited <code>SELECT</code> it opens the full path. <code>USE CATALOG</code> is the gate on the catalog itself and does not stand in for <code>USE SCHEMA</code>, and <code>BROWSE</code> exposes metadata only, not a path to read data.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A pharmaceutical company's admin runs <code>REVOKE SELECT ON TABLE trials.results.unblinded FROM contractors</code>. The command succeeds, but contractors can still query the table an hour later. The group holds <code>USE CATALOG</code> on <code>trials</code> and <code>USE SCHEMA</code> and <code>SELECT</code> on <code>trials.results</code>. Why does access persist?`,
+    opts:[
+      "Unity Catalog caches grants for up to 24 hours, so the revoke takes effect the next day",
+      "The schema-level <code>SELECT</code> still reaches the table; the access must be removed where it was granted, at the schema",
+      "A table-level revoke is only advisory; a <code>DENY SELECT</code> on the table is needed to override the schema grant",
+      "Only the table owner can revoke access, so the admin's revoke was recorded but not enforced"
+    ],
+    correct:1,
+    explain:`The group's access is inherited from the schema-level grant, and revoking a table-level grant that may never have existed does nothing to that inheritance. Unity Catalog has no <code>DENY</code> on <code>SELECT</code>, so the fix is to revoke or narrow the schema grant, or move the table to a schema it does not reach.`
+  },
+  {
+    ref:{chapter:31},
+    q:`An airline's external auditors need <code>SELECT</code> on <code>ops.safety.incident_log</code> today. The table's owner is on leave for two weeks. The owner of the <code>ops.safety</code> schema, who does not own the table, is available. What can happen?`,
+    opts:[
+      "The schema owner can grant <code>SELECT</code> on the table directly, because owners of a parent schema can manage privileges on its objects",
+      "The schema owner must first transfer the table's ownership to themselves, since only an object's owner can grant on it",
+      "Only a metastore admin can grant on a table whose owner is unavailable, so the request must be escalated",
+      "The auditors must wait, because a table owner's control over its grants cannot be overridden by anyone"
+    ],
+    correct:0,
+    explain:`The owner of the catalog or schema that contains an object can grant and manage privileges on it, so the schema owner can issue the grant without owning the table. Ownership transfer is unnecessary, and the claim that a table owner's control cannot be overridden reverses the model: container owners keep control over what is inside their container.`
+  },
+  {
+    ref:{chapter:31},
+    q:`At a logistics firm, Priya owns the schema <code>fleet.telemetry</code>. A colleague creates and owns <code>fleet.telemetry.engine_faults</code>. Priya, holding <code>USE CATALOG</code> on <code>fleet</code>, queries the new table and gets a permission error, which surprises her because she "owns the schema". What is true?`,
+    opts:[
+      "She cannot reach the table until the colleague transfers its ownership, because table owners outrank schema owners",
+      "Schema ownership makes her the co-owner of every table, so the error must come from a missing <code>USE SCHEMA</code> grant",
+      "Owning the schema does not automatically give her privileges on its tables, but she can grant herself <code>SELECT</code> on this one",
+      "Schema owners are limited to metadata, so only a catalog owner could give her read access"
+    ],
+    correct:2,
+    explain:`A schema owner does not automatically hold all privileges on the tables in the schema, and does not become their owner, but can grant privileges on them, including to herself. Ownership does not flow down to children, so the co-owner option is wrong, and the table owner cannot block her because control at the container level is a boundary a lower-level owner cannot cross.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A university's security team wants a data steward to handle all access requests for the tables in the <code>research.grants</code> schema, granting and revoking as needed, including on tables created later. The steward must not own the schema and must not be able to read the data. The steward already holds <code>USE CATALOG</code> on <code>research</code>. What should be granted?`,
+    opts:[
+      "<code>ALL PRIVILEGES</code> on the schema, which includes the right to grant to others",
+      "Ownership of each table, transferred as tables are created",
+      "<code>SELECT</code> with a grant option on the schema, so the steward can pass access on",
+      "<code>MANAGE</code> on the schema, which flows to all child objects and does not by itself grant data access"
+    ],
+    correct:3,
+    explain:`<code>MANAGE</code> lets a principal grant and revoke privileges on an object without owning it, it is inherited by every current and future child when granted on a container, and it does not include data access. <code>ALL PRIVILEGES</code> would hand the steward <code>SELECT</code> as well, breaking the no-read requirement, and per-table ownership transfers miss tables created later.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A compliance script at a fintech calls the Unity Catalog permissions endpoint that lists the grants on <code>payments.ledger.transfers</code> and reports that the <code>finance_ops</code> group has no access. Yet members of <code>finance_ops</code> query the table every day. What explains the discrepancy?`,
+    opts:[
+      "The group's access is inherited from a grant on the schema or catalog, which the plain list does not include; the effective permissions endpoint shows inherited grants",
+      "Group members are reading a cached copy of the table, which is not subject to Unity Catalog permissions",
+      "Unity Catalog stores group grants separately from user grants, so the script must query each member individually",
+      "The table is shared through Delta Sharing to the same workspace, which bypasses the grants on the table"
+    ],
+    correct:0,
+    explain:`A grant on a parent catalog or schema applies to every current and future child, and the list-permissions endpoint returns only grants made directly on the securable. The effective permissions endpoint includes privileges inherited from parent securables, so an audit of who can actually read a table must use it. Querying members one by one would not help, because the access comes from the parent grant, not from anything recorded on the table.`
+  },
+  {
+    ref:{chapter:31},
+    q:`A manufacturer wants every employee to see which tables exist in the <code>plant</code> catalog, with their names, comments and columns, so they can request access to the right one. Employees must not be able to read any rows until a request is approved. Which grant fits?`,
+    opts:[
+      "<code>USE CATALOG</code> and <code>USE SCHEMA</code> on the catalog, which reveal metadata but block reads",
+      "<code>BROWSE</code> on the catalog, which allows discovering and viewing metadata for all its objects without data access",
+      "<code>SELECT</code> on the catalog with a row filter that returns no rows until access is approved",
+      "A tag <code>access=request</code> on the catalog, which makes every table in it visible in workspace search to all users"
+    ],
+    correct:1,
+    explain:`<code>BROWSE</code> on a catalog lets a user discover and view metadata for every object in it and does not grant data access, which is exactly a request-access catalog. The usage privileges are gates on the path, not a metadata view, and the <code>SELECT</code>-plus-filter option grants a privilege that inheritance carries to every current and future table, so one filter mistake exposes data.`
   }
 ];
 

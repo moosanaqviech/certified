@@ -164,7 +164,7 @@ const E = {
   badge: "Databricks DE Professional",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Pick the single best answer.",
   coverage: "Covers all 34 chapters across Units 1-9: Developing Code with Python and SQL through Debugging and Deploying.",
-  minutes: 120,
+  minutes: 148,
   pass: 70
 };
 
@@ -922,6 +922,182 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`Validate before deploy catches a bad bundle before it reaches prod, and running it against the repository at the exact merge commit is what makes Git the actual source of truth.`
+  },
+
+  /* ---------- Drill extension: Unit 9 (added for the practice hub) ---------- */
+
+  /* Ch 32 - Troubleshooting: Spark UI, Cluster Logs, Event Logs */
+  {
+    ref:{chapter:32},
+    q:`A freight broker's nightly rate-refresh job ran on a new job cluster that never reached the Running state: the run failed with a cluster launch error, and no Spark UI exists for it because no Spark application ever started. A cluster-scoped init script that installs a custom certificate was edited yesterday. Cluster log delivery is configured to a Unity Catalog volume. Where is the evidence for the failure?`,
+    opts:[
+      "In the Spark UI of the last successful run, by comparing its stage list against the failed run",
+      "In the pipeline event log, filtered to rows where the level is <code>ERROR</code>",
+      "In the init script's stdout and stderr files under the <code>init_scripts</code> folder for that cluster ID in the log delivery path",
+      "Nowhere: a cluster that never started writes no logs, so the job must be rerun with the script removed"
+    ],
+    correct:2,
+    explain:`A cluster-scoped init script that returns a non-zero exit code makes the cluster launch fail, and with cluster log delivery configured its output is written to <code>&lt;log-path&gt;/&lt;cluster-id&gt;/init_scripts</code>, which is exactly the infrastructure evidence the Spark UI cannot hold. Comparing against an older Spark UI is tempting but useless here: the failed run never got as far as running Spark, so there is no stage or task to compare.`
+  },
+  {
+    ref:{chapter:32},
+    q:`An insurance claims team runs its ingestion job on a job cluster that terminates as soon as the run ends. When a run fails, the on-call engineer is often paged hours later and finds that the driver and worker logs needed for the postmortem are no longer reachable. The team wants every future failed run's driver and worker logs to be readable after the cluster is gone. What should they change?`,
+    opts:[
+      "Configure log delivery on the job cluster to a Unity Catalog volume, so driver and worker logs are written under a folder named for the cluster ID",
+      "Switch the job to an all-purpose cluster that never auto-terminates, so its logs stay on the driver node",
+      "Rely on the Spark UI of the failed run, which retains the full driver log for every terminated job cluster",
+      "Add a final notebook task that copies the logs to a table after every run, including failed ones"
+    ],
+    correct:0,
+    explain:`Compute log delivery ships driver and worker logs to the chosen destination (a volume is the recommended option with Unity Catalog) every five minutes until the compute terminates, under a subfolder named for the cluster ID, so the evidence outlives the ephemeral cluster. Keeping an all-purpose cluster running is the tempting shortcut, but it only trades the problem for permanent compute cost and still loses logs if that cluster restarts; a trailing copy task fails the same way, since it never runs when an upstream task fails.`
+  },
+  {
+    ref:{chapter:32},
+    q:`A triggered Lakeflow Spark Declarative Pipeline in a hospital network loads three tables. One flow, <code>lab_results_clean</code>, has an <code>expect_or_fail</code> expectation on a non-null patient ID. Last night's update failed, and the pipeline event log names that flow and that expectation as the cause. The other two flows show completed. What is the state of the data, and what comes next?`,
+    opts:[
+      "The rows that passed the expectation were committed to <code>lab_results_clean</code> and only the violating rows were dropped, so the update can be ignored",
+      "Every table in the pipeline was rolled back, because a failed expectation always undoes the whole update",
+      "The violating rows were written to <code>lab_results_clean</code> and flagged in the event log, so a cleanup query must remove them",
+      "Only the failing flow's update was rolled back atomically while the other flows completed, and the bad source records must be handled before that flow is reprocessed"
+    ],
+    correct:3,
+    explain:`With <code>expect_or_fail</code>, an invalid record stops the flow and its table update is rolled back atomically; in a triggered pipeline only the failing flow is rolled back while other flows continue independently, and manual intervention is required before reprocessing. Keeping the passing rows and dropping the rest describes <code>expect_or_drop</code>, a different action, and rolling back every table overstates the scope for a triggered pipeline.`
+  },
+  {
+    ref:{chapter:32},
+    q:`A media archive's transcoding job has been running for six hours instead of its usual forty minutes. It has not failed, and the Spark UI shows one stage with every task finished except a single task that has been running the whole time. The on-call engineer wants to see what that task is actually doing right now. What is the most direct way?`,
+    opts:[
+      "Cancel the run and read the stack trace on the failed task once Spark marks it as failed",
+      "Note the task and executor IDs from the stage's task list, then open the thread dump for that executor in the Executors tab and find the task's thread",
+      "Open the cluster event log and look for the event that corresponds to the stuck task",
+      "Query the pipeline event log for the flow that contains the stuck task"
+    ],
+    correct:1,
+    explain:`Thread dumps exist for exactly this case: a specific task that is hanging, located by its task and executor IDs from the stage view and then found in that executor's thread dump on the Executors tab, which shows the live call stack. Cancelling to get a stack trace destroys the very state being investigated, and the cluster event log records compute lifecycle events, not what an individual task is executing.`
+  },
+  {
+    ref:{chapter:32},
+    q:`A telecom billing job terminated abruptly with no failed stage or task in the Spark UI. The compute's event log shows a <code>DRIVER_NOT_RESPONDING</code> event a few minutes before termination, with no init script, node loss or spot preemption events. What should the on-call engineer read next?`,
+    opts:[
+      "The Spark UI's executor list, since an unresponsive driver is usually caused by one slow executor",
+      "The pipeline event log, since it records driver health for every job run",
+      "The driver log around the time of that event, looking for an out-of-memory error or long garbage collection pauses",
+      "Nothing further: an unresponsive driver is transient, so a Repair Run will succeed without investigation"
+    ],
+    correct:2,
+    explain:`The event log has already ruled out infrastructure causes and pointed at the driver, so the next evidence is the driver log, where Databricks troubleshooting guidance says to look for errors that made the instance unresponsive, such as out-of-memory errors or long GC pauses. Because a driver failure kills the whole job rather than being retried like an executor task, assuming it is transient and rerunning risks the same failure again.`
+  },
+
+  /* Ch 33 - Job Repair and Parameter Overrides */
+  {
+    ref:{chapter:33},
+    q:`A grocery chain's four-task job failed at task 3 because its notebook referenced a column that was renamed upstream. Tasks 1 and 2 succeeded. An engineer fixes the notebook and also updates the task to point at the corrected notebook path in the job settings. If the team now selects Repair Run, which code does task 3 run?`,
+    opts:[
+      "The original notebook path, because a repair replays the exact configuration of the failed run",
+      "The corrected notebook path, because unsuccessful tasks are rerun with the current job and task settings",
+      "Neither: changing job settings after a failure invalidates the run, so only Run Now is possible",
+      "The corrected path, but tasks 1 and 2 also rerun because the job definition changed"
+    ],
+    correct:1,
+    explain:`Job or task settings can be changed before repairing, and the unsuccessful tasks are rerun with the current settings, so an updated notebook path or cluster setting takes effect in the repair. The tempting belief that a repair replays the frozen original configuration is wrong, and editing settings does not force the already-successful tasks 1 and 2 to rerun.`
+  },
+  {
+    ref:{chapter:33},
+    q:`A ride-share company's job failed at its <code>aggregate</code> task. On the first repair, the on-call overrode the <code>region</code> parameter from <code>us-east</code> to <code>us-west</code> to test a theory; the repair failed again, and the theory turned out to be wrong. The root cause has since been fixed in code, and the next repair must use the original <code>region</code> value. What should the on-call do in the Repair Run dialog?`,
+    opts:[
+      "Clear the <code>region</code> key and value, which returns the parameter to its original value for this repair",
+      "Leave the dialog empty, since each repair starts from the job's original parameters regardless of earlier repairs",
+      "Delete the failed run and trigger a new run, since an override cannot be undone once applied to a repair",
+      "Edit the job's default <code>region</code> to <code>us-east</code> and then repair, since defaults override repair values"
+    ],
+    correct:0,
+    explain:`Values entered in the Repair Run dialog override existing values, and on a subsequent repair a parameter is returned to its original value by clearing its key and value in the dialog. Assuming an empty dialog resets everything is the trap: the earlier override carries forward until it is cleared, so leaving it would rerun with <code>us-west</code> again.`
+  },
+  {
+    ref:{chapter:33},
+    q:`An energy utility's daily meter job succeeded last night. A week-old day, 2026-10-07, must now be reprocessed once because a vendor resent corrected files; the job takes a <code>run_date</code> job parameter whose default is today's date. The scheduled runs must keep using the default afterward. What is the best way to do this?`,
+    opts:[
+      "Repair Run on last night's run, overriding <code>run_date</code> in the repair dialog",
+      "Edit the job's default <code>run_date</code> to 2026-10-07, run it, then change the default back",
+      "Clone the job, hard-code the date in the clone and run the clone once",
+      "Use Run now with different parameters, setting <code>run_date</code> to 2026-10-07 for that single run"
+    ],
+    correct:3,
+    explain:`Run now with different parameters overrides job parameter values for one run without changing the saved defaults, which is exactly a one-off reprocessing of a whole job. Repair Run is the tempting choice because it also accepts overrides, but it only reruns failed or canceled tasks and their dependents, and last night's run had nothing unsuccessful to rerun.`
+  },
+  {
+    ref:{chapter:33},
+    q:`A platform team automates repairs through the Jobs REST API. Their script repaired a failed run once; the repair also failed, and the script's second repair request on the same run is now being rejected. The request sets <code>rerun_all_failed_tasks</code> to true and passes nothing else besides the run ID. What is missing?`,
+    opts:[
+      "The <code>latest_repair_id</code> of the previous repair, which a follow-up repair of the same run must supply",
+      "A <code>rerun_tasks</code> list alongside <code>rerun_all_failed_tasks</code>, since both must name the same tasks",
+      "A new <code>run_id</code>, since each repair creates a separate job run that later repairs must target",
+      "A <code>job_parameters</code> map, since every repair request must restate all parameter values"
+    ],
+    correct:0,
+    explain:`The repair endpoint takes <code>latest_repair_id</code>, which is required on subsequent repairs of the same run so the request builds on the most recent repair. Supplying <code>rerun_tasks</code> as well is the tempting fix but is invalid, because only one of <code>rerun_tasks</code> or <code>rerun_all_failed_tasks</code> may be specified in a request.`
+  },
+  {
+    ref:{chapter:33},
+    q:`An airline's compliance team requires one auditable record per scheduled execution of its five-task revenue job. Last Tuesday's run failed at task 4 and was fixed with a Repair Run. An auditor asks whether the repair produced a second, separate job run that must also be reported. What is accurate?`,
+    opts:[
+      "Yes: a repair is a new job run with its own run ID, linked to the original only by name",
+      "Yes: the repair is recorded as a one-time submitted run that does not appear in the Jobs UI",
+      "No: the rerun tasks belong to the original job run and appear in that run's repair history",
+      "No: repairs leave no record at all, so the original run still shows task 4 as failed"
+    ],
+    correct:2,
+    explain:`Repaired tasks are part of the original job run and are recorded in its history, so Tuesday's execution stays a single run whose record shows the failed attempt and the repair. Treating the repair as a new run with its own run ID is the tempting misconception, and the one-time submit endpoint, which does not appear in the Jobs UI, is a different mechanism from repair.`
+  },
+
+  /* Ch 34 - Deploying with DABs and Git-Based CI/CD */
+  {
+    ref:{chapter:34},
+    q:`A fintech's GitHub Actions workflow deploys its bundle to production with a personal access token belonging to a senior engineer, stored as a repository secret. Security flags two risks: the deploy breaks when that engineer leaves, and a long-lived secret sits in the repository. Which change addresses both?`,
+    opts:[
+      "Rotate the personal access token monthly and store it in a separate GitHub organization",
+      "Authenticate as a service principal through workload identity federation, so the runner exchanges a short-lived GitHub OIDC token for a Databricks OAuth token",
+      "Move the token into a Databricks secret scope and read it from the bundle configuration at deploy time",
+      "Have each developer deploy to production from a laptop with their own credentials"
+    ],
+    correct:1,
+    explain:`Databricks recommends workload identity federation for CI/CD: a federation policy on a service principal lets the GitHub runner authenticate with a short-lived OIDC token, so no stored secret exists and the identity is not tied to a person. Rotating the token reduces exposure but keeps both a long-lived secret and the dependency on one engineer's account, and laptop deploys defeat the purpose of CI.`
+  },
+  {
+    ref:{chapter:34},
+    q:`A logistics company's bundle declares a <code>warehouse_id</code> variable with no default. Developers pass it with <code>--var</code> on their laptops, but in CI the value must come from the pipeline's environment configuration, and nobody wants it committed to <code>databricks.yml</code>. How should the CI step supply it to <code>bundle validate</code> and <code>bundle deploy</code>?`,
+    opts:[
+      "Add a <code>default</code> for <code>warehouse_id</code> in <code>databricks.yml</code>, since CI cannot supply variables at deploy time",
+      "Write the value into the job's parameters in the workspace UI after each deploy",
+      "Skip <code>bundle validate</code> in CI, since validation fails whenever a variable has no default",
+      "Set an environment variable named <code>BUNDLE_VAR_warehouse_id</code> in the CI step, which the CLI reads as the variable's value"
+    ],
+    correct:3,
+    explain:`Bundle variables can be set through environment variables prefixed with <code>BUNDLE_VAR_</code>, which rank just below a <code>--var</code> flag in precedence, so the CI step supplies the value without committing it. Committing a default is the tempting workaround but puts the value in the repository, and skipping validate removes the very check that would catch an unresolved variable before deploy.`
+  },
+  {
+    ref:{chapter:34},
+    q:`A retailer's <code>prod</code> target uses <code>mode: production</code> and names <code>main</code> as its Git branch. An engineer, trying to rush a fix, runs the CI deploy job manually against a feature branch with <code>bundle deploy -t prod</code>, and the deploy is refused. Why?`,
+    opts:[
+      "Production mode refuses any deploy that is not started from the Databricks workspace UI",
+      "Production mode validates that the current Git branch equals the branch specified in the target, and <code>feature/*</code> does not match <code>main</code>",
+      "Production mode pauses all schedules, so deploys are blocked until they are resumed",
+      "Production mode requires <code>bundle run</code> to succeed before <code>bundle deploy</code> is allowed"
+    ],
+    correct:1,
+    explain:`Deploying a target in production mode validates that the current Git branch matches the branch named in the target, which keeps unreviewed branches out of production (the check can be bypassed only with <code>--force</code>). Pausing schedules is real behavior but belongs to development mode, which is the tempting mix-up.`
+  },
+  {
+    ref:{chapter:34},
+    q:`An e-commerce team's CI deploys the bundle to a <code>staging</code> target on every merge to <code>main</code>, then waits for a person to open the workspace and click Run on the deployed integration-test job before approving the production deploy. They want CI itself to prove the staged job works. What step belongs after <code>bundle deploy -t staging</code>?`,
+    opts:[
+      "<code>databricks bundle run -t staging</code> on the integration-test job, failing the workflow if that run fails",
+      "<code>databricks bundle validate -t prod</code>, since a valid production configuration proves the staged job works",
+      "A second <code>bundle deploy -t staging</code>, since a repeat deploy re-executes the job",
+      "<code>pytest</code> against the source package, since unit tests replace running the deployed job"
+    ],
+    correct:0,
+    explain:`<code>bundle deploy</code> only pushes the resolved resources to the target; <code>bundle run</code> starts a deployed job or pipeline, so running the integration-test job in staging from CI turns the manual click into an automated gate before promotion. Unit tests with <code>pytest</code> are tempting but belong before deploy and check the package in isolation, not the job as deployed on staging data.`
   }
 ];
 
