@@ -264,6 +264,9 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   .rev .fb{margin-top:8px}
 
   /* ---------- report a question, results footer ---------- */
+  .ref-link{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--gold-light);font-weight:600;text-decoration:none}
+  .ref-link:hover{color:var(--cream)}
+  .ref-link .ref-lock{display:inline-flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border:1px solid var(--border-2);border-radius:999px;padding:2px 8px;font-weight:600}
   .report-line{font-size:12px;color:var(--faint);margin:12px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .report-line a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border-2)}
   .report-line a:hover{color:var(--cream)}
@@ -460,6 +463,70 @@ const DOMAINS = [
     covers:"securing AI on AWS, AgentCore Identity and Policy, data provenance, threats such as prompt injection and data leakage, hallucination defenses, CloudTrail, Config, Inspector, Artifact and Trusted Advisor, data governance, and the Generative AI Security Scoping Matrix" }
 ];
 const DOM = n => DOMAINS.find(d => d.n === n);
+/* Course chapters by UNITS id (mirrors the course index.html UNITS array;
+   scripts/validate.py fails the hub if the two drift). A question's optional
+   ref:{chapter:N} resolves here to the "Review: Chapter N" link. */
+const CHAPTERS = {
+  1:["lesson-01-ai-ml-genai-agentic-ai.html", "AI, ML, Deep Learning, GenAI and Agentic AI"],
+  2:["lesson-02-models-training-inference.html", "Models, Algorithms, Training and Inference"],
+  3:["lesson-03-inference-types.html", "Inference Types: Batch, Real-Time, Asynchronous, Serverless"],
+  4:["lesson-04-data-types.html", "Data Types in AI Models"],
+  5:["lesson-05-learning-types.html", "Supervised, Unsupervised and Reinforcement Learning"],
+  6:["lesson-06-when-ai-adds-value.html", "When AI/ML Adds Value, and When It Is the Wrong Tool"],
+  7:["lesson-07-regression-classification-clustering.html", "Regression, Classification or Clustering"],
+  8:["lesson-08-real-world-ai-applications.html", "Real-World AI Applications"],
+  9:["lesson-09-aws-managed-ai-services.html", "AWS Managed AI Services"],
+  10:["lesson-10-traditional-ml-vs-foundation-models.html", "Traditional ML vs Foundation Models"],
+  11:["lesson-11-ml-pipeline-aws-services.html", "The AI/ML Pipeline and the AWS Service at Each Stage"],
+  12:["lesson-12-model-sources-and-hosting.html", "Where Models Come From and How They Reach Production"],
+  13:["lesson-13-mlops-fundamentals.html", "MLOps Fundamentals"],
+  14:["lesson-14-model-and-business-metrics.html", "Model Metrics vs Business Metrics"],
+  15:["lesson-15-tokens-embeddings-vectors.html", "Tokens, Chunking, Embeddings and Vectors"],
+  16:["lesson-16-foundation-models.html", "Foundation Models: Transformers, Multi-Modal and Diffusion"],
+  17:["lesson-17-genai-use-cases.html", "GenAI Use Cases"],
+  18:["lesson-18-genai-strengths-and-limits.html", "What GenAI Is Good At, and Where It Fails"],
+  19:["lesson-19-fm-lifecycle.html", "The Foundation Model Lifecycle"],
+  20:["lesson-20-token-based-pricing.html", "Token-Based Pricing"],
+  21:["lesson-21-context-engineering.html", "Context Engineering"],
+  22:["lesson-22-ai-agents.html", "Anatomy of an AI Agent"],
+  23:["lesson-23-mcp-and-multi-agent.html", "Model Context Protocol and Multi-Agent Patterns"],
+  24:["lesson-24-genai-business-metrics.html", "Business Value and Metrics for GenAI"],
+  25:["lesson-25-aws-genai-stack.html", "The AWS GenAI Stack"],
+  26:["lesson-26-bedrock-vs-jumpstart.html", "Amazon Bedrock vs Amazon SageMaker JumpStart"],
+  27:["lesson-27-agent-and-assistant-tooling.html", "Agent and Assistant Tooling on AWS"],
+  28:["lesson-28-genai-cost-tradeoffs.html", "Cost Trade-offs of AWS GenAI Services"],
+  29:["lesson-29-choosing-a-foundation-model.html", "Choosing a Foundation Model"],
+  30:["lesson-30-inference-parameters.html", "Inference Parameters"],
+  31:["lesson-31-rag-and-knowledge-bases.html", "RAG and Amazon Bedrock Knowledge Bases"],
+  32:["lesson-32-vector-stores-on-aws.html", "Vector Stores on AWS"],
+  33:["lesson-33-customization-cost-ladder.html", "The Customization Cost Ladder"],
+  34:["lesson-34-prompt-anatomy.html", "Prompt Anatomy and Best Practices"],
+  35:["lesson-35-prompting-techniques.html", "Prompting Techniques"],
+  36:["lesson-36-prompt-risks.html", "Prompt Risks"],
+  37:["lesson-37-bedrock-prompt-management.html", "Prompt Versioning with Amazon Bedrock Prompt Management"],
+  38:["lesson-38-how-fms-are-trained.html", "How Foundation Models Are Trained and Adapted"],
+  39:["lesson-39-preparing-data-for-fine-tuning.html", "Preparing Data for Fine-Tuning"],
+  40:["lesson-40-evaluating-a-foundation-model.html", "Evaluating a Foundation Model"],
+  41:["lesson-41-fm-metrics.html", "FM Metrics: ROUGE, BLEU, BERTScore and LLM-as-a-Judge"],
+  42:["lesson-42-evaluating-fm-applications.html", "Evaluating FM Applications: RAG, Agents and Workflows"],
+  43:["lesson-43-meeting-the-business-objective.html", "Meeting the Business Objective"],
+  44:["lesson-44-features-of-responsible-ai.html", "Features of Responsible AI"],
+  45:["lesson-45-bedrock-guardrails.html", "Amazon Bedrock Guardrails"],
+  46:["lesson-46-legal-risks-of-genai.html", "Legal Risks of Generative AI"],
+  47:["lesson-47-good-datasets.html", "What a Good Dataset Looks Like"],
+  48:["lesson-48-bias-and-variance.html", "Bias and Variance"],
+  49:["lesson-49-transparent-vs-opaque-models.html", "Transparent vs Opaque Models"],
+  50:["lesson-50-tools-for-transparency.html", "Tools for Transparency"],
+  51:["lesson-51-human-centered-design.html", "Human-Centered Design for Explainable AI"],
+  52:["lesson-52-securing-ai-systems.html", "Securing AI Systems on AWS"],
+  53:["lesson-53-data-provenance-and-secure-data.html", "Data Provenance and Secure Data Engineering"],
+  54:["lesson-54-threats-to-ai-systems.html", "Threats to AI Systems"],
+  55:["lesson-55-hallucination-detection-and-grounding.html", "Hallucination Detection and Grounding"],
+  56:["lesson-56-governance-and-compliance-services.html", "Governance and Compliance Services"],
+  57:["lesson-57-data-governance-strategies.html", "Data Governance Strategies"],
+  58:["lesson-58-governance-processes.html", "Governance Processes and the Generative AI Security Scoping Matrix"]
+};
+const FREE_CHAPTERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];  /* free in gate.ts */
 const unitOf = ch => { for (const d of DOMAINS) { for (const r of d.ch) { if (ch >= r[0] && ch <= r[1]) return d.n; } } return 1; };
 
 /* Question sources. The first exam is free with its unit; the other exams and
@@ -485,7 +552,7 @@ const SOURCES = [
 
 /* ---------- paywall state (same cookie contract as the course home) ---------- */
 function ccList(){ const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/); return m ? decodeURIComponent(m[1]).split(".") : []; }
-function unlocked(){ const l = ccList(); return l.indexOf(COURSE_ID) >= 0 || l.indexOf("1") >= 0; }
+function unlocked(){ const l = ccList(); return l.indexOf(COURSE_ID) >= 0; }  /* legacy "1" is de-assoc only (gate.ts) */
 function gatingOn(){ return /(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie); }
 function locked(){ return gatingOn() && !unlocked(); }
 async function openCheckout(){
@@ -557,8 +624,9 @@ function parseQuestions(text, src){
     src: src.id,
     kind: src.kind,
     unit: q.__unit,
-    ch: q.__ch || null,
-    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || ""
+    ch: q.__ch || (q.ref && CHAPTERS[q.ref.chapter] ? q.ref.chapter : null),
+    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || "",
+    ref: (q.ref && CHAPTERS[q.ref.chapter]) ? { chapter: q.ref.chapter } : null
   }));
 }
 
@@ -770,6 +838,18 @@ function renderAll(){ renderHeader(); renderReco(); renderBars(); renderPicker()
 
 const reportHref = q => "../how-lessons-are-made?course=" + encodeURIComponent(COURSE_SLUG) + "&q=" + encodeURIComponent(q.id) + "&text=" + encodeURIComponent(String(q.q).replace(/<[^>]+>/g, "").slice(0, 140)) + "#report";
 const reportLine = q => `<p class="report-line"><span>Question ${q.id}</span><a href="${reportHref(q)}" target="_blank" rel="noopener">Report a problem with this question</a></p>`;
+/* "Review: Chapter N" link under an explanation. Opens the lesson in this tab
+   with ?back= pointing at the hub; the session is snapshotted first so the
+   lesson's "Back to quiz" (or the browser back button) restores it. A paid
+   chapter is labelled Locked for visitors who have not unlocked; the link
+   still goes to the lesson URL, where the gate serves the unlock page. */
+const refLink = q => {
+  const n = q.ref && q.ref.chapter, c = n && CHAPTERS[n];
+  if (!c) return "";
+  const lock = FREE_CHAPTERS.indexOf(n) < 0 && locked();
+  const href = COURSE_DIR + c[0] + "?back=" + encodeURIComponent(location.pathname + "?resume=1");
+  return `<a class="ref-link" href="${href}" data-ref="1"><span>Review: Chapter ${n} &middot; ${c[1]}</span>${lock ? `<span class="ref-lock">${lockIcon()}Locked</span>` : ""}</a>`;
+};
 const clock = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const lockIcon = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>`;
 
@@ -881,7 +961,7 @@ function reveal(){ S.revealed[S.i] = true; renderQ(); }
 
 function showFeedback(){
   const q = S.qs[S.i], ok = sameSet(S.answers[S.i], keyOf(q));
-  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}</div>`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}${refLink(q)}</div>`;
 }
 
 function renderActions(){
@@ -934,6 +1014,7 @@ function finish(){
   STATE.lastMode = S.mode;
   saveState();
   track("practice_session_complete", { mode: S.mode, questions: S.qs.length, correct });
+  S.result = { correct, byUnit, before };
   renderSummary(correct, byUnit, before);
 }
 
@@ -954,7 +1035,7 @@ function renderSummary(correct, byUnit, before){
     return `<div class="rev">
       <div class="rq"><span class="mark ${ok ? "ok" : "no"}">${ok ? "Correct" : "Review"}</span>Q${i + 1}. ${q.q}</div>
       ${q.opts.map((o, j) => `<div class="opt ${key.includes(j) ? "correct" : mine.includes(j) ? "incorrect" : ""}"><span class="key">${KEYS[j]}</span><span>${o}${mine.includes(j) ? " · your answer" : ""}</span></div>`).join("")}
-      <div class="fb"><b>Why:</b> ${q.explain}</div>
+      <div class="fb"><b>Why:</b> ${q.explain}${refLink(q)}</div>
       ${reportLine(q)}
     </div>`;
   }).join("");
@@ -1013,9 +1094,54 @@ function togglePicker(force){
 renderAll();
 loadPool();
 
+/* ---------- resume after a "Review: Chapter N" link ----------
+   Following a chapter link leaves the page, so the live session is saved to
+   sessionStorage first. Coming back through the lesson's "Back to quiz"
+   (?resume=1) or the browser back button restores the same question, or the
+   same summary and review, at the same scroll position. */
+const RESUME_KEY = STORE_KEY + ".resume";
+const RESUME_TTL = 6 * 3600 * 1000;
+function saveResume(){
+  if (!S) return;
+  try{
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({
+      t: Date.now(), mode: S.mode, mock: S.mock, label: S.label, ids: S.qs.map(q => q.id), i: S.i,
+      explainNow: S.explainNow, timed: S.timed, answers: S.answers, revealed: S.revealed, unit: S.unit,
+      left: S.left, done: S.done, started: S.started, result: S.result || null, y: window.scrollY
+    }));
+  }catch(e){}
+}
+$("runner").addEventListener("click", e => { const a = e.target.closest && e.target.closest("a[data-ref]"); if (a) saveResume(); });
+async function tryResume(){
+  let snap = null;
+  try{ snap = JSON.parse(sessionStorage.getItem(RESUME_KEY) || "null"); sessionStorage.removeItem(RESUME_KEY); }catch(e){}
+  if (!snap || !Array.isArray(snap.ids) || Date.now() - (snap.t || 0) > RESUME_TTL) return false;
+  await loadPool();
+  const byId = {}; POOL.forEach(q => { byId[q.id] = q; });
+  const qs = snap.ids.map(id => byId[id]);
+  if (!qs.length || qs.some(q => !q)) return false;
+  S = { mode: snap.mode, mock: snap.mock || null, label: snap.label, qs, i: snap.i || 0, explainNow: !!snap.explainNow, timed: !!snap.timed,
+        answers: snap.answers, revealed: snap.revealed, unit: snap.unit, left: snap.left || 0, tick: null,
+        done: !!snap.done, started: snap.started || Date.now(), result: snap.result };
+  $("hub").hidden = true; $("session").hidden = false;
+  if (S.done && S.result) renderSummary(S.result.correct, S.result.byUnit, S.result.before);
+  else {
+    S.done = false;
+    if (S.timed) S.tick = setInterval(() => { S.left--; const t = $("runTimer"); if (t) { t.textContent = fmt(S.left); if (S.left <= 120) t.classList.add("warn"); } if (S.left <= 0) finish(); }, 1000);
+    renderQ();
+  }
+  setTimeout(() => window.scrollTo({ top: snap.y || 0, behavior: "instant" }), 60);
+  return true;
+}
+
 /* Deep links: ?mode=quick | ready | domain[&domain=N] | custom */
-(function(){
+(async function(){
   let params; try{ params = new URLSearchParams(location.search); }catch(e){ return; }
+  let nav = ""; try{ nav = (performance.getEntriesByType("navigation")[0] || {}).type || ""; }catch(e){}
+  if (params.get("resume") === "1" || nav === "back_forward") {
+    if (params.get("resume") === "1") { try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+    if (await tryResume()) return;
+  }
   const mode = params.get("mode"), n = parseInt(params.get("domain"), 10);
   if (mode === "quick") startQuick();
   else if (mode === "ready") startReady();
