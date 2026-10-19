@@ -164,7 +164,7 @@ const E = {
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
   coverage: "Full coverage, all 40 chapters: Units 1-4, weighted like the real DEA-C01 exam.",
-  minutes: 80,
+  minutes: 94,
   pass: 72
 };
 
@@ -733,8 +733,107 @@ const QUESTIONS = [
     ],
     correct:2,
     explain:`Cross-account Lake Formation sharing runs through AWS RAM: outside the organization the invitation must be accepted, the receiving data lake admin re-grants to local users, and Athena and Redshift Spectrum can only include shared resources through a resource link in the local catalog. Replication is the tempting answer but it creates a copy the scenario never asked for. Column-level grants change what is visible, not whether Athena can address the table, and Athena queries shared Lake Formation resources without any datashare.`
-  }
+  },
 
+  /* ---------- Drill extension: Domain 4 (added for the practice hub) ---------- */
+
+  /* Ch 31 - IAM authentication for data services */
+  {
+    ref:{chapter:31},
+    q:`A manufacturer runs a nightly export job on servers in its own data center that uploads production telemetry to Amazon S3. The job currently reads an IAM user's access key from a configuration file, and the security team wants no long-term AWS credentials stored on those servers. The company already runs a certificate authority that issues X.509 certificates to its servers. What should the data engineer use?`,
+    opts:[
+      "Move the access key into an environment variable and rotate it every 90 days",
+      "Create an Amazon EC2 instance profile and attach it to the on-premises servers",
+      "Give the job the credentials of a federated human user from IAM Identity Center",
+      "IAM Roles Anywhere, with a trust anchor for the company's CA, so the job exchanges its certificate for temporary role credentials"
+    ],
+    correct:3,
+    explain:`IAM Roles Anywhere lets workloads outside AWS present an X.509 certificate from a trusted CA and receive temporary credentials for an IAM role, so nothing long-lived sits on the server. Rotating the key in an environment variable is the tempting half-measure, but it is still a long-term secret on disk. Instance profiles only attach to EC2 instances, and Identity Center federation is for people signing in, not unattended jobs.`
+  },
+
+  /* Ch 32 - IAM policies vs Lake Formation permissions */
+  {
+    ref:{chapter:32},
+    q:`A data platform team governs its catalog tables with Lake Formation. Four access requests arrive in the same week. Which one is best met with an IAM policy rather than a Lake Formation grant?`,
+    opts:[
+      "Let a Lambda function's execution role write objects only under the <code>raw/clickstream/</code> prefix of the landing bucket",
+      "Hide the <code>email</code> column of the customers table from the marketing analysts",
+      "Show a partner's analysts only the rows of the orders table where <code>region = 'EU'</code>",
+      "Give finance analysts every table tagged <code>domain=finance</code>, including tables added later"
+    ],
+    correct:0,
+    explain:`Writing raw objects into a bucket prefix is a broad resource and API permission on S3 with no catalog columns or rows involved, which is exactly what an identity-based IAM policy expresses. The other three are the Lake Formation signals: a hidden column, a row filter and tag-based access that scales to new tables. The LF-Tag request is the most tempting for IAM because it sounds like attribute-based access, but LF-Tags act on Data Catalog resources, which IAM policies cannot filter by column or row.`
+  },
+
+  /* Ch 33 - Encryption with AWS KMS */
+  {
+    ref:{chapter:33},
+    q:`A bank encrypts 2 PB of S3 data with SSE-KMS under a customer managed key. A new policy requires the key material to rotate every year, and the storage team worries that each rotation will force them to re-encrypt every object. What should the data engineer do?`,
+    opts:[
+      "Create a new customer managed key each year and copy every object to re-encrypt it under the new key",
+      "Switch the bucket to the AWS managed key <code>aws/s3</code>, because only AWS managed keys can rotate",
+      "Enable automatic key rotation on the customer managed key; KMS keeps the previous key material so existing objects still decrypt without re-encryption",
+      "Enable S3 Bucket Keys, which generate fresh key material for the bucket every year"
+    ],
+    correct:2,
+    explain:`Automatic rotation on a customer managed key replaces the key material on schedule (yearly by default, configurable from 90 to 2,560 days) while the key ID stays the same, and KMS retains every earlier version so old ciphertext still decrypts. Rotation never re-encrypts existing data, so no copy job is needed. Creating a new key and copying 2 PB is the tempting manual approach, but it is exactly the work automatic rotation avoids. Bucket Keys reduce KMS request cost and have nothing to do with rotation.`
+  },
+
+  /* Ch 34 - Data masking and PII detection with Amazon Macie */
+  {
+    ref:{chapter:34},
+    q:`Amazon Macie generates thousands of findings for a bucket of customer support exports because every file contains the company's own published help-desk address, <code>help@support.example.com</code>. The security team wants Macie to stop reporting that address while still flagging every real customer email address in the same files. What should they configure?`,
+    opts:[
+      "Exclude the managed data identifier for email addresses from automated discovery",
+      "A Macie allow list containing that address (or a regular expression for the support domain), used by discovery jobs and automated discovery",
+      "A custom data identifier whose regular expression matches the support domain",
+      "Exclude the support exports bucket from sensitive data discovery"
+    ],
+    correct:1,
+    explain:`An allow list tells Macie to ignore specific text or text that matches a regular expression, even where a managed identifier would otherwise flag it, so only the known address is suppressed. Excluding the email identifier is the tempting shortcut, but it would also hide real customer addresses. A custom data identifier adds detections rather than suppressing them, and excluding the bucket drops discovery of the actual PII entirely.`
+  },
+
+  /* Ch 35 - Audit logging with CloudTrail and CloudTrail Lake */
+  {
+    ref:{chapter:35},
+    q:`An auditor asks a retailer which IAM principals downloaded objects from its payroll bucket last month. The organization trail delivers to S3 with log file validation enabled, but querying the logs with Athena shows only bucket-level actions such as <code>PutBucketPolicy</code>, and no object reads. What explains the gap, and what fixes it going forward?`,
+    opts:[
+      "Log file validation filters out object-level reads; turn it off so all events are delivered",
+      "Object reads are recorded only in the 90-day event history; query the console instead of Athena",
+      "The bucket uses SSE-KMS, which hides object reads from CloudTrail; switch it to SSE-S3",
+      "The trail logs management events only by default; add S3 data events (read events, scoped to the payroll bucket) to the trail or an event data store"
+    ],
+    correct:3,
+    explain:`Object-level operations such as <code>GetObject</code> are data events, which trails and event data stores do not log unless they are explicitly enabled, and they can be scoped to a bucket and to read events to control the extra charge. Event history is the tempting answer, but it shows management events only and never data events. Log file validation proves integrity without filtering anything, and the encryption mode has no effect on what CloudTrail records.`
+  },
+
+  /* Ch 36 - Data privacy and governance frameworks */
+  {
+    ref:{chapter:36},
+    q:`An online retailer keeps years of order history in Parquet files in its S3 data lake, queried with Athena. Under GDPR it must erase an individual customer's rows within 30 days of a request, while keeping everyone else's history. Which approach honors these deletion requests?`,
+    opts:[
+      "Store the order tables as Apache Iceberg tables and run an Athena <code>DELETE FROM</code> for the requesting customer's rows",
+      "Add an S3 Lifecycle rule that expires order objects 30 days after each request",
+      "Enable S3 Object Lock in compliance mode so deletions are recorded immutably",
+      "Run Amazon Macie on the lake to locate the customer's rows and remove them automatically"
+    ],
+    correct:0,
+    explain:`Erasure targets one person's rows, so the table format must support row-level deletes: Athena runs transactional <code>DELETE FROM</code> statements on Iceberg tables. A Lifecycle rule is the tempting retention tool, but it expires whole objects by age and would destroy every other customer's history in those files. Object Lock does the opposite of erasure by preventing deletion, and Macie discovers sensitive data but never edits or deletes it.`
+  },
+
+  /* Ch 40 - Data sharing patterns */
+  {
+    ref:{chapter:40},
+    q:`A data platform team reviews four sharing requests for its curated sales data. Its default is to share in place. Which request justifies making a deliberate copy of the data instead?`,
+    opts:[
+      "The finance account wants to query the current Redshift sales tables on its own compute, with no lag behind committed data",
+      "A partner's account needs the curated Glue tables in the lake, with customer columns hidden",
+      "The marketing team in the same account wants an always-current view of the sales warehouse",
+      "Business continuity requires the curated data to stay readable if the primary Region becomes unavailable"
+    ],
+    correct:3,
+    explain:`Surviving the loss of a Region needs an independent copy in a second Region, such as S3 Replication, which is the case where copying is a deliberate choice rather than a habit. The other three carry the share-in-place signals ("current", "no lag", "always-current", "hidden columns") and map to a cross-account datashare, a Lake Formation cross-account grant and a same-account datashare. The finance request is the tempting one for a copy because it crosses accounts, but a datashare already gives live access on the consumer's own compute.`
+  }
 ];
 
 /* Chapter table for the "Review: Chapter N" links in the answer review.

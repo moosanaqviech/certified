@@ -164,7 +164,7 @@ const E = {
   badge: "AWS Data Engineer Associate",
   blurb: "Exam-style, scenario-based questions that combine multiple concepts, just like the real test. Most questions have one best answer; a few ask you to select two.",
   coverage: "Full coverage, all 40 chapters: Units 1-4, a second pass with entirely new scenarios.",
-  minutes: 80,
+  minutes: 94,
   pass: 72
 };
 
@@ -733,8 +733,107 @@ const QUESTIONS = [
     ],
     correct:3,
     explain:`The data mesh pattern in AWS guidance is domain ownership plus a central catalog under federated governance: producers publish data products to SageMaker Catalog, consumers subscribe through projects, owners approve, and Lake Formation grants are created on approval, with producer, consumer and governance layers typically in separate accounts. Central bucket policies is the tempting control-minded answer, but it puts approvals back in the central team and gives no discovery. A shared cluster or nightly replication both centralize copies instead of sharing owned data in place.`
-  }
+  },
 
+  /* ---------- Drill extension: Domain 4 (added for the practice hub) ---------- */
+
+  /* Ch 31 - IAM authentication for data services */
+  {
+    ref:{chapter:31},
+    q:`A streaming team's producers on Amazon ECS and consumers on AWS Lambda connect to an Amazon MSK provisioned cluster with SASL/SCRAM usernames and passwords kept in AWS Secrets Manager. The security team wants Kafka clients to authenticate with the IAM roles the tasks and functions already run under, and to control topic access through IAM policies. What should the data engineer enable?`,
+    opts:[
+      "Mutual TLS with client certificates issued to each task and function",
+      "Kafka ACLs on each topic that name the ECS task role and the Lambda execution role",
+      "IAM access control on the cluster, with clients using the AWS MSK IAM SASL mechanism",
+      "Automatic rotation of the SCRAM secrets in Secrets Manager every 30 days"
+    ],
+    correct:2,
+    explain:`MSK IAM access control authenticates Kafka clients with their IAM identity and authorizes Kafka actions through IAM policies, so the existing task and function roles replace the stored passwords. Rotating the SCRAM secrets is the tempting fix, but it still leaves usernames and passwords to manage. Mutual TLS swaps passwords for certificates rather than IAM roles, and Kafka ACLs authorize principals authenticated by TLS or SCRAM, not IAM roles.`
+  },
+
+  /* Ch 32 - IAM policies vs Lake Formation permissions */
+  {
+    ref:{chapter:32},
+    q:`A company has managed all lake access with IAM policies on S3 prefixes and Glue APIs. Four new requirements arrive. Which one signals that the company now needs Lake Formation permissions rather than another IAM policy?`,
+    opts:[
+      "Marketing analysts may read the customer table in Athena, but only rows where <code>consent_flag = true</code>",
+      "A Glue crawler's role must read every object in the raw bucket to infer schemas",
+      "Analysts must be allowed to start queries in one specific Athena workgroup",
+      "Nobody except the platform administrators may delete the curated bucket"
+    ],
+    correct:0,
+    explain:`Restricting which rows of a catalog table a group can see is fine-grained access, which Lake Formation provides through a data filter with a row filter expression. IAM policies act on whole resources and API actions, so they cannot filter rows. The workgroup requirement is the tempting one for Lake Formation because it concerns analysts, but allowing an Athena API action on a workgroup is a plain IAM permission, as are the crawler's bucket read and the delete restriction.`
+  },
+
+  /* Ch 33 - Encryption with AWS KMS */
+  {
+    ref:{chapter:33},
+    q:`An AWS Glue ETL job writes curated output to S3, emits logs to CloudWatch Logs and uses job bookmarks. An audit requires all three to be encrypted at rest with the company's customer managed KMS key. What is the most direct way to meet this?`,
+    opts:[
+      "Enable default SSE-KMS encryption on the output bucket and stop there",
+      "Enable encryption of the Glue Data Catalog in the Data Catalog settings",
+      "Encrypt the job script file with the KMS key before uploading it",
+      "Create an AWS Glue security configuration with S3 encryption, CloudWatch Logs encryption and job bookmark encryption set to that key, and attach it to the job"
+    ],
+    correct:3,
+    explain:`A Glue security configuration sets KMS encryption for the job's S3 output, its CloudWatch Logs and its job bookmarks in one place, and is attached to the job (the key policy must also allow the job role and CloudWatch Logs to use the key). Default bucket encryption is the tempting shortcut, but it covers only the S3 objects and leaves logs and bookmarks unaddressed. Data Catalog encryption protects catalog metadata, which is configured separately and is not what the audit named.`
+  },
+
+  /* Ch 34 - Data masking and PII detection with Amazon Macie */
+  {
+    ref:{chapter:34},
+    q:`Amazon Macie flags customer email addresses in two S3 datasets, customers and orders. An outsourced analytics vendor must join the two datasets on the email column but must never see a real address. Which approach meets both needs?`,
+    opts:[
+      "Turn on Macie's masking for the email column in both datasets",
+      "Exclude the email column from the vendor's access with a Lake Formation column-level permission",
+      "Apply an AWS Glue DataBrew recipe that transforms the email column in both datasets with the same deterministic method (a cryptographic hash or deterministic encryption using one shared secret)",
+      "Apply DataBrew probabilistic encryption to the email column in both datasets"
+    ],
+    correct:2,
+    explain:`A deterministic transform turns the same email into the same token in both datasets, so the vendor can still join on it without seeing any real address. Probabilistic encryption is the tempting choice because it is stronger, but it produces different ciphertext for the same input, which breaks the join. Hiding the column with Lake Formation removes the join key entirely, and Macie detects sensitive data but has no masking feature.`
+  },
+
+  /* Ch 35 - Audit logging with CloudTrail and CloudTrail Lake */
+  {
+    ref:{chapter:35},
+    q:`A logistics company has delivered CloudTrail logs to S3 for four years. It now creates a CloudTrail Lake event data store so auditors can run SQL without maintaining Athena tables, and the auditors want the four years of history queryable in the same store as new events. What should the data engineer do?`,
+    opts:[
+      "Nothing: a new event data store automatically backfills all events from the account's existing trails",
+      "Copy the trail events from the S3 bucket into the event data store, with a retention period long enough to cover the oldest events",
+      "Re-deliver the old log files through Amazon Data Firehose into the event data store",
+      "Use the CloudTrail event history, which keeps every management event for the life of the account"
+    ],
+    correct:1,
+    explain:`CloudTrail Lake can copy existing trail events from S3 into an event data store as a point-in-time import, and it copies only events whose time falls within the store's retention period, so retention must reach back far enough. Automatic backfill is the tempting assumption, but a new store records events only from its creation onward. Event history reaches back only 90 days, and Firehose is not a path into an event data store.`
+  },
+
+  /* Ch 36 - Data privacy and governance frameworks */
+  {
+    ref:{chapter:36},
+    q:`An insurer's EU policyholder data lives in S3 in the Europe (Ireland) Region, and regulators require that it stay within the EU. The disaster recovery plan calls for a second copy that survives a Regional outage. An engineer proposes S3 Cross-Region Replication to US East (N. Virginia), the company's main Region. What should the data engineer recommend?`,
+    opts:[
+      "Keep the US East destination and encrypt the replicas with SSE-KMS so the copy is compliant",
+      "Drop the second copy, since replication of personal data always breaches residency rules",
+      "Replicate to a bucket in another EU Region, such as Europe (Frankfurt), so the copy meets the recovery goal without leaving the EU",
+      "Use S3 Same-Region Replication to a second bucket in Ireland, which also survives a Regional outage"
+    ],
+    correct:2,
+    explain:`Residency limits where copies and backups may land, not whether they may exist, so a Cross-Region Replication destination inside the EU satisfies both the regulator and the disaster recovery plan. Encrypting the US replicas is the tempting fix, but encryption protects confidentiality and does not change where the data is stored. Same-Region Replication keeps the copy in Ireland, so it does not survive an outage of that Region.`
+  },
+
+  /* Ch 40 - Data sharing patterns */
+  {
+    ref:{chapter:40},
+    q:`A data science team in the same AWS account as the sales warehouse runs its own Amazon Redshift Serverless workgroup. It needs the warehouse's current tables, always reflecting committed changes, with its experiments running on its own compute and no extra copy of the data. What should the data engineer set up?`,
+    opts:[
+      "A datashare on the producer with the schemas added and usage granted to the data science namespace, which then creates a database from the datashare",
+      "A nightly UNLOAD to S3 followed by a COPY into the data science workgroup",
+      "S3 Replication of the warehouse's unload files into a bucket the data science team owns",
+      "An AWS Data Exchange product that the data science team subscribes to"
+    ],
+    correct:0,
+    explain:`"Always current", "own compute" and "no copy" are the share-in-place signals, and a datashare granted to a namespace in the same account gives live, read-only access with no authorization or association handshake, since those steps apply only across accounts. The nightly UNLOAD and COPY is the tempting habit, but it is stale between runs and duplicates the storage. Replicating files is still a copy, and Data Exchange is meant for third-party data products, not two teams inside one account.`
+  }
 ];
 
 /* Chapter table for the "Review: Chapter N" links in the answer review.

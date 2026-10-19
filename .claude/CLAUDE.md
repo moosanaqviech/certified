@@ -14,7 +14,10 @@ a pipeline, vector stores and HNSW vs IVF, SageMaker Unified Studio and
 SageMaker Catalog, data sharing patterns); they keep their numbers and are
 placed at the end of Units 1, 2, 2 and 4 respectively, so play order inside a
 unit is not strictly numeric. The five `aws-practice-exam-NN.html` exams carry
-one question per chapter in scope, 14/25/33/40/40. Two sealed full-length
+one question per chapter in scope, 14/25/33/40/40, and exams 04 and 05 each
+add a seven-question Domain 4 drill extension (one per chapter 31 to 36 and
+40) so the hub's Security and Governance drills have 28 questions: 47
+questions and 94 minutes each. Two sealed full-length
 mocks (`mock-exam-01` and `02`: 65 questions, 130 minutes, five select-two
 items each, sampled at the 34/26/22/18 domain weights, their own scenarios)
 are listed in the course home's "Full-length mock exams" section and are the
