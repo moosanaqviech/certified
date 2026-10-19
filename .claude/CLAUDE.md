@@ -46,11 +46,14 @@ cert-config-databricks-ml-associate.md; the index is LOCKED, verified against
 the official 1 Mar 2025 exam guide PDF. All 38 chapters are live and cover
 all 48 objectives: chapters 01 to 30 are the original syllabus and 31 to 38
 are the gap chapters, placed inside Units 1 to 3 by objective, so play order
-inside a unit is not strictly numeric. Five ml-practice-exam-NN.html exams
+inside a unit is not strictly numeric. Six ml-practice-exam-NN.html exams
 are live: 01 to 03 are cumulative section exams (Section 1; Sections 1 and
-2; Sections 1 to 3, with 18, 27 and 42 questions, one per objective) and 04
-and 05 are full mocks (48 questions, 90 minutes, one per objective, their own
-scenarios; 195 questions in all). Exams map to objectives, not chapters: the
+2; Sections 1 to 3, with 18, 27 and 42 questions, one per objective), 06 is
+the Section 4 (Model Deployment) exam and Unit 4's practice test (18
+questions, three per objective, 36 minutes), and 04 and 05 are full mocks
+(48 questions, 90 minutes, one per objective, their own scenarios), listed in
+the course home's "Full-length mock exams" section; 213 questions in all
+with the readiness quiz. Exams map to objectives, not chapters: the
 real exam is 48 scored questions against 48 objectives. The course is paid
 (Unit 1 free, $9.99 unlock) and has a practice hub at
 practice/databricks-ml-associate.)
@@ -214,8 +217,8 @@ mocks (`mock-exam-01` and `02`: 59 questions, 120 minutes, sampled at the ten
 section weights) the same way; the ML Associate hub uses the two
 existing full mocks (`ml-practice-exam-04` and `05`, one question per
 objective, their own scenarios) as its mock pool and drills from exams 01 to
-03, so its drills cannot reach section 4 (Model Deployment) until a section 4
-drill pool is authored (the readiness check and the mocks do cover it). The
+03 plus the Section 4 exam `ml-practice-exam-06`, so all four sections have a
+drill pool. The
 DEA-C01 hub drills from all five `aws-practice-exam-NN.html` files (the
 readiness quiz tags questions `d1` to `d4` by domain; the hub's `DOMAINS`
 table maps chapter ranges to domains, and the gap chapters 37 to 40 are
