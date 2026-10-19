@@ -264,6 +264,9 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   .rev .fb{margin-top:8px}
 
   /* ---------- report a question, results footer ---------- */
+  .ref-link{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--gold-light);font-weight:600;text-decoration:none}
+  .ref-link:hover{color:var(--cream)}
+  .ref-link .ref-lock{display:inline-flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border:1px solid var(--border-2);border-radius:999px;padding:2px 8px;font-weight:600}
   .report-line{font-size:12px;color:var(--faint);margin:12px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .report-line a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border-2)}
   .report-line a:hover{color:var(--cream)}
@@ -461,6 +464,47 @@ const DOMAINS = [
     covers:"managed versus external tables, grants, column masks, row filters, and ABAC" }
 ];
 const DOM = n => DOMAINS.find(d => d.n === n);
+/* Course chapters by UNITS id (mirrors the course index.html UNITS array;
+   scripts/validate.py fails the hub if the two drift). A question's optional
+   ref:{chapter:N} resolves here to the "Review: Chapter N" link. */
+const CHAPTERS = {
+  1:["lesson-01-lakehouse.html", "The Lakehouse"],
+  2:["lesson-02-delta-lake.html", "Delta Lake essentials"],
+  3:["lesson-03-unity-catalog.html", "Unity Catalog overview"],
+  4:["lesson-04-compute-cost.html", "Compute options &amp; cost models"],
+  5:["lesson-05-ingestion-patterns.html", "Ingestion patterns: batch / streaming / incremental"],
+  6:["lesson-06-copy-into.html", "COPY INTO"],
+  7:["lesson-07-auto-loader.html", "Auto Loader: schema enforcement &amp; evolution"],
+  8:["lesson-08-autoloader-vs-copyinto.html", "Auto Loader vs. COPY INTO"],
+  9:["lesson-09-lakeflow-connect.html", "Lakeflow Connect: standard vs. managed connectors"],
+  10:["lesson-10-choosing-ingestion.html", "Choosing an ingestion method"],
+  11:["medallion-lesson.html", "Bronze → Silver cleaning"],
+  12:["lesson-12-joins.html", "Joins (inner / left / broadcast / cross)"],
+  13:["lesson-13-column-row-manipulation.html", "Column & row manipulation"],
+  14:["lesson-14-deduplication-aggregations.html", "Deduplication & aggregations"],
+  15:["lesson-15-spark-tuning-parameters.html", "Spark tuning parameters"],
+  16:["lesson-16-gold-layer-objects.html", "Gold-layer objects (views / MVs / streaming tables)"],
+  17:["lesson-17-data-quality.html", "Data quality checks & validation"],
+  18:["lesson-18-anatomy-of-a-job.html", "Anatomy of a Job: tasks & the DAG"],
+  19:["lesson-19-control-flow.html", "Control flow: retries, branching, looping"],
+  20:["lesson-20-trigger-types.html", "Trigger types"],
+  21:["lesson-21-time-based-vs-data-driven.html", "Time-based vs. data-driven triggers"],
+  22:["lesson-22-git-folders.html", "Git Folders: branches, commits, PRs"],
+  23:["lesson-23-automation-bundles.html", "Automation Bundles"],
+  24:["lesson-24-environment-promotion.html", "Environment promotion (dev → test → prod)"],
+  25:["lesson-25-databricks-cli.html", "The Databricks CLI"],
+  26:["lesson-26-job-health.html", "Reading job health (Lakeflow Jobs UI)"],
+  27:["lesson-27-spark-bottlenecks.html", "Spotting bottlenecks (Spark UI): skew, shuffle, spill"],
+  28:["lesson-28-liquid-clustering.html", "Liquid Clustering & predictive optimization"],
+  29:["lesson-29-diagnosing-cluster-failures.html", "Diagnosing cluster failures"],
+  30:["lesson-30-performance-trends-baselines.html", "Performance trends & baselines"],
+  31:["managed-vs-external-lesson.html", "Managed vs. external tables"],
+  32:["lesson-32-converting-managed-external.html", "Converting between managed & external"],
+  33:["lesson-33-access-control-grants.html", "Access control: GRANT / REVOKE / DENY"],
+  34:["lesson-34-column-masking-row-security.html", "Column masking & row-level security"],
+  35:["lesson-35-abac-policies.html", "ABAC policies"]
+};
+const FREE_CHAPTERS = [1, 2, 3, 4];               /* Unit 1, free in gate.ts */
 const unitOf = ch => { for (const d of DOMAINS) { if (ch >= d.ch[0] && ch <= d.ch[1]) return d.n; } return 1; };
 
 /* Question sources. Exams 02 to 07 sit behind the course paywall; the edge
@@ -549,7 +593,8 @@ function parseQuestions(text, src){
     kind: src.kind,
     unit: q.__ch ? unitOf(q.__ch) : src.unit,
     ch: q.__ch || null,
-    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || ""
+    q: q.q, opts: q.opts, correct: q.correct, explain: q.explain || "",
+    ref: (q.ref && CHAPTERS[q.ref.chapter]) ? { chapter: q.ref.chapter } : null
   }));
 }
 
@@ -759,6 +804,18 @@ function renderAll(){ renderHeader(); renderReco(); renderBars(); renderPicker()
 
 const reportHref = q => "../how-lessons-are-made?course=" + encodeURIComponent(COURSE_SLUG) + "&q=" + encodeURIComponent(q.id) + "&text=" + encodeURIComponent(String(q.q).replace(/<[^>]+>/g, "").slice(0, 140)) + "#report";
 const reportLine = q => `<p class="report-line"><span>Question ${q.id}</span><a href="${reportHref(q)}" target="_blank" rel="noopener">Report a problem with this question</a></p>`;
+/* "Review: Chapter N" link under an explanation. Opens the lesson in this tab
+   with ?back= pointing at the hub; the session is snapshotted first so the
+   lesson's "Back to quiz" (or the browser back button) restores it. A paid
+   chapter is labelled Locked for visitors who have not unlocked; the link
+   still goes to the lesson URL, where the gate serves the unlock page. */
+const refLink = q => {
+  const n = q.ref && q.ref.chapter, c = n && CHAPTERS[n];
+  if (!c) return "";
+  const lock = FREE_CHAPTERS.indexOf(n) < 0 && locked();
+  const href = COURSE_DIR + c[0] + "?back=" + encodeURIComponent(location.pathname + "?resume=1");
+  return `<a class="ref-link" href="${href}" data-ref="1"><span>Review: Chapter ${n} &middot; ${c[1]}</span>${lock ? `<span class="ref-lock">${lockIcon()}Locked</span>` : ""}</a>`;
+};
 const clock = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const lockIcon = () => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>`;
 
@@ -870,7 +927,7 @@ function reveal(){ S.revealed[S.i] = true; renderQ(); }
 
 function showFeedback(){
   const q = S.qs[S.i], ok = sameSet(S.answers[S.i], keyOf(q));
-  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}</div>`;
+  $("fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b class="v">${ok ? "Correct." : "Not quite."}</b> <b>Why:</b> ${q.explain}${refLink(q)}</div>`;
 }
 
 function renderActions(){
@@ -923,6 +980,7 @@ function finish(){
   STATE.lastMode = S.mode;
   saveState();
   track("practice_session_complete", { mode: S.mode, questions: S.qs.length, correct });
+  S.result = { correct, byUnit, before };
   renderSummary(correct, byUnit, before);
 }
 
@@ -943,7 +1001,7 @@ function renderSummary(correct, byUnit, before){
     return `<div class="rev">
       <div class="rq"><span class="mark ${ok ? "ok" : "no"}">${ok ? "Correct" : "Review"}</span>Q${i + 1}. ${q.q}</div>
       ${q.opts.map((o, j) => `<div class="opt ${key.includes(j) ? "correct" : mine.includes(j) ? "incorrect" : ""}"><span class="key">${KEYS[j]}</span><span>${o}${mine.includes(j) ? " · your answer" : ""}</span></div>`).join("")}
-      <div class="fb"><b>Why:</b> ${q.explain}</div>
+      <div class="fb"><b>Why:</b> ${q.explain}${refLink(q)}</div>
       ${reportLine(q)}
     </div>`;
   }).join("");
@@ -1002,9 +1060,54 @@ function togglePicker(force){
 renderAll();
 loadPool();
 
+/* ---------- resume after a "Review: Chapter N" link ----------
+   Following a chapter link leaves the page, so the live session is saved to
+   sessionStorage first. Coming back through the lesson's "Back to quiz"
+   (?resume=1) or the browser back button restores the same question, or the
+   same summary and review, at the same scroll position. */
+const RESUME_KEY = STORE_KEY + ".resume";
+const RESUME_TTL = 6 * 3600 * 1000;
+function saveResume(){
+  if (!S) return;
+  try{
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({
+      t: Date.now(), mode: S.mode, mock: S.mock, label: S.label, ids: S.qs.map(q => q.id), i: S.i,
+      explainNow: S.explainNow, timed: S.timed, answers: S.answers, revealed: S.revealed, unit: S.unit,
+      left: S.left, done: S.done, started: S.started, result: S.result || null, y: window.scrollY
+    }));
+  }catch(e){}
+}
+$("runner").addEventListener("click", e => { const a = e.target.closest && e.target.closest("a[data-ref]"); if (a) saveResume(); });
+async function tryResume(){
+  let snap = null;
+  try{ snap = JSON.parse(sessionStorage.getItem(RESUME_KEY) || "null"); sessionStorage.removeItem(RESUME_KEY); }catch(e){}
+  if (!snap || !Array.isArray(snap.ids) || Date.now() - (snap.t || 0) > RESUME_TTL) return false;
+  await loadPool();
+  const byId = {}; POOL.forEach(q => { byId[q.id] = q; });
+  const qs = snap.ids.map(id => byId[id]);
+  if (!qs.length || qs.some(q => !q)) return false;
+  S = { mode: snap.mode, mock: snap.mock || null, label: snap.label, qs, i: snap.i || 0, explainNow: !!snap.explainNow, timed: !!snap.timed,
+        answers: snap.answers, revealed: snap.revealed, unit: snap.unit, left: snap.left || 0, tick: null,
+        done: !!snap.done, started: snap.started || Date.now(), result: snap.result };
+  $("hub").hidden = true; $("session").hidden = false;
+  if (S.done && S.result) renderSummary(S.result.correct, S.result.byUnit, S.result.before);
+  else {
+    S.done = false;
+    if (S.timed) S.tick = setInterval(() => { S.left--; const t = $("runTimer"); if (t) { t.textContent = fmt(S.left); if (S.left <= 120) t.classList.add("warn"); } if (S.left <= 0) finish(); }, 1000);
+    renderQ();
+  }
+  setTimeout(() => window.scrollTo({ top: snap.y || 0, behavior: "instant" }), 60);
+  return true;
+}
+
 /* Deep links: ?mode=quick | ready | domain[&domain=N] | custom */
-(function(){
+(async function(){
   let params; try{ params = new URLSearchParams(location.search); }catch(e){ return; }
+  let nav = ""; try{ nav = (performance.getEntriesByType("navigation")[0] || {}).type || ""; }catch(e){}
+  if (params.get("resume") === "1" || nav === "back_forward") {
+    if (params.get("resume") === "1") { try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+    if (await tryResume()) return;
+  }
   const mode = params.get("mode"), n = parseInt(params.get("domain"), 10);
   if (mode === "quick") startQuick();
   else if (mode === "ready") startReady();

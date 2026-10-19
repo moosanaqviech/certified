@@ -508,6 +508,37 @@ vp.addEventListener('touchend', e => {
 });
 
 render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
 </script>
 </body>
 </html>

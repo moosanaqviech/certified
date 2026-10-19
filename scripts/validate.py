@@ -961,6 +961,180 @@ def check_nav(path, text, rep):
 
 
 # ---------------------------------------------------------------------------
+# Chapter refs ("Review: Chapter N" links)
+#
+# A question may carry ref:{chapter:N} (and optionally card:K, 1-based). The
+# page resolves N through a CHAPTERS table: in exam and readiness payloads
+# { course, base, free:[...], list:{ N:[file, title] } }, in a practice hub a
+# bare { N:[file, title] } with FREE_CHAPTERS beside it. Both must mirror the
+# course index.html UNITS array (ids, files, titles), and the free list must
+# match the chapters gate.ts serves free. Checked from the raw file so the
+# older exams saved without payload markers are covered too.
+# ---------------------------------------------------------------------------
+
+UNITS_LESSON_RE = re.compile(r'\{\s*id:\s*(\d+),\s*t:\s*"([^"]*)"[^}]*?file:\s*"([^"]+)"')
+REF_ALLOWED = {"chapter", "card"}
+
+REF_HARNESS = """
+const QUESTIONS = %s;
+const CHAPTERS = %s;
+console.log(JSON.stringify({
+  refs: QUESTIONS.map(function(q){ return q && Object.prototype.hasOwnProperty.call(q, "ref") ? (q.ref === undefined ? "__undef__" : q.ref) : null; }),
+  chapters: CHAPTERS
+}));
+"""
+
+CARDS_HARNESS = """
+var document = { getElementById: function(){ return null; } };
+%s
+console.log(JSON.stringify(cards.length));
+"""
+
+
+def _literal_after(text, anchor, closer):
+    """The literal opened by `anchor` at the start of a line (so a hub's
+    parser code that merely mentions the anchor in a string is skipped)."""
+    m = re.search(r"(?m)^" + re.escape(anchor), text)
+    if not m:
+        return None
+    start = m.end() - 1
+    end = text.find(closer, start)
+    if end < 0:
+        return None
+    return text[start:end + 2]
+
+
+def units_chapters(index_path):
+    src = index_path.read_text(encoding="utf-8")
+    if "const UNITS = [" not in src:
+        return None
+    blk = src[src.index("const UNITS = ["):]
+    blk = blk[: blk.index("\n];")]
+    return {int(n): (f, t) for n, t, f in UNITS_LESSON_RE.findall(blk)}
+
+
+def gate_free_stems(course_id):
+    gate = Path(__file__).resolve().parent.parent / "netlify" / "edge-functions" / "gate.ts"
+    if not gate.exists():
+        return None
+    src = gate.read_text(encoding="utf-8")
+    m = re.search(r'id:\s*"%s".*?free:\s*new Set<string>\(\[(.*?)\]\)' % re.escape(course_id), src, re.S)
+    return set(re.findall(r'"([^"]*)"', m.group(1))) if m else None
+
+
+def lesson_card_count(path):
+    text = path.read_text(encoding="utf-8")
+    m = re.search(r"<script>\s*(.*?)/\*\s*-*\s*ENGINE", text, re.S)
+    if not m or "const cards" not in m.group(1):
+        return None
+    ok, data, missing = run_node(CARDS_HARNESS % m.group(1))
+    return int(data) if ok and not missing else None
+
+
+def check_refs(path, text, rep):
+    p = Path(path)
+    qsrc = _literal_after(text, "const QUESTIONS = [", "\n];")
+    csrc = _literal_after(text, "const CHAPTERS = {", "\n};")
+    is_hub = qsrc is None and csrc is not None
+    has_ref_text = qsrc is not None and re.search(r"\bref\s*:", qsrc)
+    if not is_hub and not has_ref_text and csrc is None:
+        return
+
+    if has_ref_text and csrc is None:
+        rep.fail("questions carry ref but the file defines no CHAPTERS table, so no link would render")
+        return
+
+    # Course folder: sibling index.html, else the table's base / COURSE_DIR.
+    index = p.parent / "index.html"
+    if not (index.exists() and "const UNITS = [" in index.read_text(encoding="utf-8")):
+        m = re.search(r'base:\s*"([^"]+)"', csrc or "") or re.search(r'const COURSE_DIR\s*=\s*"([^"]+)"', text)
+        index = (p.parent / m.group(1) / "index.html").resolve() if m else None
+    units = units_chapters(index) if index and index.exists() else None
+    if not units:
+        rep.fail("chapter refs present but the course index.html UNITS array could not be found")
+        return
+
+    # Duplicate ref keys inside one question literal (JS keeps the last silently).
+    if qsrc:
+        # A question literal starts at the "{" before its q: field.
+        opens = [m.start() for m in re.finditer(r"\{[ \t]*\n", qsrc)]
+        starts = [max([o for o in opens if o < m.start()] or [m.start()]) for m in re.finditer(r"\bq\s*:\s*`", qsrc)]
+        seen = {}
+        for m in re.finditer(r"\bref\s*:", qsrc):
+            qi = sum(1 for s0 in starts if s0 < m.start()) - 1
+            seen[qi] = seen.get(qi, 0) + 1
+        dups = sorted(k + 1 for k, v in seen.items() if v > 1)
+        if dups:
+            rep.fail(f"question(s) {dups} declare ref more than once")
+
+    ok, data, missing = run_node(REF_HARNESS % (qsrc or "[]", csrc or "null"))
+    if missing:
+        rep.warn("node not found: chapter ref checks skipped")
+        return
+    if not ok:
+        rep.fail(f"QUESTIONS / CHAPTERS do not evaluate for the ref check:\n        {data.splitlines()[-1] if data else 'unknown error'}")
+        return
+    info = json.loads(data)
+    table = info["chapters"]
+
+    # The chapter table must mirror UNITS.
+    if table is not None:
+        lst = table.get("list") if isinstance(table, dict) and "list" in table else table
+        if not isinstance(lst, dict):
+            rep.fail("CHAPTERS has no chapter list")
+            return
+        got = {int(k): tuple(v) for k, v in lst.items() if isinstance(v, list) and len(v) == 2}
+        if len(got) != len(lst):
+            rep.fail("CHAPTERS entries must be [file, title] pairs")
+        drift = sorted(n for n in set(got) | set(units) if got.get(n) != units.get(n))
+        if drift:
+            rep.fail(f"CHAPTERS has drifted from the course index UNITS for chapter(s) {drift}")
+        else:
+            rep.ok(f"CHAPTERS mirrors the course index ({len(units)} chapters)")
+        free = table.get("free") if "list" in table else None
+        course = table.get("course") if "list" in table else None
+        if is_hub:
+            fm = re.search(r"const FREE_CHAPTERS\s*=\s*\[([^\]]*)\]", text)
+            free = [int(x) for x in re.findall(r"\d+", fm.group(1))] if fm else None
+            cm = re.search(r'const COURSE_ID\s*=\s*"([^"]+)"', text)
+            course = cm.group(1) if cm else None
+        stems = gate_free_stems(course) if course else None
+        if stems is not None and free is not None:
+            want = sorted(n for n, (f, _) in units.items() if f[:-5] in stems)
+            if sorted(free) != want:
+                rep.fail(f"free chapters {sorted(free)} do not match gate.ts for {course} ({want})")
+            else:
+                rep.ok(f"free chapters match gate.ts ({want})")
+
+    refs = info["refs"]
+    tagged = [r for r in refs if r is not None]
+    if not tagged:
+        return
+    bad, cards_cache = [], {}
+    for qi, r in enumerate(refs, 1):
+        if r is None:
+            continue
+        if not isinstance(r, dict) or not r or set(r) - REF_ALLOWED or "chapter" not in r:
+            bad.append(f"Q{qi}: malformed ref {r!r} (want {{chapter:N}} or {{chapter:N, card:K}})")
+            continue
+        n = r["chapter"]
+        if not isinstance(n, int) or isinstance(n, bool) or n not in units:
+            bad.append(f"Q{qi}: ref.chapter {n!r} is not a chapter in the course index")
+            continue
+        if "card" in r:
+            k = r["card"]
+            if n not in cards_cache:
+                cards_cache[n] = lesson_card_count(index.parent / units[n][0])
+            cnt = cards_cache[n]
+            if not isinstance(k, int) or isinstance(k, bool) or k < 1 or (cnt is not None and k > cnt):
+                bad.append(f"Q{qi}: ref.card {k!r} is outside chapter {n}'s {cnt or '?'} cards")
+    for b in bad:
+        rep.fail(b)
+    if not bad:
+        rep.ok(f"{len(tagged)}/{len(refs)} question(s) carry a valid chapter ref")
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 
@@ -971,6 +1145,10 @@ def validate_file(path):
     # NAV is checked from the raw file, not the payload zone, so it still runs
     # on the older lessons that were saved without payload markers.
     check_nav(path, text, rep)
+    check_refs(path, text, rep)
+    if kind is None and _literal_after(text, "const CHAPTERS = {", "\n};") and not _literal_after(text, "const QUESTIONS = [", "\n];"):
+        rep.ok("practice hub: chapter table checked")
+        return rep
     if kind is None:
         rep.fail("no LESSON or EXAM payload markers found; is this a Certified content file?")
         return rep
