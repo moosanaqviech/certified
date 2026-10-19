@@ -267,6 +267,7 @@ const QUESTIONS = [
   /* Q1 - Delta Lake time travel and RESTORE (Ch 2) */
   {
     domain:"c1",
+    ref:{chapter:2},
     q:`A scheduled job accidentally overwrote a Delta table with a bad load an hour ago. The table has its default history retention and no separate backup. What is the fastest correct way to get the previous contents back?`,
     opts:[
       "Rerun the original upstream pipeline from source to rebuild the table",
@@ -281,6 +282,7 @@ const QUESTIONS = [
   /* Q2 - Column masking vs row filters vs views (Ch 34) */
   {
     domain:"c1",
+    ref:{chapter:34},
     q:`Support staff must query the full customer table, including every row, but must never see raw email addresses. Engineers on the same table do need the raw values. What is the intended Unity Catalog approach?`,
     opts:[
       "A column mask on the email column that returns a redacted value for the support group",
@@ -297,6 +299,7 @@ const QUESTIONS = [
   /* Q3 - COPY INTO vs Auto Loader, the COPY INTO direction (Ch 6, 8) */
   {
     domain:"c2",
+    ref:{chapter:8},
     q:`A partner drops a predictable set of roughly 40 CSV files into a storage folder once a night. The load must be safe to rerun after a failure without duplicating rows, and the team wants the simplest thing that works. Which fits best?`,
     opts:[
       "Auto Loader in file notification mode with a checkpoint",
@@ -311,6 +314,7 @@ const QUESTIONS = [
   /* Q4 - Lakeflow Connect managed connectors (Ch 9, 10) */
   {
     domain:"c2",
+    ref:{chapter:9},
     q:`A team needs to land Salesforce objects in the lakehouse on a schedule, with incremental change capture, and does not want to own extraction code or API pagination. Which ingestion route fits?`,
     opts:[
       "A notebook that calls the Salesforce REST API and writes Parquet to a landing zone",
@@ -327,6 +331,7 @@ const QUESTIONS = [
   /* Q5 - Gold-layer objects: view vs materialized view vs streaming table (Ch 16) */
   {
     domain:"c3",
+    ref:{chapter:16},
     q:`A gold-layer aggregation over billions of rows backs an executive dashboard that is opened dozens of times a day. The source tables refresh hourly, and stale results up to an hour old are acceptable. Which object should back the dashboard?`,
     opts:[
       "A standard view, so every dashboard load recomputes the aggregate",
@@ -341,6 +346,7 @@ const QUESTIONS = [
   /* Q6 - Deduplication: keeping the latest record per key (Ch 14) */
   {
     domain:"c3",
+    ref:{chapter:14},
     q:`A bronze table holds multiple rows per customer_id because the source resends records after edits. Silver must keep exactly one row per customer_id: the one with the most recent updated_at. Which approach is correct?`,
     opts:[
       "dropDuplicates on customer_id",
@@ -355,6 +361,7 @@ const QUESTIONS = [
   /* Q7 - Broadcast joins (Ch 12, with tuning from Ch 15) */
   {
     domain:"c3",
+    ref:{chapter:12},
     q:`A join between a 4 TB fact table and a 30 MB country lookup table is slow, and the Spark UI shows a large shuffle on both sides. What is the most effective fix?`,
     opts:[
       "Broadcast the small lookup table so each executor joins against a local copy and the fact table is not shuffled",
@@ -371,6 +378,7 @@ const QUESTIONS = [
   /* Q8 - Trigger types: file arrival vs schedule (Ch 20, 21) */
   {
     domain:"c4",
+    ref:{chapter:20},
     q:`An upstream vendor uploads a file to cloud storage at an unpredictable time somewhere between 01:00 and 06:00. The downstream job must run promptly after the file lands, and must not run on days when nothing is delivered. Which trigger fits?`,
     opts:[
       "A cron schedule at 06:00, after the latest possible arrival",
@@ -385,6 +393,7 @@ const QUESTIONS = [
   /* Q9 - Task retries vs full rerun (Ch 18, 19) */
   {
     domain:"c4",
+    ref:{chapter:19},
     q:`One task in a six-task job calls an external REST API that intermittently returns a 503, failing perhaps one run in ten. The call is safe to repeat. What is the intended way to handle this?`,
     opts:[
       "Wrap the whole job in an outer job that reruns it on failure",
@@ -399,6 +408,7 @@ const QUESTIONS = [
   /* Q10 - Databricks Asset Bundles and environment promotion (Ch 23, 24) */
   {
     domain:"c4",
+    ref:{chapter:23},
     q:`The same pipeline must run in dev, test, and prod, identical in logic but pointing at different catalogs and cluster sizes per environment. The team wants one source-controlled definition rather than three drifting copies. What should they use?`,
     opts:[
       "Three jobs created in the workspace UI, one per environment",
@@ -415,6 +425,7 @@ const QUESTIONS = [
   /* Q11 - Diagnosing skew in the Spark UI (Ch 27) */
   {
     domain:"c5",
+    ref:{chapter:27},
     q:`A stage in the Spark UI shows 199 tasks finishing in under 20 seconds while one task runs for 25 minutes and spills to disk. What does this pattern indicate?`,
     opts:[
       "The cluster is undersized and needs more workers",
@@ -429,6 +440,7 @@ const QUESTIONS = [
   /* Q12 - Predictive optimization vs manual maintenance (Ch 28) */
   {
     domain:"c5",
+    ref:{chapter:28},
     q:`A team maintains a nightly job that runs OPTIMIZE and VACUUM across dozens of Unity Catalog managed tables, and it keeps drifting out of step with which tables actually need maintenance. What is the recommended alternative?`,
     opts:[
       "Enable predictive optimization, which decides when to run maintenance on each managed table",
@@ -440,6 +452,51 @@ const QUESTIONS = [
     explain:`Predictive optimization runs maintenance operations on Unity Catalog managed tables when Databricks determines they will pay off, so the tables that need compaction get it and the tables that do not are left alone, with no hand-maintained schedule. Running the maintenance job more often (the trap) makes the drift more expensive rather than fixing it, since the problem is choosing which tables to maintain, not how frequently the job fires.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-assoc",
+  base: "../databricks-data-engineer-associate/",
+  free: [1, 2, 3, 4],
+  list: {
+    1:["lesson-01-lakehouse.html", "The Lakehouse"],
+    2:["lesson-02-delta-lake.html", "Delta Lake essentials"],
+    3:["lesson-03-unity-catalog.html", "Unity Catalog overview"],
+    4:["lesson-04-compute-cost.html", "Compute options &amp; cost models"],
+    5:["lesson-05-ingestion-patterns.html", "Ingestion patterns: batch / streaming / incremental"],
+    6:["lesson-06-copy-into.html", "COPY INTO"],
+    7:["lesson-07-auto-loader.html", "Auto Loader: schema enforcement &amp; evolution"],
+    8:["lesson-08-autoloader-vs-copyinto.html", "Auto Loader vs. COPY INTO"],
+    9:["lesson-09-lakeflow-connect.html", "Lakeflow Connect: standard vs. managed connectors"],
+    10:["lesson-10-choosing-ingestion.html", "Choosing an ingestion method"],
+    11:["medallion-lesson.html", "Bronze → Silver cleaning"],
+    12:["lesson-12-joins.html", "Joins (inner / left / broadcast / cross)"],
+    13:["lesson-13-column-row-manipulation.html", "Column & row manipulation"],
+    14:["lesson-14-deduplication-aggregations.html", "Deduplication & aggregations"],
+    15:["lesson-15-spark-tuning-parameters.html", "Spark tuning parameters"],
+    16:["lesson-16-gold-layer-objects.html", "Gold-layer objects (views / MVs / streaming tables)"],
+    17:["lesson-17-data-quality.html", "Data quality checks & validation"],
+    18:["lesson-18-anatomy-of-a-job.html", "Anatomy of a Job: tasks & the DAG"],
+    19:["lesson-19-control-flow.html", "Control flow: retries, branching, looping"],
+    20:["lesson-20-trigger-types.html", "Trigger types"],
+    21:["lesson-21-time-based-vs-data-driven.html", "Time-based vs. data-driven triggers"],
+    22:["lesson-22-git-folders.html", "Git Folders: branches, commits, PRs"],
+    23:["lesson-23-automation-bundles.html", "Automation Bundles"],
+    24:["lesson-24-environment-promotion.html", "Environment promotion (dev → test → prod)"],
+    25:["lesson-25-databricks-cli.html", "The Databricks CLI"],
+    26:["lesson-26-job-health.html", "Reading job health (Lakeflow Jobs UI)"],
+    27:["lesson-27-spark-bottlenecks.html", "Spotting bottlenecks (Spark UI): skew, shuffle, spill"],
+    28:["lesson-28-liquid-clustering.html", "Liquid Clustering & predictive optimization"],
+    29:["lesson-29-diagnosing-cluster-failures.html", "Diagnosing cluster failures"],
+    30:["lesson-30-performance-trends-baselines.html", "Performance trends & baselines"],
+    31:["managed-vs-external-lesson.html", "Managed vs. external tables"],
+    32:["lesson-32-converting-managed-external.html", "Converting between managed & external"],
+    33:["lesson-33-access-control-grants.html", "Access control: GRANT / REVOKE / DENY"],
+    34:["lesson-34-column-masking-row-security.html", "Column masking & row-level security"],
+    35:["lesson-35-abac-policies.html", "ABAC policies"]
+  }
+};
 /* =====================================================================
    READINESS PAYLOAD - END
 ===================================================================== */
@@ -724,6 +781,35 @@ function countUp(el, target, ms){
   requestAnimationFrame(frame);
 }
 
+/* Chapter links (optional, additive). A question may carry ref:{chapter:N}.
+   When the payload also defines a CHAPTERS table, the results review
+   shows "Review: Chapter N" under that question's explanation, never during
+   the attempt. Questions without ref, and payloads without CHAPTERS, render
+   exactly as before. The link opens in a new tab with ?back=<this quiz>&tab=1
+   so this review stays put and the lesson can offer "Back to quiz".
+     const CHAPTERS = { course:"<gate course id>", base:"", free:[1,2],
+                        list:{ 1:["lesson-01-x.html","Title"], ... } };
+   A chapter outside `free` is labelled Locked for visitors who have not
+   unlocked the course; its link still opens the lesson URL, where the gate
+   serves the existing unlock page. */
+const CHAP = (typeof CHAPTERS === "object" && CHAPTERS && CHAPTERS.list) ? CHAPTERS : null;
+function chapLocked(n){
+  if(!CHAP || (CHAP.free||[]).indexOf(n)>=0) return false;
+  if(!/(?:^|;\s*)cc_gating=1(?:;|$)/.test(document.cookie)) return false;
+  const m = document.cookie.match(/(?:^|;\s*)cc_ui=([^;]+)/), l = m ? decodeURIComponent(m[1]).split(".") : [];
+  return l.indexOf(CHAP.course)<0 && l.indexOf("1")<0;
+}
+function refLink(Q){
+  const n = Q && Q.ref && Q.ref.chapter, c = CHAP && CHAP.list[n];
+  if(!c) return "";
+  const lock = chapLocked(n);
+  const href = (CHAP.base||"") + c[0] + "?back=" + encodeURIComponent(location.pathname) + "&tab=1";
+  return `<a href="${href}" target="_blank" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--gold);font-weight:600;text-decoration:none">`
+    + `<span>Review: Chapter ${n} &middot; ${c[1]}</span>`
+    + (lock ? `<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:2px 8px">Locked</span>` : "")
+    + `<span aria-hidden="true">&#8599;</span></a>`;
+}
+
 /* ---------- review (reused verbatim from the exam renderer) ---------- */
 function renderReview(){
   const wrap=document.getElementById("review");
@@ -739,7 +825,7 @@ function renderReview(){
           return `<div class="${cls}"><span class="key">${"ABCD"[j]}</span><span>${o}${j===mine?'  &middot;  your answer':''}</span></div>`;
         }).join("")}
       </div>
-      <div class="explain"><b>Why:</b> ${Q.explain}</div>
+      <div class="explain"><b>Why:</b> ${Q.explain}${refLink(Q)}</div>
     </div>`;
   }).join("") + `<div style="margin-top:28px;text-align:center"><button class="btn sec" id="retakeBtn2">Retake quiz</button></div>`;
   document.getElementById("retakeBtn2").onclick=retake;
