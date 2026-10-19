@@ -171,6 +171,7 @@ const E = {
 const QUESTIONS = [
   /* Ch 01 - DABs Project Structure for Scalable Python */
   {
+    ref:{chapter:1},
     q:`A reviewer notices a pull request adding a new task to <code>resources/pipelines.yml</code> that includes a 30-line inline Python transformation instead of a reference to a function in <code>src/</code>. What should the reviewer flag, and why?`,
     opts:[
       `Nothing; resources/*.yml is free-form and can hold any Python needed for a task`,
@@ -178,10 +179,11 @@ const QUESTIONS = [
       `The transformation should move into databricks.yml instead, since that file holds all bundle-level logic`,
       `The task should be split into a separate bundle entirely, since one bundle cannot mix config and logic`
     ],
-    correct:0,
+    correct:1,
     explain:`resources/*.yml is meant to declare structure only, clusters, schedules, task graphs, not carry business logic; a 30-line inline transformation belongs in src/ as an importable function a task references, which also makes it unit testable. databricks.yml holds only bundle-level config like targets and includes, not task logic, and nothing requires splitting logic and config into separate bundles.`
   },
   {
+    ref:{chapter:1},
     q:`An engineer runs <code>databricks bundle deploy -t prod</code> directly after editing YAML by hand, skipping <code>databricks bundle validate</code>. The deploy fails midway with a variable resolution error inside a production target. What would have caught this earlier and more safely?`,
     opts:[
       `databricks bundle init, which re-scaffolds the bundle from its original template`,
@@ -194,6 +196,7 @@ const QUESTIONS = [
   },
   /* Ch 02 - Libraries and Dependencies: PyPI, Wheels, Source Archives */
   {
+    ref:{chapter:2},
     q:`A team's own transformation package changes weekly. Instead of shipping it as a source archive that rebuilds on every job run, they build it once into a .whl and reference it by file path in the environment spec. What does this save, and what would the source-archive approach have cost instead?`,
     opts:[
       `Nothing measurable; wheels and source archives install at the same speed`,
@@ -205,6 +208,7 @@ const QUESTIONS = [
     explain:`A wheel is already compiled, so installing one is just a file copy; a source archive is rebuilt from scratch on every install, which costs time and requires a compiler and headers the cluster image may not even have. That is a real speed and reliability difference, not just disk space, and a wheel still has to be declared in the environment spec like any other dependency, nothing installs itself automatically.`
   },
   {
+    ref:{chapter:2},
     q:`During code review, a teammate points out that a new job's <code>requests</code> dependency was added by running <code>%pip install requests==2.31.0</code> as the notebook's first cell, with nothing changed in <code>resources/jobs.yml</code>. What is the correct fix to request in review?`,
     opts:[
       `Nothing; %pip install with a pinned version is fully equivalent to a declared dependency`,
@@ -217,6 +221,7 @@ const QUESTIONS = [
   },
   /* Ch 03 - Python and Pandas UDFs */
   {
+    ref:{chapter:3},
     q:`A pipeline defines a Python UDF that calls .upper() on a string column, and a second pandas UDF that scores each row of text against a third-party sentiment model with no Spark equivalent. A reviewer suggests converting both to pandas UDFs for consistency. What is the better advice?`,
     opts:[
       `Convert both, since pandas UDFs are always faster than any alternative`,
@@ -228,6 +233,7 @@ const QUESTIONS = [
     explain:`.upper() is already a built-in Spark SQL function, so the fastest option is removing the UDF entirely, not upgrading it to a pandas UDF; a pandas UDF would still be slower than the built-in. The sentiment model has no Spark equivalent at all, so a pandas UDF is the right tool there, since it beats a row-at-a-time UDF on serialization cost. Neither the "convert both" nor the "leave both" advice accounts for the fact that these two cases call for different fixes.`
   },
   {
+    ref:{chapter:3},
     q:`A pandas UDF applies a lightweight arithmetic conversion to a numeric column across 900 million rows. A plain Python <code>@udf</code> doing the identical calculation is also available. Which one processes faster at this scale, and why?`,
     opts:[
       `The pandas UDF, because it crosses the JVM/Python boundary once per batch of rows and runs the math vectorized in pandas and NumPy instead of looped in Python`,
@@ -240,6 +246,7 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
   {
+    ref:{chapter:4},
     q:`A bronze table's <code>cloudFiles.schemaLocation</code> points at a path that gets accidentally wiped by an unrelated cleanup script. On the next run, a new column that started appearing in recent files a week ago is suddenly treated as brand new again. What does this reveal about what schemaLocation actually stores?`,
     opts:[
       `It stores nothing important; the wipe should have no observable effect`,
@@ -251,6 +258,7 @@ const QUESTIONS = [
     explain:`schemaLocation persists both the inferred schema and its evolution history; wiping it erases that memory, so a column Auto Loader had already learned about a week ago looks newly discovered again on the next run. It has nothing to do with which files were already ingested, that is a separate streaming checkpoint, and it does not cache or affect the target Delta table's own data.`
   },
   {
+    ref:{chapter:4},
     q:`An engineer manually adds a <code>depends_on</code> style comment above <code>gold_orders</code>'s function noting "must run after silver_orders", believing the pipeline needs this hint to sequence the two tables correctly. Is the comment necessary?`,
     opts:[
       `Yes; without an explicit ordering hint the two tables could run in the wrong order`,
@@ -263,6 +271,7 @@ const QUESTIONS = [
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
+    ref:{chapter:5},
     q:`A data scientist wants to test a notebook once against production data with a new parameter value, and does not want a job definition left behind afterward. Which API call fits, and what is the key difference from triggering an existing job?`,
     opts:[
       `jobs/runs/submit, which runs the task once with no job definition persisted, unlike run-now which requires an existing job`,
@@ -274,6 +283,7 @@ const QUESTIONS = [
     explain:`runs/submit is built for exactly this: an ephemeral, one-off run that leaves nothing saved behind. run-now does accept parameter overrides, but only against a job that already exists and stays saved in its run history afterward, the opposite of what is wanted here. create-then-delete works but leaves a needless job definition sitting around in between, and ad hoc runs are fully supported without any saved job.`
   },
   {
+    ref:{chapter:5},
     q:`A platform engineer explains to a new hire that the Jobs UI, the REST API, and the CLI are "three doors to the same room." What does that mean in practice, and what is the one thing that is not true of all three equally?`,
     opts:[
       `All three are equally scriptable, since the UI can be automated with browser macros`,
@@ -286,6 +296,7 @@ const QUESTIONS = [
   },
   /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
   {
+    ref:{chapter:6},
     q:`A page-view log table receives continuous new events, but rows must occasionally be deleted entirely to comply with a user data-erasure request. A downstream summary table reports total page views per day. Which table type should that summary be, and what does the erasure requirement rule out?`,
     opts:[
       `A streaming table; erasure requests are rare enough not to matter for table type`,
@@ -297,6 +308,7 @@ const QUESTIONS = [
     explain:`The moment a source can be changed after landing, here by deletion, a streaming table stops being reliable: it only ever processes new rows and has no mechanism to notice something already counted was removed. A materialized view recomputes or incrementally maintains its result against the current state of the source, so an erasure is reflected correctly. Streaming tables never catch up to deletes on their own no matter how much time passes, and bolting on a separate batch job to patch the gap is exactly the complexity a materialized view avoids.`
   },
   {
+    ref:{chapter:6},
     q:`A bronze table ingests raw server access logs via Auto Loader. Every log line is a new, immutable event; nothing already ingested is ever changed or removed. Which table type is the right default here, and what makes a materialized view unnecessary?`,
     opts:[
       `A materialized view, since access logs are high volume and volume alone favors materialized views`,
@@ -309,6 +321,7 @@ const QUESTIONS = [
   },
   /* Ch 07 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`An apply_changes call is configured with <code>keys=["order_id"]</code>. A teammate proposes removing keys entirely, arguing sequence_by alone is enough to keep the target table correct. What would actually break without keys?`,
     opts:[
       `apply_changes would have no way to know which target row a given change belongs to, since keys is what identifies the entity a change record is about`,
@@ -320,6 +333,7 @@ const QUESTIONS = [
     explain:`keys is what tells apply_changes which target row a change record refers to; without it, there is no way to match an incoming change, insert, update, or delete, to the entity it is about, so the whole matching logic breaks, not just deletes. sequence_by only decides which of several changes to the same key wins, it does not substitute for identifying the key itself, and keys is required for both SCD Type 1 and Type 2, not just Type 2.`
   },
   {
+    ref:{chapter:7},
     q:`A customer dimension table needs to answer "what was this customer's billing address as of any past order date," not just the current address. Which apply_changes setting makes that possible, and what does it add to the target table?`,
     opts:[
       `stored_as_scd_type=1, since it is the default and requires the least configuration`,
@@ -332,6 +346,7 @@ const QUESTIONS = [
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A pipeline reads Kafka, applies a custom stateful deduplication operator with no Lakeflow equivalent, and writes the result straight into a Delta table inside Unity Catalog. A colleague argues Lakeflow Declarative Pipelines should be used since the sink is a UC Delta table. What settles the disagreement?`,
     opts:[
       `The colleague is right; the sink is always the deciding signal regardless of anything else`,
@@ -343,6 +358,7 @@ const QUESTIONS = [
     explain:`The deciding signal is whichever requirement the managed wrapper cannot express, here the custom stateful operator, and that overrides the fact that the sink happens to be a UC Delta table, which would otherwise favor Lakeflow Pipelines. Raw Structured Streaming can write directly to Delta in Unity Catalog with no separate load step needed, and sharing an engine underneath does not make the two approaches interchangeable when only one exposes arbitrary stateful operators.`
   },
   {
+    ref:{chapter:8},
     q:`A two-person team maintains three raw Structured Streaming jobs, each with its own hand-managed checkpoint path, retry logic, and a duplicated null-check step, all landing Delta tables in Unity Catalog. What is the strongest fix for their growing operational load?`,
     opts:[
       `Consolidate the three jobs into one larger Structured Streaming job to reduce the number of checkpoint paths`,
@@ -355,6 +371,7 @@ const QUESTIONS = [
   },
   /* Ch 09 - Control Flow and Task Configuration in Jobs */
   {
+    ref:{chapter:9},
     q:`A job's extract task feeds two parallel tasks, load_warehouse and load_lake. A final task, archive_source, must run only after both loads have finished, whether they succeeded or failed, so source files are always archived. Which run_if setting on archive_source is correct?`,
     opts:[
       `ALL_DONE, so archive_source runs once both load tasks finish, regardless of outcome`,
@@ -366,6 +383,7 @@ const QUESTIONS = [
     explain:`ALL_DONE fires once every dependency has finished, pass or fail, which is exactly what "always archive" requires. ALL_SUCCESS (the default) would skip archiving after any failure, leaving source files unarchived exactly when a rerun might need them, and AT_LEAST_ONE_FAILED would skip archiving after a clean run instead. For Each iterates over list elements to repeat a task, it is not a conditional execution rule.`
   },
   {
+    ref:{chapter:9},
     q:`The same cleansing notebook must run once for each of 25 source tables named in a config file, with up to 5 running at a time to control load on shared compute. What is the cleanest way to configure this in a job?`,
     opts:[
       `25 separate notebook tasks, each hardcoded to one table name`,
@@ -378,6 +396,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
   {
+    ref:{chapter:10},
     q:`Two tests are written for the same cleaning function. Test A compares actual and expected DataFrames that hold identical rows in a different order because of an upstream join. Test B compares a computed value of 7.9999999999998 against an expected 8.0. Using assertDataFrameEqual with default settings, what happens?`,
     opts:[
       `Test A fails on row order, test B passes, since integer-like floats compare exactly`,
@@ -389,6 +408,7 @@ const QUESTIONS = [
     explain:`assertDataFrameEqual is built to forgive exactly these two situations: by default it treats the two DataFrames as unordered, so a reordering from an upstream join is not a failure, and it applies rtol and atol tolerances, so a tiny floating-point rounding difference passes while a genuinely wrong value would still fail loudly. Neither symptom described here causes a failure on its own with default settings.`
   },
   {
+    ref:{chapter:10},
     q:`A transformation passes every unit test written against small hand-built sample rows, but produces visibly wrong output only when run against a specific production customer's full order history. What is the fastest way to find where the logic actually diverges?`,
     opts:[
       `Add several more assertDataFrameEqual cases with small samples and hope one happens to reproduce it`,
@@ -401,6 +421,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-Format Ingestion: Files, Message Buses, Cloud Storage */
   {
+    ref:{chapter:11},
     q:`A team ingests a folder of scanned invoice images, where each file lands as one row of raw bytes plus file metadata, with no tabular schema to infer at all. Which format category does this belong to, and which format does Databricks read it as?`,
     opts:[
       `Unstructured; read as Binary, since images have no tabular schema and typically land as one row per file plus metadata`,
@@ -412,6 +433,7 @@ const QUESTIONS = [
     explain:`Images and other files with no tabular structure at all fall into the unstructured category, and Databricks reads formats like this as Binary, landing one row per file with the raw bytes plus file metadata. CSV is semi-structured with an inferable schema, not a generic default, Parquet self-describes and is not a fallback format, and Auto Loader's cloudFiles source supports Binary as one of its formats directly.`
   },
   {
+    ref:{chapter:11},
     q:`A mobile app publishes user-interaction events continuously, and a fraud-detection service needs to react to each event within a few seconds, with no requirement that events ever land as files in cloud storage first. Which ingestion path fits, and why do both Auto Loader modes fall short here?`,
     opts:[
       `Auto Loader with directory listing, since it is the simplest mode with no cloud setup required`,
@@ -424,6 +446,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-Only Pipelines: Batch and Streaming on Delta */
   {
+    ref:{chapter:12},
     q:`A downstream job reads a Delta table with <code>readStream.table()</code>. A separate scheduled process runs a <code>MERGE</code> against that table nightly to deduplicate late-arriving records. What happens to the downstream stream the first time this MERGE runs?`,
     opts:[
       `Nothing changes, since readStream.table() only reacts to streaming writers, not batch merges`,
@@ -435,6 +458,7 @@ const QUESTIONS = [
     explain:`Structured Streaming assumes its source is append-only and throws by default the moment an UPDATE, DELETE, MERGE, or OVERWRITE touches the table it is reading, exactly what a dedup MERGE does. Skipping past that safely is an explicit opt-in like skipChangeCommits, not silent default behavior, and the stream does not auto-switch modes on its own. readStream.table() reacts to any commit in the table's log, batch or streaming, which is exactly why a nightly batch MERGE still breaks it.`
   },
   {
+    ref:{chapter:12},
     q:`Files land in a staging path a few times per day on an unpredictable schedule. There is no requirement for continuous, low-latency processing, and the team wants to avoid paying for a cluster sitting idle between arrivals. Which write pattern is the better operational fit, and why?`,
     opts:[
       `A continuously running Structured Streaming job with outputMode("append"), since continuous processing is always the safer default`,
@@ -447,6 +471,7 @@ const QUESTIONS = [
   },
   /* Ch 13 - Advanced Transformations: Window Functions, Joins, Aggregations */
   {
+    ref:{chapter:13},
     q:`A report needs each employee's salary rank within their own department, with every employee row still present in the output alongside their rank. Which construct fits, and what happens if PARTITION BY is left out by mistake?`,
     opts:[
       `RANK() OVER (ORDER BY salary DESC), and omitting PARTITION BY would rank employees only within their own row, changing nothing`,
@@ -458,6 +483,7 @@ const QUESTIONS = [
     explain:`PARTITION BY dept splits rows into per-department groups before ORDER BY ranks within each one, so every row keeps its rank while still appearing in the output. Leaving PARTITION BY out does not fail or no-op, it silently collapses the whole result set into a single window, ranking every employee company-wide instead of within their department. GROUP BY collapses rows into one summary per group rather than keeping every row, and RANK() is a window function, not something a join hint applies to.`
   },
   {
+    ref:{chapter:13},
     q:`A join between a 400 GB fact table and an 8 MB dimension table runs a full shuffle instead of the expected broadcast, and profiling shows Spark misestimated the dimension table's size. Which fix directly addresses this?`,
     opts:[
       `Add a /*+ BROADCAST(d) */ hint to force the broadcast Spark's own size estimate missed`,
@@ -469,6 +495,7 @@ const QUESTIONS = [
     explain:`When Spark's own size estimate is wrong and a broadcast-eligible join falls back to a full shuffle, the BROADCAST hint forces the plan Spark should have chosen on its own, which directly fixes this case. Lowering autoBroadcastJoinThreshold would make Spark broadcast less often, the opposite of what is needed, forcing a sort-merge join keeps the expensive shuffle this scenario is trying to avoid, and repartitioning by key does not change whether the small side gets broadcast.`
   },
   {
+    ref:{chapter:13},
     q:`A dashboard needs a running total of each customer's spend by order date, with every individual order row still visible in the result set. A GROUP BY customer_id with SUM(amount) is proposed. What is wrong with that approach, and what should replace it?`,
     opts:[
       `Nothing is wrong; GROUP BY is the standard way to compute any running total`,
@@ -481,6 +508,7 @@ const QUESTIONS = [
   },
   /* Ch 14 - Quarantining Bad Data with Expectations */
   {
+    ref:{chapter:14},
     q:`A required customer_id column starts arriving null for about 3% of rows from a newly onboarded upstream source. The team wants those rows kept out of the production table, but still queryable later so someone can investigate the upstream issue. Which expectation setup fits?`,
     opts:[
       `@dp.expect on customer_id, which logs the failures as a warning but still writes the rows to the target table`,
@@ -492,6 +520,7 @@ const QUESTIONS = [
     explain:`Plain expect would let the null rows into production, which the team explicitly does not want, and expect_or_fail would halt the entire update over a partial, non-blocking data issue. expect_or_drop keeps production clean, and a companion dataset selecting everything the same condition rejects preserves those rows for inspection instead of losing them, which a delete-after-the-fact query would do.`
   },
   {
+    ref:{chapter:14},
     q:`A pipeline enforces the same two rules, id IS NOT NULL and price > 0, across five different silver tables by retyping the decorator on each one. A reviewer suggests reusing one rule set instead. Which construct does that?`,
     opts:[
       `Five separate @dp.expect_or_drop decorators, each hardcoded with both conditions written out`,
@@ -503,6 +532,7 @@ const QUESTIONS = [
     explain:`expect_all_or_drop (and its expect_all and expect_all_or_fail siblings) takes a whole dictionary of named rules and applies it in one decorator, so the same rules dictionary can be shared across all five tables instead of retyped on each. Expectations are declared per dataset, not at a pipeline level that auto-applies everywhere, and they do not propagate downstream on their own, each table that needs a rule declares it.`
   },
   {
+    ref:{chapter:14},
     q:`A silver table enforces price > 0 with a plain @dp.expect (not expect_or_drop or expect_or_fail). A colleague assumes failing rows never reach the table. What actually happens to a row that fails this expectation?`,
     opts:[
       `The row is written to the target table anyway; only pass and fail counts are logged, since plain expect does not block or remove anything`,
@@ -514,6 +544,53 @@ const QUESTIONS = [
     explain:`Plain @dp.expect is the least strict of the three: a failing row is still written to the target table, and only the pass and fail counts are logged for monitoring, nothing is blocked or removed. Automatic quarantine routing does not exist as a default, that requires explicitly building a companion dataset on the negated condition. Dropping the row is expect_or_drop's behavior and failing the update is expect_or_fail's, neither is what plain expect does.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */

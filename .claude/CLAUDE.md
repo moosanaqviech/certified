@@ -389,14 +389,17 @@ the course index `UNITS` id); when the payload also defines a `CHAPTERS`
 table (`course`, `base`, `free`, `list:{ N:[file, title] }`, mirroring
 `UNITS` and the gate.ts free set), the post-submit review shows "Review:
 Chapter N" under the explanation, opening the lesson in a new tab with
-`?back=<quiz path>&tab=1`. Questions without `ref` render as before. Only
-DE Associate is tagged so far (the pilot): all its exams, both mocks, its
-readiness quiz and its practice hub (which keeps its own `CHAPTERS` and
-`FREE_CHAPTERS`, links in drills right after the answer and in the
-Readiness and Full mock review only, and snapshots the session so the
-lesson's "Back to quiz" restores it). Its 35 lessons carry a "Back to quiz"
-bar that shows only with `?back=`. `scripts/validate.py` checks every ref
-and table. Inline recall checks are not tagged.
+`?back=<quiz path>&tab=1`. Questions without `ref` render as before. DE
+Associate (the pilot) and DE Professional are tagged: all their exams, both
+mocks of each, their readiness quizzes and their practice hubs (each hub
+keeps its own `CHAPTERS` and `FREE_CHAPTERS`, links in drills right after
+the answer and in the Readiness and Full mock review only, snapshots the
+session so the lesson's "Back to quiz" restores it, and buckets a question
+into a section by its `Ch NN` header, else its `ref`). Their lessons (35
+and 37) carry a "Back to quiz" bar that shows only with `?back=`. The legacy
+`cc_ui` value `1` unlocks de-assoc only, as in gate.ts.
+`scripts/validate.py` checks every ref and table. Inline recall checks are
+not tagged.
 
 Read lesson-authoring-guide.md and test-authoring-guide.md before authoring
 anything. They define card shapes, helper classes, and question rules.

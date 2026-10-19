@@ -171,6 +171,7 @@ const E = {
 const QUESTIONS = [
   /* Ch 01 - DABs Project Structure for Scalable Python */
   {
+    ref:{chapter:1},
     q:`Ten engineers share one bundle repo. Each runs <code>databricks bundle deploy -t dev</code> throughout the day without touching <code>databricks.yml</code>, and none of their dev deployments ever collide. The same bundle deployed with <code>-t prod</code> always lands at one fixed path instead. What explains the difference?`,
     opts:[
       `The dev target retries automatically on a naming conflict, while prod does not`,
@@ -182,6 +183,7 @@ const QUESTIONS = [
     explain:`mode: development automatically prefixes resource names and deploy paths with the deploying user's identity, so ten engineers on one repo never collide without anyone configuring anything. mode: production deploys to a single fixed path, typically run_as a service principal, which is exactly why prod does not get that same per-user isolation. Neither target retries on conflict or renames the bundle on its own.`
   },
   {
+    ref:{chapter:1},
     q:`A reviewer opens a pull request for a new bundle and wants to confirm the YAML is valid and every variable reference resolves, without deploying anything to a real workspace. Which command does that?`,
     opts:[
       `databricks bundle validate`,
@@ -194,6 +196,7 @@ const QUESTIONS = [
   },
   /* Ch 02 - Libraries and Dependencies: PyPI, Wheels, Source Archives */
   {
+    ref:{chapter:2},
     q:`A team needs to add the well-known, publicly hosted <code>requests</code> library to a job's environment, with nothing custom to build or maintain. Which distribution format fits with the least ceremony, and what is the one habit that keeps it reproducible?`,
     opts:[
       `A source archive, pinned with a hash, since source is always the most trustworthy format`,
@@ -205,6 +208,7 @@ const QUESTIONS = [
     explain:`requests is exactly the case PyPI packages are for: a well-known, publicly hosted dependency installed by name and version, no build step required. The habit that keeps it reproducible is pinning an exact version; an unpinned dependency can resolve differently on a laptop than on the job cluster. Building an in-house wheel is unnecessary ceremony for a public package, and leaving it unpinned trades reproducibility for automatic updates that can break a pipeline without warning.`
   },
   {
+    ref:{chapter:2},
     q:`A job's first task cell runs <code>%pip install pandas==2.2.0</code> before the rest of the notebook executes. It works every time someone runs it manually. Why can this same job still fail to be reproducible when scheduled?`,
     opts:[
       `%pip install cannot install pinned versions, only the latest release of a package`,
@@ -217,6 +221,7 @@ const QUESTIONS = [
   },
   /* Ch 03 - Python and Pandas UDFs */
   {
+    ref:{chapter:3},
     q:`A transform needs per-customer logic that has no built-in Spark aggregate: for each customer, fit a small trend line across their order history and return one row per customer with the fitted slope. Which shape fits best?`,
     opts:[
       `<code>groupBy().applyInPandas()</code>, so each customer's rows arrive as one pandas DataFrame per call`,
@@ -228,6 +233,7 @@ const QUESTIONS = [
     explain:`applyInPandas runs the function once per group, handing it that group's rows as a single pandas DataFrame, which fits a per-customer fit like this perfectly. No built-in Spark aggregate does trend fitting, a row-at-a-time UDF cannot see a customer's whole history at once, and mapInPandas operates over partitions rather than grouped keys, so it would not naturally isolate one customer's rows.`
   },
   {
+    ref:{chapter:3},
     q:`A pandas UDF re-loads a 2 GB embedding model from disk inside the function body on every batch, and that reload time dominates the job's runtime. Which function signature fixes it without changing what the UDF computes?`,
     opts:[
       `A scalar <code>Series -> Series</code> pandas UDF, since scalar UDFs never reload state between batches`,
@@ -240,6 +246,7 @@ const QUESTIONS = [
   },
   /* Ch 04 - Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader */
   {
+    ref:{chapter:4},
     q:`A pipeline defines <code>gold_orders</code> with a function body that calls <code>dlt.read("silver_orders")</code>. No task dependency, trigger, or schedule is configured anywhere for either table. What determines the order these two tables run in?`,
     opts:[
       `Alphabetical order of the table names within the pipeline`,
@@ -251,6 +258,7 @@ const QUESTIONS = [
     explain:`Lakeflow Declarative Pipelines parse every table function to find read references like this one and build the dependency DAG from them automatically; that reference is the entire dependency declaration. Nothing about table names, arbitrary ordering, or a separate job with manual depends_on is involved, the whole point of the declarative model is that no orchestration config is written by hand.`
   },
   {
+    ref:{chapter:4},
     q:`A bronze table's file volume is projected to grow from thousands to tens of millions of files over the next year, and directory listing is already showing rising latency at the start of every run. Which Auto Loader discovery mode addresses this, and why?`,
     opts:[
       `Directory listing, tuned with a shorter trigger interval so it lists more frequently`,
@@ -262,6 +270,7 @@ const QUESTIONS = [
     explain:`File notification mode subscribes to a cloud queue (S3 event notifications, Azure Event Grid, GCS Pub/Sub), so new files arrive as discrete events instead of being rediscovered by re-listing a growing directory, keeping cost and latency flat even at very high file counts. Listing more often only makes the existing scaling problem worse, discovery mode is exactly the lever that controls this, and the file format has nothing to do with how new files are found.`
   },
   {
+    ref:{chapter:11},
     q:`A bronze table ingests JSON files where most records match the inferred schema, but a small fraction carry a field with an unexpected type that does not fit it. With Auto Loader's default behavior, what happens to those specific values?`,
     opts:[
       `They are silently dropped from the row, with the rest of the row's columns still loaded normally`,
@@ -274,6 +283,7 @@ const QUESTIONS = [
   },
   /* Ch 05 - Automating Jobs: UI, API, and CLI */
   {
+    ref:{chapter:5},
     q:`A platform team wants a nightly process to redeploy every job definition from the latest commit on main, with no person opening the workspace at all. Which interface is built for this, and why do the other two fall short?`,
     opts:[
       `The CLI (or the REST API it wraps), scripted as part of the automation; the UI requires a person clicking, and clicking is not something a nightly cron job can do`,
@@ -285,6 +295,7 @@ const QUESTIONS = [
     explain:`An unattended nightly process needs something scriptable and non-interactive; the CLI (often via databricks bundle deploy) or a direct REST API call both work fine for that, while the UI fundamentally requires a human to click through it. The CLI runs perfectly well from a script or CI job, it is not restricted to interactive terminals, so that is not a real limitation either.`
   },
   {
+    ref:{chapter:5},
     q:`A scheduled job has been authenticating with a data engineer's personal access token. That engineer leaves the company and their account is deactivated. What happens to the job, and what is the standard fix?`,
     opts:[
       `Nothing changes; personal access tokens are not tied to the account that created them`,
@@ -297,6 +308,7 @@ const QUESTIONS = [
   },
   /* Ch 06 - Streaming Tables vs Materialized Views (TO) */
   {
+    ref:{chapter:6},
     q:`A bronze table ingests raw IoT sensor readings via Auto Loader. Every reading is a brand-new event; nothing already landed is ever edited or removed. Which table type fits, and what would be lost by over-engineering the other way?`,
     opts:[
       `A materialized view, since it is always the safer default regardless of the source`,
@@ -308,6 +320,7 @@ const QUESTIONS = [
     explain:`When a source only ever appends, a streaming table's incremental, process-once model fits it exactly, with lower latency and no downside. A materialized view would still work, but it recomputes or incrementally maintains its result against upstream state, a guarantee this strictly-appending source never actually exercises, so choosing it here trades nothing for nothing. Streaming tables handle high volume fine; that is not the deciding signal.`
   },
   {
+    ref:{chapter:6},
     q:`A gold table reports current on-hand inventory per warehouse from a silver table that is corrected whenever a stock count is re-audited (existing rows get updated, not just appended). Which table type keeps gold correct after a re-audit?`,
     opts:[
       `A materialized view, so an updated silver row is reflected the next time gold recomputes or incrementally updates`,
@@ -320,6 +333,7 @@ const QUESTIONS = [
   },
   /* Ch 07 - CDC with the APPLY CHANGES API */
   {
+    ref:{chapter:7},
     q:`An apply_changes pipeline is configured with <code>keys=["customer_id"]</code> but <code>sequence_by</code> is left pointing at a column that is null for about 5% of incoming change records. What is the most likely consequence for those records?`,
     opts:[
       `apply_changes automatically falls back to arrival order whenever sequence_by is null`,
@@ -331,6 +345,7 @@ const QUESTIONS = [
     explain:`sequence_by is what lets apply_changes decide which of several changes to the same key actually wins; a missing sequence value for a record removes that guarantee for it specifically, so ordering for that slice of records becomes unreliable rather than automatically correct. apply_changes does not silently substitute arrival order or push null-sequence records to the front, and a partial data quality issue like this does not halt the whole pipeline on its own.`
   },
   {
+    ref:{chapter:7},
     q:`A dimension table only ever needs to answer "what is true right now," with no requirement to ever look up a past value. Which apply_changes configuration fits with the least overhead?`,
     opts:[
       `stored_as_scd_type=2, since keeping history is always the safer choice regardless of requirements`,
@@ -343,6 +358,7 @@ const QUESTIONS = [
   },
   /* Ch 08 - Structured Streaming vs Lakeflow Pipelines (TO) */
   {
+    ref:{chapter:8},
     q:`A pipeline must push every scored event to an external message queue outside Databricks within seconds, with no Delta table involved at all in that hop. Which approach fits, and what single fact decides it?`,
     opts:[
       `A Lakeflow streaming table, since it processes incrementally with the lowest latency of the two options`,
@@ -354,6 +370,7 @@ const QUESTIONS = [
     explain:`The deciding fact is the sink: Lakeflow Declarative Pipelines produce streaming tables and materialized views inside Unity Catalog, not arbitrary external writes, so an external queue rules it out regardless of latency. Raw Structured Streaming with foreachBatch can write to any sink, which is exactly what is needed here. Materialized views are still Delta objects inside Unity Catalog, not a general-purpose external write mechanism, and sharing an engine underneath does not make the two interchangeable when the target differs.`
   },
   {
+    ref:{chapter:8},
     q:`A small team hand-manages checkpoint paths, retry logic, and a custom null-check step across three raw Structured Streaming jobs that all land Delta tables in Unity Catalog, and the operational load is growing faster than the team. What is the strongest fix?`,
     opts:[
       `Move the three jobs into a Lakeflow Declarative Pipeline; checkpoints, retries, and data-quality expectations come managed, and the sink is already what the managed pipeline targets`,
@@ -366,6 +383,7 @@ const QUESTIONS = [
   },
   /* Ch 09 - Control Flow and Task Configuration in Jobs */
   {
+    ref:{chapter:9},
     q:`A task occasionally hangs indefinitely due to a flaky upstream API, and when it does, every downstream task in the job sits blocked for hours until someone notices and cancels the run manually. Which task configuration prevents this without changing the job's dependency graph?`,
     opts:[
       `Wrap the task in a For Each block, so a hang in one iteration does not block the others`,
@@ -377,6 +395,7 @@ const QUESTIONS = [
     explain:`A per-task timeout kills a task that hangs past a set duration, which directly fixes "blocked for hours" without touching how tasks depend on each other. run_if governs whether a task fires based on upstream outcomes, not how long a single task is allowed to run, so it does not stop a hang. For Each addresses repeated iterations of one task, not a single hanging call, and cluster placement affects compute isolation, not whether a stuck task is ever killed.`
   },
   {
+    ref:{chapter:9},
     q:`A "count" task sets a task value with the number of rows it processed. A downstream "route" task must take one branch if that count exceeds 10,000, and a different branch otherwise. What mechanism makes this possible?`,
     opts:[
       `run_if=AT_LEAST_ONE_FAILED, which branches automatically based on any upstream numeric output`,
@@ -389,6 +408,7 @@ const QUESTIONS = [
   },
   /* Ch 10 - Testing Pipelines: assertDataFrameEqual, transform, Debugger */
   {
+    ref:{chapter:10},
     q:`A transform is currently written as a single function that reads directly from a hardcoded table path, applies several cleaning steps, and writes the result back. An engineer wants to unit test the cleaning logic without touching a workspace. What change makes that possible?`,
     opts:[
       `Add print statements throughout the function so its behavior can be inspected in the job's logs`,
@@ -400,6 +420,7 @@ const QUESTIONS = [
     explain:`A function is only unit testable in isolation once its hidden dependencies on a cluster, a path, or the time of day are removed; taking a DataFrame in and returning one, then chaining it with .transform(), is exactly that shape, and it can then be fed a small hand-built DataFrame with no real read or write involved. Print statements only help while a job is actually running, a function tied to a hardcoded path is not testable as-is, and resources/*.yml holds no business logic at all, per Chapter 1.`
   },
   {
+    ref:{chapter:10},
     q:`A transform passes every existing unit test on small hand-built sample data, but produces incorrect totals only on production-scale data. What is the fastest way to find where the logic actually diverges?`,
     opts:[
       `Rewrite the transform as a pandas UDF, since row-at-a-time execution surfaces bugs more clearly`,
@@ -412,6 +433,7 @@ const QUESTIONS = [
   },
   /* Ch 11 - Multi-Format Ingestion: Files, Message Buses, Cloud Storage */
   {
+    ref:{chapter:11},
     q:`A team needs to ingest a folder of scanned PDF invoices, where each file becomes one row of raw content plus file metadata, with no tabular schema to infer. Which format category does this fall into, and what does Databricks read it as?`,
     opts:[
       `Unstructured; read as Binary, since there is no tabular schema to infer at all`,
@@ -423,6 +445,7 @@ const QUESTIONS = [
     explain:`PDFs and images have no tabular schema at all, which is exactly the unstructured category; Databricks reads formats like this as Binary, typically landing one row per file with the raw bytes plus file metadata. JSON is semi-structured with an inferable schema, Parquet self-describes and is not a generic fallback, and Auto Loader's cloudFiles source does support Binary as one of its formats.`
   },
   {
+    ref:{chapter:11},
     q:`An application publishes click events continuously, and a downstream service needs to react within seconds of each event, with no requirement that the events ever land as files in cloud storage first. Which ingestion path fits, and why does Auto Loader not?`,
     opts:[
       `Auto Loader with cloudFiles.format set to json, since it supports low-latency triggers`,
@@ -435,6 +458,7 @@ const QUESTIONS = [
   },
   /* Ch 12 - Append-Only Pipelines: Batch and Streaming on Delta */
   {
+    ref:{chapter:12},
     q:`A downstream job reads a Delta table with <code>readStream.table()</code>, assuming it only ever grows. A separate scheduled process then runs an <code>OVERWRITE</code> against that same table to backfill corrected historical values. What happens to the downstream stream on its next micro-batch?`,
     opts:[
       `It silently skips the overwritten rows and continues streaming only the newest appends`,
@@ -446,6 +470,7 @@ const QUESTIONS = [
     explain:`Structured Streaming assumes its source is append-only and throws by default the moment an UPDATE, DELETE, MERGE, or OVERWRITE touches the table it is reading, exactly what happens here. Skipping past that safely is an explicit opt-in like skipChangeCommits, not silent default behavior, and the stream does not auto-restart from scratch. readStream.table() reacts to any commit in the table's log, batch or streaming, which is exactly why an OVERWRITE from a batch process still breaks it.`
   },
   {
+    ref:{chapter:12},
     q:`Files land in cloud storage a few times a day on an unpredictable schedule, with no requirement for continuous, low-latency processing, and no need for a cluster to sit running between loads. Which write pattern fits best?`,
     opts:[
       `COPY INTO, run on each arrival; it is idempotent, safe to re-run, and needs no cluster running in between`,
@@ -457,6 +482,53 @@ const QUESTIONS = [
     explain:`COPY INTO tracks which source files it has already loaded, so it is safe to re-run and needs no cluster left running between the unpredictable arrivals, exactly the pattern described. A continuously running stream or a tight fixed-interval trigger both pay for compute sitting idle between arrivals that only happen a few times a day, which this scenario does not call for. Both patterns are exactly-once, but that does not make them an equally good operational fit here.`
   }
 ];
+
+/* Chapter table for the "Review: Chapter N" links in the answer review.
+   Mirrors the course index UNITS array; free matches gate.ts. */
+const CHAPTERS = {
+  course: "de-pro",
+  base: "",
+  free: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  list: {
+    1:["lesson-01-dabs-project-structure.html", "DABs Project Structure for Scalable Python"],
+    2:["lesson-02-libraries-and-dependencies.html", "Libraries and Dependencies: PyPI, Wheels, Source Archives"],
+    3:["lesson-03-python-and-pandas-udfs.html", "Python and Pandas UDFs"],
+    4:["lesson-04-production-pipelines.html", "Production Pipelines: Lakeflow Declarative Pipelines + Auto Loader"],
+    5:["lesson-05-automating-jobs.html", "Automating Jobs: UI, API, and CLI"],
+    6:["lesson-06-streaming-tables-vs-materialized-views.html", "Streaming Tables vs Materialized Views"],
+    7:["lesson-07-cdc-apply-changes.html", "CDC with the APPLY CHANGES API"],
+    8:["lesson-08-structured-streaming-vs-lakeflow.html", "Structured Streaming vs Lakeflow Pipelines"],
+    9:["lesson-09-control-flow-task-config.html", "Control Flow and Task Configuration in Jobs"],
+    10:["lesson-10-testing-pipelines.html", "Testing Pipelines: assertDataFrameEqual, transform, Debugger"],
+    11:["lesson-11-multi-format-ingestion.html", "Multi-Format Ingestion: Files, Message Buses, Cloud Storage"],
+    12:["lesson-12-append-only-pipelines.html", "Append-Only Pipelines: Batch and Streaming on Delta"],
+    13:["lesson-13-advanced-transformations.html", "Advanced Transformations: Window Functions, Joins, Aggregations"],
+    14:["lesson-14-quarantining-bad-data.html", "Quarantining Bad Data with Expectations"],
+    15:["lesson-15-delta-sharing-d2d-vs-open.html", "Delta Sharing: D2D vs Open Protocol"],
+    16:["lesson-16-lakehouse-federation.html", "Lakehouse Federation"],
+    17:["lesson-17-system-tables.html", "System Tables: Cost, Audit, Utilization"],
+    18:["lesson-18-query-profiler-spark-ui.html", "Query Profiler and Spark UI"],
+    19:["lesson-19-monitoring-jobs-pipelines.html", "Monitoring Jobs and Pipelines: Event Logs, REST API, CLI"],
+    20:["lesson-20-alerting.html", "Alerting: SQL Alerts and Job Notifications"],
+    21:["lesson-21-uc-managed-tables.html", "UC Managed Tables and Reduced Ops Overhead"],
+    22:["lesson-22-deletion-vectors-liquid-clustering.html", "Delta Optimization: Deletion Vectors and Liquid Clustering"],
+    23:["lesson-23-data-skipping-file-pruning.html", "Data Skipping and File Pruning"],
+    24:["lesson-24-cdf-streaming-limitations.html", "CDF for Streaming Limitations and Latency"],
+    25:["lesson-25-diagnosing-bottlenecks-query-profile.html", "Diagnosing Bottlenecks with Query Profile"],
+    26:["lesson-26-acls-least-privilege.html", "ACLs and Least Privilege"],
+    27:["lesson-27-row-filters-column-masks.html", "Row Filters and Column Masks"],
+    28:["lesson-28-anonymization-pii-masking.html", "Anonymization and PII Masking Pipelines"],
+    29:["lesson-29-purging-retention-vacuum.html", "Purging and Retention: VACUUM and Right to Be Forgotten"],
+    30:["lesson-30-metadata-tags-discoverability.html", "Metadata, Tags, and Discoverability"],
+    31:["lesson-31-uc-permission-inheritance.html", "The UC Permission Inheritance Model"],
+    32:["lesson-32-troubleshooting-spark-ui-logs.html", "Troubleshooting: Spark UI, Cluster Logs, Event Logs"],
+    33:["lesson-33-job-repair-parameter-overrides.html", "Job Repair and Parameter Overrides"],
+    34:["lesson-34-deploying-dabs-git-cicd.html", "Deploying with DABs and Git-Based CI/CD"],
+    35:["lesson-35-scalable-data-models-delta.html", "Scalable Data Models with Delta"],
+    36:["lesson-36-liquid-clustering-vs-partitioning-vs-zorder.html", "Liquid Clustering vs Partitioning vs Z-Order"],
+    37:["lesson-37-dimensional-modelling-analytics.html", "Dimensional Modelling for Analytics"]
+  }
+};
 /* =====================================================================
    EXAM PAYLOAD - END
 ===================================================================== */
