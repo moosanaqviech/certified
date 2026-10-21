@@ -1,6 +1,7 @@
 # Curriculum index: AWS Certified Solutions Architect Associate (SAA-C03)
 
-Status: DRAFT (not yet locked). Confirm placement before authoring lessons.
+Status: LOCKED on 21 Oct 2026 by the user (89 chapters, skill-based 1:1).
+Settings live in cert-config-aws-saa-c03.md.
 Built on 21 Oct 2026 by downloading the official exam guide PDF from
 docs.aws.amazon.com
 (docs.aws.amazon.com/pdfs/aws-certification/latest/solutions-architect-associate-03/solutions-architect-associate-03.pdf)
@@ -651,7 +652,7 @@ mocks sample at the domain weights. Question headers read
     ("% of exam"), mocks 05 to 07 as the Full mock pool, pass target 72.
 
 ===============================================================================
-Terminology and freshness rules (move into cert-config-aws-saa-c03.md)
+Terminology and freshness rules (summary; cert-config-aws-saa-c03.md is authoritative)
 ===============================================================================
 
     Names as the guide writes them: "AWS IAM Identity Center" (never "AWS

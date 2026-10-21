@@ -141,6 +141,18 @@ question should hinge on it. The same holds for Amazon SageMaker Clarify and
 Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
 pages (checked 14 Oct 2026): lessons name Clarify with that status, A2I not
 at all, and teach the practices (subgroup analysis, human review) instead.)
+In progress: AWS Certified Solutions Architect Associate (SAA-C03) (see
+curriculum-index-aws-saa-c03.md and cert-config-aws-saa-c03.md; the index is
+LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
+chapters across 4 units and 14 modules, the MLA-C02 three-level model. The
+mapping is one chapter per guide skill (79) plus 10 K-anchored chapters for
+exam-critical knowledge items; K and S ids are ours, in guide order, and
+frozen. No lessons yet. Folder `aws-solutions-architect-associate/`, exam
+prefix `saa-practice-exam-NN.html` (01 to 04 unit exams, 05 to 07 sealed
+65-question mocks), proposed course id aws-saa. Accents are per module band,
+listed in the cert config. Snowball Edge and vault-based Amazon Glacier are
+closed to new customers: lessons teach AWS Data Transfer Terminal and the S3
+Glacier storage classes instead.)
 
 ## Site structure
 
