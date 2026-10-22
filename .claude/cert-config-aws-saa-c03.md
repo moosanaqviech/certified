@@ -20,12 +20,11 @@ from docs.aws.amazon.com on 21 Oct 2026).
       Source: https://docs.aws.amazon.com/pdfs/aws-certification/latest/solutions-architect-associate-03/solutions-architect-associate-03.pdf
     Questions: 65 presented (50 scored + 15 unscored, unidentified).
       Multiple choice (1 of 4) and multiple response (2+ of 5+) only.
-    Time: 130 minutes (UNVERIFIED: not in the PDF and the AWS cert page does
-      not resolve from the build environment; confirm on
-      aws.amazon.com/certification/certified-solutions-architect-associate/
-      before any lesson, course home or blog post states it).
-    Cost: USD 150 (UNVERIFIED, same caveat).
-    Pace: 2 minutes per question (65 x 2 = 130, the real limit if confirmed).
+    Time: 130 minutes. Not in the PDF; confirmed on the AWS cert page
+      (https://aws.amazon.com/certification/certified-solutions-architect-associate/,
+      "Exam duration, 130 minutes", checked 22 Oct 2026).
+    Cost: USD 150 (same page, "Cost, 150 USD", checked 22 Oct 2026).
+    Pace: 2 minutes per question (65 x 2 = 130, the real limit).
     Pass threshold: 720 on a 100 to 1,000 scaled score (published in the
       PDF). Compensatory scoring: no per-domain minimum. Use 72% as the
       practice target and label it as our guidance, since the scaled score
@@ -290,4 +289,3 @@ URL in the commit.
     gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa.
     catalog.json entry, root index.html card, pricing.html row, footer links.
     Practice hub practice/aws-saa-c03.html once exams 01 to 04 exist.
-    Confirm the 130-minute time limit and USD 150 price on the AWS cert page.

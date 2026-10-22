@@ -35,8 +35,9 @@ Exam facts (from the PDF unless noted):
     Scaled score 100 to 1,000; minimum passing score 720. Compensatory
       scoring: no per-domain minimum.
     Time limit: 130 minutes. Cost: USD 150. Neither is in the PDF; both are
-      the long-standing AWS Associate figures and MUST be confirmed on the
-      AWS cert page before any lesson or blog post states them.
+      confirmed on the AWS cert page
+      (https://aws.amazon.com/certification/certified-solutions-architect-associate/,
+      checked 22 Oct 2026).
     Target candidate: at least 1 year of hands-on experience designing cloud
       solutions on AWS. Lessons teach design decisions (which service, which
       configuration, why), not implementation: code is limited to short

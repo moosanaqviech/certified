@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>A Flexible Authorization Model: Users, Groups, Roles, Policies, and How AWS Evaluates Them · SAA-C03 Chapter 3</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-03-authorization-model.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060911;            /* page background */
+    --bg-tint: #131c39;       /* ambient glow tint behind the card */
+    --accent: #6982d3;        /* topic color: periwinkle, Unit 1 Module 1.1 Ch 01-07 */
+    --accent-glow: rgba(105,130,211,0.12);  /* correct-answer fill */
+    --accent-ink: #060911;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #7ccdb0;
+    --lav: #c4b5fd;
+    --sky: #7dd3fc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Module 1.1 · Chapter 03 · A Flexible Authorization Model:
+   Users, Groups, Roles, Policies, and How AWS Evaluates Them
+   Objective S1.1.2 (designing a flexible authorization model: IAM
+   users, groups, roles, policies) with K1.1.2 (IAM as the identity
+   service). Roles get their own chapter next (04); SCPs are Chapter 05
+   and resource-based policies Chapter 06, both only named here.
+   Shape: cover, the three identities, the shape of a policy, managed vs
+   inline (step build), how a request is evaluated (step build), quiz
+   (admin blocked by an SCP), permissions boundaries, the nine policy
+   types, quiz (delegating role creation), recap. 10 cards, two
+   quizzes, correct letters B and C.
+   Sources (all checked 22 Oct 2026):
+   docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html (a group is a
+   collection of users; a user can be in several groups; groups cannot be
+   nested, cannot be a Principal because they relate to permissions, not
+   authentication; no default all-users group);
+   docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html
+   (a role is assumable by anyone who needs it and has no long-term
+   credentials; when you assume it you get temporary credentials);
+   docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html (nine
+   policy types: identity-based, resource-based, VPC endpoint,
+   permissions boundaries, SCPs, RCPs, ACLs, RAM shares, session
+   policies; managed policies are standalone and attach to many
+   identities, inline policies are one-to-one and die with the identity;
+   boundaries, SCPs, RCPs and session policies never grant);
+   docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html
+   (AWS managed: created and maintained by AWS, cannot be edited, updated
+   by AWS when services launch; customer managed: your own, reusable;
+   inline: strict one-to-one; AWS managed job-function and full-access
+   policies);
+   docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
+   (same account: union of identity-based and resource-based grants,
+   explicit deny in either wins; boundary: intersection with
+   identity-based policies; SCPs and RCPs: intersection, an action must be
+   allowed by all; explicit deny anywhere overrides);
+   docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
+   (a boundary is a managed policy setting the maximum an identity-based
+   policy can grant; the entity can only do what both allow; it does not
+   cap resource-based policies; delegating permissions management with a
+   boundary condition on iam:CreateRole and iam:AttachRolePolicy).
+   Cover animates (policy documents slide onto the identities and the
+   deny stamp pulses). Step builds on cards 3 and 4.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-04-roles-sts-cross-account.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c03r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(105,130,211,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(105,130,211,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c03doc { animation: c03slide 5.5s ease-in-out infinite; }
+      .c03doc.d2 { animation-delay: 0.7s; } .c03doc.d3 { animation-delay: 1.4s; }
+      @keyframes c03slide { 0% { transform: translate(0px, -26px); opacity: 0; } 20%, 70% { transform: translate(0px, 0px); opacity: 1; } 90%, 100% { transform: translate(0px, 0px); opacity: 0; } }
+      .c03deny { animation: c03stamp 5.5s ease-in-out infinite; transform-origin: 268px 100px; transform-box: view-box; }
+      @keyframes c03stamp { 0%, 55% { transform: scale(1.6) rotate(-12deg); opacity: 0; } 65%, 85% { transform: scale(1) rotate(-12deg); opacity: 1; } 100% { transform: scale(1) rotate(-12deg); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c03doc { animation: none; opacity: 1; }
+        .c03deny { animation: none; opacity: 1; transform: rotate(-12deg); }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c03r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <circle cx="52" cy="120" r="16" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+      <circle cx="52" cy="114" r="6" fill="var(--accent)"/><path d="M40 132 C44 122 60 122 64 132" fill="var(--accent)"/>
+      <text x="52" y="152" fill="var(--ink-soft)" font-size="8.5" font-weight="700">user</text>
+      <circle cx="112" cy="120" r="16" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+      <circle cx="106" cy="115" r="4.5" fill="var(--accent)"/><circle cx="118" cy="115" r="4.5" fill="var(--accent)"/>
+      <path d="M98 130 C102 122 110 122 112 126 C114 122 122 122 126 130" fill="var(--accent)"/>
+      <text x="112" y="152" fill="var(--ink-soft)" font-size="8.5" font-weight="700">group</text>
+      <circle cx="172" cy="120" r="16" fill="var(--surface-2)" stroke="var(--lav)" stroke-width="1.5"/>
+      <rect x="162" y="114" width="20" height="12" rx="3" fill="none" stroke="var(--lav)" stroke-width="2"/>
+      <path d="M168 114 L168 109 C168 105 176 105 176 109 L176 114" fill="none" stroke="var(--lav)" stroke-width="2"/>
+      <text x="172" y="152" fill="var(--ink-soft)" font-size="8.5" font-weight="700">role</text>
+      <g class="c03doc"><rect x="38" y="52" width="28" height="36" rx="4" fill="var(--bg)" stroke="var(--accent)"/><path d="M44 62 h16 M44 69 h16 M44 76 h10" stroke="var(--accent)" stroke-width="1.5"/></g>
+      <g class="c03doc d2"><rect x="98" y="52" width="28" height="36" rx="4" fill="var(--bg)" stroke="var(--accent)"/><path d="M104 62 h16 M104 69 h16 M104 76 h10" stroke="var(--accent)" stroke-width="1.5"/></g>
+      <g class="c03doc d3"><rect x="158" y="52" width="28" height="36" rx="4" fill="var(--bg)" stroke="var(--lav)"/><path d="M164 62 h16 M164 69 h16 M164 76 h10" stroke="var(--lav)" stroke-width="1.5"/></g>
+      <text x="112" y="40" fill="var(--accent)" font-size="10" font-weight="700">policies attach to identities</text>
+      <rect x="222" y="70" width="92" height="60" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="268" y="90" fill="var(--ink)" font-size="9" font-weight="700">request</text>
+      <text x="268" y="104" fill="var(--ink-faint)" font-size="7.5">s3:DeleteBucket</text>
+      <text x="268" y="118" fill="var(--ink-faint)" font-size="7.5">on prod-logs</text>
+      <g class="c03deny">
+        <rect x="236" y="88" width="64" height="24" rx="5" fill="none" stroke="var(--warn)" stroke-width="2.5"/>
+        <text x="268" y="105" fill="var(--warn)" font-size="12" font-weight="700" letter-spacing="2">DENY</text>
+      </g>
+      <text x="266" y="152" fill="var(--ink-soft)" font-size="7">explicit deny always wins</text>
+      <text x="160" y="190" fill="var(--ink-soft)" font-size="9.5">Who, what, and the order AWS checks it in.</text>
+    </g>
+  </svg>`,
+
+  evalflow: `<svg viewBox="0 0 320 170">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g data-step="1">
+        <rect x="14" y="14" width="292" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="160" y="29" fill="var(--ink)" font-size="9.5" font-weight="700">1. Start from an implicit deny</text>
+        <text x="160" y="40" fill="var(--ink-faint)" font-size="7.5">nothing is allowed until a policy says so</text>
+      </g>
+      <g data-step="2">
+        <path d="M160 44 L160 54" stroke="var(--line)"/>
+        <rect x="14" y="54" width="292" height="30" rx="8" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/>
+        <text x="160" y="69" fill="var(--warn)" font-size="9.5" font-weight="700">2. Any explicit Deny? Then the answer is deny</text>
+        <text x="160" y="80" fill="var(--ink-faint)" font-size="7.5">in any policy type, no matter how many allows exist</text>
+      </g>
+      <g data-step="3">
+        <path d="M160 84 L160 94" stroke="var(--line)"/>
+        <rect x="14" y="94" width="292" height="30" rx="8" fill="rgba(196,181,253,0.12)" stroke="var(--lav)"/>
+        <text x="160" y="109" fill="var(--lav)" font-size="9.5" font-weight="700">3. Pass the filters that never grant</text>
+        <text x="160" y="120" fill="var(--ink-faint)" font-size="7.5">SCPs, RCPs, permissions boundary, session policy: all must allow</text>
+      </g>
+      <g data-step="4">
+        <path d="M160 124 L160 134" stroke="var(--line)"/>
+        <rect x="14" y="134" width="292" height="30" rx="8" fill="rgba(124,205,176,0.12)" stroke="var(--ok)"/>
+        <text x="160" y="149" fill="var(--ok)" font-size="9.5" font-weight="700">4. Is there an Allow in an identity or resource policy?</text>
+        <text x="160" y="160" fill="var(--ink-faint)" font-size="7.5">yes: allowed. no: the implicit deny stands</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.1 · Chapter 03</div>
+    <h1 class="reveal" style="font-size:34px">A flexible authorization model</h1>
+    <p class="lead reveal">IAM has three kinds of identity, three kinds of identity policy, and one evaluation order. Questions that look like puzzles ("the admin has full access but still cannot...") are solved by running that order in your head.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the three identities */
+  { html: `
+    <div class="eyebrow reveal">Who</div>
+    <h2 class="reveal" style="font-size:25px">Users for people, groups for permissions, roles for anyone who needs them</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>IAM user</b>One person or one application, with long-term credentials. The exception case from Chapter 02.</p></div>
+      <div class="pill"><p><b>IAM user group</b>Users that share a policy. No nesting, a user can be in several, no built-in "everyone" group. Groups are about permissions, not authentication, so a group can never be a <code>Principal</code>.</p></div>
+      <div class="pill"><p><b>IAM role</b>Permissions without long-term credentials, assumed by whoever needs it: a person, an instance, a function, another account. Assuming it yields temporary credentials (Chapter 04).</p></div>
+      <div class="pill"><p><b>The design rule</b>Attach permissions to groups and roles, not individual users. A job change becomes a group change.</p></div>
+    </div>` },
+
+  /* 2: the shape of a policy */
+  { html: `
+    <div class="eyebrow reveal">What</div>
+    <h2 class="reveal" style="font-size:25px">A policy is a JSON list of statements</h2>
+    <p class="lead reveal" style="margin-bottom:12px">Each statement answers four questions: effect, action, resource, condition.</p>
+    <div class="codeblock reveal" style="white-space:pre">{
+  <span class="kw">"Version"</span>: <span class="st">"2012-10-17"</span>,
+  <span class="kw">"Statement"</span>: [{
+    <span class="kw">"Effect"</span>:   <span class="al">"Allow"</span>,
+    <span class="kw">"Action"</span>:   [<span class="st">"s3:GetObject"</span>, <span class="st">"s3:ListBucket"</span>],
+    <span class="kw">"Resource"</span>: [<span class="st">"arn:aws:s3:::reports"</span>,
+                 <span class="st">"arn:aws:s3:::reports/*"</span>],
+    <span class="kw">"Condition"</span>: {<span class="st">"Bool"</span>: {<span class="st">"aws:MultiFactorAuthPresent"</span>: <span class="st">"true"</span>}}
+  }]
+}</div>
+    <p class="lead reveal" style="font-size:13.5px;margin-top:12px">Naming a specific ARN in <code>Resource</code> is a <strong>resource-level permission</strong>. It is still an identity-based policy; a <strong>resource-based policy</strong> (Chapter 06) is a different thing, attached to the resource itself and carrying a <code>Principal</code>.</p>` },
+
+  /* 3: managed vs inline, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Three ways to attach the same JSON</div>
+    <h2 class="reveal" style="font-size:24px">Managed policies and inline policies</h2>
+    <div style="margin-top:2px">
+      <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr 0.7fr 0.8fr;gap:0 8px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Type</div><div>Who maintains it</div><div>Editable</div><div>Attaches to</div>
+      </div>
+      <div data-step="1" style="display:grid;grid-template-columns:1fr 1fr 0.7fr 0.8fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">AWS managed</div><div>AWS, updated when services launch</div><div>No</div><div>Many identities</div>
+      </div>
+      <div data-step="2" style="display:grid;grid-template-columns:1fr 1fr 0.7fr 0.8fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Customer managed</div><div>You, with versions and rollback</div><div>Yes</div><div>Many identities</div>
+      </div>
+      <div data-step="3" style="display:grid;grid-template-columns:1fr 1fr 0.7fr 0.8fr;gap:0 8px;padding:8px 4px;font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Inline</div><div>You, inside one identity</div><div>Yes</div><div>Exactly one; deleted with it</div>
+      </div>
+    </div>
+    <div class="stepcap-swap" style="margin-top:12px">
+      <p class="lead" data-step="0" style="font-size:13.5px">Tap to compare the three.</p>
+      <p class="lead" data-step="1" style="font-size:13.5px">AWS managed policies such as <code>ReadOnlyAccess</code> or the job-function set are the fast start. AWS edits them, so a new service's read actions appear in <code>ReadOnlyAccess</code> without you touching anything.</p>
+      <p class="lead" data-step="2" style="font-size:13.5px">Customer managed policies are the least-privilege destination: precise, reusable across users, groups and roles, and change-tracked.</p>
+      <p class="lead" data-step="3" style="font-size:13.5px">Inline policies exist for a strict one-to-one case: a permission that must never be accidentally attached to anyone else. Prefer managed policies otherwise, because inline ones are hard to audit and vanish with the identity.</p>
+    </div>` },
+
+  /* 4: evaluation order, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">The order AWS checks</div>
+    <h2 class="reveal" style="font-size:25px">How a request is evaluated</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.evalflow}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14px">Every API call, console click and CLI command goes through the same decision. Tap to walk it.</p>
+      <p class="lead" data-step="1" style="font-size:14px">The default is deny. A brand-new user with no policies can do nothing.</p>
+      <p class="lead" data-step="2" style="font-size:14px">An <strong>explicit deny</strong> in any applicable policy ends the evaluation. This is the mechanism behind every "has AdministratorAccess but still cannot" scenario.</p>
+      <p class="lead" data-step="3" style="font-size:14px">Service control policies, resource control policies, a permissions boundary and a session policy never grant anything; they are ceilings. The request must fit inside every one that applies (an intersection).</p>
+      <p class="lead" data-step="4" style="font-size:14px">Finally an <strong>Allow</strong> must exist in an identity-based policy or, within the same account, a resource-based policy (their grants are a union). No allow, no access.</p>
+    </div>` },
+
+  /* 5: quiz, admin blocked */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A developer's role in a member account has the AdministratorAccess policy. Launching an EC2 instance in ap-southeast-2 is denied, while the same launch works in us-east-1. What is the most likely cause?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>AdministratorAccess only covers the account's default Region</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>An SCP on the account or its OU denies actions outside approved Regions</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>The role's inline policy must be converted to a managed policy</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>The developer must enable MFA before using another Region</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> An explicit deny wins, and an SCP is a ceiling over every identity in a member account whatever its IAM policies; a Region-restricting SCP is the classic case. Option A is tempting, but managed policies are not Region-scoped: AdministratorAccess allows everything everywhere. C changes packaging, not permissions, and D invents a condition the scenario never mentions.</div>` },
+
+  /* 6: permissions boundaries */
+  { html: `
+    <div class="eyebrow reveal">A ceiling inside one account</div>
+    <h2 class="reveal" style="font-size:25px">Permissions boundaries: the most a user or role can ever have</h2>
+    <p class="lead reveal" style="margin-bottom:14px">A <strong>permissions boundary</strong> is a managed policy attached to a user or role as its maximum: the identity can do only what both its policies and the boundary allow.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>It never grants</b>A boundary of <code>s3:*</code> on a user with no other policies allows nothing. A DynamoDB policy added later still does nothing: it is outside the boundary.</p></div>
+      <div class="pill"><p><b>The classic use: delegation</b>Let a team create its own roles only if each new role carries the company boundary: a condition on <code>iam:CreateRole</code> requires <code>iam:PermissionsBoundary</code> to equal the boundary ARN.</p></div>
+      <div class="pill"><p><b>What it does not cap</b>Grants from resource-based policies. The boundary limits identity-based permissions only.</p></div>
+    </div>` },
+
+  /* 7: the nine policy types */
+  { html: `
+    <div class="eyebrow reveal">The full map</div>
+    <h2 class="reveal" style="font-size:25px">Nine policy types, two jobs</h2>
+    <p class="lead reveal" style="margin-bottom:12px">AWS counts nine. Sort them by whether they grant or only limit.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Grant permissions</b><strong>Identity-based</strong> (this chapter), <strong>resource-based</strong> (Chapter 06, includes S3 bucket policies and role trust policies), <strong>ACLs</strong> (legacy, cross-account only, not JSON) and <strong>AWS RAM resource shares</strong> (sharing resources across accounts without hand-written policies).</p></div>
+      <div class="pill"><p><b>Only limit</b><strong>Permissions boundaries</strong> (one identity), <strong>SCPs</strong> (principals across an organization, Chapter 05), <strong>RCPs</strong> (resources across an organization), <strong>session policies</strong> (one assumed-role session, Chapter 04) and <strong>VPC endpoint policies</strong> (traffic through an endpoint, Chapter 11).</p></div>
+      <div class="pill"><p><b>Exam reflex</b>If a question asks which policy "restricts" without "granting", it wants one from the second list. If it asks how to share a resource with another account, the first.</p></div>
+    </div>` },
+
+  /* 8: quiz, delegation */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A platform team wants developers to create their own Lambda roles without a ticket, but never a role that can touch IAM or billing. The team runs one account. What should it implement?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Give developers IAMFullAccess and review CloudTrail weekly</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Attach an SCP to the account denying iam:* and billing actions</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>Allow role creation only when the new role carries a permissions boundary excluding IAM and billing</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Require inline policies on every role so permissions cannot be reused</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The documented delegation pattern: <code>iam:CreateRole</code> allowed only when the new role's boundary equals the company boundary, so whatever they attach, the ceiling holds. Option B is tempting, but an SCP denying <code>iam:*</code> would stop everyone, platform team included, from creating any role. A catches abuse after the fact, and D changes packaging, not power.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 03 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: roles, AWS STS and cross-account access.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Identities</b>Users for the exceptions, groups to hold permissions for people, roles for anyone or anything that needs temporary access.</p></div>
+      <div class="pill"><p><b>Policies</b>AWS managed to start, customer managed for least privilege, inline for a strict one-to-one. Four grant, five only limit.</p></div>
+      <div class="pill"><p><b>Evaluation</b>Implicit deny, explicit deny wins, every ceiling (SCP, RCP, boundary, session policy) must allow, then an Allow must exist.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>

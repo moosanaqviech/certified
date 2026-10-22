@@ -147,9 +147,19 @@ LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
 chapters across 4 units and 14 modules, the MLA-C02 three-level model. The
 mapping is one chapter per guide skill (79) plus 10 K-anchored chapters for
 exam-critical knowledge items; K and S ids are ours, in guide order, and
-frozen. No lessons yet. Folder `aws-solutions-architect-associate/`, exam
+frozen. Module 1.1 (chapters 01 to 07: global infrastructure and shared
+responsibility, root and IAM users, the authorization model, roles and STS,
+Organizations and Control Tower, resource vs identity policies (TO),
+directory federation (TO)) is live on the v2 template and wired into the
+course home; every other chapter shows "Coming soon". The latest authored
+chapter carries `next: null` in its NAV until the chapter after it ships
+(the validator derives the order from the `file:` entries in UNITS, so
+authoring Chapter 08 means updating lesson-07's NAV to point at it). Folder
+`aws-solutions-architect-associate/`, exam
 prefix `saa-practice-exam-NN.html` (01 to 04 unit exams, 05 to 07 sealed
-65-question mocks), proposed course id aws-saa. Accents are per module band,
+65-question mocks), proposed course id aws-saa (not yet registered in
+gate.ts, _shared.mjs or build_sitemap.py, so the lessons are not in
+sitemap.xml yet). Accents are per module band,
 listed in the cert config. Snowball Edge and vault-based Amazon Glacier are
 closed to new customers: lessons teach AWS Data Transfer Terminal and the S3
 Glacier storage classes instead.)
