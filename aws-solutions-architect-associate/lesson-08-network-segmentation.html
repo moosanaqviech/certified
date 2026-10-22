@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Network Segmentation: Public Subnets, Private Subnets, and Subnet Tiers · SAA-C03 Chapter 8</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-08-network-segmentation.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #061110;            /* page background */
+    --bg-tint: #133936;       /* ambient glow tint behind the card */
+    --accent: #90dfd8;        /* topic color: ice teal, Unit 1 Module 1.2 Ch 08-16 */
+    --accent-glow: rgba(144,223,216,0.12);  /* correct-answer fill */
+    --accent-ink: #061110;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Module 1.2 · Chapter 08 · Network Segmentation: Public Subnets,
+   Private Subnets, and Subnet Tiers
+   Objective S1.2.2 (determining network segmentation strategies: public
+   and private subnets). VPC and CIDR basics only: CIDR planning at scale
+   is Chapter 53, route tables and NAT gateways are Chapter 09, security
+   groups and network ACLs are Chapter 10.
+   Shape: cover, the VPC and its CIDR block, subnets and reserved
+   addresses (step build), what makes a subnet public, quiz (public IP but
+   no route), the four subnet types (step build), three tiers across two
+   AZs (step build), the default VPC, quiz (where the database goes),
+   recap. 10 cards, two quizzes, correct letters B and D.
+   Sources (all checked 22 Oct 2026):
+   docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html (IPv4
+   VPC CIDR between /16, 65,536 addresses, and /28, 16 addresses; use RFC
+   1918 ranges; a CIDR block cannot be resized, but secondary CIDR blocks
+   can be associated);
+   docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html (subnet
+   CIDR /16 to /28; subnet blocks cannot overlap; first four and last
+   address reserved: network, VPC router, DNS, future use, broadcast);
+   docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html (a
+   subnet resides in exactly one AZ; subnet types are defined by routing:
+   public has a direct route to an internet gateway, private needs a NAT
+   device, VPN-only routes to a virtual private gateway, isolated has no
+   routes outside the VPC; auto-assign public IP setting);
+   docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+   (instances need a public IPv4 or Elastic IP to use the internet
+   gateway; a private subnet's instances cannot reach the internet even
+   with public IPs);
+   docs.aws.amazon.com/vpc/latest/userguide/default-vpc-components.html
+   (default VPC 172.31.0.0/16, a /20 default subnet per AZ, an internet
+   gateway, a 0.0.0.0/0 route, so every default subnet is public);
+   docs.aws.amazon.com/vpc/latest/userguide/infrastructure-security.html
+   (use subnets to isolate web, application and database tiers; use
+   private subnets for instances that should not be reachable from the
+   internet).
+   Cover animates (traffic dots enter the public tier only and the
+   private tiers glow in turn). Step builds on cards 2, 5 and 6.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-09-routing-and-egress.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c08r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(144,223,216,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(144,223,216,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c08dot { animation: c08in 4.2s linear infinite; }
+      .c08dot.d2 { animation-delay: 1.4s; } .c08dot.d3 { animation-delay: 2.8s; }
+      @keyframes c08in { 0% { transform: translate(0px, 0px); opacity: 0; } 10% { opacity: 1; } 55% { transform: translate(0px, 50px); opacity: 1; } 70%, 100% { transform: translate(0px, 50px); opacity: 0; } }
+      .c08tier { animation: c08glow 5s ease-in-out infinite; }
+      .c08tier.t2 { animation-delay: 1.6s; }
+      @keyframes c08glow { 0%, 100% { fill-opacity: 0.05; } 20% { fill-opacity: 0.22; } 45% { fill-opacity: 0.05; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c08dot { animation: none; opacity: 0; }
+        .c08tier { animation: none; fill-opacity: 0.14; }
+      }
+    </style>
+    <ellipse cx="160" cy="104" rx="155" ry="92" fill="url(#c08r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <text x="160" y="16" fill="var(--ink-soft)" font-size="8.5">internet</text>
+      <circle class="c08dot" cx="120" cy="22" r="3.5" fill="var(--orange)"/>
+      <circle class="c08dot d2" cx="160" cy="22" r="3.5" fill="var(--orange)"/>
+      <circle class="c08dot d3" cx="200" cy="22" r="3.5" fill="var(--orange)"/>
+      <rect x="22" y="40" width="276" height="140" rx="14" fill="none" stroke="var(--accent)" stroke-dasharray="4 4"/>
+      <text x="44" y="54" text-anchor="start" fill="var(--accent)" font-size="9" font-weight="700">VPC 10.0.0.0/16</text>
+      <rect x="36" y="62" width="248" height="32" rx="8" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)"/>
+      <text x="160" y="82" fill="var(--ink)" font-size="9" font-weight="700">public subnets: load balancer</text>
+      <rect class="c08tier" x="36" y="100" width="248" height="32" rx="8" fill="var(--lav)" stroke="var(--lav)"/>
+      <text x="160" y="120" fill="var(--ink)" font-size="9" font-weight="700">private subnets: application</text>
+      <rect class="c08tier t2" x="36" y="138" width="248" height="32" rx="8" fill="var(--lav)" stroke="var(--lav)"/>
+      <text x="160" y="158" fill="var(--ink)" font-size="9" font-weight="700">private subnets: database</text>
+      <text x="160" y="196" fill="var(--ink-soft)" font-size="9.5">The internet reaches the top tier and nothing below it.</text>
+    </g>
+  </svg>`,
+
+  reserved: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="14" y="14" width="292" height="40" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+      <text x="160" y="31" fill="var(--accent)" font-size="9.5" font-weight="700">subnet 10.0.1.0/24 in one AZ</text>
+      <text x="160" y="45" fill="var(--ink-faint)" font-size="7.5">256 addresses</text>
+      <g data-step="1">
+        <g font-size="7.5">
+          <rect x="14" y="66" width="52" height="28" rx="5" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/><text x="40" y="78" fill="var(--warn)" font-weight="700">.0</text><text x="40" y="89" fill="var(--ink-faint)">network</text>
+          <rect x="74" y="66" width="52" height="28" rx="5" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/><text x="100" y="78" fill="var(--warn)" font-weight="700">.1</text><text x="100" y="89" fill="var(--ink-faint)">VPC router</text>
+          <rect x="134" y="66" width="52" height="28" rx="5" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/><text x="160" y="78" fill="var(--warn)" font-weight="700">.2</text><text x="160" y="89" fill="var(--ink-faint)">DNS</text>
+          <rect x="194" y="66" width="52" height="28" rx="5" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/><text x="220" y="78" fill="var(--warn)" font-weight="700">.3</text><text x="220" y="89" fill="var(--ink-faint)">future use</text>
+          <rect x="254" y="66" width="52" height="28" rx="5" fill="rgba(248,113,113,0.12)" stroke="var(--warn)"/><text x="280" y="78" fill="var(--warn)" font-weight="700">.255</text><text x="280" y="89" fill="var(--ink-faint)">broadcast</text>
+        </g>
+      </g>
+      <g data-step="2">
+        <text x="160" y="116" fill="var(--ok)" font-size="9.5" font-weight="700">251 usable addresses (a /28 leaves 11)</text>
+      </g>
+    </g>
+  </svg>`,
+
+  types: `<svg viewBox="0 0 320 140">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g data-step="1">
+        <rect x="8" y="10" width="72" height="120" rx="9" fill="rgba(144,223,216,0.12)" stroke="var(--accent)"/>
+        <text x="44" y="28" fill="var(--accent)" font-size="9" font-weight="700">Public</text>
+        <text x="44" y="56" fill="var(--ink-soft)" font-size="7.5">0.0.0.0/0</text>
+        <text x="44" y="68" fill="var(--ink-soft)" font-size="7.5">to internet</text>
+        <text x="44" y="80" fill="var(--ink-soft)" font-size="7.5">gateway</text>
+        <text x="44" y="110" fill="var(--ink-faint)" font-size="7">load balancers</text>
+      </g>
+      <g data-step="2">
+        <rect x="86" y="10" width="72" height="120" rx="9" fill="rgba(196,181,253,0.12)" stroke="var(--lav)"/>
+        <text x="122" y="28" fill="var(--lav)" font-size="9" font-weight="700">Private</text>
+        <text x="122" y="56" fill="var(--ink-soft)" font-size="7.5">0.0.0.0/0</text>
+        <text x="122" y="68" fill="var(--ink-soft)" font-size="7.5">to a NAT</text>
+        <text x="122" y="80" fill="var(--ink-soft)" font-size="7.5">device</text>
+        <text x="122" y="110" fill="var(--ink-faint)" font-size="7">app servers</text>
+      </g>
+      <g data-step="3">
+        <rect x="164" y="10" width="72" height="120" rx="9" fill="var(--surface-2)" stroke="var(--orange)"/>
+        <text x="200" y="28" fill="var(--orange)" font-size="9" font-weight="700">VPN-only</text>
+        <text x="200" y="56" fill="var(--ink-soft)" font-size="7.5">routes to a</text>
+        <text x="200" y="68" fill="var(--ink-soft)" font-size="7.5">virtual private</text>
+        <text x="200" y="80" fill="var(--ink-soft)" font-size="7.5">gateway</text>
+        <text x="200" y="110" fill="var(--ink-faint)" font-size="7">on-premises only</text>
+      </g>
+      <g data-step="4">
+        <rect x="242" y="10" width="72" height="120" rx="9" fill="var(--surface-2)" stroke="var(--ink-faint)"/>
+        <text x="278" y="28" fill="var(--ink)" font-size="9" font-weight="700">Isolated</text>
+        <text x="278" y="56" fill="var(--ink-soft)" font-size="7.5">local route</text>
+        <text x="278" y="68" fill="var(--ink-soft)" font-size="7.5">only</text>
+        <text x="278" y="110" fill="var(--ink-faint)" font-size="7">databases</text>
+      </g>
+    </g>
+  </svg>`,
+
+  tiers: `<svg viewBox="0 0 320 160">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="10" y="8" width="300" height="146" rx="12" fill="none" stroke="var(--accent)" stroke-dasharray="4 4"/>
+      <text x="85" y="22" fill="var(--ink-faint)" font-size="8" font-weight="700">AZ a</text>
+      <text x="235" y="22" fill="var(--ink-faint)" font-size="8" font-weight="700">AZ b</text>
+      <path d="M160 14 L160 150" stroke="var(--line)" stroke-dasharray="3 3"/>
+      <g data-step="1">
+        <rect x="22" y="30" width="126" height="32" rx="7" fill="rgba(144,223,216,0.16)" stroke="var(--accent)"/><text x="85" y="44" fill="var(--accent)" font-size="8.5" font-weight="700">public 10.0.0.0/24</text><text x="85" y="55" fill="var(--ink-faint)" font-size="7">load balancer node</text>
+        <rect x="172" y="30" width="126" height="32" rx="7" fill="rgba(144,223,216,0.16)" stroke="var(--accent)"/><text x="235" y="44" fill="var(--accent)" font-size="8.5" font-weight="700">public 10.0.1.0/24</text><text x="235" y="55" fill="var(--ink-faint)" font-size="7">load balancer node</text>
+      </g>
+      <g data-step="2">
+        <rect x="22" y="70" width="126" height="32" rx="7" fill="rgba(196,181,253,0.14)" stroke="var(--lav)"/><text x="85" y="84" fill="var(--lav)" font-size="8.5" font-weight="700">private 10.0.10.0/24</text><text x="85" y="95" fill="var(--ink-faint)" font-size="7">app instances</text>
+        <rect x="172" y="70" width="126" height="32" rx="7" fill="rgba(196,181,253,0.14)" stroke="var(--lav)"/><text x="235" y="84" fill="var(--lav)" font-size="8.5" font-weight="700">private 10.0.11.0/24</text><text x="235" y="95" fill="var(--ink-faint)" font-size="7">app instances</text>
+      </g>
+      <g data-step="3">
+        <rect x="22" y="110" width="126" height="32" rx="7" fill="var(--surface-2)" stroke="var(--ink-faint)"/><text x="85" y="124" fill="var(--ink)" font-size="8.5" font-weight="700">private 10.0.20.0/24</text><text x="85" y="135" fill="var(--ink-faint)" font-size="7">database primary</text>
+        <rect x="172" y="110" width="126" height="32" rx="7" fill="var(--surface-2)" stroke="var(--ink-faint)"/><text x="235" y="124" fill="var(--ink)" font-size="8.5" font-weight="700">private 10.0.21.0/24</text><text x="235" y="135" fill="var(--ink-faint)" font-size="7">database standby</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 08</div>
+    <h1 class="reveal" style="font-size:34px">Network segmentation: public and private subnets</h1>
+    <p class="lead reveal">Module 1.1 decided who may call AWS. Module 1.2 decides what can reach your workloads over the network, and it starts with the simplest control there is: putting each tier in a subnet the internet cannot reach unless it has to.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: the VPC */
+  { html: `
+    <div class="eyebrow reveal">The container</div>
+    <h2 class="reveal" style="font-size:25px">A VPC is your own private address space</h2>
+    <p class="lead reveal" style="margin-bottom:14px">An <strong>Amazon VPC</strong> is a logically isolated network in one Region. You give it an IPv4 <strong>CIDR block</strong>, and every subnet you create carves a piece out of it.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Size</b>From /16 (65,536 addresses) down to /28 (16 addresses). Use the private RFC 1918 ranges: 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16.</p></div>
+      <div class="pill"><p><b>Fixed once created</b>A CIDR block cannot be resized. You can add secondary CIDR blocks later, but overlap with networks you will connect to is painful to undo.</p></div>
+      <div class="pill"><p><b>Isolation by default</b>Separate VPCs separate workloads; subnets separate tiers inside one VPC.</p></div>
+    </div>` },
+
+  /* 2: subnets and reserved addresses, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">The building block</div>
+    <h2 class="reveal" style="font-size:25px">A subnet lives in exactly one AZ</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.reserved}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="font-size:14.5px">A <strong>subnet</strong> is a range of the VPC's addresses, sized /16 to /28, that never spans Availability Zones. High availability means one subnet per tier in each AZ. Subnets in a VPC cannot overlap.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px">AWS reserves five addresses in every subnet: the network address, the VPC router (+1), DNS (+2), one for future use (+3), and the last address.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px">So a /24 holds 251 usable addresses and a /28 only 11. A question about running out of IPs in a small subnet usually hinges on those five.</p>
+    </div>` },
+
+  /* 3: what makes a subnet public */
+  { html: `
+    <div class="eyebrow reveal">The defining rule</div>
+    <h2 class="reveal" style="font-size:25px">Public or private is decided by the route table</h2>
+    <p class="lead reveal" style="margin-bottom:14px">There is no "public" checkbox. A subnet is <strong>public</strong> because its route table has a route to an <strong>internet gateway</strong>, and <strong>private</strong> because it does not.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Both pieces needed</b>An instance in a public subnet also needs a public IPv4 address or an Elastic IP to talk to the internet. A route without an address does nothing.</p></div>
+      <div class="pill"><p><b>Addresses alone do nothing</b>An instance with a public IP in a private subnet still cannot reach or be reached from the internet: there is no route.</p></div>
+      <div class="pill"><p><b>Auto-assign</b>Each subnet has a setting to give new interfaces a public IP. Turn it on for public subnets only.</p></div>
+    </div>` },
+
+  /* 4: quiz, public IP but no route */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A developer launches an instance with an auto-assigned public IPv4 address into a subnet whose route table holds only the local route. The VPC has an internet gateway attached. Why can't users reach the instance from the internet?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Public IPs only work in the default VPC</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>The subnet has no route to the internet gateway, so it is private</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>The internet gateway must be attached to the subnet, not the VPC</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>The instance needs an Elastic IP instead of an auto-assigned one</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A subnet is public only when its route table sends internet-bound traffic to the internet gateway; without that route the public IP is unused. Option D is tempting, but an Elastic IP behaves the same as an auto-assigned public IP here. C is wrong because gateways attach to the VPC and subnets reach them through routes, and A is false.</div>` },
+
+  /* 5: the four subnet types, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Routing defines the type</div>
+    <h2 class="reveal" style="font-size:25px">Four kinds of subnet</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.types}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">AWS names four subnet types, each defined only by where its routes lead. Tap through them.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Public:</strong> a direct route to an internet gateway. Home of load balancers, NAT gateways and bastion hosts, and as little else as possible.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>Private:</strong> no route to the internet gateway. Outbound internet access, if needed, goes through a NAT device (Chapter 09). Nothing on the internet can start a connection in.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>VPN-only:</strong> a route to a Site-to-Site VPN through a virtual private gateway, and none to the internet. Reachable from the corporate network only (Chapter 16).</p>
+      <p class="lead" data-step="4" style="font-size:14.5px"><strong>Isolated:</strong> no routes outside the VPC at all. Resources talk only to the rest of the VPC, which suits databases that never call out.</p>
+    </div>` },
+
+  /* 6: three tiers, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The standard layout</div>
+    <h2 class="reveal" style="font-size:25px">Three tiers across two AZs</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.tiers}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="font-size:14.5px">AWS recommends using subnets to isolate the web, application and database tiers. Tap to build the classic layout.</p>
+      <p class="lead" data-step="1" style="font-size:14.5px"><strong>Web tier, public:</strong> only the internet-facing load balancer lives here, one subnet per AZ. The instances behind it do not need public IPs.</p>
+      <p class="lead" data-step="2" style="font-size:14.5px"><strong>App tier, private:</strong> instances accept traffic only from the load balancer and reach the internet, if at all, through NAT.</p>
+      <p class="lead" data-step="3" style="font-size:14.5px"><strong>Data tier, private or isolated:</strong> the database accepts traffic only from the app tier. Each tier spans two AZs, so losing one AZ loses nothing permanently. Chapter 10 adds the firewall rules between tiers.</p>
+    </div>` },
+
+  /* 7: default VPC */
+  { html: `
+    <div class="eyebrow reveal">The one you already have</div>
+    <h2 class="reveal" style="font-size:25px">The default VPC is all public</h2>
+    <p class="lead reveal" style="margin-bottom:14px">Every Region in a newer account comes with a <strong>default VPC</strong> so instances launch with no setup.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What is in it</b>172.31.0.0/16, a /20 default subnet in each AZ, an internet gateway and a 0.0.0.0/0 route to it in the main route table.</p></div>
+      <div class="pill"><p><b>The consequence</b>Every default subnet is public, and instances launched there get public IPs. Fine for a quick test or a simple website, wrong for a database.</p></div>
+      <div class="pill"><p><b>Production pattern</b>Build your own VPC with private tiers, or add private subnets to the default VPC. Never put sensitive tiers in default subnets.</p></div>
+    </div>` },
+
+  /* 8: quiz, where the database goes */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A company is moving a web app with an Amazon RDS database into a new VPC. Users reach the app through an Application Load Balancer. The database must never be reachable from the internet, and must survive an AZ failure. Where should the database go?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>A public subnet with a security group allowing only the app servers</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>One private subnet, shared with the app servers to cut latency</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>The default VPC's subnets, with public access turned off</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Private subnets in two AZs with no route to the internet gateway</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A private subnet per AZ gives two layers: no route from the internet at all, and a standby in a second AZ. Option A is tempting, since the security group does block traffic, but a public subnet leaves the database one misconfiguration away from exposure. B keeps one AZ as a single point of failure, and C puts the tier in subnets that are public by design.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 08 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: the route tables and gateways that make those subnets public or private.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>VPC and subnets</b>VPC CIDR /16 to /28, not resizable. Each subnet sits in one AZ and loses five reserved addresses.</p></div>
+      <div class="pill"><p><b>Public vs private</b>Defined by a route to the internet gateway, plus a public IP for the instance. VPN-only and isolated subnets complete the set.</p></div>
+      <div class="pill"><p><b>Tiers</b>Load balancer public; app and database private, each spread over two AZs. The default VPC is all public.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>
