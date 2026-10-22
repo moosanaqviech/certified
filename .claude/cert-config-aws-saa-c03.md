@@ -97,7 +97,12 @@ Service); lessons spell a name out once and then use the short form.
       Manager Parameter Store", "AWS KMS", "AWS CloudHSM", "AWS Certificate
       Manager (ACM)", "Amazon GuardDuty", "Amazon Macie", "Amazon Inspector",
       "AWS Security Hub", "Amazon Detective", "AWS Artifact", "AWS Config",
-      "AWS CloudTrail".
+      "AWS CloudTrail". Security Hub was split (checked 22 Oct 2026 on its
+      docs pages): the original posture service with control checks and
+      standards is now "AWS Security Hub CSPM", and "AWS Security Hub" names
+      the newer service that correlates findings from Security Hub CSPM,
+      Inspector and others into exposures. The guide says "Security Hub";
+      Ch 15 explains the split once and uses both names.
     KMS keys: "AWS owned keys", "AWS managed keys", "customer managed keys";
       never "CMK" or "customer master key" (retired terms).
     Load balancing: "Elastic Load Balancing (ELB)" for the service,
