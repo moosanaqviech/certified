@@ -147,14 +147,21 @@ LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
 chapters across 4 units and 14 modules, the MLA-C02 three-level model. The
 mapping is one chapter per guide skill (79) plus 10 K-anchored chapters for
 exam-critical knowledge items; K and S ids are ours, in guide order, and
-frozen. Module 1.1 (chapters 01 to 07: global infrastructure and shared
-responsibility, root and IAM users, the authorization model, roles and STS,
-Organizations and Control Tower, resource vs identity policies (TO),
-directory federation (TO)) is live on the v2 template and wired into the
-course home; every other chapter shows "Coming soon". The latest authored
+frozen. Modules 1.1 and 1.2 (chapters 01 to 16) are live on the v2
+template and wired into the course home: 1.1 is identity and access (01 to
+07), 1.2 is workload and network security (08 segmentation, 09 routing and
+egress, 10 security groups vs NACLs (TO), 11 VPC endpoints (TO), 12 WAF,
+Shield, Firewall Manager and Network Firewall, 13 Secrets Manager vs
+Parameter Store (TO), 14 Cognito, 15 threat detection, 16 VPN and Direct
+Connect (TO)); every other chapter shows "Coming soon". The latest authored
 chapter carries `next: null` in its NAV until the chapter after it ships
 (the validator derives the order from the `file:` entries in UNITS, so
-authoring Chapter 08 means updating lesson-07's NAV to point at it). Folder
+authoring Chapter 17 means updating lesson-16's NAV to point at it). Every
+`data-step` element in these lessons carries an inline
+`pointer-events:none`: the frozen v2 engine's `.step-on` sets
+`pointer-events:auto`, which beats the hidden card's `none`, so a revealed
+step element on a later card can sit over a quiz choice and swallow the
+tap. Keep the inline style on new SAA lessons. Folder
 `aws-solutions-architect-associate/`, exam
 prefix `saa-practice-exam-NN.html` (01 to 04 unit exams, 05 to 07 sealed
 65-question mocks), proposed course id aws-saa (not yet registered in

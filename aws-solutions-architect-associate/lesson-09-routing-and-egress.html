@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Routing and Egress: Route Tables, Internet Gateways, and NAT Gateways · SAA-C03 Chapter 9</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-09-routing-and-egress.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #061110;            /* page background */
+    --bg-tint: #133936;       /* ambient glow tint behind the card */
+    --accent: #90dfd8;        /* topic color: ice teal, Unit 1 Module 1.2 Ch 08-16 */
+    --accent-glow: rgba(144,223,216,0.12);  /* correct-answer fill */
+    --accent-ink: #061110;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Module 1.2 · Chapter 09 · Routing and Egress: Route Tables,
+   Internet Gateways, and NAT Gateways
+   Objective S1.2.1, part (designing VPC architectures with route tables
+   and NAT gateways). Security groups and network ACLs are Chapter 10;
+   NAT gateway cost is Chapter 83; VPC endpoints as the private path to
+   AWS services are Chapter 11.
+   Shape: cover, route table concepts, longest prefix match (step build),
+   the internet gateway, private egress through a NAT gateway (step
+   build), quiz (private instances cannot patch), NAT gateway
+   availability (step build: zonal per AZ, regional mode), egress-only
+   internet gateway for IPv6, quiz (IPv6 outbound only), recap. 10 cards,
+   two quizzes, correct letters C and A.
+   Sources (all checked 22 Oct 2026):
+   docs.aws.amazon.com/vpc/latest/userguide/RouteTables.html (main route
+   table governs subnets with no explicit association; custom route
+   tables; destination and target; local route; a subnet uses one route
+   table);
+   docs.aws.amazon.com/vpc/latest/userguide/route-tables-priority.html
+   (longest prefix match; IPv4 and IPv6 routes independent);
+   docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+   (horizontally scaled, redundant, highly available, no bandwidth
+   constraint, attached to the VPC; performs NAT for public IPv4; no
+   charge for the gateway itself);
+   docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html (public
+   NAT gateway in a public subnet with an Elastic IP, routes to the
+   internet gateway; private NAT gateway for other VPCs or on premises;
+   connections must be initiated from inside the VPC);
+   docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-basics.html
+   (zonal NAT gateway lives in one AZ; if that AZ fails other AZs lose
+   internet access, so create one per AZ and route to the same-AZ one;
+   TCP, UDP, ICMP; 5 Gbps scaling to 100 Gbps; no security group on a NAT
+   gateway; ports 1024 to 65535);
+   docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html
+   (regional mode expands across AZs automatically, needs no public
+   subnet, one NAT ID for all AZs, not for private NAT, up to 60 minutes
+   to expand to a new AZ);
+   docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html
+   (IPv6 only, outbound only, stateful, no charge for the gateway; NAT
+   gateway is the IPv4 equivalent).
+   Cover animates (packets leave a private subnet, pass through the NAT
+   gateway and out of the internet gateway; inbound attempts bounce).
+   Step builds on cards 2, 4 and 6.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-10-security-groups-vs-nacls.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c09r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(144,223,216,0.16)"/>
+        <stop offset="1" style="stop-color:rgba(144,223,216,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c09out { animation: c09go 4s linear infinite; }
+      .c09out.d2 { animation-delay: 2s; }
+      @keyframes c09go { 0% { transform: translate(0px, 0px); opacity: 0; } 8% { opacity: 1; } 40% { transform: translate(110px, 0px); } 50% { transform: translate(110px, -62px); } 85% { transform: translate(200px, -62px); opacity: 1; } 100% { transform: translate(230px, -62px); opacity: 0; } }
+      .c09in { animation: c09bounce 4s ease-in-out infinite; animation-delay: 1s; }
+      @keyframes c09bounce { 0% { transform: translate(0px, 0px); opacity: 0; } 15% { opacity: 1; } 45% { transform: translate(-50px, 0px); opacity: 1; } 55% { transform: translate(-50px, 0px); opacity: 0.2; } 75%, 100% { transform: translate(0px, 0px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c09out { animation: none; opacity: 1; transform: translate(110px, 0px); }
+        .c09in { animation: none; opacity: 0; }
+      }
+    </style>
+    <ellipse cx="160" cy="104" rx="155" ry="92" fill="url(#c09r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="16" y="26" width="226" height="158" rx="14" fill="none" stroke="var(--accent)" stroke-dasharray="4 4"/>
+      <text x="40" y="20" text-anchor="start" fill="var(--accent)" font-size="9" font-weight="700">VPC</text>
+      <rect x="28" y="42" width="202" height="50" rx="9" fill="rgba(144,223,216,0.12)" stroke="var(--accent)"/>
+      <text x="62" y="58" fill="var(--accent)" font-size="8" font-weight="700">public subnet</text>
+      <rect x="128" y="54" width="62" height="26" rx="6" fill="var(--bg)" stroke="var(--accent)"/>
+      <text x="159" y="71" fill="var(--ink)" font-size="8.5" font-weight="700">NAT gw</text>
+      <rect x="28" y="110" width="202" height="62" rx="9" fill="rgba(196,181,253,0.1)" stroke="var(--lav)"/>
+      <text x="66" y="126" fill="var(--lav)" font-size="8" font-weight="700">private subnet</text>
+      <rect x="40" y="134" width="50" height="26" rx="6" fill="var(--bg)" stroke="var(--lav)"/>
+      <text x="65" y="151" fill="var(--ink)" font-size="8">app</text>
+      <rect x="250" y="54" width="56" height="26" rx="6" fill="var(--surface-2)" stroke="var(--accent)"/>
+      <text x="278" y="71" fill="var(--ink)" font-size="8.5" font-weight="700">IGW</text>
+      <text x="278" y="100" fill="var(--ink-soft)" font-size="8">internet</text>
+      <path d="M90 147 L159 147 L159 80" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+      <path d="M190 67 L250 67" stroke="var(--line)" stroke-width="1.5"/>
+      <circle class="c09out" cx="50" cy="147" r="4" fill="var(--ok)"/>
+      <circle class="c09out d2" cx="50" cy="147" r="4" fill="var(--ok)"/>
+      <circle class="c09in" cx="300" cy="147" r="4" fill="var(--warn)"/>
+      <text x="280" y="128" fill="var(--warn)" font-size="7">no inbound path</text>
+      <text x="160" y="196" fill="var(--ink-soft)" font-size="9.5">Out through NAT, never in.</text>
+    </g>
+  </svg>`,
+
+  prefix: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk">
+      <rect x="10" y="8" width="300" height="88" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="22" y="24" fill="var(--ink-faint)" font-size="8" font-weight="700">DESTINATION</text>
+      <text x="170" y="24" fill="var(--ink-faint)" font-size="8" font-weight="700">TARGET</text>
+      <g font-size="9" fill="var(--ink-soft)">
+        <text x="22" y="44">10.0.0.0/16</text><text x="170" y="44">local</text>
+        <text x="22" y="64">172.31.0.0/16</text><text x="170" y="64">pcx-... (peering)</text>
+        <text x="22" y="84">0.0.0.0/0</text><text x="170" y="84">igw-...</text>
+      </g>
+      <g style="pointer-events:none" data-step="1"><rect x="14" y="34" width="292" height="16" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="160" y="112" text-anchor="middle" fill="var(--accent)" font-size="8.5" font-weight="700">to 10.0.4.7: local wins, stays in the VPC</text></g>
+      <g style="pointer-events:none" data-step="2"><rect x="14" y="54" width="292" height="16" rx="4" fill="none" stroke="var(--lav)" stroke-width="1.5"/>
+        <text x="160" y="124" text-anchor="middle" fill="var(--lav)" font-size="8.5" font-weight="700">to 172.31.9.9: /16 beats /0, goes to the peer</text></g>
+      <g style="pointer-events:none" data-step="3"><rect x="14" y="74" width="292" height="16" rx="4" fill="none" stroke="var(--orange)" stroke-width="1.5"/></g>
+    </g>
+  </svg>`,
+
+  nat: `<svg viewBox="0 0 320 140">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="80" width="86" height="40" rx="8" fill="rgba(196,181,253,0.12)" stroke="var(--lav)"/>
+        <text x="53" y="97" fill="var(--lav)" font-size="8.5" font-weight="700">private subnet</text>
+        <text x="53" y="110" fill="var(--ink-faint)" font-size="7">0.0.0.0/0 to nat-...</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M96 100 L118 100 L118 52 L128 52" fill="none" stroke="var(--ok)" stroke-width="1.5"/>
+        <rect x="128" y="32" width="90" height="40" rx="8" fill="rgba(144,223,216,0.14)" stroke="var(--accent)"/>
+        <text x="173" y="49" fill="var(--accent)" font-size="8.5" font-weight="700">NAT gateway</text>
+        <text x="173" y="62" fill="var(--ink-faint)" font-size="7">public subnet, Elastic IP</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <path d="M218 52 L236 52" stroke="var(--ok)" stroke-width="1.5"/>
+        <rect x="236" y="32" width="74" height="40" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="273" y="49" fill="var(--ink)" font-size="8.5" font-weight="700">internet gw</text>
+        <text x="273" y="62" fill="var(--ink-faint)" font-size="7">public route table</text>
+      </g>
+      <g style="pointer-events:none" data-step="4">
+        <text x="200" y="104" fill="var(--warn)" font-size="8.5" font-weight="700">internet to app: no path in</text>
+        <text x="200" y="118" fill="var(--ink-faint)" font-size="7.5">replies to outbound requests still return</text>
+      </g>
+    </g>
+  </svg>`,
+
+  natha: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="10" width="148" height="110" rx="10" fill="var(--surface-2)" stroke="var(--warn)"/>
+        <text x="84" y="26" fill="var(--warn)" font-size="8.5" font-weight="700">one zonal NAT, shared</text>
+        <rect x="24" y="36" width="56" height="22" rx="5" fill="rgba(248,113,113,0.14)" stroke="var(--warn)"/><text x="52" y="51" fill="var(--ink)" font-size="7.5">NAT in AZ a</text>
+        <rect x="24" y="72" width="56" height="20" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="52" y="86" fill="var(--ink-soft)" font-size="7">app AZ a</text>
+        <rect x="90" y="72" width="56" height="20" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="118" y="86" fill="var(--ink-soft)" font-size="7">app AZ b</text>
+        <path d="M118 72 L80 52" stroke="var(--warn)" stroke-dasharray="3 2"/>
+        <text x="84" y="110" fill="var(--ink-faint)" font-size="7">AZ a fails: AZ b loses egress</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="164" y="10" width="146" height="110" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="237" y="26" fill="var(--accent)" font-size="8.5" font-weight="700">one NAT per AZ</text>
+        <rect x="176" y="36" width="56" height="22" rx="5" fill="rgba(144,223,216,0.14)" stroke="var(--accent)"/><text x="204" y="51" fill="var(--ink)" font-size="7.5">NAT AZ a</text>
+        <rect x="242" y="36" width="56" height="22" rx="5" fill="rgba(144,223,216,0.14)" stroke="var(--accent)"/><text x="270" y="51" fill="var(--ink)" font-size="7.5">NAT AZ b</text>
+        <rect x="176" y="72" width="56" height="20" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="204" y="86" fill="var(--ink-soft)" font-size="7">app AZ a</text>
+        <rect x="242" y="72" width="56" height="20" rx="5" fill="var(--bg)" stroke="var(--line)"/><text x="270" y="86" fill="var(--ink-soft)" font-size="7">app AZ b</text>
+        <path d="M204 72 L204 58 M270 72 L270 58" stroke="var(--accent)"/>
+        <text x="237" y="110" fill="var(--ink-faint)" font-size="7">each AZ routes to its own NAT</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.2 · Chapter 09</div>
+    <h1 class="reveal" style="font-size:34px">Routing and egress</h1>
+    <p class="lead reveal">Route tables decide where every packet leaving a subnet goes. Two gateways sit at the edge: an <strong>internet gateway</strong> that lets traffic in and out, and a <strong>NAT gateway</strong> that lets private instances reach out without letting anyone reach in.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: route table concepts */
+  { html: `
+    <div class="eyebrow reveal">The traffic controller</div>
+    <h2 class="reveal" style="font-size:25px">Route tables: destination and target</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Routes</b>Each route pairs a destination CIDR with a target: an internet gateway, NAT gateway, peering connection, VPN gateway, transit gateway or endpoint.</p></div>
+      <div class="pill"><p><b>The local route</b>Every route table has one for the VPC's own CIDR. Traffic between subnets of a VPC always flows; routing cannot block it, only firewalls can.</p></div>
+      <div class="pill"><p><b>Main vs custom</b>The main route table covers every subnet without an explicit association. A subnet uses exactly one table; one table can serve many subnets.</p></div>
+      <div class="pill"><p><b>Keep main private</b>A new subnet silently inherits the main table, so leave internet routes out of it and give public subnets a custom table.</p></div>
+    </div>` },
+
+  /* 2: longest prefix match, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Choosing a route</div>
+    <h2 class="reveal" style="font-size:25px">The most specific route wins</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.prefix}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14.5px">When several routes match a destination, AWS uses the <strong>longest prefix match</strong>: the route with the narrowest CIDR. Tap to send three packets.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14.5px">A packet for 10.0.4.7 matches the local /16 and the /0. The /16 is more specific, so it stays inside the VPC.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14.5px">A packet for 172.31.9.9 matches the peering /16 and the /0. The /16 wins and it crosses the peering connection.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14.5px">Anything else falls through to <code>0.0.0.0/0</code>, the default route. IPv4 and IPv6 routes are evaluated separately, so IPv6 needs its own <code>::/0</code>.</p>
+    </div>` },
+
+  /* 3: internet gateway */
+  { html: `
+    <div class="eyebrow reveal">The front door</div>
+    <h2 class="reveal" style="font-size:25px">The internet gateway</h2>
+    <p class="lead reveal" style="margin-bottom:14px">An <strong>internet gateway</strong> attaches to the VPC (one per VPC) and becomes a route target for internet traffic, in both directions.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Not a bottleneck</b>Horizontally scaled, redundant and highly available, with no bandwidth limit. Never a single point of failure in an answer.</p></div>
+      <div class="pill"><p><b>It translates addresses</b>For IPv4 it maps an instance's private address to its public IP or Elastic IP. No public address, no internet.</p></div>
+      <div class="pill"><p><b>Two-way</b>Anything with a public address in a public subnet can also be reached from the internet, subject to its firewall rules. That is why app servers do not belong there.</p></div>
+    </div>` },
+
+  /* 4: NAT gateway path, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Outbound only</div>
+    <h2 class="reveal" style="font-size:25px">Private egress through a NAT gateway</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.nat}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14.5px">Private instances still need to download patches or call outside APIs. Tap to build the path.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14.5px">The private subnet's route table sends <code>0.0.0.0/0</code> to a NAT gateway instead of the internet gateway.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14.5px">A <strong>public NAT gateway</strong> sits in a public subnet with an Elastic IP, and swaps each instance's private address for its own.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14.5px">The public subnet's route table sends that traffic on to the internet gateway.</p>
+      <p class="lead" data-step="4" style="pointer-events:none;font-size:14.5px">Connections must start inside the VPC: replies come back, but nothing outside can open a connection in. A <strong>private NAT gateway</strong> does the same toward other VPCs or on premises, with no internet at all.</p>
+    </div>` },
+
+  /* 5: quiz, private instances cannot patch */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">Instances in a private subnet must download OS patches from the internet, but must never accept connections initiated from the internet. The VPC has an internet gateway. What should the architect add?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Public IPs on the instances and a route to the internet gateway</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>A NAT gateway in the private subnet, routed from the same subnet</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>A NAT gateway in a public subnet, and a private route 0.0.0.0/0 to it</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>An egress-only internet gateway with a 0.0.0.0/0 route</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A public NAT gateway lives in a public subnet (so it can reach the internet gateway) and private subnets route their default traffic to it; nothing can initiate a connection back in. Option D is tempting, but egress-only internet gateways handle IPv6 only. B puts the NAT gateway where it has no internet route, and A makes the instances publicly reachable.</div>` },
+
+  /* 6: NAT availability, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Designing for an AZ failure</div>
+    <h2 class="reveal" style="font-size:25px">A NAT gateway per AZ, or a regional one</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.natha}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14.5px">A standard (zonal) NAT gateway is redundant inside its AZ, but lives in only one AZ. Tap to compare designs.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14.5px">If every AZ routes through one NAT gateway and its AZ goes down, instances in the healthy AZs lose internet access too.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14.5px">AWS's recommendation: one NAT gateway per AZ, with each AZ's private route table pointing at its own. It scales from 5 Gbps to 100 Gbps, and a security group cannot be attached to it.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14.5px">Newer option: a <strong>regional NAT gateway</strong> expands across AZs automatically, needs no public subnet, and uses one ID in every route table. It does not support private NAT. Chapter 83 covers the cost side.</p>
+    </div>` },
+
+  /* 7: egress-only IGW */
+  { html: `
+    <div class="eyebrow reveal">The IPv6 twin</div>
+    <h2 class="reveal" style="font-size:25px">Egress-only internet gateways for IPv6</h2>
+    <p class="lead reveal" style="margin-bottom:14px">IPv6 addresses are globally unique, so they are public by default. There is no NAT to hide behind.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What it does</b>An <strong>egress-only internet gateway</strong> lets instances start IPv6 connections out, and stops the internet starting connections in. It is stateful, so replies return.</p></div>
+      <div class="pill"><p><b>How to use it</b>Route <code>::/0</code> from the subnet to the egress-only internet gateway. No charge for the gateway, only data transfer.</p></div>
+      <div class="pill"><p><b>The pairing to memorize</b>Outbound-only IPv4: NAT gateway. Outbound-only IPv6: egress-only internet gateway. Two-way, either version: internet gateway.</p></div>
+    </div>` },
+
+  /* 8: quiz, IPv6 outbound only */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A dual-stack subnet's instances already reach the internet over IPv4 through a NAT gateway. They now need IPv6 access to external APIs, and must not accept IPv6 connections initiated from outside. What should be added?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>An egress-only internet gateway with a ::/0 route to it</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>A ::/0 route to the existing NAT gateway</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>A ::/0 route to the internet gateway</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A second NAT gateway dedicated to IPv6</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> The egress-only internet gateway is the IPv6 equivalent of NAT: outbound and replies only. Option C is tempting because the internet gateway does carry IPv6, but routing to it lets the internet reach the instances' public IPv6 addresses. B and D misuse NAT gateways, which translate to IPv4 (NAT64), not plain IPv6 egress.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 09 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: the two firewalls, security groups and network ACLs.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Route tables</b>One per subnet, local route always present, longest prefix wins. Keep the main table free of internet routes.</p></div>
+      <div class="pill"><p><b>Gateways</b>Internet gateway: two-way, needs a public IP. NAT gateway: outbound IPv4 from private subnets, placed in a public subnet. Egress-only gateway: outbound IPv6.</p></div>
+      <div class="pill"><p><b>Availability</b>One zonal NAT gateway per AZ with same-AZ routing, or a regional NAT gateway.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>
