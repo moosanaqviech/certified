@@ -69,13 +69,15 @@ from docs.aws.amazon.com on 21 Oct 2026).
       /ready/aws-saa-c03).
     All lessons and exams live in aws-solutions-architect-associate/.
 
-## Gating and pricing (proposed, confirm at launch)
+## Gating and pricing
 
-    Course id: aws-saa, registered in gate.ts, _shared.mjs and
-      build_sitemap.py like the other paid courses.
-    Price: $9.99, Unit 1 free through saa-practice-exam-01 (the pattern
-      every paid AWS course follows). Checkout needs a Netlify env var
-      STRIPE_PRICE_AWS_SAA set to a $9.99 Stripe Price.
+    Course id: aws-saa (COURSE_ID in the course home; still to register in
+      gate.ts, _shared.mjs and build_sitemap.py).
+    Price: $14.99, "was" $45 (decided 22 Oct 2026, matching MLA-C02, the
+      other large AWS Associate course). Unit 1 free through
+      saa-practice-exam-01. Checkout needs a Netlify env var
+      STRIPE_PRICE_AWS_SAA set to a $14.99 Stripe Price.
+    Progress key: done:aws-saa-c03:<chapter id> in localStorage.
 
 ## Terminology rules
 
@@ -279,9 +281,12 @@ URL in the commit.
 
 ## Site wiring still to do (outside this file's scope)
 
-    Course home aws-solutions-architect-associate/index.html (copy an AWS
-      course home: app detector, in-app hide rule, Learn / Practice toggle,
-      modules nested in UNITS, "Coming soon" for unauthored chapters).
+    Course home: DONE 22 Oct 2026 (aws-solutions-architect-associate/
+      index.html, cloned from MLA-C02 with the AIF-C01 footer; all 89
+      chapters, four unit exams and three mocks show "Coming soon"; the
+      Practice tab reads "Soon" until the hub ships). Set a chapter's
+      file:"..." in UNITS as it ships, and an exam's file to turn it into a
+      link (the mocks are static HTML: swap the div for an <a>).
     gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa.
     catalog.json entry, root index.html card, pricing.html row, footer links.
     Practice hub practice/aws-saa-c03.html once exams 01 to 04 exist.
