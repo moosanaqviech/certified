@@ -156,11 +156,12 @@ Manager vs Parameter Store (TO), 14 Cognito, 15 threat detection, 16 VPN and
 Direct Connect (TO)), 1.3 is data security (17 compliance services, 18 KMS
 at rest, 19 TLS and ACM in transit, 20 key policies and grants, 21 backups
 and replication, 22 S3 data protection policies, 23 key rotation and
-certificate renewal); every other chapter shows "Coming soon". Chapter 23
-closes Unit 1 but saa-practice-exam-01 is not written yet, so its NAV is
-`next: null`; when the exam ships, set its `file:` in UNITS and point
-lesson-23's NAV at it with "Practice test" (the validator derives the order
-from the `file:` entries in UNITS). Every
+certificate renewal); every other chapter shows "Coming soon". The Unit 1
+practice exam is live too: saa-practice-exam-01 (23 questions, one per
+chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
+CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
+1 test row, and Chapter 23's NAV points at it ("Practice test"). Exams 02 to
+04 follow the same pattern per unit. Every
 `data-step` element in these lessons carries an inline
 `pointer-events:none`: the frozen v2 engine's `.step-on` sets
 `pointer-events:auto`, which beats the hidden card's `none`, so a revealed
