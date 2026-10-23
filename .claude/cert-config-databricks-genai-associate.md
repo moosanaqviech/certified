@@ -61,6 +61,9 @@ wording. Never use a deprecated name in prose, options, or explanations.
     Serving: "Mosaic AI Model Serving", short form "Model Serving". Hosted
       models are served through "Foundation Model APIs".
     Conversational data surface: "Genie Spaces".
+      The docs renamed them "Genie Agents" on 8 Jul 2026 (release notes,
+      capabilities unchanged); keep the guide's name and say the new one
+      once, in Ch 26 only.
     Monitoring: "Agent Monitoring" and "inference tables" (lower case for the
       table concept, title case when naming the AI Gateway feature).
     Evaluation: MLflow GenAI vocabulary as the guide uses it:
