@@ -45,18 +45,25 @@ Current official names only, taken from the 18 Mar 2026 exam guide's own
 wording. Never use a deprecated name in prose, options, or explanations.
 
     Vector database: "Mosaic AI Vector Search" on first mention in a lesson,
-      "Vector Search" afterwards. Never "Databricks Vector DB".
+      "Vector Search" afterwards. Never "Databricks Vector DB". The docs renamed
+      it "AI Search" on 1 Jun 2026 (release notes); keep the guide's name and
+      say the new one once, in Ch 32 only.
     Agent authoring: "Mosaic AI Agent Framework", short form "Agent Framework".
     Prebuilt agents: "Agent Bricks", and name its components exactly as the
       guide does: Knowledge Assistant, Multiagent Supervisor, Information
       Extraction.
     Gateway: "Mosaic AI AI Gateway" is awkward, so use "Mosaic AI Gateway" on
       first mention and "AI Gateway" afterwards, which is the guide's own short
-      form. Its three tracked surfaces are Inference Tables, Usage Tables, and
+      form. The docs moved to "Unity Gateway" (GA 4 Aug 2026)
+      and now call the endpoint-level feature "AI Gateway (legacy)"; keep the
+      guide's name and say the new one once, in Ch 54 only. Its three tracked surfaces are Inference Tables, Usage Tables, and
       rate limiting.
     Serving: "Mosaic AI Model Serving", short form "Model Serving". Hosted
       models are served through "Foundation Model APIs".
     Conversational data surface: "Genie Spaces".
+      The docs renamed them "Genie Agents" on 8 Jul 2026 (release notes,
+      capabilities unchanged); keep the guide's name and say the new one
+      once, in Ch 26 only.
     Monitoring: "Agent Monitoring" and "inference tables" (lower case for the
       table concept, title case when naming the AI Gateway feature).
     Evaluation: MLflow GenAI vocabulary as the guide uses it:
