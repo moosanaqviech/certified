@@ -184,6 +184,23 @@ replacement; never let a question hinge on the closed service.
       Elemental services. They may appear as distractors only where a
       candidate could plausibly confuse them.
 
+Changed behavior the lessons teach (checked 23 Oct 2026 on the AWS docs):
+
+    S3 SSE-C: since April 2026 server-side encryption with customer-provided
+      keys is disabled by default on new buckets (and on existing buckets in
+      accounts with no SSE-C objects) until deliberately enabled. Ch 18
+      presents SSE-C as a niche choice.
+    ACM exportable public certificates: ACM can now issue public
+      certificates exportable to EC2, containers and on-premises servers
+      (extra cost, 198-day validity, renewed 45 days before expiry, each
+      renewal deployed by the customer). "ACM certificates only work on
+      integrated services" is no longer true; Ch 19 teaches the export
+      option. ACME-issued certificates exist too and are not eligible for
+      managed renewal (not taught).
+    S3 Object Lock can be enabled on existing buckets (Ch 22); KMS automatic
+      rotation runs every 90 to 2,560 days, default 365, plus on-demand
+      rotation, which also covers imported key material (Ch 23).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the

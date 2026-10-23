@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Data Access, Lifecycle, and Protection Policies: Block Public Access, Object Ownership, Versioning, Object Lock · SAA-C03 Chapter 22</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-22-s3-data-protection-policies.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #0b0611;            /* page background */
+    --bg-tint: #231339;       /* ambient glow tint behind the card */
+    --accent: #9569d3;        /* topic color: violet, Unit 1 Module 1.3 Ch 17-23 */
+    --accent-glow: rgba(149,105,211,0.12);  /* correct-answer fill */
+    --accent-ink: #0b0611;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --sky: #7dd3fc;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 1 · Module 1.3 · Chapter 22 · Data Access, Lifecycle, and
+   Protection Policies: Block Public Access, Object Ownership, Versioning,
+   Object Lock
+   Objective S1.3.6 (implementing policies for data access, lifecycle, and
+   protection) with K1.3.3 (data retention). Lifecycle rules are taught in
+   Chapter 68 and only named here; KMS keys are Chapter 18 and 20.
+   Shape: cover, four questions four controls, Block Public Access (step
+   build over the four settings), Object Ownership, bucket policy
+   guardrails (TLS and encryption), quiz (no bucket may go public),
+   versioning and MFA delete (step build), Object Lock (step build),
+   quiz (WORM for seven years), recap. 10 cards, two quizzes, correct
+   letters C and A.
+   Sources (all checked 23 Oct 2026):
+   docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+   (four independent settings: BlockPublicAcls, IgnorePublicAcls,
+   BlockPublicPolicy, RestrictPublicBuckets; set per access point, bucket,
+   account, or organization; most restrictive combination applies;
+   recommendation to turn on all four);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/configuring-block-public-access-bucket.html
+   (all four settings are enabled by default on new buckets);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html
+   (bucket owner enforced is the default, ACLs disabled, bucket owner owns
+   every object; bucket owner preferred and object writer re-enable ACLs);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html
+   (deny when aws:SecureTransport is false; deny writes without, or with a
+   different, s3:x-amz-server-side-encryption-aws-kms-key-id);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html
+   (unversioned, enabled, suspended; never back to unversioned; delete
+   marker on delete; every version billed as a full object);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html
+   (MFA required to change versioning state or permanently delete a
+   version; only the bucket owner (root account) can enable it; CLI or
+   API only, not the console; not usable with lifecycle configurations);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html
+   (WORM; retention periods and legal holds; compliance mode: nobody,
+   including root, can delete or shorten; governance mode: bypass with
+   s3:BypassGovernanceRetention and the bypass header; legal hold has no
+   expiry; requires versioning; assessed for SEC 17a-4, CFTC, FINRA);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html
+   (Object Lock can be enabled on new and existing general purpose buckets;
+   once enabled it cannot be disabled and versioning cannot be suspended).
+   Cover animates (shield rings pulse around the bucket and a lock clamps
+   onto the stacked object versions). Step builds on cards 2, 6 and 7.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-23-key-rotation-cert-renewal.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c22r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(149,105,211,0.2)"/>
+        <stop offset="1" style="stop-color:rgba(149,105,211,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c22ring { animation: c22pulse 4.5s ease-in-out infinite; transform-origin: 110px 104px; transform-box: view-box; }
+      .c22ring.d2 { animation-delay: 0.6s; }
+      @keyframes c22pulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 40% { opacity: 1; transform: scale(1.04); } }
+      .c22lock { animation: c22clamp 5s ease-in-out infinite; }
+      @keyframes c22clamp { 0%, 20% { transform: translate(0px, -26px); opacity: 0; } 40%, 85% { transform: translate(0px, 0px); opacity: 1; } 100% { transform: translate(0px, 0px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c22ring { animation: none; opacity: 0.8; }
+        .c22lock { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c22r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <circle class="c22ring" cx="110" cy="104" r="70" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>
+      <circle class="c22ring d2" cx="110" cy="104" r="56" fill="none" stroke="var(--sky)" stroke-width="1.5"/>
+      <path d="M82 80 L138 80 L132 132 L88 132 Z" fill="rgba(149,105,211,0.2)" stroke="var(--accent)" stroke-width="2"/>
+      <ellipse cx="110" cy="80" rx="28" ry="6" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="110" y="112" fill="var(--ink)" font-size="9" font-weight="700">bucket</text>
+      <text x="110" y="24" fill="var(--accent)" font-size="8.5" font-weight="700">Block Public Access</text>
+      <text x="110" y="190" fill="var(--sky)" font-size="8.5" font-weight="700">policies: TLS, encryption</text>
+      <g>
+        <rect x="216" y="112" width="70" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+        <rect x="212" y="92" width="70" height="18" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+        <rect x="208" y="72" width="70" height="18" rx="4" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="243" y="84" fill="var(--ink)" font-size="7.5">report.pdf v3</text>
+        <text x="247" y="104" fill="var(--ink-soft)" font-size="7.5">v2</text>
+        <text x="251" y="124" fill="var(--ink-soft)" font-size="7.5">v1</text>
+      </g>
+      <g class="c22lock">
+        <rect x="236" y="148" width="24" height="18" rx="3" fill="var(--orange)"/>
+        <path d="M241 148 L241 142 C241 135 255 135 255 142 L255 148" fill="none" stroke="var(--orange)" stroke-width="2.5"/>
+      </g>
+      <text x="248" y="56" fill="var(--ink-soft)" font-size="8">versions</text>
+      <text x="248" y="182" fill="var(--orange)" font-size="8.5" font-weight="700">Object Lock</text>
+    </g>
+  </svg>`,
+
+  bpa: `<svg viewBox="0 0 320 150">
+    <g font-family="Hanken Grotesk">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="8" y="6" width="148" height="66" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="16" y="22" fill="var(--accent)" font-size="9" font-weight="700">BlockPublicAcls</text>
+        <text x="16" y="38" fill="var(--ink-soft)" font-size="7.5">rejects new public ACLs</text>
+        <text x="16" y="50" fill="var(--ink-soft)" font-size="7.5">on buckets and objects</text>
+        <text x="16" y="64" fill="var(--ink-faint)" font-size="7">ACL route, new grants</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="164" y="6" width="148" height="66" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="172" y="22" fill="var(--accent)" font-size="9" font-weight="700">IgnorePublicAcls</text>
+        <text x="172" y="38" fill="var(--ink-soft)" font-size="7.5">ignores public ACLs</text>
+        <text x="172" y="50" fill="var(--ink-soft)" font-size="7.5">that already exist</text>
+        <text x="172" y="64" fill="var(--ink-faint)" font-size="7">ACL route, old grants</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="8" y="80" width="148" height="66" rx="9" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="16" y="96" fill="var(--sky)" font-size="9" font-weight="700">BlockPublicPolicy</text>
+        <text x="16" y="112" fill="var(--ink-soft)" font-size="7.5">rejects a bucket policy</text>
+        <text x="16" y="124" fill="var(--ink-soft)" font-size="7.5">that would allow public access</text>
+        <text x="16" y="138" fill="var(--ink-faint)" font-size="7">policy route, new grants</text>
+      </g>
+      <g style="pointer-events:none" data-step="4">
+        <rect x="164" y="80" width="148" height="66" rx="9" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="172" y="96" fill="var(--sky)" font-size="9" font-weight="700">RestrictPublicBuckets</text>
+        <text x="172" y="112" fill="var(--ink-soft)" font-size="7.5">a bucket that has a public</text>
+        <text x="172" y="124" fill="var(--ink-soft)" font-size="7.5">policy serves only the owner</text>
+        <text x="172" y="138" fill="var(--ink-faint)" font-size="7">policy route, old grants</text>
+      </g>
+    </g>
+  </svg>`,
+
+  versions: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="16" width="86" height="28" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="53" y="34" fill="var(--ink-soft)" font-size="8.5">unversioned</text>
+        <path d="M98 30 L114 30" stroke="var(--line)"/><path d="M110 26 L116 30 L110 34" fill="none" stroke="var(--line)"/>
+        <rect x="118" y="16" width="86" height="28" rx="7" fill="rgba(149,105,211,0.18)" stroke="var(--accent)"/>
+        <text x="161" y="34" fill="var(--accent)" font-size="8.5" font-weight="700">enabled</text>
+        <path d="M206 30 L222 30" stroke="var(--line)"/><path d="M218 26 L224 30 L218 34" fill="none" stroke="var(--line)"/>
+        <rect x="226" y="16" width="86" height="28" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="269" y="34" fill="var(--ink-soft)" font-size="8.5">suspended</text>
+        <text x="215" y="58" fill="var(--warn)" font-size="7.5">never back to unversioned</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="70" y="72" width="80" height="18" rx="4" fill="rgba(248,113,113,0.14)" stroke="var(--warn)"/>
+        <text x="110" y="84" fill="var(--warn)" font-size="7.5" font-weight="700">delete marker</text>
+        <rect x="70" y="94" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="110" y="105" fill="var(--ink-soft)" font-size="7.5">v2 (still there)</text>
+        <rect x="70" y="112" width="80" height="16" rx="4" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="110" y="123" fill="var(--ink-soft)" font-size="7.5">v1</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="186" y="78" width="120" height="44" rx="8" fill="rgba(125,211,252,0.12)" stroke="var(--sky)"/>
+        <text x="246" y="96" fill="var(--sky)" font-size="9" font-weight="700">MFA delete</text>
+        <text x="246" y="111" fill="var(--ink-soft)" font-size="7.5">code needed to purge a version</text>
+      </g>
+    </g>
+  </svg>`,
+
+  lock: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="8" y="10" width="96" height="112" rx="9" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="56" y="28" fill="var(--sky)" font-size="9.5" font-weight="700">Governance</text>
+        <text x="56" y="48" fill="var(--ink-soft)" font-size="7.5">most users blocked</text>
+        <text x="56" y="62" fill="var(--ink-soft)" font-size="7.5">until the date</text>
+        <text x="56" y="84" fill="var(--ink)" font-size="7.5" font-weight="700">can be bypassed</text>
+        <text x="56" y="98" fill="var(--ink-faint)" font-size="7">s3:BypassGovernance</text>
+        <text x="56" y="108" fill="var(--ink-faint)" font-size="7">Retention + header</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="112" y="10" width="96" height="112" rx="9" fill="rgba(251,146,60,0.12)" stroke="var(--orange)"/>
+        <text x="160" y="28" fill="var(--orange)" font-size="9.5" font-weight="700">Compliance</text>
+        <text x="160" y="48" fill="var(--ink-soft)" font-size="7.5">nobody deletes,</text>
+        <text x="160" y="62" fill="var(--ink-soft)" font-size="7.5">not even root</text>
+        <text x="160" y="84" fill="var(--ink)" font-size="7.5" font-weight="700">cannot be shortened</text>
+        <text x="160" y="98" fill="var(--ink-faint)" font-size="7">SEC 17a-4, FINRA,</text>
+        <text x="160" y="108" fill="var(--ink-faint)" font-size="7">CFTC assessed</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="216" y="10" width="96" height="112" rx="9" fill="rgba(149,105,211,0.16)" stroke="var(--accent)"/>
+        <text x="264" y="28" fill="var(--accent)" font-size="9.5" font-weight="700">Legal hold</text>
+        <text x="264" y="48" fill="var(--ink-soft)" font-size="7.5">same protection,</text>
+        <text x="264" y="62" fill="var(--ink-soft)" font-size="7.5">no end date</text>
+        <text x="264" y="84" fill="var(--ink)" font-size="7.5" font-weight="700">on until removed</text>
+        <text x="264" y="98" fill="var(--ink-faint)" font-size="7">independent of</text>
+        <text x="264" y="108" fill="var(--ink-faint)" font-size="7">any retention period</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 1 · Module 1.3 · Chapter 22</div>
+    <h1 class="reveal" style="font-size:34px">Protecting data in Amazon S3</h1>
+    <p class="lead reveal">S3 has a setting for every way data goes wrong: made public by accident, owned by the wrong account, overwritten, or deleted. The exam gives a requirement and asks which control meets it, so each control needs its one job.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: four questions, four controls */
+  { html: `
+    <div class="eyebrow reveal">The map</div>
+    <h2 class="reveal" style="font-size:25px">Four questions, four controls</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Can anyone outside reach it?</b><strong>Block Public Access</strong> overrides any policy or ACL that would make data public.</p></div>
+      <div class="pill"><p><b>Who owns what was uploaded?</b><strong>Object Ownership</strong> decides, and whether ACLs count at all.</p></div>
+      <div class="pill"><p><b>Can we get it back?</b><strong>Versioning</strong> keeps every version, and <strong>MFA delete</strong> guards the purge.</p></div>
+      <div class="pill"><p><b>Can anyone delete it before a date?</b><strong>Object Lock</strong> stores versions write once, read many (WORM). Moving or expiring data on a schedule is lifecycle rules, Chapter 68.</p></div>
+    </div>` },
+
+  /* 2: Block Public Access, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">S3 Block Public Access</div>
+    <h2 class="reveal" style="font-size:25px">Four settings that override everything else</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.bpa}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Public access arrives two ways, ACLs and policies, and each needs blocking for new grants and for old ones. Tap through the four settings.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px"><strong>BlockPublicAcls</strong> makes any request that sets a public ACL fail.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>IgnorePublicAcls</strong> makes S3 disregard public ACLs already in place, without deleting them.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px"><strong>BlockPublicPolicy</strong> rejects a bucket policy that would grant public access.</p>
+      <p class="lead" data-step="4" style="pointer-events:none;font-size:14px"><strong>RestrictPublicBuckets</strong> limits a bucket with a public policy to AWS services and the owner's account. Set them per bucket, per account or for a whole organization; the strictest wins. New buckets have all four on by default.</p>
+    </div>` },
+
+  /* 3: Object Ownership */
+  { html: `
+    <div class="eyebrow reveal">S3 Object Ownership</div>
+    <h2 class="reveal" style="font-size:25px">Keep ACLs off and let policies decide</h2>
+    <p class="lead reveal" style="margin-bottom:14px">When another account uploads into your bucket, who owns the object? Object Ownership answers with one bucket setting.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Bucket owner enforced (default)</b>ACLs are disabled. The bucket owner owns every object, whoever wrote it, and access is policies only. AWS recommends this for nearly every use case.</p></div>
+      <div class="pill"><p><b>Bucket owner preferred, object writer</b>Both re-enable ACLs. Writers may keep ownership of what they upload, the old cross-account headache.</p></div>
+      <div class="pill"><p><b>Exam signal</b>"Another account uploads, but we cannot read the objects" is fixed by bucket owner enforced, not a new ACL.</p></div>
+    </div>` },
+
+  /* 4: bucket policy guardrails */
+  { html: `
+    <div class="eyebrow reveal">Bucket policy guardrails</div>
+    <h2 class="reveal" style="font-size:25px">Deny what breaks the rules</h2>
+    <p class="lead reveal" style="margin-bottom:12px">Deny statements in the bucket policy turn data rules into hard guarantees.</p>
+    <div class="codeblock reveal" style="white-space:pre"><span class="cm">// deny any request without TLS</span>
+{ <span class="kw">"Effect"</span>: <span class="al">"Deny"</span>,
+  <span class="kw">"Principal"</span>: <span class="st">"*"</span>,
+  <span class="kw">"Action"</span>: <span class="st">"s3:*"</span>,
+  <span class="kw">"Condition"</span>: { <span class="st">"Bool"</span>: {
+    <span class="st">"aws:SecureTransport"</span>: <span class="st">"false"</span>
+  } } }</div>
+    <div class="pills reveal" style="margin-top:12px">
+      <div class="pill"><p><b>Require your KMS key</b>A second Deny on <code>s3:PutObject</code> checks the request's KMS key ID and refuses any upload that names no key or a different one.</p></div>
+    </div>
+    <p class="lead reveal" style="font-size:13.5px;margin-top:12px">Denies cannot be overridden by any Allow (Chapter 03). Chapter 19 covers TLS, Chapter 18 the keys.</p>` },
+
+  /* 5: quiz, no bucket may go public */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A company has hundreds of buckets in one account. Security must guarantee no bucket ever becomes public, even if a developer later attaches a policy granting public read. What should the architect do?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Set every bucket's Object Ownership to bucket owner enforced</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Use Amazon Macie to find and report public buckets</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>Turn on all four Block Public Access settings at the account level</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Add a Deny for aws:SecureTransport false to each bucket policy</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Account-level Block Public Access covers every current and future bucket, and BlockPublicPolicy rejects the developer's public policy outright. Option A is tempting, but disabling ACLs closes only the ACL route; a public bucket policy still works. B detects after the fact instead of preventing, and D enforces TLS, not privacy.</div>` },
+
+  /* 6: versioning and MFA delete, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Getting it back</div>
+    <h2 class="reveal" style="font-size:25px">Versioning and MFA delete</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.versions}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Versioning is off by default. Tap to see how it protects against mistakes.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">A bucket is unversioned, enabled or suspended. Once enabled it can be suspended but never return to unversioned. Every version is a full object, billed as one.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">A delete in a versioned bucket only adds a <strong>delete marker</strong>; earlier versions remain, and removing the marker restores the object. An overwrite makes a new version, never a lost one.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px"><strong>MFA delete</strong> requires an MFA code to permanently delete a version or change the versioning state. Only the bucket owner's root user can enable it, through the CLI or API, and it cannot be combined with lifecycle rules.</p>
+    </div>` },
+
+  /* 7: Object Lock, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">S3 Object Lock</div>
+    <h2 class="reveal" style="font-size:25px">Write once, read many</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.lock}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Object Lock stops a version being deleted or overwritten. It needs versioning, works on new and existing buckets, and cannot be turned off once on. Tap through its three forms.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px"><strong>Governance mode</strong> blocks most users until the retain-until date, but a principal with <code>s3:BypassGovernanceRetention</code> who sends the bypass header can delete or change it. Good for internal policy and for testing.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>Compliance mode</strong> blocks everyone, the root user included. The mode cannot change and the period cannot shorten; only closing the account deletes early. This is the regulator answer.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">A <strong>legal hold</strong> gives the same protection with no end date, staying until someone with permission removes it. It sits on a version independently of any retention period.</p>
+    </div>` },
+
+  /* 8: quiz, WORM for seven years */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A broker must keep trade records in S3 for seven years so that no one, including administrators and the root user, can delete or alter them early. Which configuration meets this?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>Object Lock in compliance mode with a seven-year retention period</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Object Lock in governance mode with a seven-year retention period</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Versioning with MFA delete enabled by the root user</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A legal hold on each object, removed after seven years</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Compliance mode is the only setting nobody can override, root included, and its period cannot be shortened. Option B is tempting, but governance mode can be bypassed by anyone granted s3:BypassGovernanceRetention. C still lets the root user delete with a code, and D can be lifted at any time by anyone with permission to remove holds.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 22 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: rotating encryption keys and renewing certificates.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Access</b>Block Public Access (four settings, all on by default, strictest wins) and bucket owner enforced Object Ownership. Deny statements enforce TLS and the right KMS key.</p></div>
+      <div class="pill"><p><b>Recovery</b>Versioning turns deletes into markers and overwrites into versions; MFA delete (root only, CLI) guards the purge.</p></div>
+      <div class="pill"><p><b>Retention</b>Object Lock: governance can be bypassed, compliance cannot be by anyone, a legal hold lasts until removed.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>

@@ -147,16 +147,20 @@ LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
 chapters across 4 units and 14 modules, the MLA-C02 three-level model. The
 mapping is one chapter per guide skill (79) plus 10 K-anchored chapters for
 exam-critical knowledge items; K and S ids are ours, in guide order, and
-frozen. Modules 1.1 and 1.2 (chapters 01 to 16) are live on the v2
-template and wired into the course home: 1.1 is identity and access (01 to
-07), 1.2 is workload and network security (08 segmentation, 09 routing and
-egress, 10 security groups vs NACLs (TO), 11 VPC endpoints (TO), 12 WAF,
-Shield, Firewall Manager and Network Firewall, 13 Secrets Manager vs
-Parameter Store (TO), 14 Cognito, 15 threat detection, 16 VPN and Direct
-Connect (TO)); every other chapter shows "Coming soon". The latest authored
-chapter carries `next: null` in its NAV until the chapter after it ships
-(the validator derives the order from the `file:` entries in UNITS, so
-authoring Chapter 17 means updating lesson-16's NAV to point at it). Every
+frozen. Unit 1 is complete: Modules 1.1 to 1.3 (chapters 01 to 23) are
+live on the v2 template and wired into the course home: 1.1 is identity and
+access (01 to 07), 1.2 is workload and network security (08 segmentation,
+09 routing and egress, 10 security groups vs NACLs (TO), 11 VPC endpoints
+(TO), 12 WAF, Shield, Firewall Manager and Network Firewall, 13 Secrets
+Manager vs Parameter Store (TO), 14 Cognito, 15 threat detection, 16 VPN and
+Direct Connect (TO)), 1.3 is data security (17 compliance services, 18 KMS
+at rest, 19 TLS and ACM in transit, 20 key policies and grants, 21 backups
+and replication, 22 S3 data protection policies, 23 key rotation and
+certificate renewal); every other chapter shows "Coming soon". Chapter 23
+closes Unit 1 but saa-practice-exam-01 is not written yet, so its NAV is
+`next: null`; when the exam ships, set its `file:` in UNITS and point
+lesson-23's NAV at it with "Practice test" (the validator derives the order
+from the `file:` entries in UNITS). Every
 `data-step` element in these lessons carries an inline
 `pointer-events:none`: the frozen v2 engine's `.step-on` sets
 `pointer-events:auto`, which beats the hidden card's `none`, so a revealed
