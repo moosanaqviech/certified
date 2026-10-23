@@ -156,12 +156,19 @@ Manager vs Parameter Store (TO), 14 Cognito, 15 threat detection, 16 VPN and
 Direct Connect (TO)), 1.3 is data security (17 compliance services, 18 KMS
 at rest, 19 TLS and ACM in transit, 20 key policies and grants, 21 backups
 and replication, 22 S3 data protection policies, 23 key rotation and
-certificate renewal); every other chapter shows "Coming soon". The Unit 1
+certificate renewal). Module 2.1 is live too (24 architecture styles (TO), 25
+scaling strategies (TO), 26 SQS, 27 SQS vs SNS vs EventBridge vs Amazon MQ
+(TO), 28 containers (TO), 29 Lambda, 30 API Gateway, 31 Step Functions, 32
+managed AI services); Chapter 32 has `next: null` until Chapter 33 ships.
+Every other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
 1 test row, and Chapter 23's NAV points at it ("Practice test"). Exams 02 to
-04 follow the same pattern per unit. Every
+04 follow the same pattern per unit. validate.py requires every exam's
+`CHAPTERS.list` to mirror all chapters that have a `file:` in UNITS, so
+when a module ships, regenerate the list in each live SAA exam (free stays
+1 to 23). Every
 `data-step` element in these lessons carries an inline
 `pointer-events:none`: the frozen v2 engine's `.step-on` sets
 `pointer-events:auto`, which beats the hidden card's `none`, so a revealed
