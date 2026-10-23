@@ -201,6 +201,23 @@ Changed behavior the lessons teach (checked 23 Oct 2026 on the AWS docs):
       rotation runs every 90 to 2,560 days, default 365, plus on-demand
       rotation, which also covers imported key material (Ch 23).
 
+Module 2.1 changes (checked 23 Oct 2026 on the AWS docs):
+
+    SQS maximum message size is now 1 MiB (was 256 KiB); FIFO throughput is
+      300 API calls per second per action, 3,000 messages per second
+      batched, up to 30,000 TPS in high-throughput mode (Ch 26).
+    AWS App2Container is closed to new customers: never name it; Ch 28
+      teaches containerizing with a Dockerfile and Amazon ECR.
+    Amazon ECS Managed Instances is a third ECS capacity type (AWS-managed
+      EC2 instances) alongside EC2 and Fargate (Ch 28).
+    Lambda: the docs now say "Event Functions" and add Lambda Managed
+      Instances (some invocations up to 90 minutes); lessons keep "Lambda
+      function" as the guide does and teach the 15-minute limit with the
+      exception mentioned once. Async payloads are 1 MB (Ch 29).
+    API Gateway REST integrations default to a 29-second timeout, raisable
+      for Regional and private REST APIs; HTTP APIs top out at 30 seconds
+      (Ch 30).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the

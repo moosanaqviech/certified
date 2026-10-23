@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Services for Loose Coupling: SQS vs SNS vs EventBridge vs Amazon MQ · SAA-C03 Chapter 27</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-27-loose-coupling-services.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060f11;            /* page background */
+    --bg-tint: #133339;       /* ambient glow tint behind the card */
+    --accent: #6fcadc;        /* topic color: lagoon, Unit 2 Module 2.1 Ch 24-32 */
+    --accent-glow: rgba(111,202,220,0.12);  /* correct-answer fill */
+    --accent-ink: #060f11;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Module 2.1 · Chapter 27 · Services for Loose Coupling: SQS vs SNS
+   vs EventBridge vs Amazon MQ (trade-off)
+   Objective S2.1.3 (determining the AWS services required to achieve loose
+   coupling) with K2.1.11 (queuing and messaging concepts, publish and
+   subscribe). SQS internals (visibility timeout, FIFO, DLQs) are Ch 26;
+   Step Functions orchestration is Ch 31.
+   Shape: cover, shared ground, option SQS, option SNS (step build: fan-out),
+   option EventBridge (step build: bus, rule, targets), option Amazon MQ,
+   comparison table (step build), decision signals, quiz (SNS fan-out wins),
+   quiz (EventBridge wins), quiz (Amazon MQ wins), recap. 12 cards (four
+   options in the trade-off pattern), three quizzes, correct letters D, B, A.
+   Sources (all checked 23 Oct 2026):
+   docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html
+   (queues decouple senders and receivers; standard queues at-least-once,
+   FIFO exactly-once processing);
+   docs.aws.amazon.com/sns/latest/dg/welcome.html (publishers send to a topic,
+   SNS pushes to subscribers: SQS, Lambda, HTTP(S), email, SMS, mobile push,
+   Amazon Data Firehose);
+   docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html (SNS to SQS
+   fan-out: messages reach every subscribed queue and persist there);
+   docs.aws.amazon.com/sns/latest/dg/sns-message-filtering.html (subscription
+   filter policies on message attributes or body; no policy means every
+   message);
+   docs.aws.amazon.com/sns/latest/dg/sns-fifo-topics.html (SNS FIFO topics with
+   SQS FIFO queues for strict ordering and deduplication);
+   docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html and
+   eb-event-bus.html (event buses route many sources to many targets with
+   rules and event patterns, each rule up to five targets; the default bus
+   receives AWS service events; the newer Custom Event Bus routes to
+   subscribers and retains events for replay, the Classic bus uses rules;
+   Pipes are point-to-point source, filter, enrichment, target;
+   EventBridge Scheduler runs cron, rate and one-time schedules against more
+   than 270 services);
+   docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html;
+   docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html;
+   docs.aws.amazon.com/amazon-mq/latest/developer-guide/welcome.html and
+   aws.amazon.com/amazon-mq/faqs/ (managed Apache ActiveMQ Classic and
+   RabbitMQ brokers; JMS, NMS, AMQP 0.9.1 and 1.0, STOMP, MQTT and WebSocket;
+   migrate existing brokers without rewriting messaging code).
+   Cover animates (one event leaves the producer and splits into four lanes,
+   one per service). Step builds on cards 3, 4 and 6.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-28-when-to-use-containers.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c27r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(111,202,220,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(111,202,220,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c27dot { animation: c27go 4.8s ease-in-out infinite; }
+      .c27dot.l2 { animation-name: c27go2; } .c27dot.l3 { animation-name: c27go3; } .c27dot.l4 { animation-name: c27go4; }
+      @keyframes c27go  { 0%, 8% { transform: translate(0px, 0px); opacity: 0; } 15% { opacity: 1; } 55%, 100% { transform: translate(150px, -63px); opacity: 1; } }
+      @keyframes c27go2 { 0%, 8% { transform: translate(0px, 0px); opacity: 0; } 15% { opacity: 1; } 55%, 100% { transform: translate(150px, -21px); opacity: 1; } }
+      @keyframes c27go3 { 0%, 8% { transform: translate(0px, 0px); opacity: 0; } 15% { opacity: 1; } 55%, 100% { transform: translate(150px, 21px); opacity: 1; } }
+      @keyframes c27go4 { 0%, 8% { transform: translate(0px, 0px); opacity: 0; } 15% { opacity: 1; } 55%, 100% { transform: translate(150px, 63px); opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c27dot { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c27r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="18" y="80" width="76" height="40" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
+      <text x="56" y="98" fill="var(--accent)" font-size="9.5" font-weight="700">producer</text>
+      <text x="56" y="111" fill="var(--ink-faint)" font-size="7.5">emits a message</text>
+      <path d="M94 100 L200 37 M94 100 L200 79 M94 100 L200 121 M94 100 L200 163" stroke="var(--line)" stroke-dasharray="3 3"/>
+      <circle class="c27dot" cx="94" cy="100" r="4.5" fill="var(--accent)"/>
+      <circle class="c27dot l2" cx="94" cy="100" r="4.5" fill="var(--orange)"/>
+      <circle class="c27dot l3" cx="94" cy="100" r="4.5" fill="var(--lav)"/>
+      <circle class="c27dot l4" cx="94" cy="100" r="4.5" fill="var(--ok)"/>
+      <rect x="204" y="22" width="102" height="30" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+      <text x="255" y="35" fill="var(--accent)" font-size="9" font-weight="700">Amazon SQS</text>
+      <text x="255" y="46" fill="var(--ink-faint)" font-size="7">a queue to pull from</text>
+      <rect x="204" y="64" width="102" height="30" rx="8" fill="var(--surface-2)" stroke="var(--orange)"/>
+      <text x="255" y="77" fill="var(--orange)" font-size="9" font-weight="700">Amazon SNS</text>
+      <text x="255" y="88" fill="var(--ink-faint)" font-size="7">push to every subscriber</text>
+      <rect x="204" y="106" width="102" height="30" rx="8" fill="var(--surface-2)" stroke="var(--lav)"/>
+      <text x="255" y="119" fill="var(--lav)" font-size="9" font-weight="700">Amazon EventBridge</text>
+      <text x="255" y="130" fill="var(--ink-faint)" font-size="7">route by content</text>
+      <rect x="204" y="148" width="102" height="30" rx="8" fill="var(--surface-2)" stroke="var(--ok)"/>
+      <text x="255" y="161" fill="var(--ok)" font-size="9" font-weight="700">Amazon MQ</text>
+      <text x="255" y="172" fill="var(--ink-faint)" font-size="7">a broker for JMS, AMQP</text>
+      <text x="56" y="150" fill="var(--ink-soft)" font-size="8.5">never waits on</text>
+      <text x="56" y="161" fill="var(--ink-soft)" font-size="8.5">the consumer</text>
+    </g>
+  </svg>`,
+
+  fanout: `<svg viewBox="0 0 320 140">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="8" y="54" width="62" height="30" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="39" y="73" fill="var(--ink)" font-size="8.5" font-weight="700">order API</text>
+      <g style="pointer-events:none" data-step="1">
+        <path d="M70 69 L104 69" stroke="var(--orange)" stroke-width="1.5"/>
+        <rect x="104" y="50" width="70" height="38" rx="9" fill="rgba(251,146,60,0.14)" stroke="var(--orange)"/>
+        <text x="139" y="67" fill="var(--orange)" font-size="9" font-weight="700">SNS topic</text>
+        <text x="139" y="79" fill="var(--ink-faint)" font-size="7">order-placed</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M174 69 L214 22 M174 69 L214 69 M174 69 L214 116" stroke="var(--orange)" stroke-width="1.5"/>
+        <rect x="214" y="8" width="98" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="263" y="26" fill="var(--accent)" font-size="8" font-weight="700">SQS: billing</text>
+        <rect x="214" y="55" width="98" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="263" y="73" fill="var(--accent)" font-size="8" font-weight="700">SQS: shipping</text>
+        <rect x="214" y="102" width="98" height="28" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="263" y="120" fill="var(--accent)" font-size="8" font-weight="700">SQS: analytics</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <text x="190" y="104" fill="var(--ok)" font-size="7.5" font-weight="700">filter:</text>
+        <text x="190" y="114" fill="var(--ok)" font-size="7.5" font-weight="700">EU only</text>
+      </g>
+    </g>
+  </svg>`,
+
+  bus: `<svg viewBox="0 0 320 140">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="8" y="14" width="74" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="45" y="31" fill="var(--ink-soft)" font-size="7.5">AWS services</text>
+        <rect x="8" y="56" width="74" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="45" y="73" fill="var(--ink-soft)" font-size="7.5">your apps</text>
+        <rect x="8" y="98" width="74" height="26" rx="7" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="45" y="115" fill="var(--ink-soft)" font-size="7.5">SaaS partners</text>
+        <path d="M82 27 L118 66 M82 69 L118 69 M82 111 L118 72" stroke="var(--lav)" stroke-width="1.5"/>
+        <rect x="118" y="46" width="70" height="46" rx="9" fill="rgba(196,181,253,0.14)" stroke="var(--lav)"/>
+        <text x="153" y="66" fill="var(--lav)" font-size="9" font-weight="700">event bus</text>
+        <text x="153" y="79" fill="var(--ink-faint)" font-size="7">many sources</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="122" y="104" width="62" height="28" rx="6" fill="var(--bg)" stroke="var(--lav)" stroke-dasharray="3 2"/>
+        <text x="153" y="116" fill="var(--lav)" font-size="7" font-weight="700">rule: pattern</text>
+        <text x="153" y="126" fill="var(--ink-faint)" font-size="6.5">detail.state = running</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <path d="M188 69 L226 27 M188 69 L226 69 M188 69 L226 111" stroke="var(--lav)" stroke-width="1.5"/>
+        <rect x="226" y="14" width="86" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="269" y="31" fill="var(--accent)" font-size="7.5">Lambda</text>
+        <rect x="226" y="56" width="86" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="269" y="73" fill="var(--accent)" font-size="7.5">Step Functions</text>
+        <rect x="226" y="98" width="86" height="26" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="269" y="115" fill="var(--accent)" font-size="7.5">SQS queue</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.1 · Chapter 27</div>
+    <h1 class="reveal" style="font-size:34px">Services for loose coupling</h1>
+    <p class="lead reveal">Four AWS services pass messages between components so neither side has to wait for the other: <strong>Amazon SQS</strong>, <strong>Amazon SNS</strong>, <strong>Amazon EventBridge</strong> and <strong>Amazon MQ</strong>. The exam asks which one a requirement calls for.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: shared ground */
+  { html: `
+    <div class="eyebrow reveal">Shared ground</div>
+    <h2 class="reveal" style="font-size:25px">What all four give you</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The producer never calls the consumer</b>It hands a message to a managed service and moves on. If the consumer is slow, scaling or down, nothing breaks upstream.</p></div>
+      <div class="pill"><p><b>Managed and durable</b>AWS runs the infrastructure and stores messages redundantly, so a lost server does not lose work.</p></div>
+      <div class="pill"><p><b>Where they differ</b>Who gets each message (one consumer or many), push or pull, routing by content or not, and whether existing apps need standard protocols such as JMS.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2: option SQS */
+  { html: `
+    <div class="eyebrow reveal">Option 1</div>
+    <h2 class="reveal" style="font-size:25px">Amazon SQS: a queue, one consumer per message</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Pull, buffer, absorb spikes</b>Producers send; consumers poll at their own pace. Thousands of orders arriving at once wait safely until workers catch up.</p></div>
+      <div class="pill"><p><b>Each message is processed once by one worker</b>Add workers to drain faster. Standard queues deliver at least once; FIFO queues add order and exactly-once processing (Chapter 26).</p></div>
+      <div class="pill"><p><b>The limit</b>A queue is point to point. To send the same message to several systems, you need something in front of it.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 3: option SNS, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Option 2</div>
+    <h2 class="reveal" style="font-size:25px">Amazon SNS: publish once, push to every subscriber</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.fanout}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">A publisher sends to a <strong>topic</strong>; SNS pushes a copy to every subscriber. Tap to build the classic pattern.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">The order API publishes one message to an SNS topic. It does not know, or care, who listens.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>Fan-out:</strong> three SQS queues subscribe, so billing, shipping and analytics each get their own durable copy and process it at their own pace. Subscribers can also be Lambda, HTTPS, email, SMS or Amazon Data Firehose.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">A <strong>filter policy</strong> on a subscription delivers only matching messages, by attributes or body. SNS FIFO topics paired with SQS FIFO queues keep order and remove duplicates.</p>
+    </div>` },
+
+  /* 4: option EventBridge, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Option 3</div>
+    <h2 class="reveal" style="font-size:25px">Amazon EventBridge: route events by their content</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.bus}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">An <strong>event bus</strong> takes events from many sources and sends each to whichever targets want it. Tap through.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">Sources include your apps, SaaS partners and, on the default bus, AWS services themselves: an EC2 state change or an S3 object event arrives with no code.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">A <strong>rule</strong> matches an event pattern on any field of the JSON, so routing is by content, not by topic name.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">Each rule sends to up to five targets. Related tools: <strong>EventBridge Pipes</strong> link one source to one target with filtering and enrichment, and <strong>EventBridge Scheduler</strong> runs cron, rate or one-time tasks.</p>
+    </div>` },
+
+  /* 5: option Amazon MQ */
+  { html: `
+    <div class="eyebrow reveal">Option 4</div>
+    <h2 class="reveal" style="font-size:25px">Amazon MQ: a managed broker for apps that already speak the protocols</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What it is</b>Managed Apache ActiveMQ Classic or RabbitMQ brokers. AWS handles setup, patching and maintenance windows.</p></div>
+      <div class="pill"><p><b>Standard APIs and protocols</b>JMS, NMS, AMQP 0.9.1 and 1.0, STOMP, MQTT and WebSocket, so an on-premises app moves over without rewriting its messaging code.</p></div>
+      <div class="pill"><p><b>When not to pick it</b>For a new cloud-native design, SQS, SNS and EventBridge are serverless and scale on their own. Amazon MQ is the migration answer.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 6: comparison table, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">The four, compared</h2>
+    <div style="margin-top:2px">
+      <div class="reveal" style="display:grid;grid-template-columns:0.8fr 0.8fr 1fr 1.2fr;gap:0 6px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Service</div><div>Model</div><div>Who receives</div><div>Best signal</div>
+      </div>
+      <div data-step="1" style="pointer-events:none;display:grid;grid-template-columns:0.8fr 0.8fr 1fr 1.2fr;gap:0 6px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--accent);font-weight:600">SQS</div><div>Queue, pull</div><div>One worker per message</div><div>Buffer work, absorb spikes</div>
+      </div>
+      <div data-step="2" style="pointer-events:none;display:grid;grid-template-columns:0.8fr 0.8fr 1fr 1.2fr;gap:0 6px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--orange);font-weight:600">SNS</div><div>Topic, push</div><div>Every subscriber</div><div>Fan-out, notifications</div>
+      </div>
+      <div data-step="3" style="pointer-events:none;display:grid;grid-template-columns:0.8fr 0.8fr 1fr 1.2fr;gap:0 6px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--lav);font-weight:600">EventBridge</div><div>Bus, rules</div><div>Targets whose pattern matches</div><div>AWS or SaaS events, content routing, schedules</div>
+      </div>
+      <div data-step="4" style="pointer-events:none;display:grid;grid-template-columns:0.8fr 0.8fr 1fr 1.2fr;gap:0 6px;padding:8px 4px;font-size:12px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ok);font-weight:600">Amazon MQ</div><div>Broker</div><div>Queues and topics, per protocol</div><div>Existing JMS, AMQP or MQTT apps</div>
+      </div>
+    </div>
+    <p class="lead reveal" style="font-size:13.5px;margin-top:12px">They combine: SNS feeding SQS queues, or an EventBridge rule targeting an SQS queue, are common answers.</p>` },
+
+  /* 7: decision signals */
+  { html: `
+    <div class="eyebrow reveal">Decision signals</div>
+    <h2 class="reveal" style="font-size:25px">Which words pick which service</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>SQS</b>"Buffer", "decouple the web tier from processing", "workers poll", "absorb a spike", "retry failed messages later".</p></div>
+      <div class="pill"><p><b>SNS (often with SQS)</b>"Several systems each need every message", "fan-out", "send email or SMS alerts", "filter so each subscriber gets a subset".</p></div>
+      <div class="pill"><p><b>EventBridge</b>"React to an AWS service event", "events from a SaaS provider", "route on fields inside the event", "run on a schedule".</p></div>
+      <div class="pill"><p><b>Amazon MQ</b>"Existing application uses JMS, AMQP, MQTT or STOMP", "migrate the on-premises broker without code changes".</p></div>
+    </div>` },
+
+  /* 8: quiz, SNS fan-out */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">When an order is placed, the billing, shipping and analytics services must each process it independently, at their own pace, without losing messages if one service is down for an hour. What should the order service do?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Call each service's API directly and retry on failure</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Send to one SQS queue that all three services poll</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Write the order to an S3 bucket the services list hourly</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Publish to an SNS topic with one SQS queue per service subscribed</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> SNS fan-out gives every service its own copy, and each SQS queue holds that copy until its service is back. Option B is tempting, but a single queue hands each message to one consumer only, so the three services would split the orders between them. A couples the services directly, and C replaces messaging with slow polling.</div>` },
+
+  /* 9: quiz, EventBridge */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">When a production EC2 instance is terminated, a Lambda function must log it, and a workflow must start only for instances tagged critical. No polling, no custom publishing code. Which service fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>An SNS topic that EC2 publishes to</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>EventBridge rules on the default bus matching EC2 state changes</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>An SQS queue polled each minute by Lambda</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>An Amazon MQ broker receiving EC2 events</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> AWS services send events to the default bus on their own, and rules match on content, so one rule targets the function and another the workflow for critical instances. SNS (A) is tempting for fan-out, but EC2 does not publish state changes to your topic, and topics cannot route on fields inside the event.</div>` },
+
+  /* 10: quiz, Amazon MQ */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A company is moving a Java order system from its data center. The application exchanges messages through an on-premises ActiveMQ broker using JMS, and the team must not change the messaging code. Which service should it use?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>Amazon MQ with an ActiveMQ broker</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Amazon SQS with a FIFO queue</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Amazon EventBridge with a custom event bus</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>Amazon SNS with a FIFO topic</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Amazon MQ runs a managed ActiveMQ broker that speaks JMS, so the application only needs a new broker endpoint. SQS FIFO (B) is the tempting cloud-native choice, but it uses the AWS SDK and API, not JMS, so the messaging code would have to be rewritten, which the requirement rules out.</div>` },
+
+  /* 11: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 27 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: when to use containers, and which orchestrator and capacity.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Queue vs topic</b>SQS hands each message to one worker; SNS pushes a copy to every subscriber. SNS to SQS fan-out combines both.</p></div>
+      <div class="pill"><p><b>EventBridge</b>Routes events from AWS services, apps and SaaS by content, up to five targets per rule; Pipes and Scheduler round it out.</p></div>
+      <div class="pill"><p><b>Amazon MQ</b>Managed ActiveMQ or RabbitMQ for existing apps on JMS, AMQP, MQTT or STOMP. The migration answer, not the default.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>
