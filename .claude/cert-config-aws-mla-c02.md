@@ -77,6 +77,18 @@ or explanations.
       three S3 input modes; "Amazon FSx for Lustre" and "Amazon EFS" as the
       mounted file-system inputs.
 
+## Closed SageMaker AI features
+
+Checked 23 Oct 2026 on each feature's SageMaker AI developer guide page: Amazon
+SageMaker Clarify, Debugger, Model Monitor and Ground Truth are all "no longer
+open to new customers". The MLA-C02 guide names none of them (its skills say
+"Label and annotate data", "Explain model outputs", "Debug model convergence
+issues", "drift detection"), and its in-scope list names only "Amazon SageMaker
+AI". Lessons may still teach them as SageMaker AI features, with the status
+said once in the chapter that introduces each (Ground Truth Ch 18, Clarify
+Ch 19, Model Monitor Ch 34, Debugger Ch 36), and teach the technique so no
+question hinges on the closed tool alone.
+
 ## Recommended-vs-contrast stances
 
     Streaming input mode: Fast File mode is the recommended streaming input;
