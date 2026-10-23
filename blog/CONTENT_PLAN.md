@@ -57,7 +57,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Databricks Professional exam: performance tuning and optimization topics explained | "databricks professional performance tuning exam" | Yes | blog/databricks-professional-performance-tuning-optimization-exam.html |
 | 4 | How long to prepare for the Databricks Data Engineer Professional exam | "databricks professional study time" | Yes | blog/how-long-to-prepare-databricks-data-engineer-professional.html |
 | 5 | How to tell if you are ready for the Databricks DE Professional exam (readiness quiz support) | "am I ready for the databricks professional exam" | Yes | blog/am-i-ready-databricks-data-engineer-professional-exam.html |
-| 6 | Liquid Clustering and predictive optimization for the Databricks DE Professional exam | "liquid clustering predictive optimization databricks professional" | No | |
+| 6 | Liquid Clustering and predictive optimization for the Databricks DE Professional exam | "liquid clustering predictive optimization databricks professional" | Yes | blog/liquid-clustering-predictive-optimization-databricks-professional.html |
 
 ## Databricks Data Analyst Associate
 
@@ -94,8 +94,8 @@ Note on the Filename column: published posts are `.html` files in the
 | 3 | Study plan and prep time for the Databricks Generative AI Engineer Associate exam | "databricks genai engineer study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-generative-ai-engineer-associate.html |
 | 4 | Mosaic AI Vector Search and RAG for the GenAI Engineer exam explained | "mosaic ai vector search rag exam" | Yes | blog/mosaic-ai-vector-search-rag-genai-engineer-exam.html |
 | 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | Yes | blog/mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam.html |
-| 6 | Is the Databricks Generative AI Engineer Associate certification worth it in 2026 | "is databricks genai engineer certification worth it" | No | |
-| 7 | Mosaic AI Gateway and Foundation Model APIs for the GenAI Engineer exam | "mosaic ai gateway foundation model apis exam" | No | |
+| 6 | Is the Databricks Generative AI Engineer Associate certification worth it in 2026 | "is databricks genai engineer certification worth it" | Yes | blog/is-databricks-generative-ai-engineer-associate-worth-it-2026.html |
+| 7 | Mosaic AI Gateway and Foundation Model APIs for the GenAI Engineer exam | "mosaic ai gateway foundation model apis exam" | Yes | blog/mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
@@ -126,7 +126,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 10 | MLA-C02 exam guide breakdown: domains and weighting | "MLA-C02 exam domains" | Yes | blog/mla-c02-exam-guide-domains-weighting.html |
 | 11 | AWS Machine Learning Engineer Associate exam cost, format and question types (MLA-C02) | "what's on the MLA-C02 exam" | Yes | blog/mla-c02-exam-cost-format-question-types.html |
 | 12 | MLA-C01 vs MLA-C02: what changes on 29 Sep 2026 and which version to take | "mla-c01 vs mla-c02" / "mla-c02 changes" | Yes | blog/mla-c01-vs-mla-c02.html |
-| 13 | Amazon SageMaker AI for the MLA-C02 exam: what you actually need to know (replaces the MLA-C01-era SageMaker post for the current exam) | "sagemaker for MLA-C02 exam" | No | |
+| 13 | Amazon SageMaker AI for the MLA-C02 exam: what you actually need to know (replaces the MLA-C01-era SageMaker post for the current exam) | "sagemaker for MLA-C02 exam" | Yes | blog/sagemaker-ai-mla-c02-exam.html |
 
 ## Databricks Machine Learning Associate
 
@@ -175,9 +175,9 @@ Note on the Filename column: published posts are `.html` files in the
 | 2 | SAA-C03 exam guide breakdown: domains, weighting and the 14 task statements | "SAA-C03 exam domains" | Yes | blog/saa-c03-exam-guide-domains-weighting.html |
 | 3 | Study plan and prep time for the AWS Solutions Architect Associate exam | "SAA-C03 study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-aws-solutions-architect-associate.html |
 | 4 | AWS Solutions Architect Associate exam cost, format and question types | "what's on the SAA-C03 exam" | Yes | blog/saa-c03-exam-cost-format-question-types.html |
-| 5 | Security groups vs network ACLs: stateful vs stateless (trade-off, chapter 10) | "security group vs nacl" | No | |
-| 6 | VPC gateway endpoints vs interface endpoints (AWS PrivateLink) (trade-off, chapter 11) | "gateway endpoint vs interface endpoint" | No | |
-| 7 | AWS Secrets Manager vs Systems Manager Parameter Store (trade-off, chapter 13) | "secrets manager vs parameter store" | No | |
+| 5 | Security groups vs network ACLs: stateful vs stateless (trade-off, chapter 10) | "security group vs nacl" | Yes | blog/security-groups-vs-network-acls.html |
+| 6 | VPC gateway endpoints vs interface endpoints (AWS PrivateLink) (trade-off, chapter 11) | "gateway endpoint vs interface endpoint" | Yes | blog/vpc-gateway-endpoint-vs-interface-endpoint.html |
+| 7 | AWS Secrets Manager vs Systems Manager Parameter Store (trade-off, chapter 13) | "secrets manager vs parameter store" | Yes | blog/secrets-manager-vs-parameter-store.html |
 
 ## Microsoft Azure Fundamentals (AZ-900)
 

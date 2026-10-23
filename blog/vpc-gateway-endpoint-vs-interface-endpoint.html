@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPC Gateway Endpoints vs Interface Endpoints (AWS PrivateLink): Which to Use</title>
+<meta name="description" content="Gateway endpoints are free route-table entries for S3 and DynamoDB only; interface endpoints are PrivateLink ENIs for most services, reachable from on premises.">
+<link rel="canonical" href="https://certify.courses/blog/vpc-gateway-endpoint-vs-interface-endpoint">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VPC Gateway Endpoints vs Interface Endpoints (AWS PrivateLink): Which to Use">
+<meta property="og:description" content="Gateway endpoints are free route-table entries for S3 and DynamoDB only; interface endpoints are PrivateLink ENIs for most services, reachable from on premises.">
+<meta property="og:url" content="https://certify.courses/blog/vpc-gateway-endpoint-vs-interface-endpoint">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="aws-solutions-architect-associate-saa-c03-certification-guide">SAA-C03 Guide</a><span>&rsaquo;</span>
+    <span>VPC endpoints</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">AWS Solutions Architect Associate &middot; Trade-off</div>
+    <h1>Gateway Endpoints vs Interface Endpoints: Private Access to AWS Services</h1>
+    <p class="lede">A <strong>gateway endpoint</strong> is a free route table entry that sends traffic for <strong>Amazon S3 or Amazon DynamoDB</strong> privately from a VPC. An <strong>interface endpoint</strong> is a private IP address in your subnet, powered by AWS PrivateLink, that works for most AWS services and can be reached from on premises. Use a gateway endpoint for S3 or DynamoDB inside the VPC; use an interface endpoint for everything else.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+    <section id="problem">
+    <h2>The problem both solve</h2>
+    <p>AWS service endpoints are public. Without a VPC endpoint, an instance in a private subnet reaches Amazon S3 or Amazon SQS through a NAT gateway and an internet gateway. A VPC endpoint gives it a direct path instead: traffic stays on the AWS network, with no internet gateway, NAT device or public IP needed.</p>
+    <p>Both types accept an <strong>endpoint policy</strong>, an IAM resource policy that narrows what can pass through the endpoint. It never grants access on its own: the caller's identity policy and any bucket policy still have to allow the request.</p>
+  </section>
+
+  <section id="gateway">
+    <h2>Gateway endpoints: a route, for two services</h2>
+    <ul>
+      <li><strong>Only Amazon S3 and Amazon DynamoDB.</strong> No other service has a gateway endpoint.</li>
+      <li><strong>A route table entry.</strong> Associating the endpoint adds a route whose destination is the service's AWS-managed prefix list. The most specific route wins, so S3 traffic leaves the NAT gateway path.</li>
+      <li><strong>No charge.</strong> That is why it is the standard answer to "reduce NAT gateway data processing costs for S3".</li>
+      <li><strong>Limited reach.</strong> It works only from the VPC it belongs to, in the same Region. It cannot be reached from on premises, a peered VPC or another Region.</li>
+    </ul>
+  </section>
+
+  <section id="interface">
+    <h2>Interface endpoints: a private IP, for most services</h2>
+    <ul>
+      <li><strong>Most AWS services</strong>, including S3 and DynamoDB, plus partner services and your own services shared through AWS PrivateLink.</li>
+      <li><strong>An elastic network interface per Availability Zone.</strong> You pick the subnets, one per AZ; choose two or more for availability.</li>
+      <li><strong>A security group on the endpoint</strong>, so you control which sources may connect.</li>
+      <li><strong>Private DNS.</strong> With it on, the normal service hostname resolves to the endpoint's private IPs, so SDK code needs no change.</li>
+      <li><strong>Reachable from elsewhere.</strong> Because it is just a private IP, on-premises networks over AWS Direct Connect or Site-to-Site VPN, and other VPCs over peering or AWS Transit Gateway, can use it.</li>
+      <li><strong>Billed</strong> per endpoint per AZ per hour, plus per GB processed.</li>
+    </ul>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th class="col-h">Gateway</th><th>Interface</th></tr></thead>
+      <tbody>
+        <tr><th>Services</th><td class="col-h">S3 and DynamoDB only</td><td>Most AWS services, partner and your own</td></tr>
+        <tr><th>Mechanism</th><td class="col-h">Route to a prefix list</td><td>Network interface with a private IP, per AZ</td></tr>
+        <tr><th>Reach</th><td class="col-h">Its own VPC, same Region</td><td>Also on premises and other VPCs</td></tr>
+        <tr><th>Access control</th><td class="col-h">Endpoint policy, route tables</td><td>Endpoint policy, security group</td></tr>
+        <tr><th>Cost</th><td class="col-h">No charge</td><td>Hourly per AZ, plus per GB</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">From the <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html" target="_blank" rel="noopener">AWS PrivateLink guide</a>, checked 23 October 2026.</p>
+  </section>
+
+  <section id="signals">
+    <h2>Signals that decide the question</h2>
+    <div class="pick">
+      <div class="pickcard gold"><h3>Gateway endpoint</h3><p>"S3 or DynamoDB", "from instances in the VPC", "cut NAT gateway costs", "lowest cost". Free and nothing to manage.</p></div>
+      <div class="pickcard"><h3>Interface endpoint</h3><p>Any other service (SQS, KMS, Secrets Manager, ECR), "from on premises", "from another VPC", or "a security group must control access".</p></div>
+    </div>
+    <p style="margin-top:16px;">They also combine. A common pattern uses a free S3 gateway endpoint for traffic from inside the VPC and an S3 interface endpoint for on-premises clients. A trap answer offers a "gateway endpoint for SQS": it does not exist.</p>
+    <div class="callout"><p><strong>Lock both ends.</strong> To stop data leaving to an outside bucket, put an endpoint policy that allows only the company's buckets, and a bucket policy that denies requests unless <code>aws:SourceVpce</code> is your endpoint.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between a gateway endpoint and an interface endpoint?</summary><div class="fa"><p>A gateway endpoint is a free route table entry that works only for Amazon S3 and DynamoDB from inside the VPC. An interface endpoint is a private IP in your subnet, powered by AWS PrivateLink, that works for most services, can be reached from on premises, and is billed hourly and per GB.</p></div></details>
+      <details><summary>Is there a gateway endpoint for Amazon SQS?</summary><div class="fa"><p>No. Gateway endpoints exist only for Amazon S3 and Amazon DynamoDB. Every other service, including SQS, uses an interface endpoint.</p></div></details>
+      <details><summary>Can on-premises servers use an S3 gateway endpoint?</summary><div class="fa"><p>No. A gateway endpoint is only reachable from inside its own VPC. On-premises clients connected through Direct Connect or VPN need an S3 interface endpoint.</p></div></details>
+      <details><summary>How do VPC endpoints reduce NAT gateway costs?</summary><div class="fa"><p>A gateway endpoint for S3 or DynamoDB sends that traffic through a free route instead of the NAT gateway, so it no longer incurs NAT data processing charges.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>See both endpoints built step by step</h2>
+    <p>Chapter 11 of the Certified SAA-C03 course draws the route table change and the per-AZ network interfaces, with a question for each direction. Unit 1 is free.</p>
+    <a href="../aws-solutions-architect-associate/lesson-11-vpc-endpoints.html" class="cta">Open Chapter 11 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="security-groups-vs-network-acls">Security groups vs network ACLs &rarr;</a>
+    <a href="secrets-manager-vs-parameter-store">Secrets Manager vs Parameter Store &rarr;</a>
+    <a href="saa-c03-exam-guide-domains-weighting">SAA-C03 exam domains and weighting &rarr;</a>
+    <a href="how-long-to-prepare-aws-solutions-architect-associate">How long to prepare for SAA-C03 &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"VPC Gateway Endpoints vs Interface Endpoints (AWS PrivateLink): Which to Use","description":"Gateway endpoints are free route-table entries for S3 and DynamoDB only; interface endpoints are PrivateLink ENIs for most services, reachable from on premises.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-23","dateModified":"2026-10-23","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/vpc-gateway-endpoint-vs-interface-endpoint"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the difference between a gateway endpoint and an interface endpoint?", "acceptedAnswer": {"@type": "Answer", "text": "A gateway endpoint is a free route table entry that works only for Amazon S3 and DynamoDB from inside the VPC. An interface endpoint is a private IP in your subnet, powered by AWS PrivateLink, that works for most services, can be reached from on premises, and is billed hourly and per GB."}}, {"@type": "Question", "name": "Is there a gateway endpoint for Amazon SQS?", "acceptedAnswer": {"@type": "Answer", "text": "No. Gateway endpoints exist only for Amazon S3 and Amazon DynamoDB. Every other service, including SQS, uses an interface endpoint."}}, {"@type": "Question", "name": "Can on-premises servers use an S3 gateway endpoint?", "acceptedAnswer": {"@type": "Answer", "text": "No. A gateway endpoint is only reachable from inside its own VPC. On-premises clients connected through Direct Connect or VPN need an S3 interface endpoint."}}, {"@type": "Question", "name": "How do VPC endpoints reduce NAT gateway costs?", "acceptedAnswer": {"@type": "Answer", "text": "A gateway endpoint for S3 or DynamoDB sends that traffic through a free route instead of the NAT gateway, so it no longer incurs NAT data processing charges."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
