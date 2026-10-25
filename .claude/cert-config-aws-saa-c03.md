@@ -218,6 +218,20 @@ Module 2.1 changes (checked 23 Oct 2026 on the AWS docs):
       for Regional and private REST APIs; HTTP APIs top out at 30 seconds
       (Ch 30).
 
+Module 2.2 changes (checked 25 Oct 2026 on the AWS docs):
+
+    AWS Application Migration Service: its docs now title it "AWS Transform
+      MGN". Lessons use the guide's name and mention the new title once
+      (Ch 40).
+    Route 53 Resolver is now "Route 53 VPC Resolver" in the docs; Ch 35
+      mentions the rename once.
+    AWS X-Ray's service map is now the "trace map"; CloudWatch Application
+      Signals builds on X-Ray traces (Ch 36).
+    The DR whitepaper publishes no per-strategy RPO or RTO figures in its
+      text, only "near-zero" for multi-site active/active. Ch 39 ranks the
+      four strategies by cost and recovery speed; never state invented
+      minute or hour ranges in questions.
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
