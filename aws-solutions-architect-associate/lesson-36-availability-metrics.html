@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Metrics That Match the Business: CloudWatch Alarms and AWS X-Ray · SAA-C03 Chapter 36</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-36-availability-metrics.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060b11;            /* page background */
+    --bg-tint: #132439;       /* ambient glow tint behind the card */
+    --accent: #7ba9e5;        /* topic color: azure, Unit 2 Module 2.2 Ch 33-40 */
+    --accent-glow: rgba(123,169,229,0.12);  /* correct-answer fill */
+    --accent-ink: #060b11;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Module 2.2 · Chapter 36 · Metrics That Match the Business:
+   CloudWatch Alarms and AWS X-Ray
+   Objective S2.2.3 (identifying metrics based on business requirements
+   to deliver a highly available solution) with K2.2.12 (workload
+   visibility, AWS X-Ray).
+   Shape: cover, start from the business, metric alarm anatomy (step
+   build), composite alarms, quiz (composite cuts noise), anomaly
+   detection and metric math, synthetic canaries, tracing with X-Ray
+   (step build), AWS Health Dashboard (step build), quiz (canary
+   catches no-traffic failure), recap. 11 cards, two quizzes, correct
+   letters A and C.
+   Sources (all checked 25 Oct 2026):
+   docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html
+   (metric alarms watch one metric or a math expression; composite
+   alarms combine alarm states with a rule; composite alarms reduce
+   noise, can notify through SNS and create OpsItems or incidents, but
+   cannot take EC2 or Auto Scaling actions; states OK, ALARM,
+   INSUFFICIENT_DATA; evaluation period up to seven days);
+   docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html
+   (rule expressions with AND, OR, NOT over ALARM, OK, INSUFFICIENT_DATA);
+   docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html
+   (model of expected values from up to two weeks of data, hourly, daily
+   and weekly patterns; alarms on the band instead of a static
+   threshold);
+   docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries.html
+   (canaries are scheduled scripts that follow customer routes, run as
+   often as once per minute, check availability and latency even with
+   no customer traffic, and integrate with Application Signals);
+   docs.aws.amazon.com/xray/latest/devguide/aws-xray.html (X-Ray
+   collects request data across downstream calls and builds a trace
+   map that shows bottlenecks and latency);
+   docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html
+   (CloudWatch Application Signals collects metrics and traces, tracks
+   SLOs, and maps services and dependencies, with correlated X-Ray
+   traces);
+   docs.aws.amazon.com/health/latest/ug/what-is-aws-health.html (AWS
+   Health Dashboard for all customers at no cost, events through
+   Amazon EventBridge at no cost, Health API with higher support plans).
+   Cover animates (a business metric line dips, the alarm bell lights,
+   a trace dot runs across services). Step builds on cards 2, 7 and 8.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-37-single-points-of-failure.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c36r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(123,169,229,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(123,169,229,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c36line { stroke-dasharray: 260; stroke-dashoffset: 260; animation: c36draw 6s ease-in-out infinite; }
+      @keyframes c36draw { 0% { stroke-dashoffset: 260; } 45%, 100% { stroke-dashoffset: 0; } }
+      .c36bell { animation: c36ring 6s ease-in-out infinite; }
+      @keyframes c36ring { 0%, 40% { opacity: 0.25; } 50%, 85% { opacity: 1; } 100% { opacity: 0.25; } }
+      .c36dot { animation: c36trace 6s linear infinite; }
+      @keyframes c36trace { 0%, 50% { transform: translate(0px, 0px); opacity: 0; } 55% { opacity: 1; } 95% { transform: translate(196px, 0px); opacity: 1; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c36line { animation: none; stroke-dashoffset: 0; }
+        .c36bell { animation: none; opacity: 1; }
+        .c36dot { animation: none; opacity: 1; transform: translate(98px, 0px); }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c36r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="24" y="22" width="200" height="92" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="124" y="38" fill="var(--ink-soft)" font-size="8.5" font-weight="700">successful orders per minute</text>
+      <path d="M40 98 L220 98" stroke="var(--line)"/>
+      <path d="M40 70 L208 70" stroke="var(--warn)" stroke-dasharray="4 3" stroke-width="1"/>
+      <text x="212" y="66" text-anchor="end" fill="var(--warn)" font-size="7">threshold</text>
+      <path class="c36line" d="M40 56 L66 52 L92 58 L118 54 L140 60 L160 86 L182 92 L208 88" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <g class="c36bell">
+        <circle cx="262" cy="66" r="24" fill="rgba(248,113,113,0.14)" stroke="var(--warn)" stroke-width="2"/>
+        <path d="M252 72 L252 62 C252 55 272 55 272 62 L272 72 Z M248 74 L276 74" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="262" cy="79" r="2.5" fill="var(--warn)"/>
+        <text x="262" y="104" fill="var(--warn)" font-size="8.5" font-weight="700">ALARM</text>
+      </g>
+      <g font-size="7.5" fill="var(--ink-soft)">
+        <rect x="24" y="140" width="56" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="52" y="155">API</text>
+        <rect x="122" y="140" width="56" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="150" y="155">orders</text>
+        <rect x="220" y="140" width="56" height="24" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="248" y="155">database</text>
+      </g>
+      <path d="M80 152 L122 152 M178 152 L220 152" stroke="var(--line)" stroke-width="1.5"/>
+      <g class="c36dot"><circle cx="52" cy="152" r="4.5" fill="var(--lav)"/></g>
+      <text x="160" y="186" fill="var(--ink-soft)" font-size="9.5">Measure what customers feel, then follow the request.</text>
+    </g>
+  </svg>`,
+
+  alarm: `<svg viewBox="0 0 320 150">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="8" y="14" width="96" height="58" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="56" y="32" fill="var(--accent)" font-size="9" font-weight="700">metric or math</text>
+        <text x="56" y="46" fill="var(--ink-soft)" font-size="7.5">5XX errors / requests</text>
+        <text x="56" y="60" fill="var(--ink-faint)" font-size="7">period: 1 minute</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M104 43 L118 43" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="118" y="14" width="96" height="58" rx="9" fill="var(--surface-2)" stroke="var(--lav)"/>
+        <text x="166" y="32" fill="var(--lav)" font-size="9" font-weight="700">threshold rule</text>
+        <text x="166" y="46" fill="var(--ink-soft)" font-size="7.5">greater than 2%</text>
+        <text x="166" y="60" fill="var(--ink-faint)" font-size="7">3 of 5 datapoints</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <path d="M214 43 L228 43" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="228" y="14" width="84" height="18" rx="5" fill="rgba(134,239,172,0.14)" stroke="var(--ok)"/><text x="270" y="27" fill="var(--ok)" font-size="7.5" font-weight="700">OK</text>
+        <rect x="228" y="35" width="84" height="18" rx="5" fill="rgba(248,113,113,0.14)" stroke="var(--warn)"/><text x="270" y="48" fill="var(--warn)" font-size="7.5" font-weight="700">ALARM</text>
+        <rect x="228" y="56" width="84" height="18" rx="5" fill="var(--surface-2)" stroke="var(--line)"/><text x="270" y="69" fill="var(--ink-soft)" font-size="7">INSUFFICIENT_DATA</text>
+      </g>
+      <g style="pointer-events:none" data-step="4">
+        <path d="M270 74 L270 92" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="40" y="92" width="272" height="44" rx="9" fill="rgba(123,169,229,0.12)" stroke="var(--accent)"/>
+        <text x="176" y="110" fill="var(--accent)" font-size="8.5" font-weight="700">actions on a state change</text>
+        <text x="176" y="125" fill="var(--ink-soft)" font-size="7.5">SNS notify · EC2 action · Auto Scaling · OpsItem or incident</text>
+      </g>
+    </g>
+  </svg>`,
+
+  trace: `<svg viewBox="0 0 320 140">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="20" width="70" height="30" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="45" y="39" fill="var(--accent)" font-size="8.5" font-weight="700">API Gateway</text>
+        <text x="160" y="12" fill="var(--ink-faint)" font-size="7.5">one request, one trace ID</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M80 35 L120 35" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="120" y="20" width="70" height="30" rx="7" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="155" y="39" fill="var(--accent)" font-size="8.5" font-weight="700">Lambda</text>
+        <path d="M190 35 L230 35" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="230" y="20" width="80" height="30" rx="7" fill="rgba(248,113,113,0.14)" stroke="var(--warn)"/>
+        <text x="270" y="35" fill="var(--warn)" font-size="8.5" font-weight="700">DynamoDB</text>
+        <text x="270" y="45" fill="var(--warn)" font-size="7">1.8 s, throttled</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="10" y="66" width="300" height="12" rx="3" fill="var(--surface-2)"/>
+        <rect x="10" y="66" width="30" height="12" rx="3" fill="var(--accent)"/>
+        <rect x="40" y="82" width="40" height="12" rx="3" fill="var(--lav)"/>
+        <rect x="80" y="98" width="230" height="12" rx="3" fill="var(--warn)"/>
+        <text x="195" y="128" fill="var(--ink-soft)" font-size="8">segments show where the time went</text>
+      </g>
+    </g>
+  </svg>`,
+
+  health: `<svg viewBox="0 0 320 110">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="20" width="96" height="60" rx="9" fill="var(--surface-2)" stroke="var(--orange)"/>
+        <text x="58" y="40" fill="var(--orange)" font-size="9" font-weight="700">AWS Health</text>
+        <text x="58" y="54" fill="var(--ink-soft)" font-size="7.5">EBS degraded in</text>
+        <text x="58" y="66" fill="var(--ink-soft)" font-size="7.5">your AZ, your volumes</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M106 50 L132 50" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="132" y="30" width="72" height="40" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="168" y="54" fill="var(--accent)" font-size="8.5" font-weight="700">EventBridge</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <path d="M204 50 L226 50" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="226" y="14" width="86" height="22" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="269" y="29" fill="var(--ink-soft)" font-size="7.5">page the on-call</text>
+        <rect x="226" y="40" width="86" height="22" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="269" y="55" fill="var(--ink-soft)" font-size="7.5">run a runbook</text>
+        <rect x="226" y="66" width="86" height="22" rx="6" fill="var(--surface-2)" stroke="var(--line)"/><text x="269" y="81" fill="var(--ink-soft)" font-size="7.5">shift traffic</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 36</div>
+    <h1 class="reveal" style="font-size:34px">Metrics that match the business</h1>
+    <p class="lead reveal">A green CPU graph means nothing if customers cannot check out. Highly available systems are watched through the numbers the business cares about, alarmed sensibly, and traced end to end when something slows down.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: start from the business */
+  { html: `
+    <div class="eyebrow reveal">Pick the right signal</div>
+    <h2 class="reveal" style="font-size:25px">Start from what the customer experiences</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Business metrics first</b>Successful orders per minute, login success rate, p99 page latency. These say whether the service is up for customers; CPU only hints at it.</p></div>
+      <div class="pill"><p><b>Error rate, not error count</b>Divide 5XX responses by total requests with metric math. A count rises with traffic; a rate rises only when quality drops.</p></div>
+      <div class="pill"><p><b>Objectives</b>A service level objective, such as 99.9% of requests under 300 ms, turns "highly available" into a number an alarm can protect.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 2: metric alarm anatomy, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">CloudWatch metric alarms</div>
+    <h2 class="reveal" style="font-size:25px">Anatomy of an alarm</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.alarm}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">A <strong>metric alarm</strong> watches one metric, or one math expression over metrics. Tap to build one.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">Choose the metric or expression and the period it is evaluated over.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">Set a threshold and how many datapoints must breach, such as 3 out of 5, so a single spike does not page anyone.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">The alarm is always in one of three states. INSUFFICIENT_DATA often means the resource stopped reporting, which can itself be a failure signal.</p>
+      <p class="lead" data-step="4" style="pointer-events:none;font-size:14px">On a state change it acts: notify through Amazon SNS, run an EC2 action such as recover or reboot, trigger Auto Scaling, or open an OpsItem or incident.</p>
+    </div>` },
+
+  /* 3: composite alarms */
+  { html: `
+    <div class="eyebrow reveal">Less noise</div>
+    <h2 class="reveal" style="font-size:25px">Composite alarms combine alarm states</h2>
+    <p class="lead reveal" style="margin-bottom:14px">A <strong>composite alarm</strong> evaluates a rule over other alarms, not metrics: <code>ALARM(HighLatency) AND ALARM(HighErrors)</code>.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Why use one</b>Ten related metric alarms firing at once wake ten people. One composite that fires only when the real symptom appears wakes one.</p></div>
+      <div class="pill"><p><b>Rules</b>AND, OR and NOT over the ALARM, OK and INSUFFICIENT_DATA states of metric alarms and other composites.</p></div>
+      <div class="pill"><p><b>Limit to remember</b>Composites can notify through SNS and open OpsItems or incidents, but cannot take EC2 or Auto Scaling actions.</p></div>
+    </div>` },
+
+  /* 4: quiz, composite */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">An on-call team gets dozens of pages whenever one dependency slows, because CPU, latency and error alarms all fire together. They want one page only when latency and error rate are both high. What should they configure?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>A composite alarm with ALARM(latency) AND ALARM(errors), notifying only from it</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Raise every metric alarm's threshold so fewer of them fire</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>An Auto Scaling policy that adds capacity when CPU rises</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A CloudWatch dashboard showing all three metrics</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A composite alarm fires on a rule over other alarms' states, so the underlying alarms can stay silent and only the combined symptom pages anyone. Option B is tempting, but higher thresholds hide real problems and still page separately. C changes capacity, not alerting, and a dashboard alerts nobody.</div>` },
+
+  /* 5: anomaly detection and math */
+  { html: `
+    <div class="eyebrow reveal">Smarter thresholds</div>
+    <h2 class="reveal" style="font-size:25px">When a fixed number is the wrong threshold</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Anomaly detection</b>CloudWatch learns a metric's expected band from up to two weeks of data, including hourly, daily and weekly patterns. The alarm fires above, below or outside the band.</p></div>
+      <div class="pill"><p><b>Good fit</b>Traffic that is normal at 9 a.m. and alarming at 3 a.m. A static threshold is either too noisy or too blind.</p></div>
+      <div class="pill"><p><b>Metric math</b>Alarm on expressions such as error rate or the sum across instances, not only raw metrics.</p></div>
+    </div>` },
+
+  /* 6: synthetic canaries */
+  { html: `
+    <div class="eyebrow reveal">Test like a customer</div>
+    <h2 class="reveal" style="font-size:25px">CloudWatch Synthetics canaries</h2>
+    <p class="lead reveal" style="margin-bottom:14px">A <strong>canary</strong> is a scheduled script that follows a customer's route: load the page, log in, add to cart, call the API.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Catches silent outages</b>With no customer traffic there are no errors to count. A canary running as often as once a minute still finds the broken checkout.</p></div>
+      <div class="pill"><p><b>What it records</b>Availability and latency metrics, screenshots and load times, with alarms on its success rate like any other metric.</p></div>
+    </div>` },
+
+  /* 7: X-Ray, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Workload visibility</div>
+    <h2 class="reveal" style="font-size:25px">Tracing a request with AWS X-Ray</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.trace}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Metrics say something is slow; <strong>AWS X-Ray</strong> says where. Tap to follow one request.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">The request gets a trace ID at the edge, and every integrated service adds its part of the story.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">X-Ray builds a trace map of services and calls, so a throttled table or a slow downstream API stands out.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">Segments show where each millisecond went. CloudWatch Application Signals now builds on these traces to track SLOs and map service dependencies.</p>
+    </div>` },
+
+  /* 8: AWS Health, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">When AWS has the problem</div>
+    <h2 class="reveal" style="font-size:25px">AWS Health Dashboard events</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.health}</div>
+    <div class="stepcaps">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">The <strong>AWS Health Dashboard</strong> shows events that affect your own accounts and resources, free for every customer. Tap to automate the response.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">An event names the affected service, Region and resources, plus scheduled maintenance ahead of time.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">Every Health event also arrives in Amazon EventBridge at no extra cost.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">Rules route it to people or automation. The Health API itself needs a Business or Enterprise support plan.</p>
+    </div>` },
+
+  /* 9: quiz, canary */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A booking site gets almost no traffic overnight. Last week a deploy broke checkout at 1 a.m., and nobody knew until customers complained at 8 a.m., because error alarms never fired. What would have caught it?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>A lower threshold on the 5XX error count alarm</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>AWS X-Ray tracing on the checkout service</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>A CloudWatch Synthetics canary that runs the checkout flow every few minutes</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>An AWS Health Dashboard EventBridge rule</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> With no customers, there were no errors to count; a canary generates its own traffic along the checkout path and fails the moment the flow breaks. X-Ray (B) explains requests that happen, and traces nothing when nobody visits. A lower threshold (A) still needs errors to exist, and AWS Health covers AWS events, not your deploy.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 36 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: finding and removing single points of failure.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Measure what customers feel</b>Business metrics and rates against an objective; metric alarms with datapoint rules; composites to cut noise; anomaly bands for seasonal traffic.</p></div>
+      <div class="pill"><p><b>Probe and trace</b>Canaries catch failures when there is no traffic; X-Ray and Application Signals show where a request slowed.</p></div>
+      <div class="pill"><p><b>AWS-side events</b>AWS Health Dashboard, routed through EventBridge to people or runbooks.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>
