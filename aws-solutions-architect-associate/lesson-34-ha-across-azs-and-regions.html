@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Services for High Availability Across AZs and Regions · SAA-C03 Chapter 34</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-34-ha-across-azs-and-regions.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #060b11;            /* page background */
+    --bg-tint: #132439;       /* ambient glow tint behind the card */
+    --accent: #7ba9e5;        /* topic color: azure, Unit 2 Module 2.2 Ch 33-40 */
+    --accent-glow: rgba(123,169,229,0.12);  /* correct-answer fill */
+    --accent-ink: #060b11;    /* text on top of the accent key chip */
+    --warn: #f87171;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 2 · Module 2.2 · Chapter 34 · Services for High Availability
+   Across AZs and Regions
+   Objective S2.2.2 (determining the AWS services required for HA or fault
+   tolerance across Regions or AZs) with K2.2.1, K2.2.6 and K2.2.8.
+   Route 53 failover is Chapter 35; DR strategies are Chapter 39.
+   Shape: cover, AZ-resilient vs Region-resilient, ELB across AZs, RDS
+   Multi-AZ instance vs cluster (step build), Aurora and Global Database,
+   quiz (database survives an AZ with readable standbys), DynamoDB global
+   tables (step build), S3 CRR and the summary table (step build), quiz
+   (multi-Region writes), recap. 10 cards, two quizzes, correct letters C
+   and A.
+   Sources (all checked 25 Oct 2026):
+   docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html
+   (load balancer nodes in each enabled AZ; cross-zone load balancing is
+   always on at the ALB level, off by default for NLB and GWLB);
+   docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html
+   (Multi-AZ DB instance: one standby, no read traffic; Multi-AZ DB
+   cluster: two standbys in three AZs that also serve reads);
+   docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html
+   (synchronous replication to a standby in another AZ);
+   docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.Failover.html
+   (Multi-AZ DB instance failover typically 60 to 120 seconds);
+   docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
+   (writer plus two readable readers, a commit needs one reader's
+   acknowledgment, readers are the automatic failover targets);
+   docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.AuroraHighAvailability.html
+   (writes replicated synchronously across AZs to six storage nodes; up to
+   15 Aurora Replicas);
+   docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html
+   and aurora-global-database-disaster-recovery.html (one primary Region,
+   up to 10 read-only secondary Regions, replication latency typically
+   under a second, RPO typically seconds, RTO in the order of minutes);
+   docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html
+   and V2globaltables_HowItWorks.html (multi-active, any replica reads and
+   writes; MREC default with last-writer-wins, MRSC synchronous to at least
+   one other Region, exactly three Regions, three replicas or two plus a
+   witness; mode chosen at creation);
+   docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html (S3 is
+   Regional; CRR copies objects to another Region).
+   Cover animates (an AZ goes dark and traffic shifts to the survivors,
+   while a second Region pulses as the Region-level copy). Step builds on
+   cards 3, 6 and 7.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-35-route-53.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c34r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(123,169,229,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(123,169,229,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c34down { animation: c34down 6s ease-in-out infinite; }
+      @keyframes c34down { 0%, 30% { opacity: 1; } 40%, 80% { opacity: 0.18; } 90%, 100% { opacity: 1; } }
+      .c34x { animation: c34x 6s ease-in-out infinite; }
+      @keyframes c34x { 0%, 30% { opacity: 0; } 40%, 80% { opacity: 1; } 90%, 100% { opacity: 0; } }
+      .c34reg { animation: c34pulse 3s ease-in-out infinite; }
+      @keyframes c34pulse { 0%, 100% { stroke-opacity: 0.4; } 50% { stroke-opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c34down { animation: none; opacity: 0.4; }
+        .c34x { animation: none; opacity: 1; }
+        .c34reg { animation: none; stroke-opacity: 0.9; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c34r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="14" y="34" width="196" height="128" rx="14" fill="var(--surface-2)" stroke="var(--accent)" stroke-dasharray="4 4"/>
+      <text x="112" y="52" fill="var(--accent)" font-size="10" font-weight="700">Region A</text>
+      <rect x="28" y="64" width="52" height="84" rx="9" fill="rgba(123,169,229,0.16)" stroke="var(--accent)"/>
+      <g class="c34down"><rect x="86" y="64" width="52" height="84" rx="9" fill="rgba(123,169,229,0.16)" stroke="var(--accent)"/></g>
+      <rect x="144" y="64" width="52" height="84" rx="9" fill="rgba(123,169,229,0.16)" stroke="var(--accent)"/>
+      <text x="54" y="110" fill="var(--ink)" font-size="9" font-weight="700">AZ a</text>
+      <text x="112" y="110" fill="var(--ink)" font-size="9" font-weight="700">AZ b</text>
+      <text x="170" y="110" fill="var(--ink)" font-size="9" font-weight="700">AZ c</text>
+      <g class="c34x"><path d="M100 76 L124 136 M124 76 L100 136" stroke="var(--warn)" stroke-width="3"/></g>
+      <rect class="c34reg" x="226" y="58" width="82" height="80" rx="12" fill="var(--surface-2)" stroke="var(--lav)" stroke-width="2"/>
+      <text x="267" y="88" fill="var(--lav)" font-size="10" font-weight="700">Region B</text>
+      <text x="267" y="104" fill="var(--ink-soft)" font-size="7.5">replica or</text>
+      <text x="267" y="116" fill="var(--ink-soft)" font-size="7.5">global table</text>
+      <path d="M210 98 L224 98" stroke="var(--lav)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="160" y="186" fill="var(--ink-soft)" font-size="9.5">Survive an AZ inside a Region, or a whole Region.</text>
+    </g>
+  </svg>`,
+
+  rds: `<svg viewBox="0 0 320 150">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <text x="78" y="16" fill="var(--accent)" font-size="9" font-weight="700">Multi-AZ DB instance</text>
+        <rect x="14" y="26" width="58" height="40" rx="7" fill="rgba(123,169,229,0.16)" stroke="var(--accent)"/><text x="43" y="44" fill="var(--ink)" font-size="8" font-weight="700">primary</text><text x="43" y="56" fill="var(--ink-faint)" font-size="6.5">AZ a</text>
+        <path d="M72 46 L84 46" stroke="var(--accent)" stroke-width="1.5"/>
+        <rect x="84" y="26" width="58" height="40" rx="7" fill="var(--surface-2)" stroke="var(--line)"/><text x="113" y="44" fill="var(--ink-soft)" font-size="8" font-weight="700">standby</text><text x="113" y="56" fill="var(--ink-faint)" font-size="6.5">AZ b, no reads</text>
+        <text x="78" y="82" fill="var(--ink-soft)" font-size="7.5">synchronous, failover ~60 to 120 s</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <text x="240" y="16" fill="var(--ok)" font-size="9" font-weight="700">Multi-AZ DB cluster</text>
+        <rect x="176" y="26" width="44" height="40" rx="7" fill="rgba(134,239,172,0.14)" stroke="var(--ok)"/><text x="198" y="44" fill="var(--ink)" font-size="7.5" font-weight="700">writer</text><text x="198" y="56" fill="var(--ink-faint)" font-size="6.5">AZ a</text>
+        <rect x="224" y="26" width="44" height="40" rx="7" fill="var(--surface-2)" stroke="var(--ok)"/><text x="246" y="44" fill="var(--ink-soft)" font-size="7.5" font-weight="700">reader</text><text x="246" y="56" fill="var(--ink-faint)" font-size="6.5">AZ b</text>
+        <rect x="272" y="26" width="44" height="40" rx="7" fill="var(--surface-2)" stroke="var(--ok)"/><text x="294" y="44" fill="var(--ink-soft)" font-size="7.5" font-weight="700">reader</text><text x="294" y="56" fill="var(--ink-faint)" font-size="6.5">AZ c</text>
+        <text x="246" y="82" fill="var(--ink-soft)" font-size="7.5">two readable standbys</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="14" y="100" width="292" height="38" rx="8" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="160" y="116" fill="var(--ink)" font-size="8.5" font-weight="700">Both survive an AZ. Neither survives a Region.</text>
+        <text x="160" y="130" fill="var(--ink-faint)" font-size="7.5">a read replica in another Region, or Aurora Global Database, covers that</text>
+      </g>
+    </g>
+  </svg>`,
+
+  ddb: `<svg viewBox="0 0 320 130">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="10" y="20" width="140" height="92" rx="10" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="80" y="38" fill="var(--accent)" font-size="9" font-weight="700">MREC (default)</text>
+        <circle cx="40" cy="64" r="11" fill="rgba(123,169,229,0.18)" stroke="var(--accent)"/>
+        <circle cx="80" cy="64" r="11" fill="rgba(123,169,229,0.18)" stroke="var(--accent)"/>
+        <circle cx="120" cy="64" r="11" fill="rgba(123,169,229,0.18)" stroke="var(--accent)"/>
+        <path d="M51 64 L69 64 M91 64 L109 64" stroke="var(--accent)" stroke-dasharray="3 2"/>
+        <text x="80" y="92" fill="var(--ink-soft)" font-size="7">async, last writer wins</text>
+        <text x="80" y="103" fill="var(--ink-soft)" font-size="7">any number of Regions</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="170" y="20" width="140" height="92" rx="10" fill="var(--surface-2)" stroke="var(--lav)"/>
+        <text x="240" y="38" fill="var(--lav)" font-size="9" font-weight="700">MRSC</text>
+        <circle cx="200" cy="64" r="11" fill="rgba(196,181,253,0.18)" stroke="var(--lav)"/>
+        <circle cx="240" cy="64" r="11" fill="rgba(196,181,253,0.18)" stroke="var(--lav)"/>
+        <circle cx="280" cy="64" r="11" fill="none" stroke="var(--lav)" stroke-dasharray="3 2"/>
+        <text x="280" y="67" fill="var(--ink-faint)" font-size="6">witness</text>
+        <path d="M211 64 L229 64 M251 64 L269 64" stroke="var(--lav)" stroke-width="1.5"/>
+        <text x="240" y="92" fill="var(--ink-soft)" font-size="7">sync to another Region</text>
+        <text x="240" y="103" fill="var(--ink-soft)" font-size="7">exactly three Regions</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 2 · Module 2.2 · Chapter 34</div>
+    <h1 class="reveal" style="font-size:34px">High availability across AZs and Regions</h1>
+    <p class="lead reveal">Every highly available design answers one question first: what failure must it survive? Losing a data center calls for multiple AZs. Losing a Region calls for a second Region. AWS services sit on one side of that line or the other.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: AZ vs Region resilient */
+  { html: `
+    <div class="eyebrow reveal">Two levels of failure</div>
+    <h2 class="reveal" style="font-size:25px">AZ-resilient vs Region-resilient</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>AZ-resilient</b>Keeps running if one AZ fails, inside one Region: a load balancer across AZs, RDS Multi-AZ, Aurora's storage, an Auto Scaling group spread over subnets.</p></div>
+      <div class="pill"><p><b>Region-resilient</b>Keeps data and service available if a whole Region is lost: Aurora Global Database, DynamoDB global tables, S3 Cross-Region Replication, cross-Region read replicas.</p></div>
+      <div class="pill"><p><b>The exam signal</b>"Highly available" with no Region requirement means multi-AZ. "Regional outage", "disaster recovery" or "users on several continents" means multi-Region.</p></div>
+    </div>` },
+
+  /* 2: ELB across AZs */
+  { html: `
+    <div class="eyebrow reveal">Spreading the front door</div>
+    <h2 class="reveal" style="font-size:25px">Elastic Load Balancing across AZs</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Nodes in every enabled AZ</b>A load balancer places a node in each AZ you enable, and health checks pull failed targets out of rotation automatically.</p></div>
+      <div class="pill"><p><b>Cross-zone load balancing</b>Lets each node spread traffic over targets in all AZs, so uneven target counts per AZ do not overload anyone. Always on for Application Load Balancers; off by default for Network and Gateway Load Balancers.</p></div>
+      <div class="pill"><p><b>Pair it with Auto Scaling</b>An Auto Scaling group across the same AZs replaces failed instances, so an AZ loss costs capacity for minutes, not the service.</p></div>
+    </div>` },
+
+  /* 3: RDS Multi-AZ, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Relational databases</div>
+    <h2 class="reveal" style="font-size:25px">RDS Multi-AZ: instance or cluster</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.rds}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Amazon RDS has two Multi-AZ shapes. Tap to compare them.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">A <strong>Multi-AZ DB instance</strong> replicates synchronously to one standby in another AZ. The standby serves no reads; it exists to take over, typically within 60 to 120 seconds.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">A <strong>Multi-AZ DB cluster</strong> has a writer and two readers in three AZs. The readers serve read traffic and are the automatic failover targets, and a commit waits for one reader to acknowledge.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">Both protect against an AZ failure, not a Regional one. Read scaling inside a Region is also what read replicas are for (Chapter 47).</p>
+    </div>` },
+
+  /* 4: Aurora */
+  { html: `
+    <div class="eyebrow reveal">Amazon Aurora</div>
+    <h2 class="reveal" style="font-size:25px">Storage built for AZ loss, Global Database for Region loss</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>The cluster volume</b>Every write is replicated synchronously across AZs to six storage nodes, whatever the instance count. Up to 15 Aurora Replicas serve reads and act as failover targets.</p></div>
+      <div class="pill"><p><b>Aurora Global Database</b>One primary Region for writes and up to 10 read-only secondary Regions, replicated on dedicated infrastructure with latency typically under a second.</p></div>
+      <div class="pill"><p><b>The numbers to remember</b>RPO typically measured in seconds, RTO in the order of minutes, by promoting a secondary Region through switchover or failover.</p></div>
+    </div>` },
+
+  /* 5: quiz, readable standbys */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A PostgreSQL database on Amazon RDS must survive an AZ failure, and the company also wants its standby capacity to serve read-only reporting queries instead of sitting idle. All users are in one Region. Which deployment fits?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>A Multi-AZ DB instance deployment</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>A single DB instance with a cross-Region read replica</span></button>
+      <button class="choice" data-correct="true"><span class="key">C</span><span>A Multi-AZ DB cluster deployment</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A single DB instance with automated backups</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> A Multi-AZ DB cluster runs two standbys in other AZs that are failover targets and serve reads, so standby capacity does useful work. Option A is the tempting one, but its single standby takes no read traffic. B adds a Regional copy the scenario does not need, and D recovers from backups rather than failing over.</div>` },
+
+  /* 6: DynamoDB global tables, step build */
+  { steps: 2,
+    html: `
+    <div class="eyebrow reveal">NoSQL across Regions</div>
+    <h2 class="reveal" style="font-size:25px">DynamoDB global tables: two consistency modes</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.ddb}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Global tables replicate a table across Regions, and every replica accepts reads and writes. The consistency mode is chosen at creation and cannot change. Tap through both.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px"><strong>Multi-Region eventual consistency (MREC)</strong>, the default, replicates asynchronously, and concurrent updates resolve by last writer wins. Lowest write latency; a Region failure can lose the last unreplicated writes.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>Multi-Region strong consistency (MRSC)</strong> replicates each write synchronously to at least one other Region before it succeeds, so strongly consistent reads anywhere see the latest version. It needs exactly three Regions: three replicas, or two plus a witness.</p>
+    </div>` },
+
+  /* 7: S3 and summary, step build */
+  { steps: 4,
+    html: `
+    <div class="eyebrow reveal">Side by side</div>
+    <h2 class="reveal" style="font-size:24px">What each service survives</h2>
+    <div style="margin-top:2px">
+      <div class="reveal" style="display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:0 8px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em">
+        <div>Service</div><div>AZ loss</div><div>Region loss</div>
+      </div>
+      <div data-step="1" style="pointer-events:none;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">ELB + Auto Scaling</div><div>Spread over AZs</div><div>Second stack in another Region</div>
+      </div>
+      <div data-step="2" style="pointer-events:none;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">RDS, Aurora</div><div>Multi-AZ, Aurora storage</div><div>Cross-Region replica, Aurora Global Database</div>
+      </div>
+      <div data-step="3" style="pointer-events:none;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:0 8px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">DynamoDB</div><div>Built in, Regional</div><div>Global tables</div>
+      </div>
+      <div data-step="4" style="pointer-events:none;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:0 8px;padding:8px 4px;font-size:12.5px;line-height:1.35;color:var(--ink-soft)">
+        <div style="color:var(--ink);font-weight:600">Amazon S3</div><div>Built in, Regional</div><div>Cross-Region Replication</div>
+      </div>
+    </div>
+    <p class="lead reveal" style="font-size:13.5px;margin-top:12px">S3 and DynamoDB are Regional services, so AZ resilience comes free; Region resilience is always something you add.</p>` },
+
+  /* 8: quiz, multi-Region writes */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A gaming company stores player profiles in DynamoDB. Players in North America, Europe and Asia must read and write their profiles with low latency in their nearest Region, and the data must stay available if a Region fails. What should the architect use?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="true"><span class="key">A</span><span>DynamoDB global tables with replicas in the three Regions</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>One DynamoDB table with point-in-time recovery enabled</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Aurora Global Database with one writer Region</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>One DynamoDB table copied nightly to S3 in each Region</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Global tables are multi-active: every Regional replica takes local reads and writes and keeps serving if another Region fails. Option C is the tempting one because it is multi-Region, but Aurora Global Database has one writer Region, so most players would write across the world. B and D protect data, not local multi-Region access.</div>` },
+
+  /* 9: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 34 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: Route 53 routing policies and health checks for failover.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Inside a Region</b>Load balancers and Auto Scaling across AZs; RDS Multi-AZ instance (idle standby) or cluster (two readable standbys); Aurora storage on six nodes across AZs.</p></div>
+      <div class="pill"><p><b>Across Regions</b>Aurora Global Database (one writer, RPO seconds, RTO minutes), DynamoDB global tables (multi-active, MREC or MRSC), S3 Cross-Region Replication.</p></div>
+      <div class="pill"><p><b>Read the failure</b>AZ loss: multi-AZ. Region loss or global users: multi-Region.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>

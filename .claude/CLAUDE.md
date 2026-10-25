@@ -159,8 +159,13 @@ and replication, 22 S3 data protection policies, 23 key rotation and
 certificate renewal). Module 2.1 is live too (24 architecture styles (TO), 25
 scaling strategies (TO), 26 SQS, 27 SQS vs SNS vs EventBridge vs Amazon MQ
 (TO), 28 containers (TO), 29 Lambda, 30 API Gateway, 31 Step Functions, 32
-managed AI services); Chapter 32 has `next: null` until Chapter 33 ships.
-Every other chapter shows "Coming soon". The Unit 1
+managed AI services) and Module 2.2 (33 immutable infrastructure, 34 HA
+across AZs and Regions, 35 Route 53, 36 availability metrics, 37 single
+points of failure, 38 data durability, 39 DR strategies (TO), 40 legacy
+reliability), so Unit 2's chapters are all live. Chapter 40 closes Unit 2
+but saa-practice-exam-02 is not written yet, so its NAV is `next: null`;
+when the exam ships, set its `file:` and point lesson-40 at it ("Practice
+test"). Every other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
