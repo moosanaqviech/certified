@@ -162,14 +162,15 @@ scaling strategies (TO), 26 SQS, 27 SQS vs SNS vs EventBridge vs Amazon MQ
 managed AI services) and Module 2.2 (33 immutable infrastructure, 34 HA
 across AZs and Regions, 35 Route 53, 36 availability metrics, 37 single
 points of failure, 38 data durability, 39 DR strategies (TO), 40 legacy
-reliability), so Unit 2's chapters are all live. Chapter 40 closes Unit 2
-but saa-practice-exam-02 is not written yet, so its NAV is `next: null`;
-when the exam ships, set its `file:` and point lesson-40 at it ("Practice
-test"). Every other chapter shows "Coming soon". The Unit 1
+reliability), so Unit 2 is complete. The Unit 2 practice exam is live:
+saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
+72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
+2 test row, and Chapter 40's NAV points at it ("Practice test"). Every
+other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
-1 test row, and Chapter 23's NAV points at it ("Practice test"). Exams 02 to
+1 test row, and Chapter 23's NAV points at it ("Practice test"). Exams 03 and
 04 follow the same pattern per unit. validate.py requires every exam's
 `CHAPTERS.list` to mirror all chapters that have a `file:` in UNITS, so
 when a module ships, regenerate the list in each live SAA exam (free stays
