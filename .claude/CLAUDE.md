@@ -1,7 +1,10 @@
 # CLAUDE.md - Certified (certification exam prep app)
 
 Mobile-first static site of interactive lessons and timed practice exams,
-deployed on Netlify. Live courses: Databricks DE Associate (complete) and
+deployed on Netlify. Live courses: Databricks DE Associate (complete; 36
+chapters, Chapter 36 "Delta Sharing with Unity Catalog" is a v2 lesson that
+closes Unit 7, so Chapter 35 points at it and its NAV.next is
+practice-exam-07, which carries two Ch 36 questions, 52 in all) and
 Databricks DE Professional (complete, see curriculum-index-de-professional.md
 for unit/chapter placement and eyebrow labels).
 Complete: AWS Data Engineer Associate (DEA-C01) (see

@@ -164,9 +164,9 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
 const E = {
   name: "Final Exam: Units 1-7",
   badge: "Databricks DE Associate",
-  blurb: "The full-course final mock. Fifty cumulative, scenario-based questions across every unit, in the style of the real certification. Pick the single best answer.",
-  coverage: "Covers chapters 1-35: Units 1-7 (Platform, Ingestion, Transformation, Lakeflow Jobs, CI/CD, Monitoring & Optimization, Governance & Security).",
-  minutes: 100,
+  blurb: "The full-course final mock. Fifty-two cumulative, scenario-based questions across every unit, in the style of the real certification. Pick the single best answer.",
+  coverage: "Covers chapters 1-36: Units 1-7 (Platform, Ingestion, Transformation, Lakeflow Jobs, CI/CD, Monitoring & Optimization, Governance & Security).",
+  minutes: 104,
   pass: 70
 };
 
@@ -884,6 +884,34 @@ const QUESTIONS = [
     ],
     correct:0,
     explain:`Because the policy matches the PII tag, any object carrying that tag - including newly created ones - is covered automatically. That automatic, consistent coverage of current and future objects is the whole point of ABAC.`
+  },
+
+  /* Ch 36 - Delta Sharing (inside grants vs outside share) */
+  {
+    ref:{chapter:36},
+    q:`A retailer's merchandising team works in a workspace attached to the same Unity Catalog metastore as the main.sales.pricing table and must be able to update it. A supplier on its own Databricks account must be able to query the same table but never change it. Which setup meets both needs?`,
+    opts:[
+      "Add the table to a share and grant SELECT and MODIFY on the share to a recipient for each group",
+      "Create a recipient for the merchandising team on its own share, and grant MODIFY on that share to it",
+      "Grant SELECT and MODIFY on the table to the merchandising group, and grant SELECT on a share containing the table to the supplier's recipient",
+      "Grant SELECT and MODIFY on the table directly to the supplier's account users and the merchandising group"
+    ],
+    correct:2,
+    explain:`Teams inside the metastore get access, writes included, through ordinary Unity Catalog grants, while a reader in another organization gets a share. SELECT is the only privilege a share can grant a recipient, so any option that puts MODIFY on a share is impossible, and shared data is always read-only for the supplier.`
+  },
+
+  /* Ch 36 - Delta Sharing (the missing grant) */
+  {
+    ref:{chapter:36},
+    q:`A provider ran CREATE SHARE partner_feed, then ALTER SHARE partner_feed ADD TABLE main.sales.orders, then CREATE RECIPIENT acme USING ID with the partner metastore's sharing identifier. The partner, on a Unity Catalog-enabled Databricks workspace, reports that no shared data is visible. What is missing?`,
+    opts:[
+      "GRANT USE SCHEMA ON SCHEMA main.sales TO acme",
+      "A credential file sent to the partner to download",
+      "A VACUUM on main.sales.orders so the share picks up the latest files",
+      "GRANT SELECT ON SHARE partner_feed TO RECIPIENT acme"
+    ],
+    correct:3,
+    explain:`A share and a recipient are separate securables, and nothing flows until the provider grants the recipient SELECT on the share. A credential file is how an open sharing recipient on a non-Databricks client connects; a Databricks-to-Databricks recipient created with a sharing identifier authenticates through Databricks and needs no token.`
   }
 ];
 
@@ -928,7 +956,8 @@ const CHAPTERS = {
     32:["lesson-32-converting-managed-external.html", "Converting between managed & external"],
     33:["lesson-33-access-control-grants.html", "Access control: GRANT / REVOKE / DENY"],
     34:["lesson-34-column-masking-row-security.html", "Column masking & row-level security"],
-    35:["lesson-35-abac-policies.html", "ABAC policies"]
+    35:["lesson-35-abac-policies.html", "ABAC policies"],
+    36:["lesson-36-delta-sharing.html", "Delta Sharing with Unity Catalog"]
   }
 };
 /* ===== EXAM PAYLOAD - END ===== */
