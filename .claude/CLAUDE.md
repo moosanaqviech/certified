@@ -176,9 +176,10 @@ Glue Data Catalog and Lake Formation, 57 Kinesis Data Streams vs Firehose
 vs MSK (TO), 58 DataSync vs Transfer Family vs Data Transfer Terminal
 (TO), 59 Amazon Quick on Athena, Redshift and OpenSearch, 60 Glue vs EMR
 vs Batch (TO), 61 ingestion frequency, buffering and entry points, 62 CSV
-to Parquet), so Unit 3's chapters are all live. Chapter 62 closes Unit 3
-but saa-practice-exam-03 is not written yet, so its NAV is `next: null`;
-when the exam ships, set its `file:` and point lesson-62 at it. The Unit 2
+to Parquet), so Unit 3 is complete. The Unit 3 practice exam is live:
+saa-practice-exam-03 (22 questions, one per chapter 41 to 62, 44 minutes,
+72% pass, three select-two items on Ch 44, 50 and 57), linked from the Unit
+3 test row, and Chapter 62's NAV points at it ("Practice test"). The Unit 2
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
@@ -187,8 +188,8 @@ other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
-1 test row, and Chapter 23's NAV points at it ("Practice test"). Exams 03 and
-04 follow the same pattern per unit. validate.py requires every exam's
+1 test row, and Chapter 23's NAV points at it ("Practice test"). Exam 04
+follows the same pattern for Unit 4. validate.py requires every exam's
 `CHAPTERS.list` to mirror all chapters that have a `file:` in UNITS, so
 when a module ships, regenerate the list in each live SAA exam (free stays
 1 to 23). Every
