@@ -202,8 +202,17 @@ live and Unit 4 is complete. The Unit 4 practice exam is live too:
 saa-practice-exam-04 (27 questions, one per chapter 63 to 89, 54
 minutes, 72% pass, three select-two items on Ch 68, 73 and 85), linked
 from the Unit 4 test row, and Chapter 89, the last chapter of the course,
-points at it ("Practice test"). All four unit exams are live; the three
-sealed mocks (05 to 07) are next. The Unit 1
+points at it ("Practice test"). All four unit exams are live, and so are the
+three sealed full mocks (saa-practice-exam-05 to 07: 65 questions, 130
+minutes, 72% pass, 20/17/15/13 by domain, five select-two items each,
+their own scenarios: retail and financial services, healthcare and media,
+logistics, gaming and public sector; chapters sampled so the three
+together reach all 89), linked from the course home's "Full-length mock
+exams" section; 284 exam questions in all. The mocks are a sealed pool:
+never reuse their questions in the unit exams and never draw them into
+drills. The course is content-complete; registration (gate.ts,
+_shared.mjs, build_sitemap.py), the catalog row and the practice hub
+remain. The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit

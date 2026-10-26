@@ -479,6 +479,21 @@ URL in the commit.
       Practice tab reads "Soon" until the hub ships). Set a chapter's
       file:"..." in UNITS as it ships, and an exam's file to turn it into a
       link (the mocks are static HTML: swap the div for an <a>).
+    Exams: DONE 26 Oct 2026. Unit exams 01 to 04 and the three sealed
+      full mocks 05 to 07 are live and linked from the course home.
+      Mock sampling (one question per chapter listed, ascending):
+        05 retail and financial services: D1 all but 3, 10, 17; D2 all;
+          D3 41-43, 45, 47, 48, 50-52, 55-57, 59, 61, 62; D4 63-65, 68,
+          71-73, 75, 77, 80, 83, 85, 86. Select-two on Ch 5, 19, 34, 51, 73.
+        06 healthcare and media: D1 all but 7, 14, 21; D2 all; D3 41,
+          42, 44, 46, 47, 49-51, 53-55, 57, 58, 60, 62; D4 66, 67, 69,
+          70, 73, 74, 76, 78, 79, 81, 84, 86, 88. Select-two on Ch 3, 22,
+          31, 55, 79.
+        07 logistics, gaming and public sector: D1 all but 5, 12, 23; D2
+          all; D3 42-46, 48, 49, 52-54, 56, 58-61; D4 63, 65, 68, 71, 72,
+          75, 77, 80, 82, 83, 85, 87, 89. Select-two on Ch 7, 15, 39, 58,
+          87.
+      Together the three reach all 89 chapters.
     gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa.
     catalog.json entry, root index.html card, pricing.html row, footer links.
     Practice hub practice/aws-saa-c03.html once exams 01 to 04 exist.
