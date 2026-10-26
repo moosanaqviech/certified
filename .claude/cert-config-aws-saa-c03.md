@@ -307,6 +307,21 @@ Module 3.5 changes (checked 26 Oct 2026 on the AWS docs):
       second per shard per consumer and leaves the counts out.
     Firehose S3 buffering: 1 to 128 MiB and 60 to 900 s, with a zero-second
       option for no buffering (Ch 61).
+- Module 4.1 changes (checked 26 Oct 2026 on the AWS docs):
+    Amazon FSx File Gateway is no longer available to new customers, so Ch 70
+      teaches the three remaining Storage Gateway types (S3 File, Volume,
+      Tape) and never recommends FSx File Gateway.
+    gp3 is 20 percent cheaper per GiB than gp2 and decouples IOPS from size
+      (Ch 65).
+    RDS storage autoscaling fires at 10 percent free space for 5 minutes;
+      the maximum threshold must be at least 10 percent above current size
+      (Ch 67).
+    The Cost and Usage Report is taught as built through AWS Data Exports
+      (Ch 63).
+    AWS Backup cold storage has a 90-day minimum and only some resource
+      types support it (Ch 69).
+    EFS lifecycle defaults: IA after 30 days, Archive after 90 days without
+      access (Ch 72).
 
 ## Recommended-vs-contrast stances
 

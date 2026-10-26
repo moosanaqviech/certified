@@ -183,8 +183,13 @@ saa-practice-exam-03 (22 questions, one per chapter 41 to 62, 44 minutes,
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
-2 test row, and Chapter 40's NAV points at it ("Practice test"). Every
-other chapter shows "Coming soon". The Unit 1
+2 test row, and Chapter 40's NAV points at it ("Practice test"). Module
+4.1 is live too (63 cost visibility, 64 batch uploads and Requester Pays,
+65 storage sizing, 66 lowest-cost transfer, 67 storage auto scaling, 68 S3
+lifecycles, 69 backup and archival, 70 Storage Gateway vs DataSync vs
+Transfer Family (TO), 71 S3 storage classes (TO), 72 S3 vs EFS vs FSx vs
+EBS (TO)); Chapter 72 is the last live chapter, so its NAV.next is null
+until Module 4.2 ships. Every other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
