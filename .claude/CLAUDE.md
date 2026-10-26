@@ -166,8 +166,10 @@ reliability), so Unit 2 is complete. Module 3.1 is live too (41 storage
 performance: EBS volume types, instance store, S3 throughput, FSx for
 Lustre; 42 object vs file vs block (TO)), as is Module 3.2 (43 decoupling
 for scale, 44 EC2 Auto Scaling policies, 45 EC2 instance types, 46 Lambda
-memory and Fargate task size); chapter 46 is the last live chapter, so its
-NAV is `next: null` until Module 3.3 ships. The Unit 2
+memory and Fargate task size) and Module 3.3 (47 read replicas, 48
+database architectures, 49 MySQL vs PostgreSQL and RDS vs Aurora (TO), 50
+database types (TO), 51 caching strategies and DAX (TO)); chapter 51 is
+the last live chapter, so its NAV is `next: null` until Module 3.4 ships. The Unit 2
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit

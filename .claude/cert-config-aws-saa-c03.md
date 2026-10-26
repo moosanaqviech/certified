@@ -258,6 +258,23 @@ Module 3.2 changes (checked 26 Oct 2026 on the AWS docs):
       boots and daily ramps (Ch 44).
     Fargate task storage defaults to 20 GiB, up to 200 GiB (Ch 46).
 
+Module 3.3 changes (checked 26 Oct 2026 on the AWS docs):
+
+    Aurora Serverless v2 is now titled "Aurora serverless" in the docs; it
+      scales in 0.5 ACU steps and can scale to 0 ACUs with automatic pause
+      and resume. Lessons use the guide-era name "Aurora Serverless v2"
+      and mention the docs title once (Ch 48).
+    RDS magnetic storage is deprecated and existing volumes were migrated
+      to gp3; RDS storage is gp2/gp3 or Provisioned IOPS (io1, io2 Block
+      Express) (Ch 49).
+    Aurora cluster volumes grow up to 256 TiB on specific engine versions;
+      Aurora I/O-Optimized pays off when I/O is 25% or more of the bill
+      (Ch 49).
+    RDS allows 15 read replicas per primary; Aurora 15 Aurora Replicas;
+      Aurora Global Database up to 10 secondary Regions (Ch 47).
+    ElastiCache engines are Valkey, Memcached and Redis OSS; MemoryDB is
+      "Amazon MemoryDB" (Valkey and Redis OSS compatible) (Ch 50, 51).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
