@@ -117,8 +117,8 @@ Service); lessons spell a name out once and then use the short form.
       Valkey, Redis OSS, Memcached), "Amazon DocumentDB", "Amazon Neptune",
       "Amazon Keyspaces", "Amazon Redshift", "Amazon RDS Proxy". Teach
       "Aurora Serverless v2" only (see the closed-services note on v1).
-    Migration: "AWS DMS" (verify at Ch 82 whether to teach "DMS Schema
-      Conversion", "AWS SCT", or both), "AWS Application Migration
+    Migration: "AWS DMS", "DMS Schema Conversion" (managed default) and
+      "AWS SCT" (installed alternative), see the Module 4.3 notes, "AWS Application Migration
       Service" (never "CloudEndure Migration" or "Server Migration
       Service").
     Analytics: "Amazon Athena", "AWS Glue", "AWS Glue Data Catalog", "AWS
@@ -340,6 +340,22 @@ Module 3.5 changes (checked 26 Oct 2026 on the AWS docs):
     Compute Optimizer: 14-day lookback, up to 93 days with the paid
       enhanced infrastructure metrics; memory only with the CloudWatch
       agent (Ch 78).
+- Module 4.3 changes (checked 26 Oct 2026 on the AWS docs):
+    Schema conversion: teach "DMS Schema Conversion" (fully managed,
+      web-based, built on the AWS SCT engine) as the default and "AWS SCT"
+      as the installed alternative; DMS homogeneous data migrations use
+      native tools and are serverless (Ch 82).
+    Time series: Amazon Timestream for LiveAnalytics carries an end of
+      support notice pointing to Amazon Timestream for InfluxDB. Ch 81
+      teaches the access pattern (DynamoDB keys plus TTL, Parquet on S3)
+      and names Timestream for InfluxDB once, never as a quiz answer.
+    The Aurora docs now title the feature "Aurora serverless"; the course
+      keeps "Aurora Serverless v2" as in Ch 48. Recent engine versions
+      scale to 0 ACUs with auto-pause (Ch 80).
+    Database Savings Plans (up to 35 percent across RDS, Aurora, DynamoDB,
+      ElastiCache and more) sit beside reserved DB instances (Ch 80).
+    RDS automated backup retention is 0 to 35 days; transaction logs ship
+      every five minutes; snapshot export writes Parquet to S3 (Ch 79).
 
 ## Recommended-vs-contrast stances
 
