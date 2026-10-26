@@ -232,6 +232,19 @@ Module 2.2 changes (checked 25 Oct 2026 on the AWS docs):
       four strategies by cost and recovery speed; never state invented
       minute or hour ranges in questions.
 
+Module 3.1 changes (checked 26 Oct 2026 on the AWS docs):
+
+    gp3 now reaches 80,000 IOPS and 2,000 MiB/s on volumes up to 64 TiB
+      (was 16,000 IOPS, 1,000 MiB/s and 16 TiB); baseline stays 3,000 IOPS
+      and 125 MiB/s at any size. io2 Block Express is the pick only above
+      80,000 IOPS or 2,000 MiB/s, or for sub-millisecond latency, 99.999%
+      durability or Multi-Attach (Ch 41). Older study material that says
+      "over 16,000 IOPS means io1 or io2" is out of date.
+    S3 maximum object size is 48.8 TiB (was 5 TB); multipart parts stay
+      5 MiB to 5 GiB, up to 10,000 parts (Ch 41, 42).
+    S3 request rates stay at least 3,500 writes and 5,500 reads per second
+      per partitioned prefix (Ch 41).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
