@@ -164,8 +164,10 @@ across AZs and Regions, 35 Route 53, 36 availability metrics, 37 single
 points of failure, 38 data durability, 39 DR strategies (TO), 40 legacy
 reliability), so Unit 2 is complete. Module 3.1 is live too (41 storage
 performance: EBS volume types, instance store, S3 throughput, FSx for
-Lustre; 42 object vs file vs block (TO)); chapter 42 is the last live
-chapter, so its NAV is `next: null` until Module 3.2 ships. The Unit 2
+Lustre; 42 object vs file vs block (TO)), as is Module 3.2 (43 decoupling
+for scale, 44 EC2 Auto Scaling policies, 45 EC2 instance types, 46 Lambda
+memory and Fargate task size); chapter 46 is the last live chapter, so its
+NAV is `next: null` until Module 3.3 ships. The Unit 2
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit

@@ -245,6 +245,19 @@ Module 3.1 changes (checked 26 Oct 2026 on the AWS docs):
     S3 request rates stay at least 3,500 writes and 5,500 reads per second
       per partitioned prefix (Ch 41).
 
+Module 3.2 changes (checked 26 Oct 2026 on the AWS docs):
+
+    Lambda docs now title standard functions "Lambda Event Functions" and
+      add Lambda Managed Instances (some invocations up to 90 minutes);
+      Ch 46 teaches the 900-second timeout and the 128 MB to 10,240 MB
+      memory range, one vCPU at 1,769 MB, /tmp 512 MB to 10,240 MB.
+    The SQS scaling page now recommends metric math for backlog per
+      instance instead of publishing a custom metric (Ch 43).
+    AWS recommends target tracking over step scaling and against simple
+      scaling; predictive scaling and warm pools are the answers for slow
+      boots and daily ramps (Ch 44).
+    Fargate task storage defaults to 20 GiB, up to 200 GiB (Ch 46).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
