@@ -194,8 +194,13 @@ availability by workload class, 77 instance family for cost, 78
 right-sizing with Compute Optimizer) and Module 4.3 (79 database backup
 and retention, 80 DynamoDB vs RDS, serverless vs provisioned (TO), 81
 columnar and time-series data, 82 DMS homogeneous vs heterogeneous
-(TO)); Chapter 82 is the last live chapter, so its NAV.next is null
-until Module 4.4 ships. Every other chapter shows "Coming soon". The Unit 1
+(TO)) and Module 4.4 (83 NAT for cost (TO), 84 Direct Connect vs VPN vs
+internet for cost (TO), 85 routing to minimize transfer costs, 86
+CloudFront vs Global Accelerator (TO), 87 network optimization review,
+88 throttling strategy, 89 bandwidth allocation), so all 89 chapters are
+live and Unit 4 is complete. Chapter 89 is the last chapter of the
+course; its NAV.next is null until saa-practice-exam-04 ships, then it
+points there ("Practice test"). The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit

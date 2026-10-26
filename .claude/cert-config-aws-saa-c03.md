@@ -356,6 +356,21 @@ Module 3.5 changes (checked 26 Oct 2026 on the AWS docs):
       ElastiCache and more) sit beside reserved DB instances (Ch 80).
     RDS automated backup retention is 0 to 35 days; transaction logs ship
       every five minutes; snapshot export writes Parquet to S3 (Ch 79).
+- Module 4.4 changes (checked 26 Oct 2026 on the AWS docs):
+    Regional NAT gateways now exist (automatic multi-AZ expansion, no
+      public subnet, billed one NAT gateway-hour per AZ, no private NAT).
+      They postdate the guide: Ch 83 names them once, never as a quiz
+      answer; zonal "one per AZ" stays the taught production answer.
+    Site-to-Site VPN: 1.25 Gbps and 140,000 pps per standard tunnel; large
+      bandwidth tunnels up to 5 Gbps exist on Transit Gateway or Cloud WAN
+      only, not on a virtual private gateway (Ch 89).
+    Direct Connect: dedicated 1, 10, 100 and 400 Gbps; hosted 50 Mbps to
+      25 Gbps; port hours bill even when idle; data in is free (Ch 84, 89).
+    CloudFront now offers flat-rate monthly plans beside pay-as-you-go;
+      transfer from AWS origins to CloudFront is waived (Ch 86).
+    Route 53 alias queries to load balancers, CloudFront, API Gateway, VPC
+      endpoints, S3 website endpoints and others are free (Ch 87).
+    Every public IPv4 address, in use or idle, bills hourly (Ch 87).
 
 ## Recommended-vs-contrast stances
 
