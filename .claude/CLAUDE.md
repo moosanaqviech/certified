@@ -191,8 +191,11 @@ Transfer Family (TO), 71 S3 storage classes (TO), 72 S3 vs EFS vs FSx vs
 EBS (TO)), as is Module 4.2 (73 purchasing options (TO), 74 scaling for
 cost and EC2 hibernation, 75 Lambda vs Fargate vs EC2 (TO), 76
 availability by workload class, 77 instance family for cost, 78
-right-sizing with Compute Optimizer); Chapter 78 is the last live
-chapter, so its NAV.next is null until Module 4.3 ships. Every other chapter shows "Coming soon". The Unit 1
+right-sizing with Compute Optimizer) and Module 4.3 (79 database backup
+and retention, 80 DynamoDB vs RDS, serverless vs provisioned (TO), 81
+columnar and time-series data, 82 DMS homogeneous vs heterogeneous
+(TO)); Chapter 82 is the last live chapter, so its NAV.next is null
+until Module 4.4 ships. Every other chapter shows "Coming soon". The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
