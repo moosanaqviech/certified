@@ -322,6 +322,24 @@ Module 3.5 changes (checked 26 Oct 2026 on the AWS docs):
       types support it (Ch 69).
     EFS lifecycle defaults: IA after 30 days, Archive after 90 days without
       access (Ch 72).
+- Module 4.2 changes (checked 26 Oct 2026 on the AWS docs):
+    Savings Plans: Compute up to 66 percent off (any family, Region, OS,
+      tenancy, plus Fargate and Lambda), EC2 Instance up to 72 percent (one
+      family in one Region). AWS also offers Database and SageMaker AI
+      Savings Plans; lessons name only the compute plans (Ch 73).
+    Spot discounts are taught as "steep" without a percentage; the
+      two-minute interruption notice is the fact to test (Ch 73).
+    Hibernation: enabled at launch, encrypted EBS root volume big enough
+      for RAM, Linux RAM under 150 GiB (Ch 74).
+    Fargate bills per second with a one-minute minimum; Fargate Spot is up
+      to 70 percent off with a two-minute warning (Ch 75).
+    The Lambda pricing page now lists several function pricing models;
+      lessons keep to requests plus GB-seconds of duration (Ch 75).
+    A stopped RDS instance restarts automatically after 7 days, and its
+      storage still bills while stopped (Ch 76).
+    Compute Optimizer: 14-day lookback, up to 93 days with the paid
+      enhanced infrastructure metrics; memory only with the CloudWatch
+      agent (Ch 78).
 
 ## Recommended-vs-contrast stances
 
