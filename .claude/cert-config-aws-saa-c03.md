@@ -275,6 +275,21 @@ Module 3.3 changes (checked 26 Oct 2026 on the AWS docs):
     ElastiCache engines are Valkey, Memcached and Redis OSS; MemoryDB is
       "Amazon MemoryDB" (Valkey and Redis OSS compatible) (Ch 50, 51).
 
+Module 3.4 changes (checked 26 Oct 2026 on the AWS docs):
+
+    Transit Gateway attachments now also include Connect (SD-WAN), VPN
+      Concentrator, Client VPN and network function attachments; Ch 52
+      teaches the VPC, VPN, Direct Connect gateway and peering ones.
+    PrivateLink also offers resource endpoints (a database or other
+      resource, not only an NLB-fronted service); Ch 52 teaches endpoint
+      services behind an NLB.
+    Network Load Balancers now support QUIC alongside TCP, UDP and TLS;
+      ALB cross-zone is always on at the load balancer level, NLB and
+      GWLB default off, and NLB cross-zone adds EC2 inter-AZ data charges
+      (Ch 55).
+    The Outposts docs are split into first- and second-generation racks
+      plus Outposts servers; Ch 54 stays generic.
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
