@@ -168,8 +168,11 @@ Lustre; 42 object vs file vs block (TO)), as is Module 3.2 (43 decoupling
 for scale, 44 EC2 Auto Scaling policies, 45 EC2 instance types, 46 Lambda
 memory and Fargate task size) and Module 3.3 (47 read replicas, 48
 database architectures, 49 MySQL vs PostgreSQL and RDS vs Aurora (TO), 50
-database types (TO), 51 caching strategies and DAX (TO)); chapter 51 is
-the last live chapter, so its NAV is `next: null` until Module 3.4 ships. The Unit 2
+database types (TO), 51 caching strategies and DAX (TO)) and Module 3.4
+(52 peering vs Transit Gateway vs PrivateLink (TO), 53 CIDR planning, IPv6
+and subnet sizing, 54 placement groups, Local Zones, Wavelength and
+Outposts, 55 ALB vs NLB vs GWLB (TO)); chapter 55 is the last live
+chapter, so its NAV is `next: null` until Module 3.5 ships. The Unit 2
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
