@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- engine: v2 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Compute Options and Features: EC2 Instance Types for Performance · SAA-C03 Chapter 45</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, and it MUST keep the
+     .html extension: Netlify serves this page at both /course/file.html and
+     /course/file, and this tag is what tells Google the two are one page.
+     Form: https://certify.courses/<course-folder>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/aws-solutions-architect-associate/lesson-45-ec2-instance-types.html">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== SHELL — do not change between lessons ===== */
+    --frame: #13141f;
+    --surface: #161822;
+    --surface-2: #1e2130;
+    --ink: #f1f1f6;
+    --ink-soft: #a6a8b6;
+    --ink-faint: #62647a;
+    --line: rgba(255,255,255,0.08);
+    --display: "Fraunces", Georgia, serif;
+    --body: "Hanken Grotesk", system-ui, sans-serif;
+
+    /* ===== PALETTE — the only CSS you edit per lesson ===== */
+    --bg: #110906;            /* page background */
+    --bg-tint: #391c13;       /* ambient glow tint behind the card */
+    --accent: #f16237;        /* topic color: vermilion, Unit 3 Module 3.2 Ch 43-46 */
+    --accent-glow: rgba(241,98,55,0.12);  /* correct-answer fill */
+    --accent-ink: #110906;    /* text on top of the accent key chip */
+    --warn: #7ba9e5;
+    --ok: #86efac;
+    --lav: #c4b5fd;
+    --sky: #7dd3fc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg-tint) 0%, transparent 60%), var(--bg);
+    font-family: var(--body); color: var(--ink); overflow: hidden;
+  }
+
+  .stage { height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .phone { position: relative; width: 100%; max-width: 460px; height: 100dvh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; }
+  .screen { position: relative; height: 100%; width: 100%; background: var(--surface); border-radius: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; transition: background 0.7s ease; z-index: 0; }
+
+  .screen::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .topbar { position: relative; z-index: 6; padding: 18px 20px 8px; display: flex; gap: 5px; align-items: center; }
+  .seg { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .seg > i { display: block; height: 100%; width: 0%; background: var(--ink); border-radius: 3px; transition: width 0.4s ease; }
+  .seg.done > i, .seg.active > i { width: 100%; }
+
+  .viewport { position: relative; z-index: 6; flex: 1; overflow: hidden; }
+  .card {
+    position: absolute; inset: 0; padding: 14px 30px 30px; display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2,0.7,0.2,1);
+    pointer-events: none; overflow-y: auto;
+  }
+  .card.in { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .card.out-left { opacity: 0; transform: translateX(-40px); }
+
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; margin-bottom: 14px; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; transform: translateY(-1px); }
+
+  h1 { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 14px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 29px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .lead { font-size: 17px; line-height: 1.5; color: var(--ink-soft); font-weight: 400; }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .art { margin: 6px 0 22px; display: flex; align-items: center; justify-content: center; min-height: 150px; }
+  .art.grow { flex: 1; }
+  svg { display: block; width: 100%; height: auto; max-width: 320px; }
+
+  .card.in .reveal { animation: rise 0.55s cubic-bezier(0.2,0.7,0.2,1) backwards; }
+  .card.in .reveal:nth-child(1){ animation-delay: 0.05s; }
+  .card.in .reveal:nth-child(2){ animation-delay: 0.13s; }
+  .card.in .reveal:nth-child(3){ animation-delay: 0.21s; }
+  .card.in .reveal:nth-child(4){ animation-delay: 0.29s; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+
+  /* ===== v2: step-sequenced card builds ===== */
+  /* Any element carrying data-step starts hidden and rises in only once its
+     step is reached. step-on is added by the engine (see applySteps). SVG <g>
+     groups animate here too: CSS transforms on SVG elements work in modern
+     WebKit and the iOS shell. Do NOT put an entrance .reveal on a [data-step]
+     element, and do NOT rely on a transform= attribute on a [data-step] <g>
+     (the CSS transform below would override it: position children directly). */
+  [data-step] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s cubic-bezier(0.2,0.7,0.2,1), transform 0.3s cubic-bezier(0.2,0.7,0.2,1); }
+  [data-step].step-on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Appended captions (.stepcaps): the engine adds .step-past to captions of
+     steps already behind the current one, dimming them; the current step's
+     caption stays at opacity 1. The base [data-step] transition already
+     includes opacity, so the dim animates. Declared after .step-on so the
+     dim wins on already-revealed elements. */
+  [data-step].step-past { opacity: 0.55; }
+
+  .spacer { flex: 1; }
+
+  .tag { display: inline-flex; align-items:center; gap:8px; padding: 7px 13px; border-radius: 100px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid var(--line); background: rgba(255,255,255,0.03); margin-bottom: 18px; }
+
+  .pills { display:flex; flex-direction:column; gap:10px; margin-top: 6px;}
+  .pill { display:flex; gap:13px; align-items:flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .pill .ic { flex:0 0 auto; width:26px; height:26px; }
+  .pill p { font-size: 14.5px; line-height:1.4; color: var(--ink-soft); }
+  .pill p b { color: var(--ink); font-weight:600; display:block; margin-bottom:2px; font-size:15px;}
+
+  .codeblock { background:#0a1011; border:1px solid var(--line); border-radius:14px; padding:16px 18px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:12.5px; line-height:1.7; color:var(--ink-soft); overflow-x:auto; }
+  .codeblock .kw { color:#7cb8e8; font-weight:600; }
+  .codeblock .st { color:#7ccdb0; }
+  .codeblock .cm { color:#5d6f71; font-style:italic; }
+  .codeblock .al { color: var(--accent); font-weight:600; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; color: var(--ink); }
+
+  .footer { position: relative; z-index: 6; padding: 12px 24px 26px; display: flex; align-items:center; gap: 14px; }
+  .btn { flex: 1; border: none; font-family: var(--body); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; padding: 16px; border-radius: 16px; cursor: pointer; background: var(--ink); color: var(--bg); transition: transform 0.15s ease, opacity 0.2s ease, background 0.3s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { flex: 0 0 auto; width: 54px; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); font-size: 20px; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn.alt { flex: 1 1 0; background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn[hidden] { display: none; }
+  /* final card, two exits side by side: shrink to keep both on one line.
+     Stacking them instead would cost the card ~50px of height, and the
+     recap card is already the tightest one in a lesson. */
+  .footer.end .btn { font-size: 14px; white-space: nowrap; padding: 16px 10px; }
+  @media (max-width: 359px) { .footer.end { padding-left: 14px; padding-right: 14px; gap: 10px; } .footer.end .btn { font-size: 13px; padding: 15px 8px; } }
+
+  .choices { display:flex; flex-direction:column; gap:11px; margin-top: 4px;}
+  .choice { text-align:left; cursor:pointer; background: var(--surface-2); border: 1.5px solid var(--line); color: var(--ink); font-family: var(--body); font-weight: 600; font-size: 15px; padding: 16px 18px; border-radius: 15px; display:flex; align-items:center; gap: 13px; transition: border-color 0.2s, background 0.2s, transform 0.1s; }
+  .choice:active { transform: scale(0.985); }
+  .choice .key { width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); font-size:13px; color: var(--ink-soft); }
+  .choice.correct { border-color: var(--accent); background: var(--accent-glow); }
+  .choice.correct .key { background: var(--accent); color: var(--accent-ink); }
+  .choice.wrong { border-color: rgba(232,98,92,0.8); background: rgba(232,98,92,0.12); }
+  .choice.dim { opacity: 0.45; }
+
+  .feedback { margin-top:16px; font-size:14.5px; line-height:1.5; color: var(--ink-soft); opacity:0; transform: translateY(8px); transition: 0.35s ease; }
+  .feedback.show { opacity:1; transform:none; }
+  .feedback b { color: var(--accent); font-weight:600; }
+
+  .done-badge { width: 84px; height:84px; margin: 0 auto 6px; }
+
+  @media (max-width: 440px) { .stage { padding: 0; } .phone { width:100%; height:100dvh; max-height:100dvh; border-radius:0; padding:0; box-shadow:none;} .screen { border-radius:0; } }
+
+  /* ===== v2: reduced motion ===== */
+  /* Kill every engine-driven motion when the viewer asks for less: the card
+     slide, the entrance reveal, the glow crossfade, and the step transitions
+     all become instant (elements still appear, just without travel). Payload
+     looping motion must be authored as CSS keyframes inside the SVG's own
+     <style> block and wrapped in this same query, so it is covered too. */
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .card.in .reveal { animation: none; }
+    .glow { transition: none; }
+    [data-step] { transition: none; }
+  }
+  /* ===== desktop: let the lesson use the screen ===== */
+  /* Below 900px the lesson keeps its phone column. On a laptop or monitor the
+     column widens and the art (viewBox 320x200, labels drawn at phone size)
+     renders at up to twice its phone width, capped by viewport height so a
+     cover still fits above the footer; the type steps up with it. Shell CSS
+     only: the payload and the engine are untouched by this block. */
+  @media (min-width: 900px) {
+    .phone { max-width: 860px; }
+    .topbar { padding: 22px 72px 10px; }
+    .card { padding: 24px 72px 40px; }
+    .footer { padding: 14px 72px 30px; }
+    svg { max-width: min(640px, 76vh); }
+    .art { min-height: 240px; margin: 10px 0 28px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 52px; }
+    h2 { font-size: 36px; }
+    .lead { font-size: 20px; }
+    .tag { font-size: 14px; }
+    .pill p { font-size: 16.5px; }
+    .pill p b { font-size: 17px; }
+    .codeblock { font-size: 14px; }
+    .choice { font-size: 17px; }
+    .feedback { font-size: 16.5px; }
+    .footer.end .btn { font-size: 16px; }
+  }
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="glow" id="glow"></div>
+      <div class="topbar" id="topbar"></div>
+      <div class="viewport" id="viewport"></div>
+      <div class="footer" id="footer">
+        <button class="btn ghost" id="back" aria-label="Back">←</button>
+        <button class="btn alt" id="catalog" hidden>Chapter catalog</button>
+        <button class="btn" id="next">Begin lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ▼▼▼  LESSON PAYLOAD — BEGIN  ▼▼▼
+   Unit 3 · Module 3.2 · Chapter 45 · Compute Options and Features: EC2
+   Instance Types for Performance
+   Objective S3.2.3 (selecting the appropriate compute options and
+   features, EC2 instance types). Choosing a family to cut cost is
+   Chapter 77.
+   Shape: cover, reading a type name (step build), the families (step
+   build), workload to family, quiz (memory optimized for an in-memory
+   store), Graviton, burstable credits (step build), networking, placement
+   groups (step build), quiz (cluster placement group with EFA), recap.
+   11 cards, two quizzes, correct letters D and B.
+   Sources (all checked 26 Oct 2026):
+   docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html
+   (series letter, generation, options, then size after the period; C
+   compute optimized, M general purpose, R memory optimized, X memory
+   intensive, I and D storage, P and G GPU, Trn Trainium, Inf Inferentia,
+   T burstable; options g Graviton, a AMD, i Intel, d instance store, n
+   network and EBS optimized);
+   docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html
+   and the unlimited and standard mode pages (baseline CPU with credits to
+   burst; t3.large baseline 30% per vCPU; standard mode drops to baseline
+   when credits run out; unlimited mode keeps bursting and bills surplus
+   usage at a flat rate);
+   docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html
+   (SR-IOV, ENA up to 100 Gbps, all Nitro instances use ENA, no extra
+   charge);
+   docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html (Elastic Fabric
+   Adapter for tightly coupled HPC and AI/ML, OS-bypass);
+   docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-strategies.html
+   (cluster packs instances close in one AZ for low latency and high
+   throughput; partition keeps groups on separate racks, up to seven
+   partitions per AZ, for HDFS, HBase, Cassandra; spread puts each
+   instance on distinct hardware, up to seven running instances per AZ
+   per group);
+   docs.aws.amazon.com/lambda/latest/dg/foundation-arch.html and the EC2
+   instance types pages (Graviton is Arm-based; software must run on
+   arm64).
+   Warm Unit 3 band: --warn is the cool azure, per the cert config.
+   Cover animates (the name c7gn.4xlarge, each segment lighting in turn).
+   Step builds on cards 1, 2, 6 and 8.
+   ============================================================ */
+
+/* ----------  NAV  ---------- */
+const NAV = {
+  catalog:   "index.html",
+  next:      "lesson-46-lambda-fargate-sizing.html",
+  nextLabel: "Next chapter"
+};
+
+/* ----------  ART  (custom SVGs, referenced from cards as ${A.name})  ---------- */
+const A = {
+  cover: `<svg viewBox="0 0 320 200">
+    <defs>
+      <radialGradient id="c45r" cx="0.5" cy="0.5" r="0.6">
+        <stop offset="0" style="stop-color:rgba(241,98,55,0.18)"/>
+        <stop offset="1" style="stop-color:rgba(241,98,55,0)"/>
+      </radialGradient>
+    </defs>
+    <style>
+      .c45s { animation: c45lit 8s ease-in-out infinite; opacity: 0.25; }
+      .c45s2 { animation-delay: 2s; } .c45s3 { animation-delay: 4s; } .c45s4 { animation-delay: 6s; }
+      @keyframes c45lit { 0% { opacity: 0.25; } 8%, 22% { opacity: 1; } 30%, 100% { opacity: 0.25; } }
+      @media (prefers-reduced-motion: reduce) {
+        .c45s { animation: none; opacity: 1; }
+      }
+    </style>
+    <ellipse cx="160" cy="100" rx="155" ry="92" fill="url(#c45r)"/>
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <rect x="40" y="52" width="240" height="56" rx="12" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="160" y="92" font-size="30" font-weight="700" fill="var(--ink)" letter-spacing="1"><tspan fill="var(--accent)">c</tspan><tspan fill="var(--sky)">7</tspan><tspan fill="var(--lav)">gn</tspan><tspan fill="var(--ink-faint)">.</tspan><tspan fill="var(--ok)">4xlarge</tspan></text>
+      <g class="c45s">
+        <path d="M86 112 L86 126" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="86" y="140" fill="var(--accent)" font-size="8.5" font-weight="700">series</text>
+        <text x="86" y="152" fill="var(--ink-faint)" font-size="7">compute</text>
+      </g>
+      <g class="c45s c45s2">
+        <path d="M112 112 L112 160" stroke="var(--sky)" stroke-width="1.5"/>
+        <text x="112" y="172" fill="var(--sky)" font-size="8.5" font-weight="700">generation</text>
+      </g>
+      <g class="c45s c45s3">
+        <path d="M146 112 L146 126" stroke="var(--lav)" stroke-width="1.5"/>
+        <text x="152" y="140" fill="var(--lav)" font-size="8.5" font-weight="700">options</text>
+        <text x="152" y="152" fill="var(--ink-faint)" font-size="7">Graviton, network</text>
+      </g>
+      <g class="c45s c45s4">
+        <path d="M222 112 L222 126" stroke="var(--ok)" stroke-width="1.5"/>
+        <text x="222" y="140" fill="var(--ok)" font-size="8.5" font-weight="700">size</text>
+        <text x="222" y="152" fill="var(--ink-faint)" font-size="7">vCPU and memory</text>
+      </g>
+      <text x="160" y="34" fill="var(--ink-soft)" font-size="9.5">Every letter in the name is a hint.</text>
+    </g>
+  </svg>`,
+
+  families: `<svg viewBox="0 0 320 128">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="6" y="8" width="96" height="52" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+        <text x="54" y="28" fill="var(--ink)" font-size="10" font-weight="700">M  (and T)</text>
+        <text x="54" y="44" fill="var(--ink-faint)" font-size="7">general purpose,</text>
+        <text x="54" y="54" fill="var(--ink-faint)" font-size="7">balanced</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="112" y="8" width="96" height="52" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="160" y="28" fill="var(--accent)" font-size="10" font-weight="700">C</text>
+        <text x="160" y="44" fill="var(--ink-faint)" font-size="7">compute optimized,</text>
+        <text x="160" y="54" fill="var(--ink-faint)" font-size="7">more CPU per GiB</text>
+        <rect x="218" y="8" width="96" height="52" rx="9" fill="var(--surface-2)" stroke="var(--lav)"/>
+        <text x="266" y="28" fill="var(--lav)" font-size="10" font-weight="700">R, X, U</text>
+        <text x="266" y="44" fill="var(--ink-faint)" font-size="7">memory optimized,</text>
+        <text x="266" y="54" fill="var(--ink-faint)" font-size="7">more GiB per vCPU</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="6" y="70" width="148" height="52" rx="9" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="80" y="90" fill="var(--sky)" font-size="10" font-weight="700">I, D</text>
+        <text x="80" y="106" fill="var(--ink-faint)" font-size="7">storage optimized, fast local NVMe</text>
+        <rect x="166" y="70" width="148" height="52" rx="9" fill="var(--surface-2)" stroke="var(--ok)"/>
+        <text x="240" y="90" fill="var(--ok)" font-size="10" font-weight="700">P, G, Trn, Inf</text>
+        <text x="240" y="106" fill="var(--ink-faint)" font-size="7">accelerated: GPUs and AWS chips</text>
+      </g>
+    </g>
+  </svg>`,
+
+  burst: `<svg viewBox="0 0 320 128">
+    <g font-family="Hanken Grotesk">
+      <path d="M20 108 L304 108 M20 108 L20 14" stroke="var(--line)"/>
+      <g style="pointer-events:none" data-step="1">
+        <path d="M20 78 L304 78" stroke="var(--ink-faint)" stroke-dasharray="4 3"/>
+        <text x="300" y="72" fill="var(--ink-faint)" font-size="7.5" text-anchor="end">baseline (t3.large: 30% per vCPU)</text>
+        <path d="M20 96 L80 96" stroke="var(--ok)" stroke-width="2.5"/>
+        <text x="50" y="90" fill="var(--ok)" font-size="7" text-anchor="middle">earn credits</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <path d="M80 96 L92 26 L160 26" stroke="var(--accent)" stroke-width="2.5" fill="none"/>
+        <text x="126" y="20" fill="var(--accent)" font-size="7" text-anchor="middle">spend credits</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <path d="M160 26 L170 78 L240 78" stroke="var(--warn)" stroke-width="2.5" fill="none"/>
+        <text x="206" y="94" fill="var(--warn)" font-size="7" text-anchor="middle">standard: held at baseline</text>
+        <path d="M160 26 L304 26" stroke="var(--lav)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+        <text x="270" y="40" fill="var(--lav)" font-size="7" text-anchor="middle">unlimited: billed extra</text>
+      </g>
+    </g>
+  </svg>`,
+
+  placement: `<svg viewBox="0 0 320 120">
+    <g font-family="Hanken Grotesk" text-anchor="middle">
+      <g style="pointer-events:none" data-step="1">
+        <rect x="6" y="8" width="98" height="88" rx="9" fill="var(--surface-2)" stroke="var(--accent)"/>
+        <text x="55" y="26" fill="var(--accent)" font-size="9" font-weight="700">cluster</text>
+        <g fill="var(--accent)"><rect x="34" y="38" width="12" height="12" rx="2"/><rect x="48" y="38" width="12" height="12" rx="2"/><rect x="62" y="38" width="12" height="12" rx="2"/><rect x="34" y="52" width="12" height="12" rx="2"/><rect x="48" y="52" width="12" height="12" rx="2"/><rect x="62" y="52" width="12" height="12" rx="2"/></g>
+        <text x="55" y="82" fill="var(--ink-faint)" font-size="7">close, one AZ</text>
+        <text x="55" y="112" fill="var(--ink-soft)" font-size="7">lowest latency</text>
+      </g>
+      <g style="pointer-events:none" data-step="2">
+        <rect x="111" y="8" width="98" height="88" rx="9" fill="var(--surface-2)" stroke="var(--sky)"/>
+        <text x="160" y="26" fill="var(--sky)" font-size="9" font-weight="700">partition</text>
+        <rect x="122" y="36" width="22" height="34" rx="3" fill="none" stroke="var(--sky)"/>
+        <rect x="149" y="36" width="22" height="34" rx="3" fill="none" stroke="var(--sky)"/>
+        <rect x="176" y="36" width="22" height="34" rx="3" fill="none" stroke="var(--sky)"/>
+        <text x="160" y="82" fill="var(--ink-faint)" font-size="7">racks per partition</text>
+        <text x="160" y="112" fill="var(--ink-soft)" font-size="7">HDFS, Cassandra</text>
+      </g>
+      <g style="pointer-events:none" data-step="3">
+        <rect x="216" y="8" width="98" height="88" rx="9" fill="var(--surface-2)" stroke="var(--ok)"/>
+        <text x="265" y="26" fill="var(--ok)" font-size="9" font-weight="700">spread</text>
+        <g fill="var(--ok)"><rect x="228" y="44" width="12" height="12" rx="2"/><rect x="259" y="44" width="12" height="12" rx="2"/><rect x="290" y="44" width="12" height="12" rx="2"/></g>
+        <text x="265" y="82" fill="var(--ink-faint)" font-size="7">distinct hardware</text>
+        <text x="265" y="112" fill="var(--ink-soft)" font-size="7">7 per AZ, critical few</text>
+      </g>
+    </g>
+  </svg>`,
+
+  done: `<svg viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M28 43 l9 9 l19 -20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+/* ----------  CARDS  ---------- */
+const cards = [
+
+  /* 0: cover */
+  { glow: "radial-gradient(540px 340px at 50% 18%, var(--accent-glow), transparent 70%)",
+    html: `
+    <div class="spacer" style="flex:0.2"></div>
+    <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 3 · Module 3.2 · Chapter 45</div>
+    <h1 class="reveal" style="font-size:31px">EC2 instance types for performance</h1>
+    <p class="lead reveal">Hundreds of instance types reduce to a few families, each tuned for one bottleneck. Match the family to what the workload runs out of first, then add the features that remove the next limit.</p>
+    <div class="art grow reveal">${A.cover}</div>` },
+
+  /* 1: reading the name, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Reading a type name</div>
+    <h2 class="reveal" style="font-size:25px">c7gn.4xlarge, piece by piece</h2>
+    <div class="pills">
+      <div class="pill" style="pointer-events:none" data-step="1"><p><b>c · 7</b>Series (c is compute optimized) and generation. Newer generations give better price performance.</p></div>
+      <div class="pill" style="pointer-events:none" data-step="2"><p><b>gn</b>Options: g is AWS Graviton, n is network optimized. Others: a AMD, i Intel, d local NVMe instance store.</p></div>
+      <div class="pill" style="pointer-events:none" data-step="3"><p><b>4xlarge</b>Size. Each step up doubles vCPU and memory; the family keeps the ratio between them.</p></div>
+    </div>` },
+
+  /* 2: families, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The families</div>
+    <h2 class="reveal" style="font-size:25px">One family per bottleneck</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.families}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">Families differ in the ratio of CPU to memory, and in what else is attached. Tap through them.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px"><strong>General purpose</strong> balances CPU, memory and network: web servers, small databases, code repositories.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>Compute optimized</strong> leans to CPU; <strong>memory optimized</strong> leans to RAM.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px"><strong>Storage optimized</strong> adds fast local disks; <strong>accelerated</strong> adds GPUs, AWS Trainium or AWS Inferentia.</p>
+    </div>` },
+
+  /* 3: workload to family */
+  { html: `
+    <div class="eyebrow reveal">Match the workload</div>
+    <h2 class="reveal" style="font-size:25px">What runs out first?</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>CPU: C</b>Batch processing, video encoding, game servers, scientific modeling, high-traffic ad serving.</p></div>
+      <div class="pill"><p><b>Memory: R or X</b>In-memory caches and databases, real-time big data analytics, large SAP or relational workloads.</p></div>
+      <div class="pill"><p><b>Local disk I/O: I</b>NoSQL stores and data warehouses that need very high random IOPS on local NVMe.</p></div>
+      <div class="pill"><p><b>Parallel math: P, G, Trn, Inf</b>Model training (P, Trn), inference (Inf, G), graphics and video (G).</p></div>
+    </div>` },
+
+  /* 4: quiz, memory optimized */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A self-managed in-memory analytics engine keeps a 400 GiB working set in RAM. On its current general purpose instances, CPU averages 30% while the system swaps to disk. Which family fits best?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>Compute optimized (C)</span></button>
+      <button class="choice" data-correct="false"><span class="key">B</span><span>Burstable (T) in unlimited mode</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Storage optimized (I)</span></button>
+      <button class="choice" data-correct="true"><span class="key">D</span><span>Memory optimized (R)</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Swapping with idle CPU means memory is the bottleneck, and R instances give the most GiB per vCPU. Option C is tempting because fast local NVMe would make swapping faster, but the fix is to keep the working set in RAM, not to swap quicker. C and T add CPU the engine does not need.</div>` },
+
+  /* 5: Graviton */
+  { html: `
+    <div class="eyebrow reveal">Processor choice</div>
+    <h2 class="reveal" style="font-size:25px">AWS Graviton</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>What it is</b>AWS-designed Arm processors, marked by g in the name (m7g, c7gn, r8g). AWS positions them for the best price performance in EC2.</p></div>
+      <div class="pill"><p><b>The condition</b>The software must run on arm64: most Linux distributions, interpreted languages and multi-arch container images do; x86-only binaries do not.</p></div>
+      <div class="pill"><p><b>Also on</b>Lambda (arm64), Fargate, RDS, ElastiCache and more.</p></div>
+    </div>` },
+
+  /* 6: burstable credits, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">The performance trap</div>
+    <h2 class="reveal" style="font-size:25px">Burstable T instances</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.burst}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">T instances are cheap because most of the time they idle. Tap to see what happens when they cannot.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px">Each size has a <strong>baseline</strong> CPU level. Running below it earns CPU credits.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px">Bursting above the baseline spends credits. Fine for spiky web servers and dev boxes.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px">Out of credits, <strong>standard</strong> mode drops to baseline and the app slows; <strong>unlimited</strong> keeps going but bills surplus use. Sustained high CPU belongs on M or C.</p>
+    </div>` },
+
+  /* 7: networking */
+  { html: `
+    <div class="eyebrow reveal">Network features</div>
+    <h2 class="reveal" style="font-size:25px">Bandwidth and latency between nodes</h2>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Enhanced networking (ENA)</b>SR-IOV for more bandwidth, more packets per second and lower latency, up to 100 Gbps on supported types. Every Nitro instance has it, at no charge.</p></div>
+      <div class="pill"><p><b>Elastic Fabric Adapter (EFA)</b>Adds OS-bypass for tightly coupled HPC and distributed ML training (MPI, NCCL).</p></div>
+      <div class="pill"><p><b>n option</b>Network-optimized variants (c7gn, m6in) for packet processing and appliances.</p></div>
+    </div>` },
+
+  /* 8: placement groups, step build */
+  { steps: 3,
+    html: `
+    <div class="eyebrow reveal">Where instances land</div>
+    <h2 class="reveal" style="font-size:25px">Placement groups</h2>
+    <div class="art reveal" style="min-height:0;margin:2px 0 10px">${A.placement}</div>
+    <div class="stepcap-swap">
+      <p class="lead" data-step="0" style="pointer-events:none;font-size:14px">A placement group tells EC2 how close, or how far apart, to put instances. Tap through the three strategies.</p>
+      <p class="lead" data-step="1" style="pointer-events:none;font-size:14px"><strong>Cluster</strong> packs instances close together in one AZ for the lowest latency and highest throughput between them. One rack problem can hit many.</p>
+      <p class="lead" data-step="2" style="pointer-events:none;font-size:14px"><strong>Partition</strong> gives each partition its own racks (up to seven per AZ), so large distributed stores keep replicas apart.</p>
+      <p class="lead" data-step="3" style="pointer-events:none;font-size:14px"><strong>Spread</strong> puts each instance on distinct hardware, up to seven per AZ per group, for a few instances that must never fail together.</p>
+    </div>` },
+
+  /* 9: quiz, cluster + EFA */
+  { quiz: true,
+    html: `
+    <div class="eyebrow reveal">Quick check</div>
+    <h2 class="reveal" style="font-size:19px">A weather model runs as one MPI job across 64 instances that exchange data constantly. Runs are slow because of node-to-node latency. Which change helps most?</h2>
+    <div class="choices reveal">
+      <button class="choice" data-correct="false"><span class="key">A</span><span>A spread placement group across three AZs</span></button>
+      <button class="choice" data-correct="true"><span class="key">B</span><span>A cluster placement group with EFA-enabled instances</span></button>
+      <button class="choice" data-correct="false"><span class="key">C</span><span>Burstable T instances in unlimited mode</span></button>
+      <button class="choice" data-correct="false"><span class="key">D</span><span>A partition placement group with seven partitions</span></button>
+    </div>
+    <div class="feedback"><b>Correct.</b> Cluster placement puts the nodes close in one AZ, and EFA adds OS-bypass networking for MPI traffic. Option D is tempting because it is also a placement group, but partitions spread instances across racks to limit failures, which adds distance. Spread across AZs adds even more latency, and T instances do not address the network.</div>` },
+
+  /* 10: done */
+  { glow: "radial-gradient(560px 360px at 50% 16%, var(--accent-glow), transparent 70%)", last: true,
+    html: `
+    <div class="spacer" style="flex:0.3"></div>
+    <div class="done-badge reveal">${A.done}</div>
+    <h2 class="reveal" style="text-align:center;font-size:27px">Chapter 45 complete</h2>
+    <p class="lead reveal" style="text-align:center;margin-bottom:18px">Next: sizing serverless compute, Lambda memory and Fargate tasks.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Family</b>M balanced, C CPU, R and X memory, I local disk, P, G, Trn and Inf accelerated.</p></div>
+      <div class="pill"><p><b>Traps</b>T instances throttle or bill extra under sustained load; Graviton needs arm64 software.</p></div>
+      <div class="pill"><p><b>Network</b>ENA everywhere, EFA plus a cluster placement group for tightly coupled HPC.</p></div>
+    </div>
+    <div class="spacer"></div>` }
+];
+
+/* ============================================================
+   ▲▲▲  LESSON PAYLOAD — END  ▲▲▲
+   ============================================================ */
+
+
+/* ----------  ENGINE — shared, do not edit  ----------
+   v2 adds opt-in, per-card step builds on top of the v1 card engine. A card
+   with no `steps` field takes exactly the v1 paths below and renders and
+   behaves identically; every v2 branch is guarded by `steps` being present. */
+const ENGINE_VERSION = 'v2';
+const vp = document.getElementById('viewport');
+const topbar = document.getElementById('topbar');
+const glow = document.getElementById('glow');
+const nextBtn = document.getElementById('next');
+const backBtn = document.getElementById('back');
+const catalogBtn = document.getElementById('catalog');
+const footerEl = document.getElementById('footer');
+let i = 0;
+const answered = {};
+const stepState = {};   // v2: current revealed step per card index (mirrors `answered`)
+
+cards.forEach(() => { const s = document.createElement('div'); s.className = 'seg'; s.innerHTML = '<i></i>'; topbar.appendChild(s); });
+const segs = [...topbar.children];
+
+const els = cards.map((c) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = c.html; vp.appendChild(d); return d; });
+
+/* v2: apply step visibility for one card WITHOUT touching its .in class, so a
+   step reveal never replays the card-entrance .reveal stagger. Cumulative for
+   normal elements (data-step <= current). Captions append by default: inside
+   .stepcaps they accumulate too (data-step="0" is the pre-first-tap caption),
+   and captions behind the current step get .step-past (dimmed) while the
+   current one stays at full strength. A .stepcap-swap container (or legacy
+   .stepcap) opts into swap: only the caption whose data-step equals the
+   current step is shown. */
+function applySteps(idx) {
+  const cur = stepState[idx] || 0;
+  els[idx].querySelectorAll('[data-step]').forEach(function(nd) {
+    const s = parseInt(nd.getAttribute('data-step'), 10);
+    const swapCap = nd.closest && nd.closest('.stepcap-swap, .stepcap');
+    const appendCap = !swapCap && nd.closest && nd.closest('.stepcaps');
+    const on = swapCap ? (s === cur) : appendCap ? (s <= cur) : (s >= 1 && s <= cur);
+    nd.classList.toggle('step-on', on);
+    nd.classList.toggle('step-past', !!appendCap && on && s < cur);
+  });
+}
+
+/* Card layout: the only place that adds/removes .in (and thus replays reveal).
+   Called on card change, never on a step advance. */
+function layout() {
+  cards.forEach((c, idx) => {
+    const el = els[idx];
+    el.classList.remove('in','out-left');
+    if (idx === i) el.classList.add('in');
+    else if (idx < i) el.classList.add('out-left');
+    segs[idx].classList.toggle('done', idx < i);
+    segs[idx].classList.toggle('active', idx === i);
+    applySteps(idx);   // persists built state on revisit
+  });
+  glow.style.background = cards[i].glow || 'transparent';
+}
+
+/* Footer/button state only. Safe to call after a step advance (no reveal). */
+function updateFooter() {
+  const c = cards[i];
+  const end = !!c.last;
+  const twoUp = end && !!NAV.next;   // last chapter of a course shows one button
+  backBtn.hidden = end;
+  backBtn.disabled = (i === 0);
+  catalogBtn.hidden = !twoUp;
+  footerEl.classList.toggle('end', twoUp);
+  const total = c.steps || 0;
+  const stepsLeft = total > 0 && (stepState[i] || 0) < total;
+  if (stepsLeft) { nextBtn.disabled = false; nextBtn.textContent = (i === 0) ? 'Begin lesson' : 'Continue'; }
+  else if (c.quiz && !answered[i]) { nextBtn.disabled = true; nextBtn.textContent = 'Pick an answer'; }
+  else if (end) { nextBtn.disabled = false; nextBtn.textContent = NAV.next ? NAV.nextLabel + ' →' : 'Back to catalog'; }
+  else if (i === 0) { nextBtn.disabled = false; nextBtn.textContent = 'Begin lesson'; }
+  else { nextBtn.disabled = false; nextBtn.textContent = 'Continue'; }
+}
+
+function render() {
+  layout();
+  updateFooter();
+  if (cards[i].quiz) wireQuiz(els[i], i);
+}
+
+/* v2: reveal the next step of the current card. Returns true if a step was
+   consumed (so the caller does not also advance the card). */
+function advanceStep(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total) return false;
+  const cur = stepState[idx] || 0;
+  if (cur >= total) return false;
+  stepState[idx] = cur + 1;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+/* v2: reveal every remaining step at once (swipe-left escape hatch). */
+function skipSteps(idx) {
+  const total = cards[idx].steps || 0;
+  if (!total || (stepState[idx] || 0) >= total) return false;
+  stepState[idx] = total;
+  applySteps(idx);
+  updateFooter();
+  return true;
+}
+
+function wireQuiz(cardEl, idx) {
+  const choices = [...cardEl.querySelectorAll('.choice')];
+  const fb = cardEl.querySelector('.feedback');
+  choices.forEach(ch => {
+    ch.onclick = () => {
+      if (answered[idx]) return;
+      answered[idx] = true;
+      choices.forEach(o => {
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === ch) o.classList.add('wrong');
+        else o.classList.add('dim');
+      });
+      fb.classList.add('show');
+      nextBtn.disabled = false; nextBtn.textContent = 'Continue';
+    };
+  });
+}
+
+function go(n) { if (n < 0 || n >= cards.length) return; i = n; render(); }
+
+/* Primary action. On a step card mid-build this reveals the next step; once
+   the steps are done (or on a card with none) it advances, honoring the quiz
+   gate exactly as v1 did. Shared by the Continue button and ArrowRight. */
+function handleNext() {
+  if (cards[i].last) { location.href = NAV.next || NAV.catalog; return; }
+  if (advanceStep(i)) return;
+  go(i + 1);
+}
+nextBtn.onclick = handleNext;
+backBtn.onclick = () => go(i - 1);
+catalogBtn.onclick = () => { location.href = NAV.catalog; };
+
+/* v2: tapping anywhere on a step card advances one step; once built, a tap
+   advances the card (gate permitting). Cards with no steps ignore taps, so
+   this listener is inert on v1-style cards. Elements with their own behavior
+   (quiz choices, links) are skipped so a tap never double-fires. */
+vp.addEventListener('click', e => {
+  const c = cards[i];
+  if (!c.steps) return;
+  if (e.target.closest('.choice, a')) return;
+  if ((stepState[i] || 0) < c.steps) { advanceStep(i); return; }
+  if (!nextBtn.disabled && !c.last) go(i + 1);
+});
+
+/* Keys and swipes only move between cards (or, for a step card, between
+   steps). Leaving the lesson always takes a deliberate tap, so a stray swipe
+   on the final card cannot navigate away. ArrowRight mirrors the Continue
+   button step-wise; ArrowLeft mirrors Back. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && !nextBtn.disabled && !cards[i].last) handleNext();
+  if (e.key === 'ArrowLeft' && i > 0) go(i - 1);
+});
+
+let sx = 0;
+vp.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  // Swipe left: skip any remaining steps and advance in one gesture, honoring
+  // the quiz gate (updateFooter re-derives nextBtn.disabled after the skip).
+  if (dx < -50 && !cards[i].last) { skipSteps(i); if (!nextBtn.disabled) go(i + 1); }
+  if (dx > 50 && i > 0) go(i - 1);
+});
+
+render();
+
+/* Back to quiz (additive). A "Review: Chapter N" link in a quiz explanation
+   opens this lesson with ?back=<quiz path>, plus &tab=1 when it opened in a
+   new tab. Only then a small bar above the progress segments offers the way
+   back: closing the tab returns to the untouched quiz tab, otherwise it goes
+   to the quiz path, which restores the session. No param, no change. */
+(function () {
+  let back = null, tab = false;
+  try {
+    const p = new URLSearchParams(location.search), b = p.get('back');
+    tab = p.get('tab') === '1';
+    if (b && b.charAt(0) === '/' && b.charAt(1) !== '/' && b.charAt(1) !== '\\') {
+      const u = new URL(b, location.href);
+      if (u.origin === location.origin) back = u.pathname + u.search;
+    }
+  } catch (e) { return; }
+  if (!back) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:relative;z-index:7;padding:14px 20px 0;';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '← Back to quiz';
+  btn.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--surface-2,rgba(255,255,255,0.06));border:1px solid var(--line,rgba(255,255,255,0.1));border-radius:999px;padding:7px 14px;cursor:pointer;';
+  btn.onclick = () => {
+    if (tab) { try { window.close(); } catch (e) {} setTimeout(() => { location.href = back; }, 300); }
+    else location.href = back;
+  };
+  bar.appendChild(btn);
+  const tb = document.getElementById('topbar');
+  tb.parentNode.insertBefore(bar, tb);
+})();
+</script>
+</body>
+</html>
