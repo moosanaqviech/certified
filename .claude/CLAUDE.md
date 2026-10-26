@@ -171,8 +171,14 @@ database architectures, 49 MySQL vs PostgreSQL and RDS vs Aurora (TO), 50
 database types (TO), 51 caching strategies and DAX (TO)) and Module 3.4
 (52 peering vs Transit Gateway vs PrivateLink (TO), 53 CIDR planning, IPv6
 and subnet sizing, 54 placement groups, Local Zones, Wavelength and
-Outposts, 55 ALB vs NLB vs GWLB (TO)); chapter 55 is the last live
-chapter, so its NAV is `next: null` until Module 3.5 ships. The Unit 2
+Outposts, 55 ALB vs NLB vs GWLB (TO)) and Module 3.5 (56 data lake with
+Glue Data Catalog and Lake Formation, 57 Kinesis Data Streams vs Firehose
+vs MSK (TO), 58 DataSync vs Transfer Family vs Data Transfer Terminal
+(TO), 59 Amazon Quick on Athena, Redshift and OpenSearch, 60 Glue vs EMR
+vs Batch (TO), 61 ingestion frequency, buffering and entry points, 62 CSV
+to Parquet), so Unit 3's chapters are all live. Chapter 62 closes Unit 3
+but saa-practice-exam-03 is not written yet, so its NAV is `next: null`;
+when the exam ships, set its `file:` and point lesson-62 at it. The Unit 2
 practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
