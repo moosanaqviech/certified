@@ -198,14 +198,16 @@ columnar and time-series data, 82 DMS homogeneous vs heterogeneous
 internet for cost (TO), 85 routing to minimize transfer costs, 86
 CloudFront vs Global Accelerator (TO), 87 network optimization review,
 88 throttling strategy, 89 bandwidth allocation), so all 89 chapters are
-live and Unit 4 is complete. Chapter 89 is the last chapter of the
-course; its NAV.next is null until saa-practice-exam-04 ships, then it
-points there ("Practice test"). The Unit 1
+live and Unit 4 is complete. The Unit 4 practice exam is live too:
+saa-practice-exam-04 (27 questions, one per chapter 63 to 89, 54
+minutes, 72% pass, three select-two items on Ch 68, 73 and 85), linked
+from the Unit 4 test row, and Chapter 89, the last chapter of the course,
+points at it ("Practice test"). All four unit exams are live; the three
+sealed mocks (05 to 07) are next. The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
-1 test row, and Chapter 23's NAV points at it ("Practice test"). Exam 04
-follows the same pattern for Unit 4. validate.py requires every exam's
+1 test row, and Chapter 23's NAV points at it ("Practice test"). validate.py requires every exam's
 `CHAPTERS.list` to mirror all chapters that have a `file:` in UNITS, so
 when a module ships, regenerate the list in each live SAA exam (free stays
 1 to 23). Every
