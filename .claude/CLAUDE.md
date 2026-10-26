@@ -162,7 +162,11 @@ scaling strategies (TO), 26 SQS, 27 SQS vs SNS vs EventBridge vs Amazon MQ
 managed AI services) and Module 2.2 (33 immutable infrastructure, 34 HA
 across AZs and Regions, 35 Route 53, 36 availability metrics, 37 single
 points of failure, 38 data durability, 39 DR strategies (TO), 40 legacy
-reliability), so Unit 2 is complete. The Unit 2 practice exam is live:
+reliability), so Unit 2 is complete. Module 3.1 is live too (41 storage
+performance: EBS volume types, instance store, S3 throughput, FSx for
+Lustre; 42 object vs file vs block (TO)); chapter 42 is the last live
+chapter, so its NAV is `next: null` until Module 3.2 ships. The Unit 2
+practice exam is live:
 saa-practice-exam-02 (17 questions, one per chapter 24 to 40, 34 minutes,
 72% pass, three select-two items on Ch 27, 34 and 37), linked from the Unit
 2 test row, and Chapter 40's NAV points at it ("Practice test"). Every
