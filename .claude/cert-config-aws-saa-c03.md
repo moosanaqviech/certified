@@ -290,6 +290,24 @@ Module 3.4 changes (checked 26 Oct 2026 on the AWS docs):
     The Outposts docs are split into first- and second-generation racks
       plus Outposts servers; Ch 54 stays generic.
 
+Module 3.5 changes (checked 26 Oct 2026 on the AWS docs):
+
+    Amazon Quick: the docs say Quick "evolved from Amazon QuickSight", and
+      the BI feature is now "Amazon Quick Sight" inside Quick (alongside
+      Flows, Automate, Index, Research). Ch 59 says so once and uses
+      "Amazon Quick" after that; SPICE keeps its name.
+    AWS Data Transfer Terminal is currently available only to Enterprise
+      Support customers (others contact AWS Support); Ch 58 says so.
+      Snowball Edge's own guide confirms it is closed to new customers.
+    Storage Gateway's docs list S3 File Gateway, FSx File Gateway and Tape
+      Gateway; re-check which are open to new customers at Ch 70.
+    AWS Glue for Ray has reached end of support: never teach it.
+    Kinesis Data Streams: enhanced fan-out allows 20 consumers per stream
+      (50 in the new On-demand Advantage mode); Ch 57 teaches 2 MB per
+      second per shard per consumer and leaves the counts out.
+    Firehose S3 buffering: 1 to 128 MiB and 60 to 900 s, with a zero-second
+      option for no buffering (Ch 61).
+
 ## Recommended-vs-contrast stances
 
     People: IAM Identity Center with temporary credentials is the
