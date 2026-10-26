@@ -176,15 +176,15 @@ const E = {
 const QUESTIONS = [
 
   /* Ch 01 - AWS Global Infrastructure and the Shared Responsibility Model (K1.1.3, K1.1.5) */
-  { ref:{chapter:1}, q:`A hospital group moves its appointment data from a self-managed database on EC2 to an Amazon DynamoDB table. Under the shared responsibility model, which task does the hospital group still own?`,
+  { ref:{chapter:1}, q:`A streaming company runs its video transcoding fleet on Amazon EC2 instances that it launched from its own AMI. A security assessment asks which party is responsible for patching the guest operating system and for the security group rules on those instances. What is the correct answer?`,
     opts:[
-      "Choosing who can read the table with IAM policies, and the encryption settings for its data",
-      "Patching the operating system of the servers that run DynamoDB",
-      "Replacing failed disks in the storage fleet behind the table",
-      "Physical security of the data centers that host the table"
+      "The company is responsible for both the guest OS patches and the security group rules",
+      "AWS patches the guest OS, and the company manages the security group rules",
+      "The company patches the guest OS, and AWS manages the security group rules",
+      "AWS is responsible for both, because EC2 is an AWS service"
     ],
     correct:0,
-    explain:`With a managed service such as DynamoDB, AWS runs the servers, storage and operating systems, and the customer keeps its data, access permissions and encryption choices. Patching the OS (B) was the customer's job on EC2, which is exactly the work that moves to AWS with a managed service. Disks and data centers are always AWS's.` },
+    explain:`On EC2 the customer controls everything from the guest operating system up: patches, installed software, security group rules and data, while AWS secures the hardware, hypervisor and facilities. Option B is tempting because AWS patches the hosts under managed services such as RDS, but on EC2 the guest OS is the customer's. Security groups are customer-configured firewall rules.` },
 
   /* Ch 02 - Locking Down the Root User and IAM Users: MFA, Access Keys, Least Privilege (S1.1.1) */
   { ref:{chapter:2}, q:`A streaming company runs 25 member accounts in AWS Organizations, each created with its own root password and MFA device that a small team must look after. Security wants to reduce root credential risk across all member accounts with the least ongoing effort, while still being able to perform root-only tasks when needed. What should the architect do?`,
@@ -752,15 +752,15 @@ const QUESTIONS = [
     explain:`A Glue job converts the CSV to compressed, partitioned Parquet, and job bookmarks make each run process only files it has not seen. A crawler (B) is tempting because it is part of the pipeline, but it only catalogs data; it converts nothing. Querying the raw CSV still scans every row and column.` },
 
   /* Ch 66 - The Lowest Cost Method of Transferring Data to AWS Storage (S4.1.3) */
-  { ref:{chapter:66}, q:`A university lab needs to move a one-time 15 TB research data set into S3. It has a 1 Gbps internet link that is mostly idle at night and 10 days to finish. What is the lowest-cost method?`,
+  { ref:{chapter:66}, q:`A hospital is retiring an on-premises NFS file server holding 40 TB and millions of files. The data must be copied into S3, re-synced every night with each transfer verified until cutover in three weeks, and the IT team has no time to build and maintain scripts. What is the most cost-effective approach?`,
     opts:[
-      "Upload over the existing link with the AWS CLI using multipart uploads",
-      "Order an AWS Direct Connect connection for the transfer",
-      "Use AWS Data Transfer Terminal",
-      "Enable S3 Transfer Acceleration on the bucket"
+      "AWS DataSync with a scheduled task from the NFS server to S3",
+      "AWS Data Transfer Terminal",
+      "An AWS Direct Connect connection with a custom copy script",
+      "S3 Transfer Acceleration with the AWS CLI on a cron job"
     ],
     correct:0,
-    explain:`15 TB at 1 Gbps takes about a day and a half, well within 10 days; inbound transfer to S3 is free, and the CLI adds only request charges. Data Transfer Terminal (C) is the answer when the link cannot finish in time, which is not the case here, and it adds logistics. Direct Connect takes weeks, and Transfer Acceleration adds per-GB charges.` },
+    explain:`DataSync's per-GB fee buys incremental syncs, scheduling and verification of every transfer, which replaces scripts the team cannot build; the link can carry 40 TB well within three weeks. Data Transfer Terminal (B) suits data too large for the link before a deadline, and it cannot do nightly re-syncs. Direct Connect takes weeks to provision, and Transfer Acceleration adds charges while still needing scripts.` },
 
   /* Ch 67 - When Storage Auto Scaling Is Required (S4.1.4) */
   { ref:{chapter:67}, q:`A media archive runs a self-managed PostgreSQL database on EC2. Its 2 TiB gp3 data volume is 90 percent full and grows steadily. The team wants to add capacity with the least disruption. What should it do?`,

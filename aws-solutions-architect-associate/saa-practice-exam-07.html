@@ -176,15 +176,15 @@ const E = {
 const QUESTIONS = [
 
   /* Ch 01 - AWS Global Infrastructure and the Shared Responsibility Model (K1.1.3, K1.1.5) */
-  { ref:{chapter:1}, q:`A game studio moves its player profiles from a self-managed database on EC2 to Amazon DynamoDB. Under the shared responsibility model, which task remains the studio's responsibility after the move?`,
+  { ref:{chapter:1}, q:`A state education agency is moving its student records system to AWS. The records must stay inside the country, and the system must keep running if a single data center fails. An AWS Region exists in the country. How should the system be deployed?`,
     opts:[
-      "Patching the operating system of the servers that run DynamoDB",
-      "Writing the IAM policies that control which roles can read the table, and choosing its encryption key",
-      "Securing the physical data centers that host the table",
-      "Replacing failed disks in the storage fleet behind the table"
+      "In one Availability Zone of the in-country Region",
+      "Across two or more Availability Zones in the in-country Region",
+      "Across the in-country Region and a Region in a neighboring country",
+      "On CloudFront edge locations inside the country"
     ],
     correct:1,
-    explain:`For a managed service like DynamoDB, AWS runs the servers, storage and facilities, while the customer keeps responsibility for its data, who can access it and how it is encrypted. Patching the operating system (A) was the studio's job on EC2, but with DynamoDB AWS patches the hosts. Physical security and disk replacement are inherited controls.` },
+    explain:`Data stays where the customer puts it, so choosing the in-country Region meets residency, and spreading across Availability Zones, which are separate data centers with independent power and networking, survives the loss of one. A second Region abroad (C) adds resilience the requirement does not ask for and moves records out of the country. One AZ is a single point of failure, and edge locations cache content, they do not host the system.` },
 
   /* Ch 02 - Locking Down the Root User and IAM Users: MFA, Access Keys, Least Privilege (S1.1.1) */
   { ref:{chapter:2}, q:`A state agency runs 25 member accounts in AWS Organizations. An audit asks it to reduce the risk from root user credentials across all member accounts with the least ongoing effort, while still being able to perform the rare root-only tasks. What should it do?`,
@@ -354,26 +354,26 @@ const QUESTIONS = [
     explain:`An S3 Bucket Key generates a bucket-level key from the KMS key, so S3 calls KMS far less often, cutting request cost and throttling while keeping the customer managed key. SSE-C (A) removes KMS calls but makes the application handle and send keys with every request. CloudHSM and more keys add work without reducing calls.` },
 
   /* Ch 19 - Encrypting Data in Transit: AWS Certificate Manager and TLS (S1.3.3) */
-  { ref:{chapter:19}, q:`A game publisher serves its website through Amazon CloudFront in front of an ALB in eu-west-1. The team requested and validated an ACM certificate for www.example.com in eu-west-1, but it does not appear when they edit the CloudFront distribution. What should they do?`,
+  { ref:{chapter:19}, q:`A public sector agency publishes documents through an S3 bucket that partner systems read with the AWS SDK. An audit requires that no request to the bucket can ever travel over plain HTTP. What should the agency configure?`,
     opts:[
-      "Export the certificate's private key and upload it to the distribution",
-      "Serve HTTP between viewers and CloudFront until the certificate appears",
-      "Request and DNS-validate a certificate for the domain in us-east-1, and attach it to the distribution",
-      "Copy the existing certificate to us-east-1 with ACM"
+      "Default encryption with SSE-S3 on the bucket",
+      "S3 Block Public Access on the account",
+      "A bucket policy that denies any request where aws:SecureTransport is false",
+      "Object Lock in compliance mode"
     ],
     correct:2,
-    explain:`CloudFront uses certificates from US East (N. Virginia) only, so a certificate must be requested or imported there; DNS validation then lets ACM renew it automatically. ACM certificates cannot be copied between Regions (D), so a second request is the way. Serving HTTP drops encryption, and integrated certificates are not handled by exporting keys.` },
+    explain:`A bucket policy statement that denies requests when aws:SecureTransport is false rejects every non-TLS request, enforcing encryption in transit. Default encryption with SSE-S3 (A) is tempting because it sounds similar, but it protects data at rest, not the connection. Block Public Access and Object Lock address public exposure and deletion, not transport.` },
 
   /* Ch 20 - Access Policies for Encryption Keys: KMS Key Policies and Grants (S1.3.4) */
-  { ref:{chapter:20}, q:`Objects in a bucket in account A are encrypted with a customer managed KMS key in account A. A role in account B is allowed by the bucket policy to read them, but every GetObject call fails with an access denied error from KMS. What fixes it?`,
+  { ref:{chapter:20}, q:`A logistics company runs a quarterly reconciliation job whose role needs to decrypt data with a customer managed KMS key for a few hours, then lose that permission. The security team does not want to edit the key policy for every run. What should the job's automation use?`,
     opts:[
-      "Add an IAM policy in account A that allows the role to decrypt",
-      "Add a statement to the key policy in account A that allows the role in account B to use kms:Decrypt, and allow kms:Decrypt on the key in the role's IAM policy",
-      "Re-encrypt the objects with the AWS managed key aws/s3",
-      "Turn off encryption on the bucket"
+      "Add the role to the key policy permanently",
+      "Create a KMS grant for the role at the start of the run and retire it when the job ends",
+      "Change the key policy to allow every principal in the account",
+      "Switch the data to the AWS managed key aws/s3"
     ],
     correct:1,
-    explain:`Cross-account use of a KMS key needs the key policy to allow the other account's principal and that principal's own IAM policy to allow the action. An IAM policy in account A (A) cannot grant permissions to an identity in account B. AWS managed keys cannot be shared across accounts at all, and dropping encryption breaks the security requirement.` },
+    explain:`Grants give a principal specific key permissions programmatically and can be retired or revoked when the work is done, so access lasts only for the run and the key policy stays untouched. A permanent key policy entry (A) works but leaves the access in place between quarters. Opening the key to the whole account breaks least privilege, and AWS managed key policies cannot be customized.` },
 
   /* Ch 21 - Implementing Backups and Replication: AWS Backup, Cross-Region and Cross-Account Copies, S3 Replication (S1.3.5) */
   { ref:{chapter:21}, q:`A game studio enabled S3 Cross-Region Replication from its asset bucket to a bucket in another Region. New uploads now appear in the destination, but the two years of assets that already existed are missing there. How should the team copy them?`,
@@ -497,15 +497,15 @@ const QUESTIONS = [
     explain:`Translate changes the language and Comprehend analyzes sentiment, both as pre-trained APIs with no model to build. SageMaker AI (A) could do it, but training and hosting a model is never the least-effort answer when managed services already cover the task. Rekognition analyzes images, and Polly and Transcribe convert between text and speech.` },
 
   /* Ch 33 - Automating for Infrastructure Integrity: Immutable Infrastructure with AWS CloudFormation (S2.2.1) */
-  { ref:{chapter:33}, q:`A central IT team must deploy the same logging and alerting stack to 20 accounts across three Regions and keep every copy identical as the template changes. What should it use?`,
+  { ref:{chapter:33}, q:`A manufacturer's operators patch its EC2 fleet in place over SSH each month, and servers that should be identical now differ, causing hard-to-reproduce failures. The fleet is defined in CloudFormation behind an Auto Scaling group. Which approach makes the fleet immutable?`,
     opts:[
-      "Deploy the template by hand in each account and Region",
-      "AWS Systems Manager Patch Manager",
-      "AWS CloudFormation StackSets from a delegated administrator account",
-      "Copy a golden AMI to every Region"
+      "Run a configuration script on every running server each night",
+      "Take weekly snapshots of each server's root volume",
+      "Build a new golden AMI with EC2 Image Builder for each release and roll it out by updating the launch template in the stack, replacing instances",
+      "Enable termination protection on all instances"
     ],
     correct:2,
-    explain:`StackSets create, update and delete the same stack across many accounts and Regions in one operation, so every copy follows the template. Manual deployment (A) multiplies effort and invites drift across 60 copies. Patch Manager patches existing nodes, and an AMI is not a logging and alerting stack.` },
+    explain:`Immutable infrastructure never changes a running server: each release is a new image, and instances are replaced, so every server matches the template and the AMI. Nightly scripts (A) still modify servers in place, which is how drift crept in. Snapshots preserve the drifted state, and termination protection stops the very replacement immutability depends on.` },
 
   /* Ch 34 - Services for High Availability Across AZs and Regions (S2.2.2) */
   { ref:{chapter:34}, q:`A game's leaderboards run on DynamoDB in us-east-1. Players in North America and Europe should read and write in their nearest Region with low latency, and the game must keep working if a whole Region fails. What should the architect use?`,
@@ -586,15 +586,15 @@ const QUESTIONS = [
     explain:`RDS Proxy pools connections, absorbs surges and keeps client connections open through a Multi-AZ failover, needing only an endpoint change. Retry logic (D) is the right pattern in new code, but the application cannot be modified. A replica cannot accept writes, and a bigger instance does not stop the reconnect storm.` },
 
   /* Ch 42 - Storage That Scales: Object vs File vs Block (S3.1.2) */
-  { ref:{chapter:42}, q:`A news site for a public broadcaster runs its content management system on a fleet of Linux instances across three AZs. Every instance must read and write the same uploaded media files through a POSIX file system, and the library grows unpredictably. Which storage fits?`,
+  { ref:{chapter:42}, q:`A ticketing platform runs a self-managed database on a single EC2 instance. The database needs low-latency block storage that keeps its data when the instance is stopped and can be grown as ticket sales increase. Which storage fits?`,
     opts:[
-      "An EBS volume attached to each instance",
-      "Instance store volumes synchronized nightly",
-      "An S3 bucket accessed through the SDK only",
-      "An Amazon EFS Regional file system mounted on every instance"
+      "An Amazon S3 bucket mounted as the data directory",
+      "An Amazon EFS file system",
+      "The instance store volumes of the instance",
+      "An Amazon EBS volume, increased with Elastic Volumes as data grows"
     ],
     correct:3,
-    explain:`EFS is a shared POSIX file system that many Linux instances mount at once across AZs, and it grows and shrinks with the files. S3 (C) scales without limit but is object storage over an API, not a mounted file system the CMS expects. EBS volumes attach to one instance in one AZ, and instance store is temporary.` },
+    explain:`EBS is block storage for one instance with low latency, it persists independently of the instance, and Elastic Volumes grows it in place. Instance store (C) is tempting because it is fast, but its data is lost when the instance stops. S3 is object storage over an API, and EFS is a shared network file system rather than the block device a database engine expects.` },
 
   /* Ch 43 - Decoupling So Components Scale Independently (S3.2.1) */
   { ref:{chapter:43}, q:`Each sensor reading from a factory must be processed by three independent systems: an alerting service, a historian and a machine learning feature store. Each runs at a different speed and must scale on its own backlog without slowing the others. What should the architect build?`,
@@ -719,15 +719,15 @@ const QUESTIONS = [
     explain:`At 200 Mbps the bulk copy would take months, so physical transfer through Data Transfer Terminal fits the deadline, and DataSync then copies only changed files on a schedule with verification. Snowball Edge (B) is no longer available to new customers. Transfer Acceleration speeds distance, not a link this small, and Transfer Family is for outside partners.` },
 
   /* Ch 59 - Visualization Strategies: Amazon Quick on Athena, Redshift, and OpenSearch Service (S3.5.4) */
-  { ref:{chapter:59}, q:`A game's live operations team needs to search application logs and chart error spikes by server within seconds of the events happening. Which visualization approach fits?`,
+  { ref:{chapter:59}, q:`A school district keeps weekly attendance files in an S3 data lake cataloged in the AWS Glue Data Catalog. Principals want interactive dashboards that change once a week, with no servers or clusters to run and costs tied to actual queries. Which approach fits?`,
     opts:[
-      "Amazon Quick dashboards on Athena over the S3 log archive",
-      "Amazon Quick on Amazon Redshift with SPICE refreshed daily",
       "Amazon OpenSearch Service with OpenSearch Dashboards, fed by a Firehose stream",
-      "AWS CloudTrail event history"
+      "A provisioned Amazon Redshift cluster running 24/7 with a BI tool on EC2",
+      "Amazon Quick dashboards on Amazon Athena over the S3 data",
+      "Amazon CloudWatch dashboards"
     ],
     correct:2,
-    explain:`OpenSearch Service indexes streamed logs within seconds and its built-in Dashboards handle search and operational charts. Quick on Redshift with SPICE (B) is strong for repeated business reporting, but a daily refresh and warehouse loads cannot show seconds-old errors. Athena over the archive suits occasional analysis, and CloudTrail records API calls, not application logs.` },
+    explain:`Athena queries the cataloged S3 data in place and bills per query, and Amazon Quick builds the interactive dashboards with nothing to manage. OpenSearch (A) shines for streaming logs within seconds, which weekly attendance does not need, and it runs a domain all the time. A provisioned Redshift cluster idles most of the week, and CloudWatch dashboards chart metrics, not business data.` },
 
   /* Ch 60 - Compute for Data Processing: AWS Glue vs Amazon EMR vs AWS Batch (S3.5.5) */
   { ref:{chapter:60}, q:`A transport research lab runs 10,000 independent traffic simulations, each a container that runs for about two hours. The code is not Spark, jobs can be retried if interrupted, and cost matters. What should the lab use?`,
