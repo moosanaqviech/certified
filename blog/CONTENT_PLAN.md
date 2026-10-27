@@ -47,6 +47,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 7 | Liquid Clustering vs partitioning and Z-Order: what Databricks recommends now | "liquid clustering vs partitioning" | Yes | blog/liquid-clustering-vs-partitioning-z-order.html |
 | 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | Yes | blog/common-mistakes-databricks-data-engineer-associate-exam.html |
 | 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | Yes | blog/is-databricks-data-engineer-associate-worth-it-2026.html |
+| 10 | Unity Catalog vs AWS Lake Formation: governing a lakehouse on Databricks vs AWS (cross-cert: links DE Associate and Professional to SAA-C03 chapter 56 and DEA-C01) | "unity catalog vs lake formation" | No | |
 
 ## Databricks Data Engineer Professional
 
@@ -178,6 +179,10 @@ Note on the Filename column: published posts are `.html` files in the
 | 5 | Security groups vs network ACLs: stateful vs stateless (trade-off, chapter 10) | "security group vs nacl" | Yes | blog/security-groups-vs-network-acls.html |
 | 6 | VPC gateway endpoints vs interface endpoints (AWS PrivateLink) (trade-off, chapter 11) | "gateway endpoint vs interface endpoint" | Yes | blog/vpc-gateway-endpoint-vs-interface-endpoint.html |
 | 7 | AWS Secrets Manager vs Systems Manager Parameter Store (trade-off, chapter 13) | "secrets manager vs parameter store" | Yes | blog/secrets-manager-vs-parameter-store.html |
+| 8 | Is the AWS Solutions Architect Associate (SAA-C03) certification worth it in 2026 | "is aws solutions architect associate worth it" | No | |
+| 9 | Which AWS certification first: a 2026 path across Cloud Practitioner, AI Practitioner, Solutions Architect, Data Engineer and ML Engineer (cross-cert hub: links all five AWS courses and their practice hubs) | "which aws certification first" / "aws certification path 2026" | No | |
+| 10 | AWS disaster recovery strategies: backup and restore vs pilot light vs warm standby vs multi-site active/active (trade-off, chapter 39) | "pilot light vs warm standby" | No | |
+| 11 | SQS vs SNS vs EventBridge vs Amazon MQ: picking the right AWS messaging service (trade-off, chapter 27; also DEA-C01) | "sqs vs sns vs eventbridge" | No | |
 
 ## Microsoft Azure Fundamentals (AZ-900)
 
