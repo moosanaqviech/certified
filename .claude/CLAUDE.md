@@ -210,9 +210,12 @@ logistics, gaming and public sector; chapters sampled so the three
 together reach all 89), linked from the course home's "Full-length mock
 exams" section; 284 exam questions in all. The mocks are a sealed pool:
 never reuse their questions in the unit exams and never draw them into
-drills. The course is content-complete; registration (gate.ts,
-_shared.mjs, build_sitemap.py), the catalog row and the practice hub
-remain. The Unit 1
+drills. The course is content-complete and shows "Live now" on the
+root catalog (with Practice and "Start learning" links); its practice hub
+is live at practice/aws-saa-c03 (see the practice hubs paragraph below),
+linked from the course home's Learn / Practice toggle, the practice index
+and the site footer. Registration (gate.ts, _shared.mjs, build_sitemap.py)
+remains. The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
@@ -301,8 +304,9 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/databricks-genai-associate.html`), Data Analyst Associate
 (`practice/databricks-da-associate.html`), Spark Developer Associate
 (`practice/databricks-spark-associate.html`), AWS MLA-C02
-(`practice/aws-mla-c02.html`) and AWS AIF-C01 (`practice/aws-aif-c01.html`)
-have hubs, so every live course has one.
+(`practice/aws-mla-c02.html`), AWS AIF-C01 (`practice/aws-aif-c01.html`)
+and AWS SAA-C03 (`practice/aws-saa-c03.html`) have hubs, so every live
+course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub runs its two sealed
 mocks (`mock-exam-01` and `02`: 59 questions, 120 minutes, sampled at the ten
@@ -352,7 +356,15 @@ domain, so exam 04 feeds two domains), uses the three full mocks (`05` to
 12-question Readiness check from the section exams, and its five bars carry
 the official 20/24/28/14/14 weights, so they read "% of exam". Its pass
 target is 70 (our practice target; the real exam reports a scaled 700 of
-1,000).
+1,000). The AWS SAA-C03 hub is the MLA-C02 clone in the same AWS cerulean
+palette: it drills from the four unit exams (`saa-practice-exam-01` to
+`04`, tagged by each question's `Ch NN` header against the chapter ranges
+1-23, 24-40, 41-62, 63-89, one per domain), uses the three sealed mocks
+(`05` to `07`, 65 questions, 130 minutes) as its mock pool, runs a
+weighted 12-question Readiness check from the unit exams, and its four
+bars carry the official 30/26/24/20 weights, so they read "% of exam".
+Its course id is `aws-saa` (the course home's and the exams' id) and its
+pass target is 72, matching the course's exams.
 
 ## Author identity and trust pages
 
