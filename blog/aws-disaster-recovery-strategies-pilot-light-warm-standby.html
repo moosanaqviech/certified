@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Disaster Recovery Strategies: Backup and Restore vs Pilot Light vs Warm Standby vs Active/Active</title>
+<meta name="description" content="The four AWS disaster recovery strategies compared: what runs in the recovery Region, RPO and RTO, cost, and the wording that picks each one on SAA-C03.">
+<link rel="canonical" href="https://certify.courses/blog/aws-disaster-recovery-strategies-pilot-light-warm-standby">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AWS Disaster Recovery Strategies: Backup and Restore vs Pilot Light vs Warm Standby vs Active/Active">
+<meta property="og:description" content="The four AWS disaster recovery strategies compared: what runs in the recovery Region, RPO and RTO, cost, and the wording that picks each one on SAA-C03.">
+<meta property="og:url" content="https://certify.courses/blog/aws-disaster-recovery-strategies-pilot-light-warm-standby">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="aws-solutions-architect-associate-saa-c03-certification-guide">SAA-C03 Guide</a><span>&rsaquo;</span>
+    <span>Disaster recovery strategies</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">AWS Solutions Architect Associate &middot; Trade-off</div>
+    <h1>AWS Disaster Recovery: Backup and Restore, Pilot Light, Warm Standby or Active/Active</h1>
+    <p class="lede">AWS describes four disaster recovery strategies, from cheapest and slowest to costliest and fastest: <strong>backup and restore</strong>, <strong>pilot light</strong>, <strong>warm standby</strong> and <strong>multi-site active/active</strong>. You choose by the recovery point objective (RPO), the recovery time objective (RTO) and the budget. The cheapest strategy that meets both objectives is the right one.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="objectives">
+    <h2>Two numbers decide everything</h2>
+    <ul>
+      <li><strong>RPO</strong> is the most data the business can afford to lose, measured as time since the last recovery point.</li>
+      <li><strong>RTO</strong> is the longest the business can wait for service to come back.</li>
+    </ul>
+    <p>Both are business decisions. Lower values cost more, so a question that gives generous objectives and asks for the lowest cost is pointing at the cheaper end of the scale, even if a faster strategy would also work.</p>
+  </section>
+
+  <section id="strategies">
+    <h2>The four strategies</h2>
+    <h3>Backup and restore</h3>
+    <p>Only backups exist in the recovery Region: snapshots, AWS Backup cross-Region copies, S3 replication. After a disaster you redeploy the infrastructure and restore the data. AWS stresses infrastructure as code (AWS CloudFormation or the AWS CDK) here, because rebuilding by hand is slow and error-prone and can blow the RTO. RPO is set by how often you back up.</p>
+    <h3>Pilot light</h3>
+    <p>Data replicates continuously to live data stores in the recovery Region, and core infrastructure is in place, but application servers are switched off. AWS's best practice for "switched off" is not to deploy them at all until needed. On failover you switch them on and scale out. AWS Elastic Disaster Recovery uses this pattern for server-based workloads.</p>
+    <h3>Warm standby</h3>
+    <p>A scaled-down but fully functional copy of production runs in the recovery Region and can take traffic immediately at reduced capacity. Failover means scaling up, so service quotas in that Region must already be high enough to reach production size.</p>
+    <h3>Multi-site active/active</h3>
+    <p>The workload runs and serves users in two or more Regions, routed by Amazon Route 53 or AWS Global Accelerator. AWS calls it the most complex and costly approach, able to bring recovery time near zero. Its variant, hot standby, runs full capacity in the second Region but sends it no traffic until failover.</p>
+  </section>
+
+  <section id="confusion">
+    <h2>Pilot light vs warm standby: the pair people mix up</h2>
+    <p>AWS's own whitepaper admits the difference can be hard to see, then states it plainly: <strong>pilot light cannot process requests without action first</strong>, because servers must be turned on; <strong>warm standby can handle traffic immediately</strong>, at reduced capacity, and only needs to scale up. If a question says "must serve requests immediately after failover, even at lower capacity", pilot light is out.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>Strategy</th><th class="col-h">Running in the recovery Region</th><th>RPO and RTO, cost</th></tr></thead>
+      <tbody>
+        <tr><th>Backup and restore</th><td class="col-h">Backups only; rebuild with IaC</td><td>Hours; lowest cost</td></tr>
+        <tr><th>Pilot light</th><td class="col-h">Live data, core infrastructure; servers off</td><td>Tens of minutes; low cost</td></tr>
+        <tr><th>Warm standby</th><td class="col-h">Scaled-down copy that already serves</td><td>Minutes; higher cost</td></tr>
+        <tr><th>Multi-site active/active</th><td class="col-h">Full production, serving users</td><td>Near zero; highest cost</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Strategy definitions from the AWS whitepaper Disaster Recovery of Workloads on AWS, checked 27 October 2026. The RPO and RTO figures are AWS's usual relative scale, not a guarantee; real values depend on the design.</p>
+  </section>
+
+  <section id="signals">
+    <h2>Wording that picks each strategy</h2>
+    <div class="pick">
+      <div class="pickcard"><h3>Backup and restore</h3><p>"Lowest cost", "can be down for a day", "protect against deletion or corruption".</p></div>
+      <div class="pickcard"><h3>Pilot light</h3><p>"Replicate data continuously but keep compute costs minimal", "no servers running until a disaster".</p></div>
+      <div class="pickcard"><h3>Warm standby</h3><p>"Serve traffic immediately, even at reduced capacity", "scale up after failover".</p></div>
+      <div class="pickcard gold"><h3>Active/active</h3><p>"Near-zero downtime and data loss", "users in several Regions served every day", "cost is secondary".</p></div>
+    </div>
+    <div class="callout"><p><strong>Replication is not backup.</strong> Continuous replication copies a corruption or a malicious delete as faithfully as good data. AWS's guidance is that every strategy, active/active included, still keeps point-in-time backups, and that failover should rely on data plane operations such as Amazon Application Recovery Controller routing controls rather than control plane changes.</p></div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between pilot light and warm standby?</summary><div class="fa"><p>Pilot light keeps data replicated but application servers off, so it cannot serve requests until servers are started. Warm standby runs a smaller, fully working copy that serves traffic immediately and only needs to scale up, so it recovers faster and costs more.</p></div></details>
+      <details><summary>Which AWS disaster recovery strategy is the cheapest?</summary><div class="fa"><p>Backup and restore is the cheapest because only backups are stored in the recovery Region. It also has the highest RPO and RTO, since infrastructure must be redeployed and data restored after the disaster.</p></div></details>
+      <details><summary>What is RPO and RTO in AWS?</summary><div class="fa"><p>RPO, the recovery point objective, is the most data a business can afford to lose, measured in time. RTO, the recovery time objective, is the longest it can wait for the service to be restored. Lower values need costlier strategies.</p></div></details>
+      <details><summary>Which DR strategy does AWS Elastic Disaster Recovery use?</summary><div class="fa"><p>AWS Elastic Disaster Recovery uses the pilot light strategy. It replicates servers at block level into a staging area and launches full-capacity recovery instances only when failover is triggered.</p></div></details>
+      <details><summary>Does multi-site active/active still need backups?</summary><div class="fa"><p>Yes. Replication between active Regions also replicates corruption and deletions, so point-in-time backups remain the only way back from a data disaster. AWS notes that recovery from data corruption always has a recovery point before the problem was found.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Practise the choice</h2>
+    <p>Chapter 39 of the Certified SAA-C03 course builds each strategy step by step and asks three scenario questions that land on different answers.</p>
+    <a href="../aws-solutions-architect-associate/lesson-39-disaster-recovery.html" class="cta">Open Chapter 39 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="sqs-vs-sns-vs-eventbridge-vs-amazon-mq">SQS vs SNS vs EventBridge vs Amazon MQ &rarr;</a>
+    <a href="security-groups-vs-network-acls">Security groups vs network ACLs &rarr;</a>
+    <a href="saa-c03-exam-guide-domains-weighting">SAA-C03 exam domains and weighting &rarr;</a>
+    <a href="aws-solutions-architect-associate-saa-c03-certification-guide">The complete SAA-C03 certification guide &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"AWS Disaster Recovery Strategies: Backup and Restore vs Pilot Light vs Warm Standby vs Active/Active","description":"The four AWS disaster recovery strategies compared: what runs in the recovery Region, RPO and RTO, cost, and the wording that picks each one on SAA-C03.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-27","dateModified":"2026-10-27","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/aws-disaster-recovery-strategies-pilot-light-warm-standby"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the difference between pilot light and warm standby?", "acceptedAnswer": {"@type": "Answer", "text": "Pilot light keeps data replicated but application servers off, so it cannot serve requests until servers are started. Warm standby runs a smaller, fully working copy that serves traffic immediately and only needs to scale up, so it recovers faster and costs more."}}, {"@type": "Question", "name": "Which AWS disaster recovery strategy is the cheapest?", "acceptedAnswer": {"@type": "Answer", "text": "Backup and restore is the cheapest because only backups are stored in the recovery Region. It also has the highest RPO and RTO, since infrastructure must be redeployed and data restored after the disaster."}}, {"@type": "Question", "name": "What is RPO and RTO in AWS?", "acceptedAnswer": {"@type": "Answer", "text": "RPO, the recovery point objective, is the most data a business can afford to lose, measured in time. RTO, the recovery time objective, is the longest it can wait for the service to be restored. Lower values need costlier strategies."}}, {"@type": "Question", "name": "Which DR strategy does AWS Elastic Disaster Recovery use?", "acceptedAnswer": {"@type": "Answer", "text": "AWS Elastic Disaster Recovery uses the pilot light strategy. It replicates servers at block level into a staging area and launches full-capacity recovery instances only when failover is triggered."}}, {"@type": "Question", "name": "Does multi-site active/active still need backups?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Replication between active Regions also replicates corruption and deletions, so point-in-time backups remain the only way back from a data disaster. AWS notes that recovery from data corruption always has a recovery point before the problem was found."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
