@@ -48,6 +48,8 @@ Note on the Filename column: published posts are `.html` files in the
 | 8 | Common mistakes on the Databricks Data Engineer Associate exam | "databricks data engineer exam tips" | Yes | blog/common-mistakes-databricks-data-engineer-associate-exam.html |
 | 9 | Is the Databricks Data Engineer Associate certification worth it in 2026 | "is databricks certification worth it" | Yes | blog/is-databricks-data-engineer-associate-worth-it-2026.html |
 | 10 | Unity Catalog vs AWS Lake Formation: governing a lakehouse on Databricks vs AWS (cross-cert: links DE Associate and Professional to SAA-C03 chapter 56 and DEA-C01) | "unity catalog vs lake formation" | Yes | blog/unity-catalog-vs-aws-lake-formation.html |
+| 11 | Auto Loader schema inference and evolution: modes, hints and the rescued data column (deep dive, chapter 07, linked from its final card) | "auto loader schema evolution" | Yes | blog/auto-loader-schema-evolution-rescued-data.html |
+| 12 | Unity Catalog row filters and column masks: SQL, privileges and pitfalls (deep dive, chapter 34, linked from its final card) | "unity catalog row filter column mask" | Yes | blog/unity-catalog-row-filters-column-masks.html |
 
 ## Databricks Data Engineer Professional
 

@@ -430,6 +430,17 @@ exam must be prefixed with that course's folder
 (`databricks-data-engineer-associate/lesson-01-lakehouse.html`, not
 `lesson-01-lakehouse.html`).
 
+Deep dives: a lesson may close with a "Go deeper" block on its final card
+(an `<a data-deeper href="../blog/<slug>">`, payload only, engine untouched)
+linking a blog post that holds what a card cannot: full code, every option
+the exam tests, privileges and limits. Piloted on DE Associate chapters 07
+(Auto Loader schema evolution), 12 (broadcast vs sort-merge join) and 34
+(row filters and column masks). Most chapters need none: a post that only
+covers the chapter's ground again is not a deep dive. The bar, the block
+markup and the post shape are under "Deep dives" in blog/BLOG_STYLE_GUIDE.md.
+`scripts/check_deep_dives.py` (CI, `guard-seo`) fails a link whose post is
+missing, not in `sitemap.xml`, or does not link back to the lesson.
+
 ## URL forms: link to the canonical form, always
 
 Netlify serves one file at several URLs: `x.html` answers 200 at both
