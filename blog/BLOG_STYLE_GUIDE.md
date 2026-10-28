@@ -57,6 +57,58 @@ the relevant course), never bolted on as an ad.
 a full guide (e.g., a complete exam-domain breakdown). Never pad to hit a
 word count, a tight 650-word post beats a bloated 1,200-word one.
 
+## Deep dives (posts linked from a lesson)
+
+A lesson is 8 to 12 cards by design, so some chapters can only name what an
+exam question may hinge on: the full option set, the complete code, the edge
+cases. A deep dive is the post that holds that detail, linked from the
+lesson's final card as "Go deeper". Piloted on the Databricks DE Associate
+course (chapters 07, 12 and 34).
+
+**When a chapter gets one.** Only when the post adds something the lesson
+cannot hold: runnable code or SQL beyond a snippet, every value of an option
+the exam tests, privileges and limits, a plan or config walkthrough. A post
+that covers the same ground as the chapter, or the same topic for a different
+certification, is not a deep dive and gets no "Go deeper" link. Most chapters
+need none.
+
+**How it differs from a cluster post.**
+
+- Length: 1,000 to 1,600 words is fine, code included. Still no padding.
+- Code: complete, working blocks in `<pre><code>`, each followed by what it
+  does. Use the current product names and the documented syntax, checked
+  against the vendor docs (cite the docs page in an `.fnote` under the key
+  table).
+- Kicker reads "<Course short name> &middot; Deep dive".
+- A "What this deep dive adds" section first: one paragraph on what the
+  chapter covers and what this post adds, then where the topic sits in the
+  exam guide.
+- Screenshots: avoid. Consoles change faster than posts are updated; use code,
+  tables and diagrams. If one is unavoidable, date it in its caption.
+- Paywall: a deep dive extends a paid chapter, it never restates it card by
+  card. It ends in the "Back to the chapter" CTA card linking the lesson.
+- Everything else (definitional lead, FAQ, JSON-LD, no em dashes, sitemap)
+  is the same as any post.
+
+**Wiring it into the lesson.** Add this block to the final card's `html`,
+just before its closing spacer (payload only, the engine is untouched):
+
+```html
+    <a class="reveal" data-deeper href="../blog/<slug>" style="display:block;width:100%;max-width:440px;margin:22px auto 0;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:var(--ink);text-decoration:none;text-align:left;">
+      <span style="display:block;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;color:var(--ink-faint);">Go deeper</span>
+      <span style="display:block;font-size:15.5px;font-weight:600;line-height:1.35;margin-top:4px;">Short title</span>
+      <span style="display:block;font-size:13px;line-height:1.45;color:var(--ink-soft);margin-top:4px;">One line on what the post adds &rarr;</span>
+    </a>
+```
+
+Keep the blurb to one line on a phone (about 60 characters): a final card
+with four summary rows already fills the screen. The link opens in the same
+tab, because the app's WebView has no tabs. The post must link back to the
+lesson (its CTA card does), and `python3 scripts/check_deep_dives.py`, run in
+CI by `guard-seo`, fails any `data-deeper` link whose post is missing, not in
+`sitemap.xml`, or has no link back. Record the post in CONTENT_PLAN.md with
+"(deep dive, chapter NN, linked from its final card)" in the topic.
+
 ## Post metadata
 
 Decide these values before writing; they map into the template's `<head>`,
