@@ -119,6 +119,25 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   .callout p{margin:0;font-size:15.5px;}
   ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
   .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
   @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
 </style>
 <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
@@ -210,6 +229,38 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     <p class="fnote">Sourced from the Databricks documentation page "Configure schema inference and evolution in Auto Loader".</p>
     <h3>Why the default stops the stream on purpose</h3>
     <p>With <code>addNewColumns</code>, Auto Loader runs inference on the latest micro-batch, appends the new columns to the stored schema and then fails the stream. A running stream cannot change its schema in place, so the failure is how the new version takes effect. Databricks recommends running the stream as a Lakeflow Job, whose retry restarts it without anyone stepping in. A question that says "the stream failed after the files gained a field, and succeeded on retry" is describing exactly this.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 452" role="img" aria-labelledby="dg1t dg1d">
+        <title id="dg1t">What addNewColumns does when a new field arrives</title>
+        <desc id="dg1d">Run 1 reads files with id and amount under schema v0. A file adds a discount field. Auto Loader appends discount to the stored schema and fails the run with UnknownFieldException. The job retry starts run 2 with schema v1: id, amount, discount.</desc>
+        <defs><marker id="dg1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="d-box" x="10" y="8" width="340" height="84" rx="12"/>
+        <text class="d-step" x="26" y="32">1 · RUN 1</text>
+        <text class="d-txt" x="26" y="54">Files arrive with id and amount</text>
+        <rect class="d-chip" x="26" y="64" width="170" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="78">schema v0: id, amount</text>
+        <path class="d-arrow" d="M180 94 V114" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="10" y="118" width="340" height="84" rx="12"/>
+        <text class="d-step" x="26" y="142">2 · A NEW FIELD ARRIVES</text>
+        <text class="d-txt" x="26" y="164">One file also carries discount</text>
+        <rect class="d-chip" x="26" y="174" width="252" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="188">{"id":7, "amount":12, "discount":2}</text>
+        <path class="d-arrow" d="M180 204 V224" marker-end="url(#dg1a)"/>
+        <rect class="d-bad" x="10" y="228" width="340" height="104" rx="12"/>
+        <text class="d-step d-red" x="26" y="252">3 · SCHEMA SAVED, RUN STOPS</text>
+        <text class="d-txt" x="26" y="274">Auto Loader appends discount to the</text>
+        <text class="d-txt" x="26" y="292">schema in _schemas, then fails the run</text>
+        <rect class="d-chip" x="26" y="302" width="160" height="20" rx="6"/>
+        <text class="d-mono d-red" x="34" y="316">UnknownFieldException</text>
+        <path class="d-arrow" d="M180 334 V354" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="10" y="358" width="340" height="84" rx="12"/>
+        <text class="d-step d-green" x="26" y="382">4 · JOB RETRY: RUN 2</text>
+        <text class="d-txt" x="26" y="404">The restart reads with the new schema</text>
+        <rect class="d-chip" x="26" y="414" width="226" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="428">schema v1: id, amount, discount</text>
+      </svg>
+      <figcaption>With the default addNewColumns mode, one stopped run is how a new column takes effect.</figcaption>
+    </figure>
     <h3>Supplying your own schema</h3>
 <pre><code>(spark.readStream
     .format("cloudFiles")
@@ -228,6 +279,32 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
       <li>a value with the <strong>wrong type</strong>, such as <code>"twelve"</code> in an int column;</li>
       <li>a field whose <strong>case differs</strong> from the schema, such as <code>Amount</code> against <code>amount</code>.</li>
     </ul>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 318" role="img" aria-labelledby="dg2t dg2d">
+        <title id="dg2t">Where a record that does not fit the schema ends up</title>
+        <desc id="dg2d">An incoming JSON record has id 9, amount "twelve" and coupon "X1", against a schema of id BIGINT and amount INT in rescue mode. The row written has id 9, amount NULL, and _rescued_data holding the amount and coupon values plus the source file path.</desc>
+        <defs><marker id="dg2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="20">INCOMING JSON RECORD</text>
+        <rect class="d-chip" x="10" y="30" width="340" height="28" rx="8"/>
+        <text class="d-mono" x="22" y="48">{"id": 9, "amount": "twelve", "coupon": "X1"}</text>
+        <text class="d-soft" x="10" y="80">Schema: id BIGINT, amount INT · mode: rescue</text>
+        <path class="d-arrow" d="M180 90 V112" marker-end="url(#dg2a)"/>
+        <text class="d-step" x="10" y="136">ROW WRITTEN TO THE TABLE</text>
+        <rect class="d-box" x="10" y="146" width="340" height="84" rx="10"/>
+        <path class="d-line" d="M10 174 H350 M70 146 V230 M150 146 V230"/>
+        <text class="d-soft" x="22" y="164">id</text>
+        <text class="d-soft" x="82" y="164">amount</text>
+        <text class="d-mono d-gold" x="162" y="164">_rescued_data</text>
+        <text class="d-mono" x="22" y="196">9</text>
+        <text class="d-mono d-faint" x="82" y="196">NULL</text>
+        <text class="d-mono d-gold" x="162" y="196">{"amount": "twelve",</text>
+        <text class="d-mono d-gold" x="162" y="214"> "coupon": "X1", ...}</text>
+        <text class="d-soft" x="10" y="258">amount: wrong type, so NULL here, original kept</text>
+        <text class="d-soft" x="10" y="280">coupon: not in the schema, kept, not dropped</text>
+        <text class="d-soft" x="10" y="302">The JSON also records the source file path</text>
+      </svg>
+      <figcaption>A type mismatch and an unknown field, kept in _rescued_data instead of failing the read.</figcaption>
+    </figure>
 <pre><code>SELECT _rescued_data, count(*) AS records
 FROM main.bronze.events
 WHERE _rescued_data IS NOT NULL

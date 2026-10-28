@@ -83,8 +83,18 @@ need none.
 - A "What this deep dive adds" section first: one paragraph on what the
   chapter covers and what this post adds, then where the topic sits in the
   exam guide.
-- Screenshots: avoid. Consoles change faster than posts are updated; use code,
-  tables and diagrams. If one is unavoidable, date it in its caption.
+- Diagrams: one or two per post where a picture shows what prose cannot (a
+  sequence of events, what two users see, where a value ends up). Inline SVG
+  in a `<figure class="diagram">` with a `<figcaption>`, `role="img"` and a
+  `<title>`/`<desc>` pair, styled by the `.diagram` and `.d-*` classes in the
+  page `<style>` (copy both from an existing deep dive, for example
+  `auto-loader-schema-evolution-rescued-data.html`). Draw at a 360-wide
+  viewBox so text stays legible on a phone, and check at 390px for overflow.
+- Screenshots: avoid for now. Consoles change faster than posts are updated,
+  and images copied from vendor docs, blogs or videos belong to their owners
+  ("All rights reserved"), so never reuse them. Only screenshots captured in
+  our own workspace are allowed: identifying details blurred, capture date in
+  the caption.
 - Paywall: a deep dive extends a paid chapter, it never restates it card by
   card. It ends in the "Back to the chapter" CTA card linking the lesson.
 - Everything else (definitional lead, FAQ, JSON-LD, no em dashes, sitemap)
