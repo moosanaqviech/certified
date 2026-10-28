@@ -119,6 +119,25 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
   .callout p{margin:0;font-size:15.5px;}
   ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
   .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
   @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
 </style>
 <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
@@ -144,6 +163,36 @@ src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
     <h2>What this deep dive adds</h2>
     <p class="answer">Chapter 34 of the course covers the idea: a mask redacts a column, a row filter hides rows, and a function that checks the caller's identity decides. This post is the working SQL behind that chapter: complete functions, the statements that attach and remove them, the privileges each step needs, and the limits that show up as exam distractors.</p>
     <p>Fine-grained access sits in Governance and Security, the last of the seven sections in the May 2026 version of the Databricks Certified Data Engineer Associate exam.</p>
+  </section>
+
+  <section id="outcome">
+    <h2>What each user sees</h2>
+    <p>The examples below put a row filter on <code>region</code> that lets admins through, and a mask on <code>ssn</code> that shows the real value only to the hr group. Two people running the same query against the same table get this:</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 398" role="img" aria-labelledby="dg3t dg3d">
+        <title id="dg3t">One customers table, two callers</title>
+        <desc id="dg3d">An admin, in the admin and hr groups, sees all four rows with real SSNs. An analyst in neither group sees only the two US rows, Ana and Caro, with SSNs masked as stars; Ben (EU) and Dev (APAC) are filtered out.</desc>
+        <text class="d-step" x="10" y="20">WHAT AN ADMIN SEES</text>
+        <text class="d-soft" x="10" y="38">member of the admin and hr groups</text>
+        <rect class="d-box" x="10" y="48" width="340" height="116" rx="10"/><path class="d-line" d="M10 76 H350 M100 48 V164 M180 48 V164"/><text class="d-soft" x="22" y="66">name</text><text class="d-soft" x="112" y="66">region</text><text class="d-soft" x="192" y="66">ssn</text>
+        <g><text class="d-txt" x="22" y="94">Ana</text><text class="d-txt" x="112" y="94">US</text><text class="d-mono" x="192" y="94">123-45-6789</text></g>
+        <g><text class="d-txt" x="22" y="116">Ben</text><text class="d-txt" x="112" y="116">EU</text><text class="d-mono" x="192" y="116">234-56-7891</text></g>
+        <g><text class="d-txt" x="22" y="138">Caro</text><text class="d-txt" x="112" y="138">US</text><text class="d-mono" x="192" y="138">345-67-8912</text></g>
+        <g><text class="d-txt" x="22" y="160">Dev</text><text class="d-txt" x="112" y="160">APAC</text><text class="d-mono" x="192" y="160">456-78-9123</text></g>
+        <text class="d-step" x="10" y="198">WHAT AN ANALYST SEES</text>
+        <text class="d-soft" x="10" y="216">member of neither group</text>
+        <rect class="d-box" x="10" y="226" width="340" height="116" rx="10"/><path class="d-line" d="M10 254 H350 M100 226 V342 M180 226 V342"/><text class="d-soft" x="22" y="244">name</text><text class="d-soft" x="112" y="244">region</text><text class="d-soft" x="192" y="244">ssn</text>
+        <g><text class="d-txt" x="22" y="272">Ana</text><text class="d-txt" x="112" y="272">US</text><text class="d-mono" x="192" y="272">***-**-****</text></g>
+        <g class="d-dim"><text class="d-txt" x="22" y="294">Ben</text><text class="d-txt" x="112" y="294">EU</text><text class="d-mono" x="192" y="294">filtered out</text></g>
+        <g><text class="d-txt" x="22" y="316">Caro</text><text class="d-txt" x="112" y="316">US</text><text class="d-mono" x="192" y="316">***-**-****</text></g>
+        <g class="d-dim"><text class="d-txt" x="22" y="338">Dev</text><text class="d-txt" x="112" y="338">APAC</text><text class="d-mono" x="192" y="338">filtered out</text></g>
+        <rect class="d-gold" x="10" y="360" width="8" height="8" rx="2"/>
+        <text class="d-soft" x="26" y="368">Row filter: only region = 'US' unless admin</text>
+        <rect class="d-gold" x="10" y="380" width="8" height="8" rx="2"/>
+        <text class="d-soft" x="26" y="388">Column mask: real ssn only for hr</text>
+      </svg>
+      <figcaption>Same table, same query: the row filter removes rows, the column mask changes one value, the stored data is untouched.</figcaption>
+    </figure>
   </section>
 
   <section id="row-filter">
@@ -210,6 +259,38 @@ RETURN IS_ACCOUNT_GROUP_MEMBER('admin')
 
 ALTER TABLE main.sales.orders
   SET ROW FILTER main.security.region_filter ON (region);</code></pre>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 436" role="img" aria-labelledby="dg4t dg4d">
+        <title id="dg4t">How a mapping table decides what Ben sees</title>
+        <desc id="dg4d">The region_access table maps ana@example.com to US and ben@example.com to EU and APAC. When Ben queries the orders table, SESSION_USER() returns Ben's address, the filter keeps rows for EU and APAC, and the result holds orders 102 (EU) and 104 (APAC). Ben needs no SELECT on region_access because the filter runs with its owner's rights.</desc>
+        <defs><marker id="dg4a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="20">REGION_ACCESS (MAPPING TABLE)</text>
+        <rect class="d-box" x="10" y="30" width="340" height="88" rx="10"/>
+        <path class="d-line" d="M10 52 H350 M10 74 H350 M10 96 H350 M240 30 V118"/>
+        <text class="d-soft" x="22" y="46">username</text>
+        <text class="d-soft" x="252" y="46">region</text>
+        <g class="d-dim"><text class="d-mono" x="22" y="68">ana@example.com</text><text class="d-mono" x="252" y="68">US</text></g>
+        <text class="d-mono d-gold" x="22" y="90">ben@example.com</text><text class="d-mono d-gold" x="252" y="90">EU</text>
+        <text class="d-mono d-gold" x="22" y="112">ben@example.com</text><text class="d-mono d-gold" x="252" y="112">APAC</text>
+        <path class="d-arrow" d="M180 122 V142" marker-end="url(#dg4a)"/>
+        <rect class="d-box" x="10" y="146" width="340" height="60" rx="12"/>
+        <text class="d-txt" x="26" y="170">Ben runs SELECT * FROM sales.orders</text>
+        <text class="d-mono" x="26" y="192">SESSION_USER() = ben@example.com</text>
+        <path class="d-arrow" d="M180 208 V228" marker-end="url(#dg4a)"/>
+        <rect class="d-box" x="10" y="232" width="340" height="40" rx="12"/>
+        <text class="d-txt" x="26" y="257">The filter keeps Ben's regions: EU, APAC</text>
+        <path class="d-arrow" d="M180 274 V294" marker-end="url(#dg4a)"/>
+        <text class="d-step d-green" x="10" y="314">BEN'S RESULT</text>
+        <rect class="d-good" x="10" y="322" width="340" height="66" rx="10"/>
+        <path class="d-line" d="M10 344 H350 M10 366 H350 M100 322 V388 M180 322 V388"/>
+        <text class="d-soft" x="22" y="338">id</text><text class="d-soft" x="112" y="338">region</text><text class="d-soft" x="192" y="338">amount</text>
+        <text class="d-mono" x="22" y="360">102</text><text class="d-txt" x="112" y="360">EU</text><text class="d-mono" x="192" y="360">40.00</text>
+        <text class="d-mono" x="22" y="382">104</text><text class="d-txt" x="112" y="382">APAC</text><text class="d-mono" x="192" y="382">75.50</text>
+        <text class="d-soft" x="10" y="410">Ben needs no SELECT on region_access:</text>
+        <text class="d-soft" x="10" y="428">the filter runs with its owner's rights.</text>
+      </svg>
+      <figcaption>The access rules live in rows, so granting a region is an INSERT, not a code change.</figcaption>
+    </figure>
     <p>Granting a manager a new region is now an <code>INSERT</code>. The filter runs with the rights of its owner, so analysts do not need <code>SELECT</code> on <code>region_access</code>. Identity functions such as <code>SESSION_USER()</code> and <code>IS_ACCOUNT_GROUP_MEMBER()</code> are the exception: they always evaluate as the person running the query, which is what makes the filter personal.</p>
   </section>
 
