@@ -641,6 +641,20 @@ Netlify static hosting; pushing to main deploys. Do not add build steps,
 bundlers, or shared JS imports: every lesson and exam must work as a
 standalone file opened locally.
 
+App catalog: `catalog.json` (root, served at /catalog.json) is the course
+list the mobile app renders. Its hand-edited keys (id, vendor, track,
+exam_code, lesson_url, lessons_total, status, units) stay hand-edited, and
+never rename an id: the app keys learner progress by it. The display fields
+(questions_total, mocks_total, level, last_verified, icon, practice_url,
+ready_url, guide_url, price, price_note) are filled by
+`python3 scripts/build_catalog.py` from the root catalog page's cert rows,
+and accent and ink from the vendor tile colours in style.css
+(`.cert-logo--<vendor>`), so when a row or a tile colour changes, re-run it.
+Each display field is optional and omitted when the row shows no value; a
+row's chapter count must equal lessons_total or the script fails. The `guard-catalog` workflow runs it with `--check`
+and validates against `catalog.schema.json`
+(additionalProperties false, so a new key needs a schema entry first).
+
 Analytics: every page carries two tags in `<head>`, above the `ENGINE`
 marker: Google Analytics 4 (`gtag.js`, measurement id `G-GBFP6K89Q6`) and
 the Cloudflare Web Analytics beacon (before `</head>`). Both live in all four

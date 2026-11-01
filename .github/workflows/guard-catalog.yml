@@ -1,0 +1,40 @@
+name: Guard catalog
+
+# catalog.json is the course list the mobile app renders. Netlify serves it
+# as a static file (there is no build step), so this check is what stops a
+# bad one from deploying:
+#   1. scripts/build_catalog.py --check fails when catalog.json's display
+#      fields (counts, price, Last verified date, level, icon, links, and
+#      the accent and ink tile colours) no longer match the root catalog page
+#      and style.css, or when lessons_total disagrees
+#      with a row's chapter count. Fix: python3 scripts/build_catalog.py
+#   2. ajv validates catalog.json against catalog.schema.json, so a field the
+#      app does not expect, or a value of the wrong shape, fails the build.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: catalog.json matches the catalog page
+        run: python3 scripts/build_catalog.py --check
+
+      - name: catalog.json matches catalog.schema.json
+        run: |
+          npm install --no-save --no-package-lock ajv-cli@5 ajv-formats@3
+          npx ajv-cli validate --spec=draft2020 -c ajv-formats -s catalog.schema.json -d catalog.json
