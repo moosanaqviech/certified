@@ -496,7 +496,7 @@ URL in the commit.
       Together the three reach all 89 chapters.
     gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa:
       DONE 1 Nov 2026, as is the catalog.json entry (aws-saa-c03).
-    Root index.html card, pricing.html row, footer links.
+    pricing.html row: DONE 1 Nov 2026. Root index.html card, footer links.
     Practice hub: DONE 27 Oct 2026 (practice/aws-saa-c03.html, the MLA-C02
       hub clone: drills from exams 01 to 04, mocks 05 to 07, four bars at
       30/26/24/20, pass target 72). Linked from the course home toggle,
