@@ -214,8 +214,10 @@ drills. The course is content-complete and shows "Live now" on the
 root catalog (with Practice and "Start learning" links); its practice hub
 is live at practice/aws-saa-c03 (see the practice hubs paragraph below),
 linked from the course home's Learn / Practice toggle, the practice index
-and the site footer. Registration (gate.ts, _shared.mjs, build_sitemap.py)
-remains. The Unit 1
+and the site footer. It is paid from launch: course id aws-saa, $14.99,
+Unit 1 free through saa-practice-exam-01, registered in gate.ts,
+_shared.mjs, build_sitemap.py and catalog.json (1 Nov 2026); checkout needs
+the Netlify env var STRIPE_PRICE_AWS_SAA set to a $14.99 Stripe Price. The Unit 1
 practice exam is live too: saa-practice-exam-01 (23 questions, one per
 chapter, 46 minutes, 72% pass, three select-two items on Ch 05, 12 and 21,
 CHAPTERS table with course "aws-saa" and free 1 to 23), linked from the Unit
@@ -230,9 +232,7 @@ step element on a later card can sit over a quiz choice and swallow the
 tap. Keep the inline style on new SAA lessons. Folder
 `aws-solutions-architect-associate/`, exam
 prefix `saa-practice-exam-NN.html` (01 to 04 unit exams, 05 to 07 sealed
-65-question mocks), proposed course id aws-saa (not yet registered in
-gate.ts, _shared.mjs or build_sitemap.py, so the lessons are not in
-sitemap.xml yet). Accents are per module band,
+65-question mocks), course id aws-saa. Accents are per module band,
 listed in the cert config. Snowball Edge and vault-based Amazon Glacier are
 closed to new customers: lessons teach AWS Data Transfer Terminal and the S3
 Glacier storage classes instead.)

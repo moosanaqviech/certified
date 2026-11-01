@@ -70,8 +70,8 @@ from docs.aws.amazon.com on 21 Oct 2026).
 
 ## Gating and pricing
 
-    Course id: aws-saa (COURSE_ID in the course home; still to register in
-      gate.ts, _shared.mjs and build_sitemap.py).
+    Course id: aws-saa (COURSE_ID in the course home; registered in
+      gate.ts, _shared.mjs and build_sitemap.py on 1 Nov 2026).
     Price: $14.99, "was" $45 (decided 22 Oct 2026, matching MLA-C02, the
       other large AWS Associate course). Unit 1 free through
       saa-practice-exam-01. Checkout needs a Netlify env var
@@ -494,8 +494,9 @@ URL in the commit.
           75, 77, 80, 82, 83, 85, 87, 89. Select-two on Ch 7, 15, 39, 58,
           87.
       Together the three reach all 89 chapters.
-    gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa.
-    catalog.json entry, root index.html card, pricing.html row, footer links.
+    gate.ts, _shared.mjs and build_sitemap.py registration for aws-saa:
+      DONE 1 Nov 2026, as is the catalog.json entry (aws-saa-c03).
+    Root index.html card, pricing.html row, footer links.
     Practice hub: DONE 27 Oct 2026 (practice/aws-saa-c03.html, the MLA-C02
       hub clone: drills from exams 01 to 04, mocks 05 to 07, four bars at
       30/26/24/20, pass target 72). Linked from the course home toggle,

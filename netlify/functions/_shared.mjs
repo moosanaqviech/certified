@@ -75,6 +75,11 @@ export const COURSES = {
     title: "AWS AI Practitioner (AIF-C01)",
     priceId: "STRIPE_PRICE_AWS_AIF",
   },
+  "aws-saa": {
+    folder: "aws-solutions-architect-associate",
+    title: "AWS Solutions Architect Associate (SAA-C03)",
+    priceId: "STRIPE_PRICE_AWS_SAA",
+  },
 };
 
 export function isCourse(id) {
