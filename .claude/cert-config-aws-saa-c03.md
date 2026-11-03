@@ -64,8 +64,9 @@ from docs.aws.amazon.com on 21 Oct 2026).
       sealed full mocks (65 questions, 130 minutes, 20/17/15/13 by domain,
       five select-two items each).
     Practice hub: practice/aws-saa-c03.html (served at /practice/aws-saa-c03).
-    Readiness quiz: ready/aws-saa-c03.html if one is built (served at
-      /ready/aws-saa-c03).
+    Readiness quiz: ready/aws-saa-c03.html (served at /ready/aws-saa-c03),
+      live 3 Nov 2026: 12 questions, domains d1 to d4 at 4/3/3/2, Ch 05,
+      09, 12, 17 / 35, 36, 38 / 41, 54, 57 / 74, 85.
     All lessons and exams live in aws-solutions-architect-associate/.
 
 ## Gating and pricing
