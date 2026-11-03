@@ -211,7 +211,11 @@ together reach all 89), linked from the course home's "Full-length mock
 exams" section; 284 exam questions in all. The mocks are a sealed pool:
 never reuse their questions in the unit exams and never draw them into
 drills. The course is content-complete and shows "Live now" on the
-root catalog (with Practice and "Start learning" links); its practice hub
+root catalog (with "Read the guide", "Am I ready?", Practice and "Start
+learning" links). A public readiness quiz lives at ready/aws-saa-c03 (12
+new questions, four domains at the official 30/26/24/20 weights, counts
+4/3/3/2, scenarios reused from none of the seven exams), linked from the
+catalog row, the pillar guide and the study plan post; its practice hub
 is live at practice/aws-saa-c03 (see the practice hubs paragraph below),
 linked from the course home's Learn / Practice toggle, the practice index
 and the site footer. It is paid from launch: course id aws-saa, $14.99,
