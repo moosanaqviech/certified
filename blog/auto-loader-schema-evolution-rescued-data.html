@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Loader Schema Inference and Evolution: Modes, Hints and the Rescued Data Column</title>
+<meta name="description" content="How Databricks Auto Loader infers a schema, what each schemaEvolutionMode does when a new column arrives, and where schema hints and _rescued_data fit in.">
+<link rel="canonical" href="https://certify.courses/blog/auto-loader-schema-evolution-rescued-data">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Auto Loader Schema Inference and Evolution: Modes, Hints and the Rescued Data Column">
+<meta property="og:description" content="How Databricks Auto Loader infers a schema, what each schemaEvolutionMode does when a new column arrives, and where schema hints and _rescued_data fit in.">
+<meta property="og:url" content="https://certify.courses/blog/auto-loader-schema-evolution-rescued-data">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-data-engineer-associate-certification-guide">DE Associate Guide</a><span>&rsaquo;</span>
+    <span>Auto Loader schema evolution</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks DE Associate &middot; Deep dive</div>
+    <h1>Auto Loader Schema Inference and Evolution: Modes, Hints and the Rescued Data Column</h1>
+    <p class="lede">Databricks <strong>Auto Loader</strong> infers a schema by sampling the first files it reads, stores it in <code>cloudFiles.schemaLocation</code>, and decides what to do when a new column arrives through <code>cloudFiles.schemaEvolutionMode</code>. The default, <strong>addNewColumns</strong>, records the new column and stops the stream once so that a restart picks it up.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 7 of the course covers what Auto Loader is: the <code>cloudFiles</code> source, file discovery, the checkpoint and the idea of schema evolution. This post is the reference behind that card: a full pipeline, every option it uses, the five evolution modes side by side, and what lands in <code>_rescued_data</code>.</p>
+    <p>Auto Loader sits in Data Ingestion and Loading, the second of the seven sections in the May 2026 version of the Databricks Certified Data Engineer Associate exam. Questions usually describe a pipeline that broke, or did not break, when the files changed shape.</p>
+  </section>
+
+  <section id="pipeline">
+    <h2>The full pipeline, line by line</h2>
+<pre><code>checkpoint = "/Volumes/main/bronze/checkpoints/events"
+
+(spark.readStream
+    .format("cloudFiles")
+    .option("cloudFiles.format", "json")
+    .option("cloudFiles.schemaLocation", checkpoint)
+    .option("cloudFiles.inferColumnTypes", "true")
+    .option("cloudFiles.schemaHints", "event_ts timestamp, amount decimal(10,2)")
+    .load("/Volumes/main/landing/events/")
+  .writeStream
+    .option("checkpointLocation", checkpoint)
+    .option("mergeSchema", "true")
+    .trigger(availableNow=True)
+    .toTable("main.bronze.events"))</code></pre>
+    <table class="cmp">
+      <thead><tr><th>Line</th><th class="col-h">What it does</th></tr></thead>
+      <tbody>
+        <tr><th><code>format("cloudFiles")</code></th><td class="col-h">Selects Auto Loader as the streaming source.</td></tr>
+        <tr><th><code>cloudFiles.format</code></th><td class="col-h">The file type being read: json, csv, xml, parquet, avro, text, binaryFile and others.</td></tr>
+        <tr><th><code>cloudFiles.schemaLocation</code></th><td class="col-h">Where the inferred schema, and every later version of it, is stored. It can be the same path as the checkpoint. Without it, inference and evolution are off.</td></tr>
+        <tr><th><code>cloudFiles.inferColumnTypes</code></th><td class="col-h">Infers real types for JSON, CSV and XML. Without it every column comes back as a string.</td></tr>
+        <tr><th><code>cloudFiles.schemaHints</code></th><td class="col-h">Pins the types of columns you already know, in SQL schema syntax.</td></tr>
+        <tr><th><code>checkpointLocation</code></th><td class="col-h">Records which files were processed, so a restart resumes exactly where it stopped.</td></tr>
+        <tr><th><code>mergeSchema</code></th><td class="col-h">Lets the Delta target accept the columns Auto Loader adds. The Databricks schema evolution examples pair it with Auto Loader on the write.</td></tr>
+        <tr><th><code>trigger(availableNow=True)</code></th><td class="col-h">Processes every file that is waiting, then stops: batch scheduling with streaming bookkeeping.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="inference">
+    <h2>Step 1: how the schema is inferred</h2>
+    <p>On the first run Auto Loader samples up to <strong>50 GB or 1,000 files</strong>, whichever limit it reaches first, and writes the result to a <code>_schemas</code> directory under the schema location. Later runs read the stored schema instead of sampling again, which is why the schema location is required.</p>
+    <ul>
+      <li><strong>JSON, CSV and XML</strong> infer every column as a string, nested JSON fields included. Strings never fail to parse, so nothing is lost when a value changes type between files. Set <code>cloudFiles.inferColumnTypes</code> to <code>true</code> to get real types instead.</li>
+      <li><strong>Parquet and Avro</strong> carry their own types, and Auto Loader uses them. When Parquet files disagree, it picks the widest type.</li>
+      <li><strong>CSV headers</strong> are assumed. For headerless files set <code>.option("header", "false")</code>.</li>
+      <li><strong>Case</strong>: <code>abc</code>, <code>Abc</code> and <code>ABC</code> are treated as one column during inference.</li>
+    </ul>
+  </section>
+
+  <section id="hints">
+    <h2>Step 2: schema hints for the columns you know</h2>
+<pre><code>.option("cloudFiles.schemaHints", "tags map&lt;string,string&gt;, version int")</code></pre>
+    <p>A hint overrides the inferred type of one column and leaves the rest to inference. Hints can also name a column that has not appeared yet, so it exists with the right type from the first batch. They apply only when you have not supplied a full schema with <code>.schema(...)</code>, and they work with <code>inferColumnTypes</code> on or off.</p>
+  </section>
+
+  <section id="modes">
+    <h2>Step 3: a new column arrives</h2>
+    <p>This is the part the exam tests. <code>cloudFiles.schemaEvolutionMode</code> takes one of five values:</p>
+    <table class="cmp">
+      <thead><tr><th>Mode</th><th class="col-h">On a new column</th><th>Stream</th></tr></thead>
+      <tbody>
+        <tr><th><code>addNewColumns</code></th><td class="col-h">Adds it to the end of the schema in the schema location. Existing column types never change.</td><td>Stops once with <code>UnknownFieldException</code>; the restart uses the new schema. Default when no schema is supplied.</td></tr>
+        <tr><th><code>addNewColumnsWithTypeWidening</code></th><td class="col-h">As addNewColumns, and also widens supported types (int to long). Unsupported changes, such as int to string, go to the rescued data column.</td><td>Stops once, like addNewColumns. Public Preview on Databricks Runtime 16.4 and above.</td></tr>
+        <tr><th><code>rescue</code></th><td class="col-h">Never changes the schema. The new column's values go to the rescued data column.</td><td>Keeps running.</td></tr>
+        <tr><th><code>failOnNewColumns</code></th><td class="col-h">Changes nothing.</td><td>Fails and stays failed until you update the schema or remove the file.</td></tr>
+        <tr><th><code>none</code></th><td class="col-h">Ignores the new column. Its data is dropped unless <code>rescuedDataColumn</code> is set.</td><td>Keeps running. Default when you supply a schema.</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation page "Configure schema inference and evolution in Auto Loader".</p>
+    <h3>Why the default stops the stream on purpose</h3>
+    <p>With <code>addNewColumns</code>, Auto Loader runs inference on the latest micro-batch, appends the new columns to the stored schema and then fails the stream. A running stream cannot change its schema in place, so the failure is how the new version takes effect. Databricks recommends running the stream as a Lakeflow Job, whose retry restarts it without anyone stepping in. A question that says "the stream failed after the files gained a field, and succeeded on retry" is describing exactly this.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 452" role="img" aria-labelledby="dg1t dg1d">
+        <title id="dg1t">What addNewColumns does when a new field arrives</title>
+        <desc id="dg1d">Run 1 reads files with id and amount under schema v0. A file adds a discount field. Auto Loader appends discount to the stored schema and fails the run with UnknownFieldException. The job retry starts run 2 with schema v1: id, amount, discount.</desc>
+        <defs><marker id="dg1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="d-box" x="10" y="8" width="340" height="84" rx="12"/>
+        <text class="d-step" x="26" y="32">1 · RUN 1</text>
+        <text class="d-txt" x="26" y="54">Files arrive with id and amount</text>
+        <rect class="d-chip" x="26" y="64" width="170" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="78">schema v0: id, amount</text>
+        <path class="d-arrow" d="M180 94 V114" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="10" y="118" width="340" height="84" rx="12"/>
+        <text class="d-step" x="26" y="142">2 · A NEW FIELD ARRIVES</text>
+        <text class="d-txt" x="26" y="164">One file also carries discount</text>
+        <rect class="d-chip" x="26" y="174" width="252" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="188">{"id":7, "amount":12, "discount":2}</text>
+        <path class="d-arrow" d="M180 204 V224" marker-end="url(#dg1a)"/>
+        <rect class="d-bad" x="10" y="228" width="340" height="104" rx="12"/>
+        <text class="d-step d-red" x="26" y="252">3 · SCHEMA SAVED, RUN STOPS</text>
+        <text class="d-txt" x="26" y="274">Auto Loader appends discount to the</text>
+        <text class="d-txt" x="26" y="292">schema in _schemas, then fails the run</text>
+        <rect class="d-chip" x="26" y="302" width="160" height="20" rx="6"/>
+        <text class="d-mono d-red" x="34" y="316">UnknownFieldException</text>
+        <path class="d-arrow" d="M180 334 V354" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="10" y="358" width="340" height="84" rx="12"/>
+        <text class="d-step d-green" x="26" y="382">4 · JOB RETRY: RUN 2</text>
+        <text class="d-txt" x="26" y="404">The restart reads with the new schema</text>
+        <rect class="d-chip" x="26" y="414" width="226" height="20" rx="6"/>
+        <text class="d-mono" x="34" y="428">schema v1: id, amount, discount</text>
+      </svg>
+      <figcaption>With the default addNewColumns mode, one stopped run is how a new column takes effect.</figcaption>
+    </figure>
+    <h3>Supplying your own schema</h3>
+<pre><code>(spark.readStream
+    .format("cloudFiles")
+    .option("cloudFiles.format", "json")
+    .schema("id bigint, event_ts timestamp, amount decimal(10,2)")
+    .option("rescuedDataColumn", "_rescued_data")
+    .load("/Volumes/main/landing/events/"))</code></pre>
+    <p>With <code>.schema(...)</code> the default mode becomes <code>none</code>, and <code>addNewColumns</code> is not allowed at all. The line above adds the rescued data column explicitly, so unexpected fields are kept rather than silently dropped. If you want evolution with known types, use schema hints instead of a full schema.</p>
+  </section>
+
+  <section id="rescued">
+    <h2>The rescued data column</h2>
+    <p>When inference is on, Auto Loader adds a <code>_rescued_data</code> column. Instead of failing or dropping a record that does not fit the schema, it stores the parts that did not fit as a JSON string, together with the path of the file they came from. Three things end up there:</p>
+    <ul>
+      <li>a field that is <strong>not in the schema</strong> (in rescue mode, or in none mode with the column set);</li>
+      <li>a value with the <strong>wrong type</strong>, such as <code>"twelve"</code> in an int column;</li>
+      <li>a field whose <strong>case differs</strong> from the schema, such as <code>Amount</code> against <code>amount</code>.</li>
+    </ul>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 318" role="img" aria-labelledby="dg2t dg2d">
+        <title id="dg2t">Where a record that does not fit the schema ends up</title>
+        <desc id="dg2d">An incoming JSON record has id 9, amount "twelve" and coupon "X1", against a schema of id BIGINT and amount INT in rescue mode. The row written has id 9, amount NULL, and _rescued_data holding the amount and coupon values plus the source file path.</desc>
+        <defs><marker id="dg2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="20">INCOMING JSON RECORD</text>
+        <rect class="d-chip" x="10" y="30" width="340" height="28" rx="8"/>
+        <text class="d-mono" x="22" y="48">{"id": 9, "amount": "twelve", "coupon": "X1"}</text>
+        <text class="d-soft" x="10" y="80">Schema: id BIGINT, amount INT · mode: rescue</text>
+        <path class="d-arrow" d="M180 90 V112" marker-end="url(#dg2a)"/>
+        <text class="d-step" x="10" y="136">ROW WRITTEN TO THE TABLE</text>
+        <rect class="d-box" x="10" y="146" width="340" height="84" rx="10"/>
+        <path class="d-line" d="M10 174 H350 M70 146 V230 M150 146 V230"/>
+        <text class="d-soft" x="22" y="164">id</text>
+        <text class="d-soft" x="82" y="164">amount</text>
+        <text class="d-mono d-gold" x="162" y="164">_rescued_data</text>
+        <text class="d-mono" x="22" y="196">9</text>
+        <text class="d-mono d-faint" x="82" y="196">NULL</text>
+        <text class="d-mono d-gold" x="162" y="196">{"amount": "twelve",</text>
+        <text class="d-mono d-gold" x="162" y="214"> "coupon": "X1", ...}</text>
+        <text class="d-soft" x="10" y="258">amount: wrong type, so NULL here, original kept</text>
+        <text class="d-soft" x="10" y="280">coupon: not in the schema, kept, not dropped</text>
+        <text class="d-soft" x="10" y="302">The JSON also records the source file path</text>
+      </svg>
+      <figcaption>A type mismatch and an unknown field, kept in _rescued_data instead of failing the read.</figcaption>
+    </figure>
+<pre><code>SELECT _rescued_data, count(*) AS records
+FROM main.bronze.events
+WHERE _rescued_data IS NOT NULL
+GROUP BY _rescued_data;</code></pre>
+    <p>A query like this in Silver is the usual way to notice drift without stopping Bronze. The column also changes how parser modes behave: with it set, a type mismatch no longer drops a record in <code>DROPMALFORMED</code> or fails the read in <code>FAILFAST</code>. Only records that are actually corrupt do.</p>
+  </section>
+
+  <section id="partitions">
+    <h2>Two details that are easy to miss</h2>
+    <ul>
+      <li><strong>Partition columns do not evolve the schema.</strong> Auto Loader reads Hive-style paths such as <code>event=click/date=2026-10-01/</code>, but a new directory key is not picked up automatically. List the keys in <code>cloudFiles.partitionColumns</code>, for example <code>"event,date"</code>.</li>
+      <li><strong>Pipelines manage the location for you.</strong> In Lakeflow Spark Declarative Pipelines, Databricks manages the schema location and checkpoint, so you never set <code>cloudFiles.schemaLocation</code> yourself.</li>
+    </ul>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "absorb new columns" points at the default addNewColumns, and "the stream stopped once, then ran" is that mode working as designed. "Never stop, keep unexpected fields for later" is rescue. "Fail loudly on any change" is failOnNewColumns. "A schema was supplied and the new field vanished" is none, the default with a supplied schema.</p></div>
+    <p>A common distractor puts schema handling on the checkpoint or on file notification mode. The checkpoint tracks which files were processed, and file notification only changes how new files are found. Neither touches the schema. When to choose Auto Loader over <code>COPY INTO</code> at all is covered in the <a href="copy-into-vs-auto-loader-vs-upload-databricks-ingestion">COPY INTO vs Auto Loader post</a> and in Chapter 8 of the course.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the default schema evolution mode in Auto Loader?</summary><div class="fa"><p>The default is addNewColumns when you do not supply a schema, and none when you do. With addNewColumns the stream stops once on a new column, records it in the schema location, and picks it up on restart.</p></div></details>
+      <details><summary>Why did my Auto Loader stream fail with UnknownFieldException?</summary><div class="fa"><p>That failure is how addNewColumns applies a new column: Auto Loader has already saved the updated schema, and the next run uses it. Run the stream as a Lakeflow Job with retries so the restart happens automatically.</p></div></details>
+      <details><summary>What goes into the _rescued_data column?</summary><div class="fa"><p>Data that did not fit the schema: fields missing from it, values with the wrong type, and fields whose case differs. It is stored as a JSON string with the source file path, so nothing is silently lost.</p></div></details>
+      <details><summary>Why does Auto Loader infer every JSON column as a string?</summary><div class="fa"><p>Strings never fail to parse, so a value that changes type between files cannot break the stream. Set cloudFiles.inferColumnTypes to true for real types, or pin specific columns with cloudFiles.schemaHints.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Auto Loader is Chapter 7 of the Databricks Data Engineer Associate course, in Unit 2, Data Ingestion and Loading, with the source, discovery and checkpoint built up card by card and exam-style checks.</p>
+    <a href="../databricks-data-engineer-associate/lesson-07-auto-loader.html" class="cta">Open Chapter 7 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="copy-into-vs-auto-loader-vs-upload-databricks-ingestion">COPY INTO vs Auto Loader vs file upload &rarr;</a>
+    <a href="databricks-data-engineer-associate-certification-guide">The complete Databricks Data Engineer Associate certification guide &rarr;</a>
+    <a href="../databricks-data-engineer-associate/lesson-08-autoloader-vs-copyinto.html">Chapter 8: Auto Loader vs COPY INTO &rarr;</a>
+    <a href="../practice/databricks-de-associate">Data Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Auto Loader Schema Inference and Evolution: Modes, Hints and the Rescued Data Column","description":"How Databricks Auto Loader infers a schema, what each schemaEvolutionMode does when a new column arrives, and where schema hints and _rescued_data fit in.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-28","dateModified":"2026-10-28","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/auto-loader-schema-evolution-rescued-data"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the default schema evolution mode in Auto Loader?", "acceptedAnswer": {"@type": "Answer", "text": "The default is addNewColumns when you do not supply a schema, and none when you do. With addNewColumns the stream stops once on a new column, records it in the schema location, and picks it up on restart."}},
+{"@type": "Question", "name": "Why did my Auto Loader stream fail with UnknownFieldException?", "acceptedAnswer": {"@type": "Answer", "text": "That failure is how addNewColumns applies a new column: Auto Loader has already saved the updated schema, and the next run uses it. Run the stream as a Lakeflow Job with retries so the restart happens automatically."}},
+{"@type": "Question", "name": "What goes into the _rescued_data column?", "acceptedAnswer": {"@type": "Answer", "text": "Data that did not fit the schema: fields missing from it, values with the wrong type, and fields whose case differs. It is stored as a JSON string with the source file path, so nothing is silently lost."}},
+{"@type": "Question", "name": "Why does Auto Loader infer every JSON column as a string?", "acceptedAnswer": {"@type": "Answer", "text": "Strings never fail to parse, so a value that changes type between files cannot break the stream. Set cloudFiles.inferColumnTypes to true for real types, or pin specific columns with cloudFiles.schemaHints."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

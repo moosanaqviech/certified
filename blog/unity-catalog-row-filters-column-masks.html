@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unity Catalog Row Filters and Column Masks: SQL, Privileges and Pitfalls</title>
+<meta name="description" content="Write and attach Unity Catalog row filters and column masks in SQL: complete functions, the privileges each step needs, and the limits that trip people up.">
+<link rel="canonical" href="https://certify.courses/blog/unity-catalog-row-filters-column-masks">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity Catalog Row Filters and Column Masks: SQL, Privileges and Pitfalls">
+<meta property="og:description" content="Write and attach Unity Catalog row filters and column masks in SQL: complete functions, the privileges each step needs, and the limits that trip people up.">
+<meta property="og:url" content="https://certify.courses/blog/unity-catalog-row-filters-column-masks">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-data-engineer-associate-certification-guide">DE Associate Guide</a><span>&rsaquo;</span>
+    <span>Row filters and column masks</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks DE Associate &middot; Deep dive</div>
+    <h1>Unity Catalog Row Filters and Column Masks: SQL, Privileges and Pitfalls</h1>
+    <p class="lede">In Unity Catalog, a <strong>row filter</strong> is a SQL function that returns true for each row a user may see, and a <strong>column mask</strong> is a SQL function that returns the value a user sees in one column. Both attach to the table with <code>ALTER TABLE</code>, run on every query, and never change the stored data.</p>
+    <p class="updated">Last updated October 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 34 of the course covers the idea: a mask redacts a column, a row filter hides rows, and a function that checks the caller's identity decides. This post is the working SQL behind that chapter: complete functions, the statements that attach and remove them, the privileges each step needs, and the limits that show up as exam distractors.</p>
+    <p>Fine-grained access sits in Governance and Security, the last of the seven sections in the May 2026 version of the Databricks Certified Data Engineer Associate exam.</p>
+  </section>
+
+  <section id="outcome">
+    <h2>What each user sees</h2>
+    <p>The examples below put a row filter on <code>region</code> that lets admins through, and a mask on <code>ssn</code> that shows the real value only to the hr group. Two people running the same query against the same table get this:</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 398" role="img" aria-labelledby="dg3t dg3d">
+        <title id="dg3t">One customers table, two callers</title>
+        <desc id="dg3d">An admin, in the admin and hr groups, sees all four rows with real SSNs. An analyst in neither group sees only the two US rows, Ana and Caro, with SSNs masked as stars; Ben (EU) and Dev (APAC) are filtered out.</desc>
+        <text class="d-step" x="10" y="20">WHAT AN ADMIN SEES</text>
+        <text class="d-soft" x="10" y="38">member of the admin and hr groups</text>
+        <rect class="d-box" x="10" y="48" width="340" height="116" rx="10"/><path class="d-line" d="M10 76 H350 M100 48 V164 M180 48 V164"/><text class="d-soft" x="22" y="66">name</text><text class="d-soft" x="112" y="66">region</text><text class="d-soft" x="192" y="66">ssn</text>
+        <g><text class="d-txt" x="22" y="94">Ana</text><text class="d-txt" x="112" y="94">US</text><text class="d-mono" x="192" y="94">123-45-6789</text></g>
+        <g><text class="d-txt" x="22" y="116">Ben</text><text class="d-txt" x="112" y="116">EU</text><text class="d-mono" x="192" y="116">234-56-7891</text></g>
+        <g><text class="d-txt" x="22" y="138">Caro</text><text class="d-txt" x="112" y="138">US</text><text class="d-mono" x="192" y="138">345-67-8912</text></g>
+        <g><text class="d-txt" x="22" y="160">Dev</text><text class="d-txt" x="112" y="160">APAC</text><text class="d-mono" x="192" y="160">456-78-9123</text></g>
+        <text class="d-step" x="10" y="198">WHAT AN ANALYST SEES</text>
+        <text class="d-soft" x="10" y="216">member of neither group</text>
+        <rect class="d-box" x="10" y="226" width="340" height="116" rx="10"/><path class="d-line" d="M10 254 H350 M100 226 V342 M180 226 V342"/><text class="d-soft" x="22" y="244">name</text><text class="d-soft" x="112" y="244">region</text><text class="d-soft" x="192" y="244">ssn</text>
+        <g><text class="d-txt" x="22" y="272">Ana</text><text class="d-txt" x="112" y="272">US</text><text class="d-mono" x="192" y="272">***-**-****</text></g>
+        <g class="d-dim"><text class="d-txt" x="22" y="294">Ben</text><text class="d-txt" x="112" y="294">EU</text><text class="d-mono" x="192" y="294">filtered out</text></g>
+        <g><text class="d-txt" x="22" y="316">Caro</text><text class="d-txt" x="112" y="316">US</text><text class="d-mono" x="192" y="316">***-**-****</text></g>
+        <g class="d-dim"><text class="d-txt" x="22" y="338">Dev</text><text class="d-txt" x="112" y="338">APAC</text><text class="d-mono" x="192" y="338">filtered out</text></g>
+        <rect class="d-gold" x="10" y="360" width="8" height="8" rx="2"/>
+        <text class="d-soft" x="26" y="368">Row filter: only region = 'US' unless admin</text>
+        <rect class="d-gold" x="10" y="380" width="8" height="8" rx="2"/>
+        <text class="d-soft" x="26" y="388">Column mask: real ssn only for hr</text>
+      </svg>
+      <figcaption>Same table, same query: the row filter removes rows, the column mask changes one value, the stored data is untouched.</figcaption>
+    </figure>
+  </section>
+
+  <section id="row-filter">
+    <h2>A row filter, end to end</h2>
+<pre><code>-- 1. The function: TRUE keeps the row, FALSE hides it
+CREATE FUNCTION main.security.us_filter(region STRING)
+RETURN IF(IS_ACCOUNT_GROUP_MEMBER('admin'), true, region = 'US');
+
+-- 2. Attach it; ON (...) passes table columns to the parameters, in order
+ALTER TABLE main.sales.orders
+  SET ROW FILTER main.security.us_filter ON (region);
+
+-- Or attach it when the table is created
+CREATE TABLE main.sales.orders (region STRING, id INT)
+  WITH ROW FILTER main.security.us_filter ON (region);
+
+-- 3. Remove it
+ALTER TABLE main.sales.orders DROP ROW FILTER;</code></pre>
+    <p>The function receives the row's <code>region</code> value and returns a boolean. Members of <code>admin</code> get <code>true</code> for every row; everyone else sees only US rows. The parameter type must match the column type. Anyone who queries the table gets the filtered result, whether they use SQL, a notebook or a dashboard, because the filter belongs to the table, not to a view in front of it.</p>
+  </section>
+
+  <section id="mask">
+    <h2>A column mask, end to end</h2>
+<pre><code>-- 1. The function: returns what the caller sees in place of the value
+CREATE FUNCTION main.security.ssn_mask(ssn STRING)
+RETURN CASE WHEN IS_ACCOUNT_GROUP_MEMBER('hr') THEN ssn
+            ELSE '***-**-****' END;
+
+-- 2. Attach it at creation...
+CREATE TABLE main.hr.employees (
+  name STRING,
+  ssn  STRING MASK main.security.ssn_mask
+);
+
+-- ...or to an existing column
+ALTER TABLE main.hr.employees
+  ALTER COLUMN ssn SET MASK main.security.ssn_mask;
+
+-- 3. Remove it
+ALTER TABLE main.hr.employees ALTER COLUMN ssn DROP MASK;</code></pre>
+    <p>The mask's first parameter is the column being masked, and its return type must match the column type or be castable to it. A column has at most one mask. The row still comes back; only that value changes.</p>
+    <h3>Masks that depend on another column</h3>
+    <p><code>USING COLUMNS</code> passes extra columns, or constants, to the mask. Here an address is visible only to the group for that row's country:</p>
+<pre><code>CREATE FUNCTION main.security.mask_address(
+  address STRING, country STRING, group_suffix STRING)
+RETURN IF(IS_ACCOUNT_GROUP_MEMBER(country || group_suffix),
+          address, 'REDACTED');
+
+ALTER TABLE main.crm.customers
+  ALTER COLUMN address
+  SET MASK main.security.mask_address USING COLUMNS (country, '_address_viewers');</code></pre>
+  </section>
+
+  <section id="mapping">
+    <h2>Mapping tables: access rules as data</h2>
+    <p>Hard-coding group names in a function means editing SQL every time access changes. A mapping table moves the rules into rows instead:</p>
+<pre><code>CREATE TABLE main.security.region_access (username STRING, region STRING);
+
+CREATE FUNCTION main.security.region_filter(row_region STRING)
+RETURN IS_ACCOUNT_GROUP_MEMBER('admin')
+    OR EXISTS (SELECT 1 FROM main.security.region_access a
+               WHERE a.username = SESSION_USER()
+                 AND a.region = row_region);
+
+ALTER TABLE main.sales.orders
+  SET ROW FILTER main.security.region_filter ON (region);</code></pre>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 436" role="img" aria-labelledby="dg4t dg4d">
+        <title id="dg4t">How a mapping table decides what Ben sees</title>
+        <desc id="dg4d">The region_access table maps ana@example.com to US and ben@example.com to EU and APAC. When Ben queries the orders table, SESSION_USER() returns Ben's address, the filter keeps rows for EU and APAC, and the result holds orders 102 (EU) and 104 (APAC). Ben needs no SELECT on region_access because the filter runs with its owner's rights.</desc>
+        <defs><marker id="dg4a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="20">REGION_ACCESS (MAPPING TABLE)</text>
+        <rect class="d-box" x="10" y="30" width="340" height="88" rx="10"/>
+        <path class="d-line" d="M10 52 H350 M10 74 H350 M10 96 H350 M240 30 V118"/>
+        <text class="d-soft" x="22" y="46">username</text>
+        <text class="d-soft" x="252" y="46">region</text>
+        <g class="d-dim"><text class="d-mono" x="22" y="68">ana@example.com</text><text class="d-mono" x="252" y="68">US</text></g>
+        <text class="d-mono d-gold" x="22" y="90">ben@example.com</text><text class="d-mono d-gold" x="252" y="90">EU</text>
+        <text class="d-mono d-gold" x="22" y="112">ben@example.com</text><text class="d-mono d-gold" x="252" y="112">APAC</text>
+        <path class="d-arrow" d="M180 122 V142" marker-end="url(#dg4a)"/>
+        <rect class="d-box" x="10" y="146" width="340" height="60" rx="12"/>
+        <text class="d-txt" x="26" y="170">Ben runs SELECT * FROM sales.orders</text>
+        <text class="d-mono" x="26" y="192">SESSION_USER() = ben@example.com</text>
+        <path class="d-arrow" d="M180 208 V228" marker-end="url(#dg4a)"/>
+        <rect class="d-box" x="10" y="232" width="340" height="40" rx="12"/>
+        <text class="d-txt" x="26" y="257">The filter keeps Ben's regions: EU, APAC</text>
+        <path class="d-arrow" d="M180 274 V294" marker-end="url(#dg4a)"/>
+        <text class="d-step d-green" x="10" y="314">BEN'S RESULT</text>
+        <rect class="d-good" x="10" y="322" width="340" height="66" rx="10"/>
+        <path class="d-line" d="M10 344 H350 M10 366 H350 M100 322 V388 M180 322 V388"/>
+        <text class="d-soft" x="22" y="338">id</text><text class="d-soft" x="112" y="338">region</text><text class="d-soft" x="192" y="338">amount</text>
+        <text class="d-mono" x="22" y="360">102</text><text class="d-txt" x="112" y="360">EU</text><text class="d-mono" x="192" y="360">40.00</text>
+        <text class="d-mono" x="22" y="382">104</text><text class="d-txt" x="112" y="382">APAC</text><text class="d-mono" x="192" y="382">75.50</text>
+        <text class="d-soft" x="10" y="410">Ben needs no SELECT on region_access:</text>
+        <text class="d-soft" x="10" y="428">the filter runs with its owner's rights.</text>
+      </svg>
+      <figcaption>The access rules live in rows, so granting a region is an INSERT, not a code change.</figcaption>
+    </figure>
+    <p>Granting a manager a new region is now an <code>INSERT</code>. The filter runs with the rights of its owner, so analysts do not need <code>SELECT</code> on <code>region_access</code>. Identity functions such as <code>SESSION_USER()</code> and <code>IS_ACCOUNT_GROUP_MEMBER()</code> are the exception: they always evaluate as the person running the query, which is what makes the filter personal.</p>
+  </section>
+
+  <section id="privileges">
+    <h2>Who can do what</h2>
+    <table class="cmp">
+      <thead><tr><th>Action</th><th class="col-h">Privileges needed</th></tr></thead>
+      <tbody>
+        <tr><th>Use a function as a filter or mask</th><td class="col-h"><code>EXECUTE</code> on the function, plus <code>USE SCHEMA</code> and <code>USE CATALOG</code> on its parents</td></tr>
+        <tr><th>Create a table with a filter or mask</th><td class="col-h">The above, plus <code>CREATE TABLE</code> on the schema</td></tr>
+        <tr><th>Add or remove one on an existing table</th><td class="col-h">Table owner, or both <code>MANAGE</code> and <code>SELECT</code> on the table</td></tr>
+        <tr><th>Same statement also changes the schema</th><td class="col-h">Additionally <code>MODIFY</code></td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation pages "Row filters and column masks" and "Manually apply row filters and column masks".</p>
+    <div class="callout"><p><strong>Order matters when removing:</strong> run <code>DROP ROW FILTER</code> or <code>DROP MASK</code> before <code>DROP FUNCTION</code>. Dropping the function first leaves the table pointing at a function that no longer exists, and the table becomes unreadable.</p></div>
+  </section>
+
+  <section id="limits">
+    <h2>Limits worth knowing</h2>
+    <ul>
+      <li><strong>Tables only.</strong> You cannot attach a row filter or column mask to a view. A dynamic view is the older alternative, not a place to attach one.</li>
+      <li><strong>No time travel</strong> on a table with a row filter or column mask, and no deep or shallow clones of it.</li>
+      <li><strong>No path-based access.</strong> Reading the table's files by path is blocked, since that would bypass the policy.</li>
+      <li><strong>No chains.</strong> A filter or mask cannot query another table that has its own filter or mask.</li>
+      <li><strong>Compute.</strong> Databricks Runtime 12.2 LTS or above. On dedicated access mode, reads need 15.4 LTS or above with serverless enabled for the workspace, and writes need 16.3 or above.</li>
+      <li><strong>Many tables, one rule.</strong> For the same filter across many tables, Databricks recommends ABAC policies: they are applied centrally from tags, table owners cannot override them, and they evaluate more efficiently than per-table functions. That is Chapter 35 of the course.</li>
+    </ul>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "see the table but not this column's real value" is a column mask. "See only some rows" is a row filter. "One copy of the table, governed centrally" rules out per-team copies and per-team views. "Same rule across hundreds of tagged tables" is ABAC, not a function attached table by table.</p></div>
+    <p>Distractors often offer <code>REVOKE SELECT</code>, which removes the whole table, or a mask where a filter is needed (the row would still appear, just with a redacted value). How plain grants and the privilege hierarchy work is in the <a href="unity-catalog-vs-aws-lake-formation">Unity Catalog vs Lake Formation post</a> and Chapter 33 of the course.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between a row filter and a column mask in Unity Catalog?</summary><div class="fa"><p>A row filter decides which rows a user sees; a column mask decides what value a user sees in one column. Both are SQL functions attached to the table, so every query gets the result without the stored data changing.</p></div></details>
+      <details><summary>Can I apply a row filter or column mask to a view?</summary><div class="fa"><p>No. Row filters and column masks attach to tables only. For a view, the older approach is a dynamic view that checks the caller with functions such as IS_ACCOUNT_GROUP_MEMBER in its own SQL.</p></div></details>
+      <details><summary>What privileges do I need to add a column mask to a table?</summary><div class="fa"><p>You need to own the table, or hold both MANAGE and SELECT on it, plus EXECUTE on the mask function and USE SCHEMA and USE CATALOG on its parents. If the same statement also changes the table schema, you also need MODIFY.</p></div></details>
+      <details><summary>Should I use row filters or ABAC policies?</summary><div class="fa"><p>Use a row filter for one table with its own rule. Databricks recommends ABAC policies when the same filtering or masking must apply consistently across many tables, because they are applied centrally from tags and table owners cannot override them.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Column masking and row-level security is Chapter 34 of the Databricks Data Engineer Associate course, in Unit 7, Governance and Security, with the access decision built up card by card and exam-style checks.</p>
+    <a href="../databricks-data-engineer-associate/lesson-34-column-masking-row-security.html" class="cta">Open Chapter 34 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="unity-catalog-vs-aws-lake-formation">Unity Catalog vs AWS Lake Formation &rarr;</a>
+    <a href="managed-vs-external-tables-unity-catalog">Managed vs external tables in Unity Catalog &rarr;</a>
+    <a href="../databricks-data-engineer-associate/lesson-35-abac-policies.html">Chapter 35: ABAC policies &rarr;</a>
+    <a href="../practice/databricks-de-associate">Data Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Unity Catalog Row Filters and Column Masks: SQL, Privileges and Pitfalls","description":"Write and attach Unity Catalog row filters and column masks in SQL: complete functions, the privileges each step needs, and the limits that trip people up.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-10-28","dateModified":"2026-10-28","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/unity-catalog-row-filters-column-masks"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What is the difference between a row filter and a column mask in Unity Catalog?", "acceptedAnswer": {"@type": "Answer", "text": "A row filter decides which rows a user sees; a column mask decides what value a user sees in one column. Both are SQL functions attached to the table, so every query gets the result without the stored data changing."}},
+{"@type": "Question", "name": "Can I apply a row filter or column mask to a view?", "acceptedAnswer": {"@type": "Answer", "text": "No. Row filters and column masks attach to tables only. For a view, the older approach is a dynamic view that checks the caller with functions such as IS_ACCOUNT_GROUP_MEMBER in its own SQL."}},
+{"@type": "Question", "name": "What privileges do I need to add a column mask to a table?", "acceptedAnswer": {"@type": "Answer", "text": "You need to own the table, or hold both MANAGE and SELECT on it, plus EXECUTE on the mask function and USE SCHEMA and USE CATALOG on its parents. If the same statement also changes the table schema, you also need MODIFY."}},
+{"@type": "Question", "name": "Should I use row filters or ABAC policies?", "acceptedAnswer": {"@type": "Answer", "text": "Use a row filter for one table with its own rule. Databricks recommends ABAC policies when the same filtering or masking must apply consistently across many tables, because they are applied centrally from tags and table owners cannot override them."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
