@@ -17,7 +17,7 @@ every other key (id, vendor, track, exam_code, units, ...), which stays
 hand-edited in catalog.json. A live cert row is matched to its catalog.json
 entry by the course folder of its "Start learning" link, compared with the
 entry's lesson_url; a cert's vendor tile comes from the page's vendor section
-whose heading names its vendor (Oracle matches "Java / Oracle").
+whose heading names its vendor.
 
 Rules:
   * A field is written only when the page shows a real value for it, and is
