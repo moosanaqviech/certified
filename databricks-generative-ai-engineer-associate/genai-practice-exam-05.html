@@ -601,12 +601,12 @@ const QUESTIONS = [
     q:`A chain runs fine in the notebook but fails on the serving endpoint with auth errors when it reaches a Unity Catalog function tool and the vector index. What resolves it?`,
     opts:[
       "Grant all workspace users admin rights.",
-      "Grant the endpoint's service principal access to the Unity Catalog function tool and the vector index (on-behalf-of/passthrough).",
+      "Re-log the chain with the function tool and the vector index declared as resources, then deploy the new version.",
       "Disable Unity Catalog governance on those objects.",
-      "Give the notebook author additional permissions."
+      "Find the endpoint's service principal and grant it access to the function tool and the vector index by hand."
     ],
     correct:1,
-    explain:`the endpoint runs as its service principal, so that principal needs grants on the function tool and the index. Giving users or the notebook author more permissions is wrong: it is the endpoint's identity, not a user's, that is failing the access check.`
+    explain:`With automatic authentication passthrough, Databricks creates a service principal for each deployed model version and grants it access only to the resources declared when the chain was logged. The tool and index were never declared, so the fix is to add them to resources= and deploy the new version. Granting that service principal by hand (D) is not possible: it does not appear in the UI or API, and it receives exactly the declared resources. Admin rights for everyone (A) and switching off governance (C) break least privilege.`
   },
 
   /* Q32 · Ch 37 - batch inference with ai_query() */

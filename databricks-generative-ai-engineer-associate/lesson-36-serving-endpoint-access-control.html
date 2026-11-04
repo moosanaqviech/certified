@@ -296,7 +296,7 @@ const cards = [
     <div class="spacer" style="flex:0.3"></div>
     <div class="eyebrow reveal"><span class="dot" style="background:var(--accent)"></span>Unit 4 · Chapter 36</div>
     <h1 class="reveal">Access from a serving endpoint</h1>
-    <p class="lead reveal">A deployed agent has to reach the index, functions, and warehouses it uses, without you managing tokens. That runs on <strong>declared resources and one of two identities</strong>.</p>
+    <p class="lead reveal">A deployed agent has to reach the index, functions, and warehouses it uses, without you managing tokens. That runs on <strong>declared resources and a choice of identity</strong>.</p>
     <div class="art grow reveal">${A.cover}</div>` },
 
   /* 1 : the problem */
@@ -320,21 +320,32 @@ const cards = [
   { html: `
     <div class="eyebrow reveal">Identity one</div>
     <h2 class="reveal">Automatic authentication passthrough</h2>
-    <p class="lead reveal" style="margin-bottom:16px">The default. At deploy time Databricks provisions short-lived credentials scoped to exactly the declared resources.</p>
+    <p class="lead reveal" style="margin-bottom:16px">The recommended mode. At deploy time Databricks provisions short-lived credentials scoped to exactly the declared resources.</p>
     <div class="pills reveal">
-      <div class="pill"><p><b>A system service principal</b>The endpoint gets its own machine identity that owns those scoped credentials, and uses them automatically at query time. No tokens to manage.</p></div>
+      <div class="pill"><p><b>A system service principal</b>One per model version, granted the declared resources and hidden from the UI and API. Nothing to grant by hand: declare and redeploy.</p></div>
       <div class="pill"><p><b>Least privilege, verified</b>Only the declared resources are granted, and Databricks checks the deploying owner actually holds those permissions before granting them.</p></div>
     </div>
     <div class="spacer"></div>` },
 
   /* 4 : OBO */
   { html: `
-    <div class="eyebrow reveal">Identity two</div>
+    <div class="eyebrow reveal">Identity two · Public Preview</div>
     <h2 class="reveal">On-behalf-of-user</h2>
-    <p class="lead reveal" style="margin-bottom:16px">Automatic passthrough uses one service principal for every caller. When data access must differ per user, the agent acts as the calling user instead.</p>
+    <p class="lead reveal" style="margin-bottom:16px">Passthrough uses one service principal for every caller, which suits shared resources. When data access must differ per user, the agent acts as the calling user instead.</p>
     <div class="pills reveal">
       <div class="pill"><p><b>ModelServingUserCredentials</b>The agent authenticates as the querying user, so it can only reach what that user is entitled to. This is how per-user row and column controls stay enforced through the agent.</p></div>
-      <div class="pill"><p><b>Choose by the data</b>Shared, non-sensitive resources fit automatic passthrough; sensitive, per-user data needs on-behalf-of-user.</p></div>
+      <div class="pill"><p><b>Opt in</b>A workspace admin enables it (MLflow 2.22.1+). Scopes are declared at log time; the user's client is built inside <code>predict</code>.</p></div>
+    </div>
+    <div class="spacer"></div>` },
+
+  /* 4b : manual authentication */
+  { html: `
+    <div class="eyebrow reveal">The fallback</div>
+    <h2 class="reveal">Manual authentication</h2>
+    <p class="lead reveal" style="margin-bottom:16px">When neither built-in mode fits, the agent uses a credential you supply and manage.</p>
+    <div class="pills reveal">
+      <div class="pill"><p><b>Your own credential</b>A service principal's OAuth secret (recommended) or a token, kept in Databricks secrets and passed as an environment variable at deploy.</p></div>
+      <div class="pill"><p><b>When to use it</b>A resource without passthrough support, or an API outside Databricks. You create, grant and rotate the credential.</p></div>
     </div>
     <div class="spacer"></div>` },
 
@@ -389,7 +400,7 @@ const cards = [
     <p class="lead reveal" style="text-align:center;margin-bottom:20px">The endpoint reaches only what you declared, as one of two identities.</p>
     <div class="pills reveal">
       <div class="pill"><p><b>Declare resources</b>List every downstream resource at log time; undeclared means no credential and a query-time auth failure.</p></div>
-      <div class="pill"><p><b>Passthrough vs on-behalf-of-user</b>One service principal for shared resources; each user's identity when data access must differ per user.</p></div>
+      <div class="pill"><p><b>Passthrough vs on-behalf-of-user</b>One service principal for shared resources; each user's identity when data access must differ per user. Manual secrets only when neither fits.</p></div>
       <div class="pill"><p><b>Endpoint ACLs are separate</b>CAN_QUERY and CAN_MANAGE govern who invokes the endpoint, not what it can reach.</p></div>
     </div>
     <div class="spacer"></div>` }
