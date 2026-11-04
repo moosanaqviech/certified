@@ -99,6 +99,8 @@ Note on the Filename column: published posts are `.html` files in the
 | 5 | Mosaic AI Agent Framework and Agent Bricks for the GenAI Engineer exam | "mosaic ai agent framework exam" | Yes | blog/mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam.html |
 | 6 | Is the Databricks Generative AI Engineer Associate certification worth it in 2026 | "is databricks genai engineer certification worth it" | Yes | blog/is-databricks-generative-ai-engineer-associate-worth-it-2026.html |
 | 7 | Mosaic AI Gateway and Foundation Model APIs for the GenAI Engineer exam | "mosaic ai gateway foundation model apis exam" | Yes | blog/mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam.html |
+| 8 | Mosaic AI Vector Search in Python: create, query and filter an index (deep dive, chapter 33, linked from its final card) | "databricks vector search similarity_search filters" | Yes | blog/mosaic-ai-vector-search-similarity-search-filters.html |
+| 9 | Databricks agent authentication: declared resources, on-behalf-of-user and secrets (deep dive, chapter 36, linked from its final card) | "databricks agent on behalf of user authentication" | Yes | blog/databricks-agent-authentication-resources-on-behalf-of-user.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 

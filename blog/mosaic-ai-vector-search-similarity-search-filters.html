@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mosaic AI Vector Search in Python: Create, Query and Filter an Index</title>
+<meta name="description" content="Create all three Mosaic AI Vector Search index types in Python and query them: every similarity_search argument, filter syntax by endpoint, hybrid, reranking.">
+<link rel="canonical" href="https://certify.courses/blog/mosaic-ai-vector-search-similarity-search-filters">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mosaic AI Vector Search in Python: Create, Query and Filter an Index">
+<meta property="og:description" content="Create all three Mosaic AI Vector Search index types in Python and query them: every similarity_search argument, filter syntax by endpoint, hybrid, reranking.">
+<meta property="og:url" content="https://certify.courses/blog/mosaic-ai-vector-search-similarity-search-filters">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>Similarity search and filters</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Mosaic AI Vector Search in Python: Create, Query and Filter an Index</h1>
+    <p class="lede">In Mosaic AI Vector Search, <strong>similarity_search</strong> is the Python method that queries an index: it takes a query text or vector, the columns to return, a result count, optional filters and a query type (ANN or HYBRID). Filters are a dictionary on Standard endpoints and a SQL-like string on Storage Optimized endpoints.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 33 of the course builds one Delta Sync index and runs one query with a single equality filter. This post is the reference behind that chapter: complete create code for all three index flavors, keeping an index current, every <code>similarity_search</code> argument, the full filter syntax on both endpoint types, the reranker, and the retriever tool an agent calls.</p>
+    <p>"Create and query a Vector Search index" is an objective in Section 4, Assembling and Deploying Applications, of the 18 March 2026 exam guide. The concepts around it (endpoints, index types, sizing) are in the <a href="mosaic-ai-vector-search-rag-genai-engineer-exam">Vector Search and RAG post</a>.</p>
+    <div class="callout"><p><strong>Names in the code:</strong> the docs renamed the product AI Search in June 2026, and the current SDK is <code>databricks-ai-search</code> with <code>AISearchClient</code>. <code>VectorSearchClient</code> is the same class under its old name, and <code>databricks-vectorsearch</code> is now a deprecated shim over it. The exam guide, and this post, say Vector Search.</p></div>
+  </section>
+
+  <section id="create">
+    <h2>Create each index flavor</h2>
+    <p>A Standard endpoint and a Delta Sync index whose embeddings Databricks computes:</p>
+<pre><code>%pip install databricks-ai-search
+dbutils.library.restartPython()
+
+from databricks.ai_search.client import AISearchClient
+
+client = AISearchClient()
+client.create_endpoint(name="rag_endpoint", endpoint_type="STANDARD")
+
+index = client.create_delta_sync_index(
+    endpoint_name="rag_endpoint",
+    source_table_name="main.rag.doc_chunks",
+    index_name="main.rag.doc_chunks_index",
+    pipeline_type="TRIGGERED",
+    primary_key="chunk_id",
+    embedding_source_column="chunk_text",
+    embedding_model_endpoint_name="databricks-qwen3-embedding-0-6b",
+    columns_to_sync=["chunk_text", "source_url", "region", "doc_year"],
+)</code></pre>
+    <p>Databricks embeds <code>chunk_text</code> through the named endpoint at sync time, and each <code>query_text</code> with the same model. <code>columns_to_sync</code> matters more than it looks: by default every source column is synced, but when set, only those columns plus the primary key and embedding column are indexed, and <strong>only indexed columns can be returned or filtered on</strong>. A <code>source_url</code> left out here never comes back.</p>
+    <p>When an upstream pipeline already writes vectors, point the index at that column instead:</p>
+<pre><code>index = client.create_delta_sync_index(
+    endpoint_name="rag_endpoint",
+    source_table_name="main.rag.doc_chunks_embedded",
+    index_name="main.rag.doc_chunks_embedded_index",
+    pipeline_type="TRIGGERED",
+    primary_key="chunk_id",
+    embedding_dimension=1024,
+    embedding_vector_column="chunk_vector",
+)</code></pre>
+    <p>The vector column is <code>array&lt;float&gt;</code> and <code>embedding_dimension</code> must match it (on Storage Optimized endpoints the dimension must divide evenly by 16). Queries now pass <code>query_vector</code>, embedded by the same model you used upstream.</p>
+    <p>A Direct Vector Access index has no source table, so you declare its schema yourself. It cannot be created in the UI, only through the SDK or REST API:</p>
+<pre><code>index = client.create_direct_access_index(
+    endpoint_name="rag_endpoint",
+    index_name="main.rag.live_notes_index",
+    primary_key="note_id",
+    embedding_dimension=1024,
+    embedding_vector_column="note_vector",
+    schema={
+        "note_id": "int",
+        "note_text": "string",
+        "region": "string",
+        "note_vector": "array&lt;float&gt;",
+    },
+)</code></pre>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 318" role="img" aria-labelledby="dg1t dg1d">
+        <title id="dg1t">How data reaches each index flavor</title>
+        <desc id="dg1d">Delta Sync with managed embeddings: a Delta table's text column goes through an embedding endpoint into the index, and queries use query_text. Delta Sync with self-managed embeddings: a Delta table that already holds a vector column syncs into the index, and queries use query_vector. Direct Vector Access: your code calls upsert and delete on the index, with no source table and no sync, and queries use query_vector.</desc>
+        <defs><marker id="dg1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="18">DELTA SYNC, MANAGED EMBEDDINGS</text>
+        <rect class="d-box" x="10" y="28" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="58" y="48" text-anchor="middle">Delta table</text>
+        <text class="d-mono" x="58" y="64" text-anchor="middle">chunk_text</text>
+        <path class="d-arrow" d="M108 51 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="132" y="28" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="180" y="48" text-anchor="middle">Embedding</text>
+        <text class="d-txt" x="180" y="64" text-anchor="middle">endpoint</text>
+        <path class="d-arrow" d="M230 51 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="254" y="28" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="302" y="56" text-anchor="middle">Index</text>
+        <text class="d-soft" x="10" y="94">Query with query_text; Databricks embeds it</text>
+        <text class="d-step" x="10" y="124">DELTA SYNC, SELF-MANAGED</text>
+        <rect class="d-box" x="10" y="134" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="58" y="154" text-anchor="middle">Delta table</text>
+        <text class="d-mono" x="58" y="170" text-anchor="middle">chunk_vector</text>
+        <path class="d-arrow" d="M108 157 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-chip" x="132" y="134" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="180" y="154" text-anchor="middle">sync</text>
+        <text class="d-soft" x="180" y="170" text-anchor="middle">no embedding</text>
+        <path class="d-arrow" d="M230 157 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="254" y="134" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="302" y="162" text-anchor="middle">Index</text>
+        <text class="d-soft" x="10" y="200">Query with query_vector from your model</text>
+        <text class="d-step" x="10" y="230">DIRECT VECTOR ACCESS</text>
+        <rect class="d-box" x="10" y="240" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="58" y="260" text-anchor="middle">Your code</text>
+        <text class="d-soft" x="58" y="276" text-anchor="middle">no source table</text>
+        <path class="d-arrow" d="M108 263 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-chip" x="132" y="240" width="96" height="46" rx="10"/>
+        <text class="d-mono" x="180" y="260" text-anchor="middle">upsert()</text>
+        <text class="d-mono" x="180" y="276" text-anchor="middle">delete()</text>
+        <path class="d-arrow" d="M230 263 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="254" y="240" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="302" y="268" text-anchor="middle">Index</text>
+        <text class="d-soft" x="10" y="306">Query with query_vector; no sync to run</text>
+      </svg>
+      <figcaption>Who computes the vectors decides whether a query passes query_text or query_vector.</figcaption>
+    </figure>
+  </section>
+
+  <section id="update">
+    <h2>Keeping an index current</h2>
+<pre><code># Delta Sync on TRIGGERED: start a sync after the source table changes
+index = client.get_index(index_name="main.rag.doc_chunks_index")
+index.sync()
+
+# Direct Vector Access: your code writes every change
+live = client.get_index(index_name="main.rag.live_notes_index")
+live.upsert([
+    {"note_id": 1, "note_text": "Refunds post in 5 days",
+     "region": "US", "note_vector": [0.12] * 1024},
+])
+live.delete(primary_keys=[1])</code></pre>
+    <p>A <code>CONTINUOUS</code> Delta Sync index updates itself, so <code>sync()</code> is for <code>TRIGGERED</code> pipelines, typically the last task of the job refreshing the chunk table. <code>upsert()</code> takes a list of dicts matching the declared schema; <code>delete()</code> takes a list of primary keys. On a Delta Sync index you change the source table instead.</p>
+    <p>The index schema is fixed at creation: returning a new source column means building a new index and switching traffic to it.</p>
+  </section>
+
+  <section id="arguments">
+    <h2>Every similarity_search argument</h2>
+    <table class="cmp">
+      <thead><tr><th>Argument</th><th class="col-h">What it does</th></tr></thead>
+      <tbody>
+        <tr><th><code>columns</code></th><td class="col-h">Required list of fields to return. Each must be an indexed column.</td></tr>
+        <tr><th><code>query_text</code></th><td class="col-h">Text query. Embedded for you on a managed-embedding index; also the keyword side of HYBRID.</td></tr>
+        <tr><th><code>query_vector</code></th><td class="col-h">A list of floats, for self-managed and Direct Vector Access indexes.</td></tr>
+        <tr><th><code>num_results</code></th><td class="col-h">Rows to return, default 5. Above 1,000 the SDK pages for you, up to 10,000 in all.</td></tr>
+        <tr><th><code>filters</code></th><td class="col-h">Dict on Standard, string on Storage Optimized (next section). Without a query, a filter-only lookup.</td></tr>
+        <tr><th><code>query_type</code></th><td class="col-h"><code>"ANN"</code> (default), <code>"HYBRID"</code>, or <code>"FULL_TEXT"</code> (Beta, keywords only).</td></tr>
+        <tr><th><code>score_threshold</code></th><td class="col-h">Drops results scoring below the value. With a reranker it is applied before reranking.</td></tr>
+        <tr><th><code>reranker</code></th><td class="col-h">A <code>DatabricksReranker</code> that re-scores the first-pass results.</td></tr>
+        <tr><th><code>debug_level</code></th><td class="col-h">Set to 1 or more to get timings, including reranker time, in <code>debug_info</code>.</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation pages "Create AI Search endpoints and indexes" and "Query an AI Search index", and the <code>similarity_search</code> reference in the <code>databricks-ai-search</code> Python SDK (version 0.82).</p>
+  </section>
+
+  <section id="filters">
+    <h2>Filter syntax on each endpoint type</h2>
+    <p>Standard endpoints take a dict whose key holds column and operator; Storage Optimized endpoints take one SQL-like <code>WHERE</code> string.</p>
+    <table class="cmp">
+      <thead><tr><th>Intent</th><th class="col-h">Standard (dict)</th><th>Storage Optimized (string)</th></tr></thead>
+      <tbody>
+        <tr><th>Equals</th><td class="col-h"><code>{"region": "US"}</code></td><td><code>"region = 'US'"</code></td></tr>
+        <tr><th>Any of</th><td class="col-h"><code>{"id": [200, 300]}</code></td><td><code>"id IN (200, 300)"</code></td></tr>
+        <tr><th>Not equal</th><td class="col-h"><code>{"color NOT": "red"}</code></td><td><code>"color != 'red'"</code></td></tr>
+        <tr><th>Range</th><td class="col-h"><code>{"price &lt;": 200}</code>, also <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td><code>"price &lt; 200"</code></td></tr>
+        <tr><th>Either column</th><td class="col-h"><code>{"color1 OR color2": ["red", "blue"]}</code></td><td><code>"color1 = 'red' OR color2 = 'blue'"</code></td></tr>
+        <tr><th>Text match</th><td class="col-h"><code>{"col LIKE": "apple"}</code> matches whole words only</td><td><code>"col LIKE '%apple%'"</code> with SQL wildcards</td></tr>
+        <tr><th>Struct, map</th><td class="col-h"><code>{"profile.age": 18}</code></td><td><code>"attrs['voltage'] = 9"</code></td></tr>
+        <tr><th>Timestamp</th><td class="col-h">Storage Optimized only</td><td><code>"date &gt; TO_TIMESTAMP('1995-01-01')"</code></td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Operators and examples from the "Use filters on queries" section of the Databricks page "Query an AI Search index".</p>
+    <p>On Standard, several keys in one dict must all match, as in <code>{"region": ["US", "CA"], "doc_year &gt;=": 2024}</code>. A Standard <code>LIKE</code> matches whitespace-separated tokens, so <code>"apple"</code> matches "apple pear" but not "pineapple"; the Storage Optimized <code>LIKE</code> is the SQL one.</p>
+    <p>The bigger difference is when the filter runs. Storage Optimized endpoints overfetch and then filter what was fetched, so a selective filter can return fewer rows than <code>num_results</code>, or none, even when matching rows exist lower down.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 262" role="img" aria-labelledby="dg2t dg2d">
+        <title id="dg2t">A selective filter on a Storage Optimized endpoint</title>
+        <desc id="dg2d">With num_results set to 3 and the filter region equals US, the endpoint first fetches its top six candidates by score: EU, EU, US, APAC, EU, EU. The filter keeps only the one US row, rank 3, so one result comes back. Matching US rows at ranks 9 and 14 were never fetched.</desc>
+        <defs><marker id="dg2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-mono d-gold" x="10" y="18">num_results=3, filters="region = 'US'"</text>
+        <text class="d-step" x="10" y="44">OVERFETCHED BY SCORE</text>
+        <rect class="d-box" x="10" y="54" width="150" height="148" rx="10"/>
+        <g class="d-dim"><text class="d-mono" x="24" y="76">#1</text><text class="d-txt" x="60" y="76">EU</text></g>
+        <g class="d-dim"><text class="d-mono" x="24" y="100">#2</text><text class="d-txt" x="60" y="100">EU</text></g>
+        <text class="d-mono d-gold" x="24" y="124">#3</text><text class="d-txt d-gold" x="60" y="124">US</text>
+        <g class="d-dim"><text class="d-mono" x="24" y="148">#4</text><text class="d-txt" x="60" y="148">APAC</text></g>
+        <g class="d-dim"><text class="d-mono" x="24" y="172">#5</text><text class="d-txt" x="60" y="172">EU</text></g>
+        <g class="d-dim"><text class="d-mono" x="24" y="196">#6</text><text class="d-txt" x="60" y="196">EU</text></g>
+        <path class="d-arrow" d="M164 120 H196" marker-end="url(#dg2a)"/>
+        <text class="d-step d-green" x="200" y="44">AFTER THE FILTER</text>
+        <rect class="d-good" x="200" y="104" width="150" height="34" rx="10"/>
+        <text class="d-mono" x="214" y="125">#3</text><text class="d-txt" x="250" y="125">US</text>
+        <text class="d-soft" x="200" y="160">1 row, not 3</text>
+        <text class="d-soft" x="10" y="230">US rows ranked #9 and #14 exist</text>
+        <text class="d-soft" x="10" y="250">but were never fetched.</text>
+      </svg>
+      <figcaption>Storage Optimized endpoints filter the overfetched candidates, so a narrow filter can come back short.</figcaption>
+    </figure>
+  </section>
+
+  <section id="ranking">
+    <h2>ANN, HYBRID and the reranker</h2>
+<pre><code>from databricks.ai_search.reranker import DatabricksReranker
+
+results = index.similarity_search(
+    query_text="error E-4031 at checkout",
+    columns=["chunk_id", "chunk_text", "source_url"],
+    filters={"region": "US"},
+    num_results=5,
+    query_type="HYBRID",
+    reranker=DatabricksReranker(columns_to_rerank=["chunk_text"]),
+    debug_level=1,
+)
+rows = results["result"]["data_array"]
+print(results["debug_info"])</code></pre>
+    <p>ANN compares embeddings only, which suits paraphrased questions. HYBRID runs ANN and a keyword search in parallel and merges them with Reciprocal Rank Fusion, which catches exact codes like the one above; it returns at most 200 results. The reranker is a cross-encoder second pass over the first-pass results. <code>columns_to_rerank</code> is read in order and only its first 2,000 characters count, so put short, informative columns first. <code>num_results</code> is still the final count.</p>
+    <div class="callout"><p><strong>Latency:</strong> the docs put the reranker at roughly a 10% quality gain for typically under a second more per query. That is why a latency-critical, high-QPS workload runs plain ANN with reranking off, the sizing call in Chapter 34.</p></div>
+  </section>
+
+  <section id="retriever">
+    <h2>The index as an agent's retriever</h2>
+<pre><code>from databricks_langchain import VectorSearchRetrieverTool
+
+vs_tool = VectorSearchRetrieverTool(
+    index_name="main.rag.doc_chunks_index",
+    tool_name="policy_search",
+    tool_description="Search refund and shipping policies.",
+    num_results=5,
+    columns=["chunk_id", "chunk_text", "source_url"],
+    filters={"region": "US"},
+    query_type="HYBRID",
+)
+docs = vs_tool.invoke("How long do refunds take?")</code></pre>
+    <p>For new Python agents the docs recommend <code>VectorSearchRetrieverTool</code> from <code>databricks-langchain</code> (or <code>databricks-openai</code>): the description tells the model when to search, and <code>columns</code>, <code>filters</code> and <code>query_type</code> work as above. On a self-managed or Direct Vector Access index it also needs <code>text_column</code> and an <code>embedding</code> model to embed the query. The <code>DatabricksVectorSearch</code> vector store, wrapped with <code>as_retriever()</code>, still serves a fixed chain, with LangChain's names <code>k</code> and <code>filter</code>.</p>
+    <p class="fnote">From the Databricks page "Connect agents to unstructured data" and the <code>databricks-langchain</code> 0.22 package source.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> a field missing from results is fixed in two places: sync the column into the index, then name it in <code>columns</code>. Per-user scoping is a <code>filters</code> value the application sets from the user's identity, not a security feature inside the index. Exact codes and part numbers point to HYBRID; a tight latency budget points to ANN without the reranker.</p></div>
+    <p>Distractors change the wrong argument: more <code>num_results</code> for more fields, HYBRID for metadata, or a join back to the source table.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What arguments does similarity_search take in Databricks Vector Search?</summary><div class="fa"><p>similarity_search takes the columns to return plus either query_text or query_vector, and optionally num_results (default 5), filters, query_type (ANN by default, or HYBRID), score_threshold, a reranker and debug_level. Only columns that were synced into the index can be returned or filtered on.</p></div></details>
+      <details><summary>How do filters differ between Standard and Storage Optimized Vector Search endpoints?</summary><div class="fa"><p>Standard endpoints take a dictionary such as {"price &lt;": 200}, with the operator in the key. Storage Optimized endpoints take a SQL-like string such as "price &lt; 200" and apply it to overfetched results, so a narrow filter can return fewer rows than requested.</p></div></details>
+      <details><summary>When do I call sync() on a Vector Search index?</summary><div class="fa"><p>Call index.sync() on a Delta Sync index that uses the TRIGGERED pipeline type, after the source table changes. A CONTINUOUS index updates itself, and a Direct Vector Access index is never synced: your code writes to it with upsert() and delete().</p></div></details>
+      <details><summary>Should I use HYBRID search or ANN in Mosaic AI Vector Search?</summary><div class="fa"><p>Use HYBRID when queries contain exact terms such as product codes or names, because it merges vector and keyword results. Use plain ANN, the default, for paraphrased questions or when latency is the tightest constraint.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Creating and querying a Vector Search index is Chapter 33 of the Databricks Generative AI Engineer Associate course, in Unit 4, Assembling and Deploying Applications, with exam-style checks on columns and filters.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-33-creating-querying-vector-index.html" class="cta">Open Chapter 33 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-vector-search-rag-genai-engineer-exam">Mosaic AI Vector Search and RAG for the exam &rarr;</a>
+    <a href="mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam">Mosaic AI Agent Framework and Agent Bricks &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-34-sizing-vector-search.html">Chapter 34: sizing Vector Search &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Mosaic AI Vector Search in Python: Create, Query and Filter an Index","description":"Create all three Mosaic AI Vector Search index types in Python and query them: every similarity_search argument, filter syntax by endpoint, hybrid, reranking.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-04","dateModified":"2026-11-04","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/mosaic-ai-vector-search-similarity-search-filters"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "What arguments does similarity_search take in Databricks Vector Search?", "acceptedAnswer": {"@type": "Answer", "text": "similarity_search takes the columns to return plus either query_text or query_vector, and optionally num_results (default 5), filters, query_type (ANN by default, or HYBRID), score_threshold, a reranker and debug_level. Only columns that were synced into the index can be returned or filtered on."}},
+{"@type": "Question", "name": "How do filters differ between Standard and Storage Optimized Vector Search endpoints?", "acceptedAnswer": {"@type": "Answer", "text": "Standard endpoints take a dictionary such as {\"price <\": 200}, with the operator in the key. Storage Optimized endpoints take a SQL-like string such as \"price < 200\" and apply it to overfetched results, so a narrow filter can return fewer rows than requested."}},
+{"@type": "Question", "name": "When do I call sync() on a Vector Search index?", "acceptedAnswer": {"@type": "Answer", "text": "Call index.sync() on a Delta Sync index that uses the TRIGGERED pipeline type, after the source table changes. A CONTINUOUS index updates itself, and a Direct Vector Access index is never synced: your code writes to it with upsert() and delete()."}},
+{"@type": "Question", "name": "Should I use HYBRID search or ANN in Mosaic AI Vector Search?", "acceptedAnswer": {"@type": "Answer", "text": "Use HYBRID when queries contain exact terms such as product codes or names, because it merges vector and keyword results. Use plain ANN, the default, for paraphrased questions or when latency is the tightest constraint."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

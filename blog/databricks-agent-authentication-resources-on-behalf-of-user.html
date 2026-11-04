@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databricks Agent Authentication: Declared Resources, On-Behalf-of-User and Secrets</title>
+<meta name="description" content="How a Databricks agent on Model Serving authenticates: each declarable resource and its privilege, on-behalf-of-user code and scopes, and manual auth.">
+<link rel="canonical" href="https://certify.courses/blog/databricks-agent-authentication-resources-on-behalf-of-user">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Databricks Agent Authentication: Declared Resources, On-Behalf-of-User and Secrets">
+<meta property="og:description" content="How a Databricks agent on Model Serving authenticates: each declarable resource and its privilege, on-behalf-of-user code and scopes, and manual auth.">
+<meta property="og:url" content="https://certify.courses/blog/databricks-agent-authentication-resources-on-behalf-of-user">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>Agent authentication</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Databricks Agent Authentication: Declared Resources, On-Behalf-of-User and Secrets</h1>
+    <p class="lede">A Databricks agent deployed on Model Serving reaches other resources in one of three ways: <strong>automatic authentication passthrough</strong>, where a hidden service principal uses the deployer's checked access to resources declared at log time; <strong>on-behalf-of-user</strong> authentication, where it acts as the person querying it; or <strong>manual authentication</strong> with credentials kept in secrets.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 36 of the course covers the idea: a deployed agent reaches only what it declared, through a shared identity or the caller's own, and endpoint permissions are a separate layer. This post adds the detail: who the agent runs as in each mode, every declarable resource with its required privilege, complete code for all three modes, and the endpoint permission levels.</p>
+    <p>The objective is "Control access to resources from model serving endpoints", in Section 4 (Assembling and Deploying Applications) of the 18 Mar 2026 guide for the Databricks Certified Generative AI Engineer Associate exam. The docs now steer new agents to Databricks Apps; everything below is the Model Serving version the objective names.</p>
+  </section>
+
+  <section id="modes">
+    <h2>Who the agent runs as</h2>
+    <p>The downstream resource checks the agent's identity, not the caller's, and that identity depends on the mode:</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 352" role="img" aria-labelledby="dg1t dg1d">
+        <title id="dg1t">Who a Databricks agent runs as in each authentication mode</title>
+        <desc id="dg1d">With automatic passthrough, any caller with CAN QUERY reaches resources as a hidden service principal created per model version, so every caller gets the same reach. With on-behalf-of-user, Ana's downscoped token is used, so the table sees Ana and she reaches only her own grants. With manual authentication, the agent uses a service principal whose credentials you store in secrets, and you create, grant and rotate that credential.</desc>
+        <defs><marker id="dg1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="16">CALLER</text>
+        <text class="d-step" x="132" y="16">AGENT RUNS AS</text>
+        <text class="d-step" x="254" y="16">RESOURCE SEES</text>
+
+        <text class="d-txt d-gold" x="10" y="42">Automatic passthrough</text>
+        <rect class="d-box" x="10" y="50" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="20" y="70">Ana or Ben</text><text class="d-soft" x="20" y="88">CAN QUERY</text>
+        <path class="d-arrow" d="M108 74 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="132" y="50" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="142" y="70">Hidden SP</text><text class="d-soft" x="142" y="88">per version</text>
+        <path class="d-arrow" d="M230 74 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="254" y="50" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="264" y="70">Index sees</text><text class="d-soft" x="264" y="88">the SP</text>
+        <text class="d-soft" x="10" y="118">Every caller gets the deployer-checked reach</text>
+        <path class="d-line" d="M10 134 H350"/>
+
+        <text class="d-txt d-gold" x="10" y="156">On-behalf-of-user</text>
+        <rect class="d-box" x="10" y="164" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="20" y="184">Ana</text><text class="d-soft" x="20" y="202">CAN QUERY</text>
+        <path class="d-arrow" d="M108 188 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="132" y="164" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="142" y="184">Ana's token</text><text class="d-soft" x="142" y="202">downscoped</text>
+        <path class="d-arrow" d="M230 188 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-good" x="254" y="164" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="264" y="184">Table sees</text><text class="d-soft" x="264" y="202">Ana</text>
+        <text class="d-soft" x="10" y="232">Each caller reaches only their own grants</text>
+        <path class="d-line" d="M10 248 H350"/>
+
+        <text class="d-txt d-gold" x="10" y="270">Manual authentication</text>
+        <rect class="d-box" x="10" y="278" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="20" y="298">Ana or Ben</text><text class="d-soft" x="20" y="316">CAN QUERY</text>
+        <path class="d-arrow" d="M108 302 H128" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="132" y="278" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="142" y="298">Your SP</text><text class="d-soft" x="142" y="316">from secrets</text>
+        <path class="d-arrow" d="M230 302 H250" marker-end="url(#dg1a)"/>
+        <rect class="d-box" x="254" y="278" width="96" height="48" rx="10"/>
+        <text class="d-txt" x="264" y="298">API sees</text><text class="d-soft" x="264" y="316">your SP</text>
+        <text class="d-soft" x="10" y="346">You create, grant and rotate the credential</text>
+      </svg>
+      <figcaption>Passthrough and manual give every caller one shared reach; on-behalf-of-user is the only mode where the resource sees the person asking.</figcaption>
+    </figure>
+    <p>Under passthrough, Databricks first verifies that the endpoint creator can access every declared resource, then creates a service principal for that agent model version, grants it read access to those resources, and injects short-lived M2M OAuth credentials that it rotates. That service principal does not appear in API or UI listings and is deleted when the model version leaves the endpoint, so there is nothing to grant by hand: a missing permission is fixed by the declaration.</p>
+  </section>
+
+  <section id="resources">
+    <h2>Every resource you can declare</h2>
+    <p>These are the resource types the docs list for automatic passthrough, with the <code>mlflow.models.resources</code> class, its argument, and the permission the endpoint creator must hold at deploy time:</p>
+    <table class="cmp">
+      <thead><tr><th>Resource and class</th><th class="col-h">Deployer needs</th></tr></thead>
+      <tbody>
+        <tr><th>Vector Search index<br><code>DatabricksVectorSearchIndex(index_name=)</code></th><td class="col-h">Can Use (MLflow 2.13.1+)</td></tr>
+        <tr><th>Model Serving endpoint<br><code>DatabricksServingEndpoint(endpoint_name=)</code></th><td class="col-h">Can Query (2.13.1+)</td></tr>
+        <tr><th>SQL warehouse<br><code>DatabricksSQLWarehouse(warehouse_id=)</code></th><td class="col-h">Use Endpoint (2.16.1+)</td></tr>
+        <tr><th>Unity Catalog function<br><code>DatabricksFunction(function_name=)</code></th><td class="col-h"><code>EXECUTE</code> (2.16.1+)</td></tr>
+        <tr><th>Genie Space<br><code>DatabricksGenieSpace(genie_space_id=)</code></th><td class="col-h">Can Run (2.17.1+)</td></tr>
+        <tr><th>Unity Catalog connection<br><code>DatabricksUCConnection(connection_name=)</code></th><td class="col-h">Use Connection (2.17.1+)</td></tr>
+        <tr><th>Unity Catalog table<br><code>DatabricksTable(table_name=)</code></th><td class="col-h"><code>SELECT</code> (2.18.0+)</td></tr>
+        <tr><th>Lakebase<br><code>DatabricksLakebase(database_instance_name=)</code></th><td class="col-h"><code>databricks_superuser</code> (3.3.2+)</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Sourced from the Databricks documentation pages "Authentication for agents (Model Serving)" and "Access control lists" (serving endpoint ACLs), checked November 2026. Unity Catalog resources also need <code>USE SCHEMA</code> and <code>USE CATALOG</code> on their parents. The docs also show <code>DatabricksApp(app_name=)</code> in the logging example, for a custom MCP server hosted on a Databricks App, but list no permission for it.</p>
+    <p>Declare downstream resources too: a Genie Space needs its tables, warehouses and functions alongside it. For workspace MCP endpoints, the <code>get_databricks_resources()</code> method of <code>DatabricksMCPClient</code>, in the <code>databricks-mcp</code> package, lists everything to declare.</p>
+  </section>
+
+  <section id="passthrough">
+    <h2>Automatic passthrough: the logging call</h2>
+<pre><code>import mlflow
+from mlflow.models.resources import (
+    DatabricksVectorSearchIndex, DatabricksServingEndpoint,
+    DatabricksFunction, DatabricksSQLWarehouse, DatabricksGenieSpace,
+    DatabricksTable,
+)
+
+with mlflow.start_run():
+    logged = mlflow.pyfunc.log_model(
+        name="agent",
+        python_model="agent.py",
+        input_example=input_example,
+        resources=[
+            DatabricksVectorSearchIndex(index_name="prod.support.docs_index"),
+            DatabricksServingEndpoint(endpoint_name="databricks-bge-large-en"),
+            DatabricksServingEndpoint(endpoint_name="my-llm-endpoint"),
+            DatabricksFunction(function_name="prod.support.lookup_order"),
+            # The Genie Space, plus what it depends on
+            DatabricksGenieSpace(genie_space_id="&lt;genie_space_id&gt;"),
+            DatabricksSQLWarehouse(warehouse_id="&lt;warehouse_id&gt;"),
+            DatabricksTable(table_name="prod.sales.orders"),
+        ],
+    )</code></pre>
+    <p>The <code>resources</code> list is stored with the logged model. When the registered version is deployed, the permission check runs against the deployer and the hidden service principal is granted exactly this list. Anything the code touches that is missing here fails at query time, not at deploy time.</p>
+  </section>
+
+  <section id="obo">
+    <h2>On-behalf-of-user: clients, then scopes</h2>
+    <p>On-behalf-of-user authentication is in <strong>Public Preview</strong>, needs MLflow 2.22.1 or above, and is off until a workspace admin enables it. On Model Serving it covers Vector Search indexes, serving endpoints, SQL warehouses, Unity Catalog connections, tables (through SQL statement execution) and functions, Genie Spaces and MCP servers, but not volumes.</p>
+<pre><code>from databricks.sdk import WorkspaceClient
+from databricks_ai_bridge import ModelServingUserCredentials
+from databricks.vector_search.client import VectorSearchClient
+from databricks.vector_search.utils import CredentialStrategy
+from mlflow.pyfunc import ResponsesAgent
+
+class SupportAgent(ResponsesAgent):
+    def predict(self, request):
+        # Built per request: the caller is only known now
+        user_client = WorkspaceClient(
+            credentials_strategy=ModelServingUserCredentials())
+        user_vsc = VectorSearchClient(
+            credential_strategy=CredentialStrategy.MODEL_SERVING_USER_CREDENTIALS)
+        # Runs as the agent's own identity, not the caller
+        system_client = WorkspaceClient()
+        try:
+            index = user_vsc.get_index(endpoint_name="vs-endpoint",
+                                       index_name="prod.support.docs_index")
+        except Exception:
+            index = None  # caller lacks access: skip the tool, do not crash
+        ...</code></pre>
+    <p>Every user-scoped client is created inside <code>predict</code> (or <code>predict_stream</code>), never in <code>__init__</code> or at import time: the user's identity only exists once a request arrives, and building the client per request keeps invocations isolated from each other. The <code>try</code>/<code>except</code> lets a user without access to one resource still use the rest; the plain <code>WorkspaceClient()</code> runs as the agent.</p>
+<pre><code>import mlflow
+from mlflow.models.auth_policy import AuthPolicy, SystemAuthPolicy, UserAuthPolicy
+from mlflow.models.resources import DatabricksServingEndpoint
+
+system_policy = SystemAuthPolicy(
+    resources=[DatabricksServingEndpoint(endpoint_name="my-llm-endpoint")])
+user_policy = UserAuthPolicy(api_scopes=["model-serving", "ai-search"])
+
+with mlflow.start_run():
+    mlflow.pyfunc.log_model(
+        name="agent",
+        python_model="agent.py",
+        auth_policy=AuthPolicy(system_auth_policy=system_policy,
+                               user_auth_policy=user_policy),
+    )</code></pre>
+    <p>For on-behalf-of-user, the docs pass an <code>auth_policy</code> instead of a bare <code>resources</code> list: the system policy holds resources reached with the agent's own credentials, the user policy holds the REST API scopes the caller's token is downscoped to. On Model Serving, only scopes matching the supported resources are allowed. The docs flag one risk: the <code>model-serving</code> scope lets the agent call an endpoint as the user, and that endpoint may reach APIs beyond the agent's own scopes.</p>
+    <p>Once the caller's identity reaches the data, Unity Catalog's own per-user controls apply to it, which is how <a href="unity-catalog-row-filters-column-masks">row filters and column masks</a> stay in force through an agent.</p>
+  </section>
+
+  <section id="manual">
+    <h2>Manual authentication with secrets</h2>
+    <p>Manual authentication is for a resource passthrough does not cover, credentials other than the deployer's, APIs outside Databricks, or the prompt registry. The docs recommend OAuth for a service principal you create and grant yourself:</p>
+<pre><code>import os
+from databricks.sdk import WorkspaceClient
+from databricks import agents
+
+scope = "agent-secrets"
+os.environ["DATABRICKS_HOST"] = "https://&lt;workspace-url&gt;"
+os.environ["DATABRICKS_CLIENT_ID"] = dbutils.secrets.get(scope=scope, key="sp-client-id")
+os.environ["DATABRICKS_CLIENT_SECRET"] = dbutils.secrets.get(scope=scope, key="sp-client-secret")
+w = WorkspaceClient(host=os.environ["DATABRICKS_HOST"],
+                    client_id=os.environ["DATABRICKS_CLIENT_ID"],
+                    client_secret=os.environ["DATABRICKS_CLIENT_SECRET"])
+
+agents.deploy(UC_MODEL_NAME, version,
+    environment_vars={
+        "DATABRICKS_HOST": "https://&lt;workspace-url&gt;",
+        "DATABRICKS_CLIENT_ID": "{{secrets/agent-secrets/sp-client-id}}",
+        "DATABRICKS_CLIENT_SECRET": "{{secrets/agent-secrets/sp-client-secret}}",
+    })</code></pre>
+    <p>The agent code builds its client from the three environment variables, reading the client ID and secret from a secret scope as the docs show. <code>agents.deploy()</code> passes the endpoint the same variables as <code>{{secrets/scope/key}}</code> references, so the secret never appears in plain text in the endpoint config. A PAT works the same way with <code>DATABRICKS_TOKEN</code>, preferably for a service principal. For the prompt registry, that principal needs <code>CREATE FUNCTION</code>, <code>EXECUTE</code> and <code>MANAGE</code> on the prompts schema.</p>
+    <div class="callout"><p><strong>The trap:</strong> overriding these authentication environment variables disables automatic passthrough for every other resource the agent depends on. Adding one external API key can break the index that worked yesterday.</p></div>
+  </section>
+
+  <section id="query">
+    <h2>Who can call the endpoint</h2>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 356" role="img" aria-labelledby="dg2t dg2d">
+        <title id="dg2t">Two checks on every request to an agent endpoint</title>
+        <desc id="dg2d">Ana sends a request. Gate one is the endpoint ACL: she needs CAN QUERY or CAN MANAGE, and CAN VIEW alone cannot query. The agent code then runs. Gate two is the agent's identity, which is the passthrough service principal, Ana under on-behalf-of-user, or your own service principal, and it needs the privilege on the resource. Only then does the request reach the index, table, warehouse or Genie Space.</desc>
+        <defs><marker id="dg2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="16">TWO CHECKS ON EVERY REQUEST</text>
+        <rect class="d-box" x="10" y="28" width="340" height="38" rx="12"/>
+        <text class="d-txt" x="26" y="52">Ana sends a request to the endpoint</text>
+        <path class="d-arrow" d="M180 68 V86" marker-end="url(#dg2a)"/>
+        <rect class="d-chip" x="10" y="90" width="340" height="62" rx="12"/>
+        <text class="d-step" x="26" y="110">GATE 1: ENDPOINT ACL</text>
+        <text class="d-mono" x="26" y="128">CAN QUERY or CAN MANAGE</text>
+        <text class="d-soft" x="26" y="145">CAN VIEW can get and list, not query</text>
+        <path class="d-arrow" d="M180 154 V172" marker-end="url(#dg2a)"/>
+        <rect class="d-box" x="10" y="176" width="340" height="38" rx="12"/>
+        <text class="d-txt" x="26" y="200">The agent code runs</text>
+        <path class="d-arrow" d="M180 216 V234" marker-end="url(#dg2a)"/>
+        <rect class="d-chip" x="10" y="238" width="340" height="62" rx="12"/>
+        <text class="d-step" x="26" y="258">GATE 2: THE AGENT'S IDENTITY</text>
+        <text class="d-soft" x="26" y="276">Passthrough SP, Ana (OBO) or your SP</text>
+        <text class="d-soft" x="26" y="293">needs the privilege on the resource</text>
+        <path class="d-arrow" d="M180 302 V320" marker-end="url(#dg2a)"/>
+        <rect class="d-good" x="10" y="324" width="340" height="30" rx="12"/>
+        <text class="d-txt" x="26" y="344">Index, table, warehouse, Genie Space</text>
+      </svg>
+      <figcaption>The endpoint ACL decides who may ask; the authentication mode decides whose access answers.</figcaption>
+    </figure>
+    <p>Serving endpoint ACLs have three levels. <strong>CAN VIEW</strong> gets and lists the endpoint. <strong>CAN QUERY</strong> adds sending requests. <strong>CAN MANAGE</strong> adds updating the config, deleting the endpoint and changing its permissions. The levels stack, so a manager can also query. Under passthrough, granting CAN QUERY shares the deployer-checked reach; under on-behalf-of-user, each caller still needs their own data access.</p>
+  </section>
+
+  <section id="decide">
+    <h2>Which mode when</h2>
+    <table class="cmp">
+      <thead><tr><th>Situation</th><th class="col-h">Mode</th></tr></thead>
+      <tbody>
+        <tr><th>Per-user access or user-attributed auditing is required</th><td class="col-h">On-behalf-of-user</td></tr>
+        <tr><th>Shared resources, all of a supported type</th><td class="col-h">Automatic passthrough (the docs' recommendation)</td></tr>
+        <tr><th>An unsupported resource, an external API or the prompt registry</th><td class="col-h">Manual, OAuth service principal in secrets</td></tr>
+        <tr><th>OBO needed for a resource Model Serving does not support, such as volumes</th><td class="col-h">Deploy on Databricks Apps</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">From the docs' decision flowchart. Modes can be mixed per resource within one agent.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "works in the notebook, auth error on the endpoint" points to a resource missing from <code>resources=</code>, fixed by re-logging and redeploying. "Each user sees only their own rows" points to on-behalf-of-user. "Who may invoke the endpoint" is an endpoint ACL question, never a resource question. A shared admin token is always the wrong answer.</p></div>
+    <p>How the agent itself is authored, traced and deployed with <code>agents.deploy()</code> is in the <a href="mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam">Agent Framework and Agent Bricks post</a>.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>Who does a Databricks agent run as on Model Serving?</summary><div class="fa"><p>With automatic authentication passthrough, the agent runs as a hidden service principal created for its model version, with access to the resources declared at log time. With on-behalf-of-user authentication it acts as the person querying it, and with manual authentication it uses the credentials you supply as environment variables.</p></div></details>
+      <details><summary>Why does my agent work in a notebook but fail on the serving endpoint?</summary><div class="fa"><p>In the notebook the agent runs as you; deployed, it reaches only the resources declared in log_model's resources parameter. Add the missing index, function or endpoint to resources, log a new version and redeploy.</p></div></details>
+      <details><summary>Is on-behalf-of-user authentication generally available for Databricks agents?</summary><div class="fa"><p>No. On-behalf-of-user authentication for agents is in Public Preview, requires MLflow 2.22.1 or above, and is disabled until a workspace admin enables it.</p></div></details>
+      <details><summary>What permission does a user need to query a Databricks serving endpoint?</summary><div class="fa"><p>CAN QUERY on the endpoint, or CAN MANAGE, which includes it. CAN VIEW only gets and lists the endpoint.</p></div></details>
+      <details><summary>Where should a Databricks agent create its on-behalf-of-user clients?</summary><div class="fa"><p>Inside predict or predict_stream, not in __init__ or at import time, because the caller's identity only exists when a request arrives.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Controlling access to resources from a serving endpoint is Chapter 36 of the Databricks Generative AI Engineer Associate course, in Unit 4, Assembling and Deploying Applications, with declared resources, the two identities and endpoint ACLs built up card by card and exam-style checks.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-36-serving-endpoint-access-control.html" class="cta">Open Chapter 36 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam">Mosaic AI Gateway and Foundation Model APIs for the exam &rarr;</a>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">The complete Databricks GenAI Engineer certification guide &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-42-user-facing-interfaces.html">Chapter 42: User-facing interfaces for agents &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Databricks Agent Authentication: Declared Resources, On-Behalf-of-User and Secrets","description":"How a Databricks agent on Model Serving authenticates: each declarable resource and its privilege, on-behalf-of-user code and scopes, and manual auth.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-04","dateModified":"2026-11-04","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/databricks-agent-authentication-resources-on-behalf-of-user"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type": "Question", "name": "Who does a Databricks agent run as on Model Serving?", "acceptedAnswer": {"@type": "Answer", "text": "With automatic authentication passthrough, the agent runs as a hidden service principal created for its model version, with access to the resources declared at log time. With on-behalf-of-user authentication it acts as the person querying it, and with manual authentication it uses the credentials you supply as environment variables."}},
+{"@type": "Question", "name": "Why does my agent work in a notebook but fail on the serving endpoint?", "acceptedAnswer": {"@type": "Answer", "text": "In the notebook the agent runs as you; deployed, it reaches only the resources declared in log_model's resources parameter. Add the missing index, function or endpoint to resources, log a new version and redeploy."}},
+{"@type": "Question", "name": "Is on-behalf-of-user authentication generally available for Databricks agents?", "acceptedAnswer": {"@type": "Answer", "text": "No. On-behalf-of-user authentication for agents is in Public Preview, requires MLflow 2.22.1 or above, and is disabled until a workspace admin enables it."}},
+{"@type": "Question", "name": "What permission does a user need to query a Databricks serving endpoint?", "acceptedAnswer": {"@type": "Answer", "text": "CAN QUERY on the endpoint, or CAN MANAGE, which includes it. CAN VIEW only gets and lists the endpoint."}},
+{"@type": "Question", "name": "Where should a Databricks agent create its on-behalf-of-user clients?", "acceptedAnswer": {"@type": "Answer", "text": "Inside predict or predict_stream, not in __init__ or at import time, because the caller's identity only exists when a request arrives."}}
+]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
