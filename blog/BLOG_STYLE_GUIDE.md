@@ -100,19 +100,23 @@ need none.
 - Everything else (definitional lead, FAQ, JSON-LD, no em dashes, sitemap)
   is the same as any post.
 
-**Wiring it into the lesson.** Add this block to the final card's `html`,
-just before its closing spacer (payload only, the engine is untouched):
+**Wiring it into the lesson.** Add this block to the final card's `html`
+(payload only, the engine is untouched). Place it straight after the "Lesson
+complete" heading when the card has a summary list (pills): a list of three
+or four rows fills a small phone, and a link placed after it lands below the
+footer buttons. On a card with only a short lead paragraph, it can go just
+before the closing spacer. Either way, check the card at 360x640 and confirm
+the link sits above the footer without scrolling:
 
 ```html
-    <a class="reveal" data-deeper href="../blog/<slug>" style="display:block;width:100%;max-width:440px;margin:22px auto 0;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:var(--ink);text-decoration:none;text-align:left;">
+    <a class="reveal" data-deeper href="../blog/<slug>" style="display:block;width:100%;max-width:440px;margin:2px auto 18px;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:var(--ink);text-decoration:none;text-align:left;">
       <span style="display:block;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;color:var(--ink-faint);">Go deeper</span>
       <span style="display:block;font-size:15.5px;font-weight:600;line-height:1.35;margin-top:4px;">Short title</span>
       <span style="display:block;font-size:13px;line-height:1.45;color:var(--ink-soft);margin-top:4px;">One line on what the post adds &rarr;</span>
     </a>
 ```
 
-Keep the blurb to one line on a phone (about 60 characters): a final card
-with four summary rows already fills the screen. The link opens in the same
+Keep the blurb short (about 60 characters) so the block stays compact. The link opens in the same
 tab, because the app's WebView has no tabs. The post must link back to the
 lesson (its CTA card does), and `python3 scripts/check_deep_dives.py`, run in
 CI by `guard-seo`, fails any `data-deeper` link whose post is missing, not in
