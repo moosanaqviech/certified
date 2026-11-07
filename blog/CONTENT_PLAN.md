@@ -105,7 +105,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 11 | Batch inference with ai_query(): every argument, structured output and error handling (deep dive, chapter 37, linked from its final card) | "databricks ai_query batch inference" | Yes | blog/databricks-ai-query-batch-inference.html |
 | 12 | MLflow Prompt Registry on Databricks: register, version, alias and load a prompt (deep dive, chapter 40, linked from its final card) | "mlflow prompt registry alias" | Yes | blog/mlflow-prompt-registry-databricks.html |
 | 13 | Custom scorers and mlflow.genai.evaluate(): evaluating an agent from its traces (deep dive, chapters 49 and 50, linked from both final cards) | "mlflow genai evaluate custom scorer" | Yes | blog/mlflow-genai-evaluate-custom-scorers.html |
-| 14 | Mosaic AI Gateway: rate limits, usage and inference tables, with queries (deep dive candidate, chapter 54) | "databricks ai gateway rate limit usage table" | No | |
+| 14 | Mosaic AI Gateway: rate limits, usage tables and inference tables, with queries (deep dive, chapter 54, linked from its final card) | "databricks ai gateway rate limit usage table" | Yes | blog/databricks-ai-gateway-rate-limits-usage-inference-tables.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
