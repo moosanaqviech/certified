@@ -101,6 +101,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 7 | Mosaic AI Gateway and Foundation Model APIs for the GenAI Engineer exam | "mosaic ai gateway foundation model apis exam" | Yes | blog/mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam.html |
 | 8 | Mosaic AI Vector Search in Python: create, query and filter an index (deep dive, chapter 33, linked from its final card) | "databricks vector search similarity_search filters" | Yes | blog/mosaic-ai-vector-search-similarity-search-filters.html |
 | 9 | Databricks agent authentication: declared resources, on-behalf-of-user and secrets (deep dive, chapter 36, linked from its final card) | "databricks agent on behalf of user authentication" | Yes | blog/databricks-agent-authentication-resources-on-behalf-of-user.html |
+| 10 | Mosaic AI Gateway configuration: inference tables, usage tracking, rate limits and guardrails (deep dive, chapter 54, linked from its final card) | "databricks ai gateway inference table usage tracking rate limits" | Yes | blog/mosaic-ai-gateway-inference-usage-rate-limits-guardrails.html |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
