@@ -129,7 +129,11 @@ together reach all 69 objectives; their own scenarios: retail and finance,
 health and public sector, media, travel and industry), listed in the course
 home's "Full-length mock exams" section; 208 questions in all. The mocks are
 a sealed pool: never reuse their questions in the section exams and never
-draw them into drills. The course home lists all 58 chapters and its
+draw them into drills. A public readiness quiz lives at ready/aws-aif-c01
+(12 new questions, five domains at the official 20/24/28/14/14 weights,
+counts 2/3/3/2/2, scenarios reused from none of the seven exams), linked
+from the catalog row, the pillar guide and the study plan post. The course
+home lists all 58 chapters and its
 Practice toggle links the hub at practice/aws-aif-c01 (see the practice hubs
 paragraph below). Paid from launch: course id aws-aif, $9.99, Unit 1 free through
 aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
