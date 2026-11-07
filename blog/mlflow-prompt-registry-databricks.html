@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLflow Prompt Registry on Databricks: Register, Version, Alias and Load a Prompt</title>
+<meta name="description" content="Use the MLflow Prompt Registry on Databricks: Unity Catalog names and privileges, immutable versions, alias promotion and rollback, and loading prompts in apps.">
+<link rel="canonical" href="https://certify.courses/blog/mlflow-prompt-registry-databricks">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MLflow Prompt Registry on Databricks: Register, Version, Alias and Load a Prompt">
+<meta property="og:description" content="Use the MLflow Prompt Registry on Databricks: Unity Catalog names and privileges, immutable versions, alias promotion and rollback, and loading prompts in apps.">
+<meta property="og:url" content="https://certify.courses/blog/mlflow-prompt-registry-databricks">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>MLflow Prompt Registry</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>MLflow Prompt Registry on Databricks: Register, Version, Alias and Load a Prompt</h1>
+    <p class="lede">The <strong>MLflow Prompt Registry</strong> stores prompt templates as Unity Catalog objects with immutable, numbered versions and movable aliases such as <code>production</code>. Code registers a version with <code>mlflow.genai.register_prompt()</code>, points an alias at it with <code>set_prompt_alias()</code>, and loads it with <code>load_prompt()</code> through an alias URI such as <code>prompts:/name@production</code>, so promotion and rollback move a pointer instead of editing a file.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 40 of the course teaches the model: versions never change, aliases move, and promotion is never a branch merge or an overwritten file. This post is the working version: names and privileges in Unity Catalog, both template formats, every call from registration to rollback, how an app should load a prompt, and the frameworks that need single braces.</p>
+    <p>Prompt version control is a Section 4 (Assembling and Deploying Applications) objective in the 18 March 2026 exam guide, and the guide's sample question 7 is about it. How prompt promotion fits a wider release pipeline is Chapter 41 of the course.</p>
+    <div class="callout"><p><strong>Status:</strong> the Databricks docs list the Prompt Registry as Beta (pages updated September and October 2026), and it needs <code>mlflow[databricks]</code> 3.1.0 or above.</p></div>
+  </section>
+
+  <section id="names">
+    <h2>Names and privileges</h2>
+    <p>On Databricks a prompt is a Unity Catalog object, so its name has three parts, <code>catalog.schema.prompt_name</code>, and access is governed like any other UC object. To view or create prompts you need <strong>CREATE FUNCTION</strong>, <strong>EXECUTE</strong> and <strong>MANAGE</strong> on the schema. Point the session at Databricks first:</p>
+<pre><code>import mlflow
+
+mlflow.set_tracking_uri("databricks")
+mlflow.set_registry_uri("databricks-uc")
+
+NAME = "main.support.ticket_summary"</code></pre>
+    <p>An experiment tag, <code>mlflow.promptRegistryLocation</code> set to <code>catalog.schema</code>, records a default location so tools can find the schema without it being repeated everywhere.</p>
+    <p class="fnote">Names, privileges and the experiment tag from the Databricks pages "Prompt Registry" and "Create and edit prompts".</p>
+  </section>
+
+  <section id="register">
+    <h2>Register a prompt and its versions</h2>
+    <p>The first <code>register_prompt()</code> call creates the prompt as version 1. Every later call with the same name adds the next version. Variables use double braces:</p>
+<pre><code>v1 = mlflow.genai.register_prompt(
+    name=NAME,
+    template=(
+        "Summarise this ticket for {{audience}} "
+        "in {{num_sentences}} sentences: {{ticket}}"
+    ),
+    commit_message="First version",
+    tags={"owner": "support-ai", "task": "summarization"},
+)
+
+v2 = mlflow.genai.register_prompt(
+    name=NAME,
+    template=[
+        {"role": "system", "content": "You write support summaries for {{audience}}."},
+        {"role": "user", "content": "Summarise in {{num_sentences}} sentences: {{ticket}}"},
+    ],
+    commit_message="Split into system and user messages",
+)
+
+v1.version, v2.version   # (1, 2)</code></pre>
+    <ul>
+      <li><strong>Two formats.</strong> A string is a simple prompt; a list of <code>role</code> and <code>content</code> dicts is a conversation prompt. Both use <code>{{variable}}</code> placeholders, and <code>.variables</code> lists them.</li>
+      <li><strong>Commit messages and tags</strong> are stored with the version, so the history says who changed what and why. The UI's Compare view diffs the template text between versions.</li>
+      <li><strong>Versions are immutable.</strong> There is no call that edits version 1. Every change is a new version, which is what makes the history an audit trail and rollback exact.</li>
+    </ul>
+  </section>
+
+  <section id="aliases">
+    <h2>Aliases: promote and roll back</h2>
+    <p>An alias is a named pointer to one version. Point <code>production</code> at the tested version and <code>staging</code> at the candidate:</p>
+<pre><code>mlflow.genai.set_prompt_alias(name=NAME, alias="production", version=1)
+mlflow.genai.set_prompt_alias(name=NAME, alias="staging", version=2)</code></pre>
+    <p>Promotion after the candidate passes evaluation is one more pointer move. Saving the old target first under another alias makes rollback a single call too:</p>
+<pre><code># Promote: remember the current production version, then move the alias
+current = mlflow.genai.load_prompt(f"prompts:/{NAME}@production")
+mlflow.genai.set_prompt_alias(NAME, "production-previous", current.version)
+mlflow.genai.set_prompt_alias(NAME, "production", 2)
+
+# Roll back: point production at the saved version
+previous = mlflow.genai.load_prompt(f"prompts:/{NAME}@production-previous")
+mlflow.genai.set_prompt_alias(NAME, "production", previous.version)</code></pre>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 236" role="img" aria-labelledby="pr1t pr1d">
+        <title id="pr1t">Promotion and rollback move an alias, not a version</title>
+        <desc id="pr1d">Three immutable versions, v1, v2 and v3, sit in a row. Before promotion, the production alias points at v2 and staging points at v3. After v3 passes evaluation, production moves to v3 and production-previous keeps v2. To roll back, production moves back to v2. The versions themselves never change.</desc>
+        <defs><marker id="pr1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="d-step" x="10" y="18">BEFORE: V3 IN STAGING</text>
+        <rect class="d-box" x="40" y="58" width="72" height="34" rx="8"/><text class="d-mono" x="76" y="80" text-anchor="middle">v1</text>
+        <rect class="d-good" x="144" y="58" width="72" height="34" rx="8"/><text class="d-mono" x="180" y="80" text-anchor="middle">v2</text>
+        <rect class="d-chip" x="248" y="58" width="72" height="34" rx="8"/><text class="d-mono" x="284" y="80" text-anchor="middle">v3</text>
+        <text class="d-soft d-gold" x="180" y="38" text-anchor="middle">production</text>
+        <path class="d-arrow" d="M180 42 V54" marker-end="url(#pr1a)"/>
+        <text class="d-soft" x="284" y="38" text-anchor="middle">staging</text>
+        <path class="d-arrow" d="M284 42 V54" marker-end="url(#pr1a)"/>
+        <text class="d-step" x="10" y="128">AFTER: V3 PASSED EVALUATION</text>
+        <rect class="d-box" x="40" y="168" width="72" height="34" rx="8"/><text class="d-mono" x="76" y="190" text-anchor="middle">v1</text>
+        <rect class="d-box" x="144" y="168" width="72" height="34" rx="8"/><text class="d-mono" x="180" y="190" text-anchor="middle">v2</text>
+        <rect class="d-good" x="248" y="168" width="72" height="34" rx="8"/><text class="d-mono" x="284" y="190" text-anchor="middle">v3</text>
+        <text class="d-soft d-gold" x="284" y="148" text-anchor="middle">production</text>
+        <path class="d-arrow" d="M284 152 V164" marker-end="url(#pr1a)"/>
+        <text class="d-soft" x="180" y="148" text-anchor="middle">production-previous</text>
+        <path class="d-arrow" d="M180 152 V164" marker-end="url(#pr1a)"/>
+        <text class="d-soft" x="10" y="226">Rollback: move production back to v2. No version is edited.</text>
+      </svg>
+      <figcaption>Every environment change is an alias move between versions that never change.</figcaption>
+    </figure>
+    <p><code>delete_prompt_alias(NAME, "staging")</code> removes a pointer and leaves the versions in place; <code>delete_prompt()</code> removes a version or the whole prompt.</p>
+    <p class="fnote">Calls and the promotion pattern from the Databricks page "Use prompts in deployed applications". Every snippet in this post was run against MLflow 3.18 with a local registry (a plain prompt name instead of a Unity Catalog one): versions 1 and 2, promotion to 2, rollback to 1, and the loads shown.</p>
+  </section>
+
+  <section id="load">
+    <h2>Loading the prompt in an application</h2>
+    <p>Application code loads an alias, never a version number, so a promotion takes effect without a redeploy. Reading the alias from an environment variable lets the same code run against <code>staging</code> in one deployment and <code>production</code> in another:</p>
+<pre><code>import os
+
+alias = os.getenv("PROMPT_ALIAS", "production")
+prompt = mlflow.genai.load_prompt(f"prompts:/{NAME}@{alias}")
+
+text = prompt.format(
+    audience="a store manager",
+    num_sentences=2,
+    ticket="Printer jams on tray 2 after the firmware update.",
+)</code></pre>
+    <table class="cmp">
+      <thead><tr><th>URI</th><th class="col-h">Loads</th></tr></thead>
+      <tbody>
+        <tr><th><code>prompts:/{name}@production</code></th><td class="col-h">The version the alias points at now. The form for application code.</td></tr>
+        <tr><th><code>prompts:/{name}/2</code></th><td class="col-h">Exactly version 2, for tests and evaluations that must not drift. <code>load_prompt(name, version=2)</code> is the same.</td></tr>
+      </tbody>
+    </table>
+    <p><code>format()</code> fills the variables and returns a string for a simple prompt or a list of messages for a conversation prompt. The MLflow client caches loaded templates, so reading from the registry adds no per-request latency. In MLflow 3.18 an alias load is cached for 60 seconds by default, so a running app picks up a promotion within about a minute; a version load is cached with no expiry, since that version can never change. <code>load_prompt(..., cache_ttl_seconds=0)</code> bypasses the cache.</p>
+    <p>LangChain, LlamaIndex and other libraries expect single-brace (<code>{variable}</code>) templates. <code>prompt.to_single_brace_format()</code> converts the template, so the registry stays the source of truth while the framework gets the syntax it needs.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> "promote a prompt with instant rollback and a record of what ran" means register a new version and move the <code>production</code> alias. Any answer that merges a git branch, overwrites a prompt file on a CI runner, or updates a Delta row in place loses the immutable history or the pointer to roll back to.</p></div>
+    <p>A second trap is hard-coding a version number in the application, which turns every promotion back into a redeploy.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>How do I promote a prompt to production in MLflow?</summary><div class="fa"><p>Register the new prompt as a version, evaluate it, then call set_prompt_alias to point the production alias at that version. Applications that load prompts:/name@production pick it up without a code change or redeploy.</p></div></details>
+      <details><summary>Can I edit an existing prompt version in the MLflow Prompt Registry?</summary><div class="fa"><p>No. Prompt versions are immutable once created, so every change is registered as a new version with register_prompt. That immutability is what gives an exact audit trail and lets rollback return to precisely the old text.</p></div></details>
+      <details><summary>What permissions do I need for the Prompt Registry on Databricks?</summary><div class="fa"><p>You need CREATE FUNCTION, EXECUTE and MANAGE on the Unity Catalog schema that holds the prompts. Prompts are Unity Catalog objects named catalog.schema.prompt_name and are governed like other objects in the catalog.</p></div></details>
+      <details><summary>What template syntax does the MLflow Prompt Registry use?</summary><div class="fa"><p>Templates use double braces, such as {{question}}, and format() fills them. For LangChain or LlamaIndex, which expect single braces, to_single_brace_format() converts the loaded template.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Prompt version control is Chapter 40 of the Databricks Generative AI Engineer Associate course, in Unit 4, Assembling and Deploying Applications, with exam-style checks on promotion and rollback.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-40-prompt-version-control.html" class="cta">Open Chapter 40 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-agent-framework-responses-agent-deploy">Build, log and deploy a Databricks agent &rarr;</a>
+    <a href="databricks-ai-query-batch-inference">Batch inference with ai_query() &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-41-cicd-for-agents.html">Chapter 41: CI/CD for agents &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"MLflow Prompt Registry on Databricks: Register, Version, Alias and Load a Prompt","description":"Use the MLflow Prompt Registry on Databricks: Unity Catalog names and privileges, immutable versions, alias promotion and rollback, and loading prompts in apps.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-07","dateModified":"2026-11-07","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/mlflow-prompt-registry-databricks"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I promote a prompt to production in MLflow?", "acceptedAnswer": {"@type": "Answer", "text": "Register the new prompt as a version, evaluate it, then call set_prompt_alias to point the production alias at that version. Applications that load prompts:/name@production pick it up without a code change or redeploy."}}, {"@type": "Question", "name": "Can I edit an existing prompt version in the MLflow Prompt Registry?", "acceptedAnswer": {"@type": "Answer", "text": "No. Prompt versions are immutable once created, so every change is registered as a new version with register_prompt. That immutability is what gives an exact audit trail and lets rollback return to precisely the old text."}}, {"@type": "Question", "name": "What permissions do I need for the Prompt Registry on Databricks?", "acceptedAnswer": {"@type": "Answer", "text": "You need CREATE FUNCTION, EXECUTE and MANAGE on the Unity Catalog schema that holds the prompts. Prompts are Unity Catalog objects named catalog.schema.prompt_name and are governed like other objects in the catalog."}}, {"@type": "Question", "name": "What template syntax does the MLflow Prompt Registry use?", "acceptedAnswer": {"@type": "Answer", "text": "Templates use double braces, such as {{question}}, and format() fills them. For LangChain or LlamaIndex, which expect single braces, to_single_brace_format() converts the loaded template."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

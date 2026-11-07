@@ -103,7 +103,7 @@ Note on the Filename column: published posts are `.html` files in the
 | 9 | Databricks agent authentication: declared resources, on-behalf-of-user and secrets (deep dive, chapter 36, linked from its final card) | "databricks agent on behalf of user authentication" | Yes | blog/databricks-agent-authentication-resources-on-behalf-of-user.html |
 | 10 | Build, log and deploy a Databricks agent: ResponsesAgent to agents.deploy() (deep dive, chapter 25, linked from its final card) | "databricks responsesagent deploy agent" | Yes | blog/mosaic-ai-agent-framework-responses-agent-deploy.html |
 | 11 | Batch inference with ai_query(): every argument, structured output and error handling (deep dive, chapter 37, linked from its final card) | "databricks ai_query batch inference" | Yes | blog/databricks-ai-query-batch-inference.html |
-| 12 | MLflow prompt registry: register, version, alias and load a prompt (deep dive candidate, chapter 40) | "mlflow prompt registry alias" | No | |
+| 12 | MLflow Prompt Registry on Databricks: register, version, alias and load a prompt (deep dive, chapter 40, linked from its final card) | "mlflow prompt registry alias" | Yes | blog/mlflow-prompt-registry-databricks.html |
 | 13 | Custom scorers and agent evaluation with mlflow.genai.evaluate() (deep dive candidate, chapters 49 and 50) | "mlflow genai evaluate custom scorer" | No | |
 | 14 | Mosaic AI Gateway: rate limits, usage and inference tables, with queries (deep dive candidate, chapter 54) | "databricks ai gateway rate limit usage table" | No | |
 
