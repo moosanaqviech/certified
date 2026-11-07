@@ -35,7 +35,10 @@ course home's "Full-length mock exams" section; 178 questions in all). The
 mocks are a sealed pool: never reuse their questions in the section exams
 and never draw them into drills. The course launched free, is now paid
 (Units 1 to 3 free through their practice exam, $9.99 unlock), has no
-readiness quiz, and has a practice hub at practice/databricks-da-associate
+readiness quiz (deliberately, as for GenAI: the guide publishes no domain
+weights and the frozen readiness engine prints "% of exam" under every bar;
+the hub's Readiness check, weighted by objective count, covers it), and has
+a practice hub at practice/databricks-da-associate
 (see the practice hubs paragraph below). Exam guide names come first, with
 the 2026 docs renames mentioned once each, see the cert config. Its blog
 cluster is complete: eight posts listed in the Data Analyst Associate block
@@ -64,7 +67,11 @@ against the official 18 Mar 2026 exam guide PDF on 12 Aug 2026. All 55
 chapters across 6 units are live and cover all 56 objectives, and all seven
 genai-practice-exam-NN.html exams (01-07) are live. Exams map to objectives
 and SAMPLE them: the real exam is 45 scored questions against 56 objectives,
-so one full mock cannot cover them all).
+so one full mock cannot cover them all. No public readiness quiz, by
+decision (7 Nov 2026): the guide publishes no domain weights and the frozen
+readiness engine prints "% of exam" under every bar, so a quiz would
+misstate the guide; the practice hub's Readiness check, labelled "% of
+objectives", covers it.)
 Complete: Databricks Certified Associate Developer for Apache Spark (see
 curriculum-index-databricks-spark-developer-associate.md and
 cert-config-databricks-spark-developer-associate.md; the index is LOCKED,
