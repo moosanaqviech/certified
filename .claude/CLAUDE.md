@@ -286,7 +286,11 @@ each course). Each course lives in its own top-level folder and has its own
   domains at the 28/24/24/24 weighting, surfaced in a separate "Full-length
   mock exams" section of the course index). The course and its exams are now
   content-complete (see cert-config-aws-mla-c02.md for the badge,
-  terminology, and palette registry). The last chapter of the course (76)
+  terminology, and palette registry). A public readiness quiz lives at
+  ready/aws-mla-c02 (12 new questions, four domains at the official
+  28/24/24/24 weights, counts 3/3/3/3, scenarios reused from none of the
+  seven exams), linked from the catalog row, the pillar guide and the
+  study plan post. The last chapter of the course (76)
   carries `next` pointing at the Unit 4 practice exam. The practice exams
   use the `mla-c02-practice-exam-NN.html` prefix.
   The previous exam version, MLA-C01, was RETIRED on 27 Sep 2026 (last
