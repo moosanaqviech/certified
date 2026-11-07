@@ -101,6 +101,11 @@ Note on the Filename column: published posts are `.html` files in the
 | 7 | Mosaic AI Gateway and Foundation Model APIs for the GenAI Engineer exam | "mosaic ai gateway foundation model apis exam" | Yes | blog/mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam.html |
 | 8 | Mosaic AI Vector Search in Python: create, query and filter an index (deep dive, chapter 33, linked from its final card) | "databricks vector search similarity_search filters" | Yes | blog/mosaic-ai-vector-search-similarity-search-filters.html |
 | 9 | Databricks agent authentication: declared resources, on-behalf-of-user and secrets (deep dive, chapter 36, linked from its final card) | "databricks agent on behalf of user authentication" | Yes | blog/databricks-agent-authentication-resources-on-behalf-of-user.html |
+| 10 | Build, log and deploy a Databricks agent: ResponsesAgent to agents.deploy() (deep dive, chapter 25, linked from its final card) | "databricks responsesagent deploy agent" | Yes | blog/mosaic-ai-agent-framework-responses-agent-deploy.html |
+| 11 | Batch inference with ai_query(): every option with full SQL (deep dive candidate, chapter 37) | "databricks ai_query batch inference" | No | |
+| 12 | MLflow prompt registry: register, version, alias and load a prompt (deep dive candidate, chapter 40) | "mlflow prompt registry alias" | No | |
+| 13 | Custom scorers and agent evaluation with mlflow.genai.evaluate() (deep dive candidate, chapters 49 and 50) | "mlflow genai evaluate custom scorer" | No | |
+| 14 | Mosaic AI Gateway: rate limits, usage and inference tables, with queries (deep dive candidate, chapter 54) | "databricks ai gateway rate limit usage table" | No | |
 
 ## AWS Certified Data Engineer Associate (DEA-C01)
 
