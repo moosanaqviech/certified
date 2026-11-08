@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build, Log and Deploy a Databricks Agent: ResponsesAgent to agents.deploy()</title>
+<meta name="description" content="Build a tool-calling Databricks agent with MLflow ResponsesAgent, then log it as code, validate, register to Unity Catalog and serve it with agents.deploy().">
+<link rel="canonical" href="https://certify.courses/blog/mosaic-ai-agent-framework-responses-agent-deploy">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Build, Log and Deploy a Databricks Agent: ResponsesAgent to agents.deploy()">
+<meta property="og:description" content="Build a tool-calling Databricks agent with MLflow ResponsesAgent, then log it as code, validate, register to Unity Catalog and serve it with agents.deploy().">
+<meta property="og:url" content="https://certify.courses/blog/mosaic-ai-agent-framework-responses-agent-deploy">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>Build, log and deploy an agent</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Build, Log and Deploy a Databricks Agent: ResponsesAgent to agents.deploy()</h1>
+    <p class="lede">A Databricks agent built with the Mosaic AI Agent Framework is a Python class that subclasses MLflow's <strong>ResponsesAgent</strong> and implements <code>predict</code>. It is logged as code with <code>mlflow.pyfunc.log_model()</code>, registered as a version in Models in Unity Catalog, and served by <code>agents.deploy()</code>, which creates a Model Serving endpoint.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 25 of the course shows the <code>ResponsesAgent</code> wrapper as a skeleton and logging as a list of steps. This post is the working version: a complete tool-calling <code>agent.py</code>, the items it returns, streaming, the driver notebook that logs, validates and registers it, and the <code>agents.deploy()</code> arguments.</p>
+    <p>Building agents with MLflow and the Agent Framework is a Section 3 (Application Development) objective in the 18 March 2026 exam guide; registering and serving are Section 4. How the deployed agent authenticates has its own deep dive: <a href="databricks-agent-authentication-resources-on-behalf-of-user">declared resources, on-behalf-of-user and secrets</a>.</p>
+    <div class="callout"><p><strong>Where the docs are heading:</strong> since October 2026 the Databricks docs file this Model Serving path under "Legacy" and recommend the Agent Bricks CLI, which serves agents on Agent Runtime in Databricks Apps, for new agents. <code>ResponsesAgent</code> is the same on both. The exam guide predates the change and tests logging, Unity Catalog and <code>agents.deploy()</code>, so this post teaches that path.</p></div>
+  </section>
+
+  <section id="agent">
+    <h2>The complete agent.py</h2>
+    <p>The agent lives in its own file so MLflow can log the code, not a pickle. It answers order questions with one tool, calling a Foundation Model API endpoint through the OpenAI-compatible client in <code>databricks-openai</code>.</p>
+<pre><code>import json
+from typing import Generator
+from uuid import uuid4
+
+import mlflow
+from mlflow.entities import SpanType
+from mlflow.models import set_model
+from mlflow.pyfunc import ResponsesAgent
+from mlflow.types.responses import (
+    ResponsesAgentRequest,
+    ResponsesAgentResponse,
+    ResponsesAgentStreamEvent,
+    to_chat_completions_input,
+)
+from databricks_openai import DatabricksOpenAI
+
+LLM_ENDPOINT = "databricks-claude-sonnet-4-5"
+MAX_TURNS = 5
+SYSTEM_PROMPT = (
+    "You are a support agent for an online store. Use get_order_status "
+    "for any question about a specific order. Never guess a status."
+)
+
+# Tool spec in the Chat Completions format the endpoint expects
+TOOLS = [{
+    "type": "function",
+    "function": {
+        "name": "get_order_status",
+        "description": "Look up the shipping status of one order.",
+        "parameters": {
+            "type": "object",
+            "properties": {"order_id": {"type": "string"}},
+            "required": ["order_id"],
+        },
+    },
+}]
+
+
+@mlflow.trace(span_type=SpanType.TOOL)
+def get_order_status(order_id: str) -&gt; str:
+    # Stand-in for a real lookup (a UC function, a table, an API)
+    return json.dumps({"order_id": order_id, "status": "shipped"})
+
+
+TOOL_FNS = {"get_order_status": get_order_status}
+
+
+def done(item: dict) -&gt; ResponsesAgentStreamEvent:
+    # One finished output item: a message, a tool call or a tool result
+    return ResponsesAgentStreamEvent(type="response.output_item.done", item=item)
+
+
+class SupportAgent(ResponsesAgent):
+    def __init__(self):
+        # Auth comes from the notebook in dev, and from the
+        # declared resources once deployed
+        self.client = DatabricksOpenAI()
+
+    @mlflow.trace(span_type=SpanType.LLM)
+    def call_llm(self, messages: list[dict]) -&gt; dict:
+        resp = self.client.chat.completions.create(
+            model=LLM_ENDPOINT, messages=messages, tools=TOOLS
+        )
+        return resp.choices[0].message.to_dict()
+
+    def predict_stream(
+        self, request: ResponsesAgentRequest
+    ) -&gt; Generator[ResponsesAgentStreamEvent, None, None]:
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages += to_chat_completions_input(
+            [item.model_dump() for item in request.input]
+        )
+        for _ in range(MAX_TURNS):
+            msg = self.call_llm(messages)
+            messages.append(msg)
+            if not msg.get("tool_calls"):
+                # The model answered: emit the text and end the loop
+                yield done(self.create_text_output_item(
+                    text=msg["content"], id=str(uuid4())))
+                return
+            for call in msg["tool_calls"]:
+                name = call["function"]["name"]
+                arguments = call["function"]["arguments"]
+                yield done(self.create_function_call_item(
+                    id=str(uuid4()), call_id=call["id"],
+                    name=name, arguments=arguments))
+                result = TOOL_FNS[name](**json.loads(arguments))
+                messages.append({"role": "tool",
+                                 "tool_call_id": call["id"],
+                                 "content": result})
+                yield done(self.create_function_call_output_item(
+                    call_id=call["id"], output=result))
+        yield done(self.create_text_output_item(
+            text="I could not finish that request.", id=str(uuid4())))
+
+    @mlflow.trace(span_type=SpanType.AGENT)
+    def predict(self, request: ResponsesAgentRequest) -&gt; ResponsesAgentResponse:
+        items = [
+            event.item
+            for event in self.predict_stream(request)
+            if event.type == "response.output_item.done"
+        ]
+        return ResponsesAgentResponse(output=items)
+
+
+mlflow.openai.autolog()
+AGENT = SupportAgent()
+set_model(AGENT)</code></pre>
+    <ul>
+      <li><strong>The loop</strong> calls the LLM, runs any tool calls, appends each result as a <code>tool</code> message and asks again, until the LLM answers in text. <code>MAX_TURNS</code> stops a model that never stops calling tools.</li>
+      <li><strong><code>to_chat_completions_input</code></strong> turns the request's Responses-format items into Chat Completions messages, so multi-turn history works.</li>
+      <li><strong>The <code>create_*_item</code> helpers</strong> build output items in the Responses schema's shapes; MLflow says <code>ResponsesAgentResponse</code> and <code>ResponsesAgentStreamEvent</code> are the only objects to construct yourself.</li>
+      <li><strong>Tracing:</strong> <code>mlflow.openai.autolog()</code> records each LLM call and the <code>@mlflow.trace</code> decorators add agent and tool spans. <code>set_model(AGENT)</code> marks the object MLflow loads.</li>
+    </ul>
+    <p class="fnote">Built from the MLflow page "ResponsesAgent for Model Serving" and the Databricks page "Log and register agents (Model Serving)". Run against MLflow 3.18 and <code>databricks-openai</code> 0.17 with a stubbed LLM: one tool call, one tool result, one answer.</p>
+  </section>
+
+  <section id="outputs">
+    <h2>What the agent returns</h2>
+    <p>The response is a list of output items, not one string, so AI Playground, evaluations and reviewers see the full path to the answer.</p>
+    <table class="cmp">
+      <thead><tr><th>Item type</th><th class="col-h">Helper and contents</th></tr></thead>
+      <tbody>
+        <tr><th><code>function_call</code></th><td class="col-h"><code>create_function_call_item(id, call_id, name, arguments)</code>: the tool the LLM chose and its JSON arguments.</td></tr>
+        <tr><th><code>function_call_output</code></th><td class="col-h"><code>create_function_call_output_item(call_id, output)</code>: what the tool returned, tied to its call by <code>call_id</code>.</td></tr>
+        <tr><th><code>message</code></th><td class="col-h"><code>create_text_output_item(text, id)</code>: the assistant's text, the answer the user sees.</td></tr>
+      </tbody>
+    </table>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 306" role="img" aria-labelledby="ag1t ag1d">
+        <title id="ag1t">One request through the agent loop, and the items it emits</title>
+        <desc id="ag1d">The user asks where order A123 is. Turn one: the LLM returns a tool call, which the agent emits as a function_call item, runs get_order_status, and emits the result as a function_call_output item with the same call_id. Turn two: the LLM sees the result and answers in text, which the agent emits as a message item and the loop ends.</desc>
+        <defs><marker id="ag1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="d-chip" x="10" y="10" width="340" height="34" rx="10"/>
+        <text class="d-txt" x="180" y="32" text-anchor="middle">"Where is order A123?"</text>
+        <path class="d-arrow" d="M180 46 V62" marker-end="url(#ag1a)"/>
+        <text class="d-step" x="10" y="82">TURN 1</text>
+        <rect class="d-box" x="10" y="90" width="120" height="46" rx="10"/>
+        <text class="d-txt" x="70" y="110" text-anchor="middle">LLM</text>
+        <text class="d-soft" x="70" y="126" text-anchor="middle">chooses a tool</text>
+        <path class="d-arrow" d="M132 113 H152" marker-end="url(#ag1a)"/>
+        <rect class="d-good" x="156" y="90" width="194" height="20" rx="6"/>
+        <text class="d-mono" x="253" y="104" text-anchor="middle">function_call</text>
+        <rect class="d-good" x="156" y="116" width="194" height="20" rx="6"/>
+        <text class="d-mono" x="253" y="130" text-anchor="middle">function_call_output</text>
+        <text class="d-soft" x="156" y="154">same call_id links the pair</text>
+        <path class="d-arrow" d="M70 138 V184" marker-end="url(#ag1a)"/>
+        <text class="d-soft" x="80" y="176">result appended as a tool message</text>
+        <text class="d-step" x="10" y="204">TURN 2</text>
+        <rect class="d-box" x="10" y="212" width="120" height="46" rx="10"/>
+        <text class="d-txt" x="70" y="232" text-anchor="middle">LLM</text>
+        <text class="d-soft" x="70" y="248" text-anchor="middle">answers in text</text>
+        <path class="d-arrow" d="M132 235 H152" marker-end="url(#ag1a)"/>
+        <rect class="d-good" x="156" y="225" width="194" height="20" rx="6"/>
+        <text class="d-mono" x="253" y="239" text-anchor="middle">message</text>
+        <text class="d-soft" x="10" y="290">No tool call in the reply, so the loop ends.</text>
+      </svg>
+      <figcaption>Every step of the loop becomes an output item; the user's answer is only the last one.</figcaption>
+    </figure>
+  </section>
+
+  <section id="streaming">
+    <h2>predict and predict_stream</h2>
+    <p><code>predict</code> returns the whole response; <code>predict_stream</code> yields events as they happen. Writing the loop once in <code>predict_stream</code> and collecting its finished items in <code>predict</code> is the pattern MLflow's examples use, so the two always agree.</p>
+    <p>To stream the answer token by token, yield <code>self.create_text_delta(delta=..., item_id=...)</code> events with one <code>item_id</code>, then a final <code>response.output_item.done</code> event with the complete text under that id. Databricks uses that final event for the trace and the AI Playground display.</p>
+  </section>
+
+  <section id="driver">
+    <h2>The driver notebook: test, log, validate, register</h2>
+    <p>A separate notebook drives the agent file (test it first with <code>from agent import AGENT</code> and <code>AGENT.predict(...)</code>). Log it as code, declaring its dependencies and every Databricks resource it calls:</p>
+<pre><code>import mlflow
+from mlflow.models.resources import DatabricksServingEndpoint
+
+with mlflow.start_run():
+    logged = mlflow.pyfunc.log_model(
+        name="agent",
+        python_model="agent.py",
+        input_example={"input": [
+            {"role": "user", "content": "Where is order A123?"}]},
+        pip_requirements=["mlflow", "databricks-openai"],
+        resources=[DatabricksServingEndpoint(
+            endpoint_name="databricks-claude-sonnet-4-5")],
+    )</code></pre>
+    <ul>
+      <li><strong><code>python_model="agent.py"</code></strong> logs the file. At serving time Databricks rebuilds the environment and runs it to load the agent.</li>
+      <li><strong>No signature argument:</strong> for a <code>ResponsesAgent</code>, MLflow infers one from the request and response schemas and adds the metadata <code>{"task": "agent/v1/responses"}</code>. Other agents must pass a signature or an input example.</li>
+      <li><strong><code>resources</code></strong> lists what the deployed agent calls; Databricks issues short-lived credentials for exactly these. Anything left out fails only once the endpoint is live. Indexes use <code>DatabricksVectorSearchIndex</code>, Unity Catalog functions <code>DatabricksFunction</code>.</li>
+    </ul>
+    <p>Before deploying, run the logged model in a fresh environment built from its requirements, so a missing package fails here rather than on an endpoint build:</p>
+<pre><code>mlflow.models.predict(
+    model_uri=logged.model_uri,
+    input_data={"input": [{"role": "user", "content": "Where is order A123?"}]},
+    env_manager="uv",
+)</code></pre>
+    <p>Finally, register it as a version in Models in Unity Catalog, which <code>agents.deploy()</code> requires:</p>
+<pre><code>mlflow.set_registry_uri("databricks-uc")
+UC_MODEL_NAME = "main.support.order_agent"
+uc_model = mlflow.register_model(model_uri=logged.model_uri, name=UC_MODEL_NAME)</code></pre>
+    <p class="fnote">From the Databricks page "Log and register agents (Model Serving)" and the MLflow page "ResponsesAgent for Model Serving". MLflow 3 names the artifact with <code>name</code>; older examples use <code>artifact_path</code>.</p>
+  </section>
+
+  <section id="deploy">
+    <h2>agents.deploy(): arguments and what it sets up</h2>
+<pre><code>from databricks import agents
+
+deployment = agents.deploy(UC_MODEL_NAME, uc_model.version, scale_to_zero=True)
+deployment.query_endpoint</code></pre>
+    <table class="cmp">
+      <thead><tr><th>Argument</th><th class="col-h">What it does</th></tr></thead>
+      <tbody>
+        <tr><th><code>model_name</code>, <code>model_version</code></th><td class="col-h">The Unity Catalog model and version to serve. Both required.</td></tr>
+        <tr><th><code>scale_to_zero</code></th><td class="col-h">Default <code>False</code>. <code>True</code> stops billing for an idle endpoint at the cost of a slow first request.</td></tr>
+        <tr><th><code>workload_size</code></th><td class="col-h">Default <code>"Small"</code>: the endpoint's concurrency.</td></tr>
+        <tr><th><code>environment_vars</code></th><td class="col-h">Values the agent reads at runtime, for example credentials for a non-Databricks service passed as secret references.</td></tr>
+        <tr><th><code>endpoint_name</code></th><td class="col-h">Optional; a name is derived from the model name when it is omitted.</td></tr>
+      </tbody>
+    </table>
+    <p>Per the Databricks docs, the call also provisions credentials for the declared resources (after checking the endpoint owner's privileges), turns on real-time tracing to the active MLflow experiment, enables the Review App, and logs requests to AI Gateway inference tables. It can take up to 15 minutes.</p>
+    <p><strong>Updating</strong> is the same call with a new version: it joins the existing endpoint and takes traffic once ready while the old version keeps serving. Change only the version to keep that zero-downtime. <code>list_deployments()</code>, <code>get_deployments()</code> and <code>delete_deployment()</code> manage what is running.</p>
+    <p class="fnote">Arguments from the <code>databricks-agents</code> 1.13 <code>deploy()</code> signature; behavior from the Databricks page "Deploy an agent for AI applications (Model Serving)" (MLflow 3.1.3 or above).</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> the wrapper is <code>ResponsesAgent</code> with a <code>predict</code> method, the logging style is models-from-code with <code>set_model()</code>, the registry is Unity Catalog, and the deploy call is <code>agents.deploy()</code>. A scenario where the endpoint fails to reach an index or LLM after deployment points to a missing entry in <code>resources</code>, not to the agent's code.</p></div>
+    <p>Distractors swap in an older step: pickling the agent, the workspace registry with stages, or a hand-built endpoint.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>How do I deploy an agent on Databricks Model Serving?</summary><div class="fa"><p>Log the agent with mlflow.pyfunc.log_model() pointing at its Python file, register the logged model to Unity Catalog with mlflow.register_model(), then call agents.deploy() with the model name and version. The call creates the serving endpoint and sets up authentication, tracing and the Review App.</p></div></details>
+      <details><summary>Do I need to define a model signature for a ResponsesAgent?</summary><div class="fa"><p>No. MLflow infers a signature that follows the ResponsesAgent request and response schemas when you log the model. Agents that do not use ResponsesAgent must pass a signature or an input example to infer one from.</p></div></details>
+      <details><summary>What is the difference between predict and predict_stream in ResponsesAgent?</summary><div class="fa"><p>predict returns the complete response at once, while predict_stream yields events as the agent works, ending each output item with a response.output_item.done event. A common pattern writes the logic once in predict_stream and has predict collect its finished items.</p></div></details>
+      <details><summary>How do I update a deployed Databricks agent without downtime?</summary><div class="fa"><p>Register a new model version and call agents.deploy() again with the same model name and the new version. Databricks adds the version to the existing endpoint and moves traffic once it is ready, so change only the version and not the endpoint name or other settings.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Building agents with MLflow and the Mosaic AI Agent Framework is Chapter 25 of the Databricks Generative AI Engineer Associate course, in Unit 3, Application Development, with exam-style checks on the wrapper and on tracing.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-25-agents-mlflow-agent-framework.html" class="cta">Open Chapter 25 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-agent-framework-agent-bricks-genai-engineer-exam">Mosaic AI Agent Framework and Agent Bricks &rarr;</a>
+    <a href="databricks-agent-authentication-resources-on-behalf-of-user">Databricks agent authentication &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-31-registering-model-unity-catalog.html">Chapter 31: registering to Unity Catalog &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Build, Log and Deploy a Databricks Agent: ResponsesAgent to agents.deploy()","description":"Build a tool-calling Databricks agent with MLflow ResponsesAgent, then log it as code, validate, register to Unity Catalog and serve it with agents.deploy().","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-07","dateModified":"2026-11-07","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/mosaic-ai-agent-framework-responses-agent-deploy"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I deploy an agent on Databricks Model Serving?", "acceptedAnswer": {"@type": "Answer", "text": "Log the agent with mlflow.pyfunc.log_model() pointing at its Python file, register the logged model to Unity Catalog with mlflow.register_model(), then call agents.deploy() with the model name and version. The call creates the serving endpoint and sets up authentication, tracing and the Review App."}}, {"@type": "Question", "name": "Do I need to define a model signature for a ResponsesAgent?", "acceptedAnswer": {"@type": "Answer", "text": "No. MLflow infers a signature that follows the ResponsesAgent request and response schemas when you log the model. Agents that do not use ResponsesAgent must pass a signature or an input example to infer one from."}}, {"@type": "Question", "name": "What is the difference between predict and predict_stream in ResponsesAgent?", "acceptedAnswer": {"@type": "Answer", "text": "predict returns the complete response at once, while predict_stream yields events as the agent works, ending each output item with a response.output_item.done event. A common pattern writes the logic once in predict_stream and has predict collect its finished items."}}, {"@type": "Question", "name": "How do I update a deployed Databricks agent without downtime?", "acceptedAnswer": {"@type": "Answer", "text": "Register a new model version and call agents.deploy() again with the same model name and the new version. Databricks adds the version to the existing endpoint and moves traffic once it is ready, so change only the version and not the endpoint name or other settings."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

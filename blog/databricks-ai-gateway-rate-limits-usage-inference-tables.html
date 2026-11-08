@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mosaic AI Gateway: Rate Limits, Usage Tables and Inference Tables, with Queries</title>
+<meta name="description" content="Configure Mosaic AI Gateway rate limits, usage tracking and inference tables on Databricks, with every limit rule, both table schemas and the SQL to query them.">
+<link rel="canonical" href="https://certify.courses/blog/databricks-ai-gateway-rate-limits-usage-inference-tables">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mosaic AI Gateway: Rate Limits, Usage Tables and Inference Tables, with Queries">
+<meta property="og:description" content="Configure Mosaic AI Gateway rate limits, usage tracking and inference tables on Databricks, with every limit rule, both table schemas and the SQL to query them.">
+<meta property="og:url" content="https://certify.courses/blog/databricks-ai-gateway-rate-limits-usage-inference-tables">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>AI Gateway rate limits and tables</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Mosaic AI Gateway: Rate Limits, Usage Tables and Inference Tables, with Queries</h1>
+    <p class="lede"><strong>Mosaic AI Gateway</strong> is the governance layer on a Databricks Model Serving endpoint. Its rate limits cap queries or tokens per minute for the endpoint, users, groups and service principals; its usage tracking writes token counts per request to the <code>system.serving.endpoint_usage</code> system table; and its inference tables log each request and response to a Unity Catalog Delta table.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 54 of the course names the gateway's three tracking surfaces and what each one answers. This post holds the detail: how to turn them on in code, every rate-limit level and the rules for which limit wins, the columns of the usage and inference tables, and the SQL that turns them into cost attribution and an error report.</p>
+    <p>Tracking with AI Gateway is a Section 6 (Evaluation and Monitoring) objective in the 18 March 2026 exam guide. What a single endpoint logs on its own is Chapter 53 of the course.</p>
+    <div class="callout"><p><strong>Names:</strong> since 4 August 2026 the Databricks docs call the new control plane Unity Gateway and file this endpoint-level feature as "AI Gateway (legacy)". The exam guide says AI Gateway, and the features below are the ones it tests. The new gateway records usage in a separate table, <code>system.ai_gateway.usage</code>.</p></div>
+  </section>
+
+  <section id="configure">
+    <h2>Turning the features on</h2>
+    <p>Each feature is a checkbox in the endpoint's AI Gateway section, or one call through the Databricks SDK. Configuring an endpoint needs CAN MANAGE on it:</p>
+<pre><code>from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.serving import (
+    AiGatewayInferenceTableConfig, AiGatewayRateLimit,
+    AiGatewayRateLimitKey, AiGatewayRateLimitRenewalPeriod,
+    AiGatewayUsageTrackingConfig,
+)
+
+w = WorkspaceClient()
+w.serving_endpoints.put_ai_gateway(
+    name="support-llm",
+    usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True),
+    inference_table_config=AiGatewayInferenceTableConfig(
+        enabled=True, catalog_name="main", schema_name="ai_logs",
+        table_name_prefix="support_llm"),
+    rate_limits=[
+        AiGatewayRateLimit(key=AiGatewayRateLimitKey.ENDPOINT, calls=1000,
+                           renewal_period=AiGatewayRateLimitRenewalPeriod.MINUTE),
+        AiGatewayRateLimit(key=AiGatewayRateLimitKey.USER, calls=60,
+                           renewal_period=AiGatewayRateLimitRenewalPeriod.MINUTE),
+        AiGatewayRateLimit(key=AiGatewayRateLimitKey.SERVICE_PRINCIPAL,
+                           principal="nightly-batch-sp", tokens=200000,
+                           renewal_period=AiGatewayRateLimitRenewalPeriod.MINUTE),
+    ],
+)</code></pre>
+    <p>The inference table needs CREATE TABLE in the target schema. Changes to the gateway configuration take effect in about 20 to 40 seconds. To stop people bypassing limits by creating their own endpoint, the docs advise keeping endpoint creation and CAN MANAGE with admins and granting everyone else query access only.</p>
+    <p class="fnote">Built against the <code>databricks-sdk</code> 0.162 classes, whose objects were constructed and serialised locally; the call itself needs a workspace. The SDK also accepts <code>guardrails</code> and <code>fallback_config</code>. Requirements from the Databricks page "Configure governance on model serving endpoints (legacy)", updated 16 October 2026.</p>
+  </section>
+
+  <section id="limits">
+    <h2>Rate limits: levels and which one wins</h2>
+    <table class="cmp">
+      <thead><tr><th>Level</th><th class="col-h">What it caps</th></tr></thead>
+      <tbody>
+        <tr><th>Endpoint</th><td class="col-h">All traffic. A global ceiling: once it is hit, every request is blocked, whatever the user limits say.</td></tr>
+        <tr><th>User (default)</th><td class="col-h">Each user who has no more specific limit.</td></tr>
+        <tr><th>User or service principal</th><td class="col-h">One named principal. Overrides the default and any group limit.</td></tr>
+        <tr><th>User group</th><td class="col-h">A shared budget for all members of the group together.</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>Calls or tokens.</strong> Each limit is queries per minute (QPM) or tokens per minute (TPM). When both apply to the same principal, the more restrictive one is enforced. TPM limits are not available on endpoints that serve custom models or agents.</li>
+      <li><strong>Several groups.</strong> A user in several groups is limited only after exceeding all of those groups' QPM limits, or all of their TPM limits.</li>
+      <li><strong>Defaults and caps.</strong> No limits exist until you set them; an endpoint takes at most 20 limits, of which at most 5 are group limits, and limits apply only to callers who have permission to query.</li>
+    </ul>
+  </section>
+
+  <section id="usage">
+    <h2>Usage tracking: who spent what</h2>
+    <p>Usage tracking shares two system tables. <code>system.serving.endpoint_usage</code> has one row per request: <code>requester</code> (the user or service principal), <code>request_time</code>, <code>status_code</code>, <code>input_token_count</code>, <code>output_token_count</code>, character counts, <code>request_streaming</code>, a <code>usage_context</code> map and <code>served_entity_id</code>. <code>system.serving.served_entities</code> describes each served model, including <code>endpoint_name</code>. Only account admins can query them by default, even though an endpoint manager turns tracking on.</p>
+<pre><code>-- Tokens per caller per endpoint, last 7 days
+SELECT se.endpoint_name,
+       eu.requester,
+       COUNT(*)                   AS requests,
+       SUM(eu.input_token_count)  AS input_tokens,
+       SUM(eu.output_token_count) AS output_tokens
+FROM system.serving.endpoint_usage AS eu
+JOIN system.serving.served_entities AS se
+  ON eu.served_entity_id = se.served_entity_id
+WHERE eu.request_time &gt;= current_date() - INTERVAL 7 DAYS
+GROUP BY se.endpoint_name, eu.requester
+ORDER BY output_tokens DESC;</code></pre>
+    <p>When one service principal calls on behalf of many customers or projects, <code>requester</code> alone cannot split the bill. Callers of external model endpoints can pass a <code>usage_context</code> map with the request (up to 10 KiB), for example <code>{"project": "returns-bot"}</code>, and group on it with <code>eu.usage_context['project']</code>. When a model does not return token counts, they are estimated as (text length + 1) / 4. Rows typically arrive within an hour.</p>
+  </section>
+
+  <section id="inference">
+    <h2>Inference tables: what was said</h2>
+    <p>The inference table records content, not cost: a table ending in <code>_payload</code> in the chosen schema, with <code>request_date</code>, <code>request_time</code>, <code>databricks_request_id</code>, <code>status_code</code>, <code>execution_duration_ms</code>, the raw <code>request</code> and <code>response</code> JSON, <code>requester</code>, <code>served_entity_id</code> and <code>logging_error_codes</code>.</p>
+<pre><code>-- Daily errors and model latency for one endpoint
+SELECT request_date,
+       COUNT(*)                                    AS requests,
+       SUM(CASE WHEN status_code &gt;= 400 THEN 1 ELSE 0 END) AS errors,
+       percentile(execution_duration_ms, 0.95)     AS p95_ms
+FROM main.ai_logs.support_llm_payload
+GROUP BY request_date
+ORDER BY request_date DESC;</code></pre>
+    <ul>
+      <li><strong>Payloads over 1 MiB</strong> are not logged in full; <code>logging_error_codes</code> shows <code>MAX_REQUEST_SIZE_EXCEEDED</code> or <code>MAX_RESPONSE_SIZE_EXCEEDED</code>.</li>
+      <li><strong>Streaming responses</strong> are logged with the chunks aggregated into one response.</li>
+      <li><strong>Latency of the log:</strong> rows appear within about an hour. Renaming the table, changing its schema or deleting it can stop logging.</li>
+      <li><strong><code>execution_duration_ms</code></strong> is the model's inference time only, without network overhead.</li>
+    </ul>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 252" role="img" aria-labelledby="gw1t gw1d">
+        <title id="gw1t">Where each AI Gateway surface acts on a request</title>
+        <desc id="gw1d">A request reaches the gateway, which first checks the rate limits: over the limit, the request is rejected before it reaches the model. Within the limit, it goes to the model. After the response, usage tracking writes token counts and the caller to system.serving.endpoint_usage, and the inference table writes the request and response payloads to a Unity Catalog Delta table.</desc>
+        <defs><marker id="gw1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="d-chip" x="10" y="18" width="80" height="40" rx="10"/>
+        <text class="d-txt" x="50" y="42" text-anchor="middle">Request</text>
+        <path class="d-arrow" d="M92 38 H112" marker-end="url(#gw1a)"/>
+        <rect class="d-box" x="116" y="12" width="120" height="52" rx="10"/>
+        <text class="d-txt" x="176" y="34" text-anchor="middle">Rate limits</text>
+        <text class="d-soft" x="176" y="52" text-anchor="middle">QPM / TPM check</text>
+        <path class="d-arrow" d="M238 38 H258" marker-end="url(#gw1a)"/>
+        <rect class="d-good" x="262" y="18" width="88" height="40" rx="10"/>
+        <text class="d-txt" x="306" y="42" text-anchor="middle">Model</text>
+        <path class="d-arrow" d="M176 66 V86" marker-end="url(#gw1a)"/>
+        <rect class="d-bad" x="116" y="90" width="120" height="30" rx="8"/>
+        <text class="d-soft" x="176" y="110" text-anchor="middle">over limit: rejected</text>
+        <path class="d-arrow" d="M306 60 V150" marker-end="url(#gw1a)"/>
+        <path class="d-arrow" d="M306 128 H160 V150" marker-end="url(#gw1a)"/>
+        <text class="d-step" x="10" y="146">AFTER THE RESPONSE</text>
+        <rect class="d-box" x="10" y="156" width="164" height="62" rx="10"/>
+        <text class="d-txt" x="92" y="178" text-anchor="middle">Usage tracking</text>
+        <text class="d-mono" x="92" y="196" text-anchor="middle">endpoint_usage</text>
+        <text class="d-soft" x="92" y="211" text-anchor="middle">tokens, requester</text>
+        <rect class="d-box" x="186" y="156" width="164" height="62" rx="10"/>
+        <text class="d-txt" x="268" y="178" text-anchor="middle">Inference table</text>
+        <text class="d-mono" x="268" y="196" text-anchor="middle">..._payload</text>
+        <text class="d-soft" x="268" y="211" text-anchor="middle">request, response</text>
+        <text class="d-soft" x="10" y="242">Rate limits act; the two tables record.</text>
+      </svg>
+      <figcaption>Rate limits shape traffic before the model; usage and inference tables record after it.</figcaption>
+    </figure>
+    <p class="fnote">Schemas, limits and behaviour from the Databricks pages "Configure governance on model serving endpoints (legacy)" and "Log requests and responses for serving endpoints (legacy)". The queries are written to those schemas and the join the docs give; they were not run, because this environment has no workspace.</p>
+  </section>
+
+  <section id="more">
+    <h2>Two more gateway features</h2>
+    <p>The same section configures <strong>AI Guardrails</strong> (Public Preview): a safety filter, and PII detection that blocks or masks names, addresses and card numbers in requests and responses (output guardrails do not apply to embeddings models or streaming). For endpoints serving external models, <strong>fallbacks</strong> retry a request that returns 429 or a 5XX error on the next served model, up to two fallbacks, and only the first successful or last failed attempt is logged.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> a runaway caller or an unfair share of capacity points to rate limits; "which team or user spent the tokens" points to usage tracking; "what did the model receive and return" points to inference tables. Rate limits act on traffic; the two tables only record it.</p></div>
+    <p>Distractors swap the surfaces: an inference table to stop abuse, or a rate limit to explain a bad answer.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between usage tables and inference tables in Databricks AI Gateway?</summary><div class="fa"><p>Usage tracking records accounting: one row per request in system.serving.endpoint_usage with the caller and token counts. Inference tables record content: the raw request and response JSON in a Unity Catalog Delta table, for debugging and quality monitoring.</p></div></details>
+      <details><summary>Which rate limit wins in Databricks AI Gateway?</summary><div class="fa"><p>The endpoint limit is a global ceiling that blocks all traffic once exceeded. Below it, a limit set for a specific user or service principal overrides a group limit and the default user limit, and when both a query and a token limit apply, the more restrictive one is enforced.</p></div></details>
+      <details><summary>Can I set token-per-minute limits on an agent endpoint?</summary><div class="fa"><p>No. Token-per-minute limits cannot be applied to endpoints that serve custom models or agents, so those endpoints use query-per-minute limits. Token limits work on foundation model and external model endpoints.</p></div></details>
+      <details><summary>Who can query the AI Gateway usage system tables?</summary><div class="fa"><p>By default only account admins can query system.serving.endpoint_usage and system.serving.served_entities, even though an endpoint manager turns usage tracking on. Admins can grant access to other users.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Mosaic AI Gateway tracking is Chapter 54 of the Databricks Generative AI Engineer Associate course, in Unit 6, Evaluation and Monitoring, with exam-style checks on which surface answers which question.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-54-ai-gateway-tracking.html" class="cta">Open Chapter 54 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam">Mosaic AI Gateway and Foundation Model APIs &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-53-inference-tables-agent-monitoring.html">Chapter 53: inference tables and Agent Monitoring &rarr;</a>
+    <a href="databricks-ai-query-batch-inference">Batch inference with ai_query() &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Mosaic AI Gateway: Rate Limits, Usage Tables and Inference Tables, with Queries","description":"Configure Mosaic AI Gateway rate limits, usage tracking and inference tables on Databricks, with every limit rule, both table schemas and the SQL to query them.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-07","dateModified":"2026-11-07","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/databricks-ai-gateway-rate-limits-usage-inference-tables"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the difference between usage tables and inference tables in Databricks AI Gateway?", "acceptedAnswer": {"@type": "Answer", "text": "Usage tracking records accounting: one row per request in system.serving.endpoint_usage with the caller and token counts. Inference tables record content: the raw request and response JSON in a Unity Catalog Delta table, for debugging and quality monitoring."}}, {"@type": "Question", "name": "Which rate limit wins in Databricks AI Gateway?", "acceptedAnswer": {"@type": "Answer", "text": "The endpoint limit is a global ceiling that blocks all traffic once exceeded. Below it, a limit set for a specific user or service principal overrides a group limit and the default user limit, and when both a query and a token limit apply, the more restrictive one is enforced."}}, {"@type": "Question", "name": "Can I set token-per-minute limits on an agent endpoint?", "acceptedAnswer": {"@type": "Answer", "text": "No. Token-per-minute limits cannot be applied to endpoints that serve custom models or agents, so those endpoints use query-per-minute limits. Token limits work on foundation model and external model endpoints."}}, {"@type": "Question", "name": "Who can query the AI Gateway usage system tables?", "acceptedAnswer": {"@type": "Answer", "text": "By default only account admins can query system.serving.endpoint_usage and system.serving.served_entities, even though an endpoint manager turns usage tracking on. Admins can grant access to other users."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>
