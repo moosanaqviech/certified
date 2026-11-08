@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Scorers and mlflow.genai.evaluate(): Evaluating an Agent from Its Traces</title>
+<meta name="description" content="Write MLflow custom scorers with @scorer, score an agent step by step from its traces, re-score stored traces, and mix code scorers with built-in judges.">
+<link rel="canonical" href="https://certify.courses/blog/mlflow-genai-evaluate-custom-scorers">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Custom Scorers and mlflow.genai.evaluate(): Evaluating an Agent from Its Traces">
+<meta property="og:description" content="Write MLflow custom scorers with @scorer, score an agent step by step from its traces, re-score stored traces, and mix code scorers with built-in judges.">
+<meta property="og:url" content="https://certify.courses/blog/mlflow-genai-evaluate-custom-scorers">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>Custom scorers and evaluation</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Custom Scorers and mlflow.genai.evaluate(): Evaluating an Agent from Its Traces</h1>
+    <p class="lede">A <strong>custom scorer</strong> in MLflow is a Python function decorated with <code>@scorer</code> that grades one evaluated example, reading its inputs, outputs, expectations or full trace and returning a bool, a number, a string or a <code>Feedback</code> with a rationale. <code>mlflow.genai.evaluate()</code> runs the app over an evaluation dataset, records a trace per row and applies custom scorers alongside built-in LLM judges.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 49 of the course introduces the <code>@scorer</code> decorator, the four arguments a scorer can read and its return types; Chapter 50 explains why agents are evaluated from their traces. This post joins them in one working example: a traced app, an evaluation dataset, four scorers including one that grades the retrieval step from the trace, the results, and re-scoring stored traces without running the app again.</p>
+    <p>Both are Section 6 (Evaluation and Monitoring) objectives in the 18 March 2026 exam guide. Which built-in judges need ground truth is Chapter 48 of the course, summarised in the table below.</p>
+  </section>
+
+  <section id="code">
+    <h2>The complete example</h2>
+    <p>A small support agent retrieves a policy and answers in JSON. Each function carries <code>@mlflow.trace</code>, so every call produces a trace with an agent span and a retriever span inside it:</p>
+<pre><code>import json
+import mlflow
+from mlflow.entities import Feedback, SpanType
+from mlflow.genai.scorers import scorer
+
+mlflow.set_experiment("/Shared/support-agent-eval")
+
+POLICIES = {
+    "returns": "Items can be returned within 30 days with a receipt.",
+    "shipping": "Standard shipping takes 3 to 5 business days.",
+}
+
+@mlflow.trace(span_type=SpanType.RETRIEVER)
+def retrieve(question: str) -&gt; list[dict]:
+    return [{"doc_id": k, "text": v}
+            for k, v in POLICIES.items() if k in question.lower()]
+
+@mlflow.trace(span_type=SpanType.AGENT)
+def support_agent(question: str) -&gt; str:
+    docs = retrieve(question)
+    answer = docs[0]["text"] if docs else "I don't know."
+    return json.dumps({"answer": answer,
+                       "sources": [d["doc_id"] for d in docs]})
+
+eval_data = [
+    {"inputs": {"question": "What is your returns window?"},
+     "expectations": {"expected_source": "returns"}},
+    {"inputs": {"question": "How long does shipping take?"},
+     "expectations": {"expected_source": "shipping"}},
+    {"inputs": {"question": "Do you price match?"},
+     "expectations": {"expected_source": "pricing"}},
+]
+
+@scorer
+def valid_json(outputs) -&gt; bool:
+    try:
+        json.loads(outputs)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+@scorer
+def concise(outputs) -&gt; Feedback:
+    words = len(json.loads(outputs)["answer"].split())
+    return Feedback(value=words &lt;= 40,
+                    rationale=f"Answer has {words} words; the limit is 40.")
+
+@scorer
+def cites_expected_source(outputs, expectations) -&gt; bool:
+    return expectations["expected_source"] in json.loads(outputs)["sources"]
+
+@scorer
+def retrieval_hit(trace, expectations) -&gt; Feedback:
+    spans = trace.search_spans(span_type=SpanType.RETRIEVER)
+    retrieved = [d["doc_id"] for s in spans for d in (s.outputs or [])]
+    hit = expectations["expected_source"] in retrieved
+    return Feedback(value=hit, rationale=f"Retrieved {retrieved or 'nothing'}.")
+
+results = mlflow.genai.evaluate(
+    data=eval_data,
+    predict_fn=support_agent,
+    scorers=[valid_json, concise, cites_expected_source, retrieval_hit],
+)
+print(results.metrics)</code></pre>
+    <ul>
+      <li><strong>The dataset.</strong> Each row has <code>inputs</code>, whose keys become the keyword arguments of <code>predict_fn</code> (here <code>question</code>), and optional <code>expectations</code> holding the ground truth.</li>
+      <li><strong>A scorer names only what it reads.</strong> <code>valid_json</code> asks for <code>outputs</code>; <code>cites_expected_source</code> adds <code>expectations</code>; <code>retrieval_hit</code> asks for the whole <code>trace</code>. MLflow supplies each by name.</li>
+      <li><strong>Return types.</strong> A bool is pass or fail. A <code>Feedback</code> carries a value and a rationale, so the evaluation shows why a row failed, not just that it did.</li>
+      <li><strong>Scoring a step.</strong> <code>retrieval_hit</code> finds the retriever span and checks what it returned. That separates "retrieval missed" from "the model ignored good context", which no score on the final answer can do.</li>
+    </ul>
+    <p class="fnote">Run against MLflow 3.18 with a local tracking store. It printed <code>valid_json/mean</code> 1.0, <code>concise/mean</code> 1.0, and <code>cites_expected_source/mean</code> and <code>retrieval_hit/mean</code> of 0.67 each: the price-match question has no policy, so both source checks fail on that row. API from the Databricks "Code-based scorers" pages and the MLflow 3.18 package.</p>
+  </section>
+
+  <section id="results">
+    <h2>Reading the results</h2>
+    <p>Each scorer becomes a metric named <code>&lt;scorer&gt;/mean</code>, the average across rows with a bool counted as 1 or 0. The evaluation run also stores one trace per row with every scorer's feedback attached, which is where the rationales appear. In the example, the low <code>retrieval_hit</code> and <code>cites_expected_source</code> means point to the same row, and its rationale ("Retrieved nothing") says the fix belongs in retrieval, not the prompt.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 250" role="img" aria-labelledby="ev1t ev1d">
+        <title id="ev1t">How mlflow.genai.evaluate turns rows into scored traces</title>
+        <desc id="ev1d">Each evaluation row passes its inputs to the app's predict function. The app runs and records a trace containing an agent span and a retriever span. The scorers then read the trace: valid_json and concise read the outputs, cites_expected_source reads outputs and expectations, and retrieval_hit reads the retriever span inside the trace. Each scorer attaches feedback to the trace, and the run reports one mean per scorer.</desc>
+        <defs><marker id="ev1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="d-chip" x="10" y="14" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="58" y="34" text-anchor="middle">Eval row</text>
+        <text class="d-soft" x="58" y="50" text-anchor="middle">inputs</text>
+        <path class="d-arrow" d="M108 37 H128" marker-end="url(#ev1a)"/>
+        <rect class="d-box" x="132" y="14" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="180" y="34" text-anchor="middle">predict_fn</text>
+        <text class="d-soft" x="180" y="50" text-anchor="middle">runs the app</text>
+        <path class="d-arrow" d="M230 37 H250" marker-end="url(#ev1a)"/>
+        <rect class="d-good" x="254" y="14" width="96" height="46" rx="10"/>
+        <text class="d-txt" x="302" y="34" text-anchor="middle">Trace</text>
+        <text class="d-soft" x="302" y="50" text-anchor="middle">agent, retriever</text>
+        <path class="d-arrow" d="M302 62 V82" marker-end="url(#ev1a)"/>
+        <text class="d-step" x="10" y="102">SCORERS READ THE TRACE</text>
+        <rect class="d-box" x="10" y="112" width="166" height="28" rx="8"/>
+        <text class="d-mono" x="93" y="130" text-anchor="middle">valid_json: outputs</text>
+        <rect class="d-box" x="184" y="112" width="166" height="28" rx="8"/>
+        <text class="d-mono" x="267" y="130" text-anchor="middle">concise: outputs</text>
+        <rect class="d-box" x="10" y="146" width="166" height="28" rx="8"/>
+        <text class="d-mono" x="93" y="164" text-anchor="middle">cites_source: expectations</text>
+        <rect class="d-good" x="184" y="146" width="166" height="28" rx="8"/>
+        <text class="d-mono" x="267" y="164" text-anchor="middle">retrieval_hit: span</text>
+        <path class="d-arrow" d="M180 178 V196" marker-end="url(#ev1a)"/>
+        <rect class="d-chip" x="10" y="200" width="340" height="34" rx="10"/>
+        <text class="d-txt" x="180" y="222" text-anchor="middle">Feedback on each trace, one mean per scorer</text>
+      </svg>
+      <figcaption>The trace is the unit of evaluation: scorers can grade the answer or any step inside it.</figcaption>
+    </figure>
+  </section>
+
+  <section id="reuse">
+    <h2>Trace once, score again</h2>
+    <p>Re-running an agent for every scorer change is slow and costs tokens. Stored traces can be scored directly: pass them as <code>data</code> and leave out <code>predict_fn</code>.</p>
+<pre><code>traces = mlflow.search_traces(run_id=results.run_id)
+rescored = mlflow.genai.evaluate(data=traces, scorers=[retrieval_hit])</code></pre>
+    <p>The expectations travel with the traces, so <code>retrieval_hit</code> scored them again without the original dataset. The same pattern applies to production traces: search them, add the useful ones to an evaluation dataset (a Unity Catalog table created with <code>mlflow.genai.datasets.create_dataset</code>, which needs CREATE TABLE on the schema), and evaluate against it after each change.</p>
+  </section>
+
+  <section id="judges">
+    <h2>Built-in judges next to custom scorers</h2>
+    <p>Custom scorers sit in the same <code>scorers</code> list as the built-in LLM judges, so one run can mix deterministic checks with judgment calls. The column that matters for the exam is whether a judge needs ground truth in <code>expectations</code>:</p>
+    <table class="cmp">
+      <thead><tr><th>Built-in judge</th><th class="col-h">Needs ground truth</th></tr></thead>
+      <tbody>
+        <tr><th><code>RelevanceToQuery</code>, <code>RetrievalRelevance</code>, <code>RetrievalGroundedness</code>, <code>Safety</code>, <code>Guidelines</code>, <code>ToolCallEfficiency</code></th><td class="col-h">No: they judge the response or context against the request or a stated rule.</td></tr>
+        <tr><th><code>Correctness</code>, <code>RetrievalSufficiency</code>, <code>ToolCallCorrectness</code></th><td class="col-h">Yes: they compare against expected facts, responses or tool calls.</td></tr>
+        <tr><th><code>ExpectationsGuidelines</code></th><td class="col-h">No ground-truth answer, but each row's guidelines go in <code>expectations</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>Choose a code-based scorer for exact rules (valid JSON, a schema, a required disclaimer, a length limit, an expected tool) and a judge when quality needs reading the way a person would. By default each judge uses a Databricks-hosted LLM; the <code>model</code> argument swaps it, written as <code>&lt;provider&gt;:/&lt;model-name&gt;</code>, for example <code>databricks:/databricks-gpt-5-mini</code>.</p>
+    <p class="fnote">Judge table from the Databricks page "Built-in LLM judges"; mixing judges and scorers from "Scorers and LLM judges".</p>
+  </section>
+
+  <section id="production">
+    <h2>From evaluation to monitoring</h2>
+    <p>The same scorer can grade live traffic. Two constraints from the docs decide how to write it: production monitoring accepts built-in judges and <code>@scorer</code>-decorated functions, but not class-based <code>Scorer</code> subclasses, and a decorated scorer used in monitoring must be defined and registered from a Databricks notebook, because the monitoring service serializes the function's code to run it remotely. State a monitored scorer needs belongs inside the function body.</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> a deterministic business rule (valid JSON, a banned phrase, a required citation) points to a custom <code>@scorer</code>, not a new LLM judge. "Did retrieval fail or did the model ignore good context?" points to the trace and a scorer that reads the retriever span. Iterating on scorers points to re-evaluating stored traces rather than re-running the agent.</p></div>
+    <p>Distractors offer a single score on the final answer, endpoint logs, or a judge that needs ground truth on a dataset that has none.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>How do I write a custom scorer for mlflow.genai.evaluate?</summary><div class="fa"><p>Write a Python function, decorate it with @scorer from mlflow.genai.scorers, and give it keyword arguments for what it needs: inputs, outputs, expectations or trace. Return a bool, a number, a string or a Feedback with a rationale, and pass the function in the scorers list of mlflow.genai.evaluate.</p></div></details>
+      <details><summary>Can a custom scorer evaluate an agent's intermediate steps?</summary><div class="fa"><p>Yes. A scorer that takes the trace argument can search its spans, for example the retriever span, and grade what that step returned. That shows whether a wrong answer came from bad retrieval or from the model ignoring good context.</p></div></details>
+      <details><summary>Can I re-run evaluation without calling my agent again?</summary><div class="fa"><p>Yes. Pass stored traces, for example from mlflow.search_traces, as the data argument and omit predict_fn. The scorers grade the recorded traces, and expectations stored with them are available to scorers that need ground truth.</p></div></details>
+      <details><summary>Which MLflow built-in judges need ground truth?</summary><div class="fa"><p>Correctness, RetrievalSufficiency and ToolCallCorrectness need ground truth in expectations. RelevanceToQuery, RetrievalRelevance, RetrievalGroundedness, Safety, Guidelines and ToolCallEfficiency do not.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapters</h2>
+    <p>Custom scorers and evaluating agents with tracing are Chapters 49 and 50 of the Databricks Generative AI Engineer Associate course, in Unit 6, Evaluation and Monitoring, with exam-style checks on both.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-49-custom-scorers.html" class="cta">Open Chapter 49 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-50-agent-eval-scoring-tracing.html">Chapter 50: evaluating agents with tracing &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-48-judges-ground-truth.html">Chapter 48: judges and ground truth &rarr;</a>
+    <a href="mosaic-ai-agent-framework-responses-agent-deploy">Build, log and deploy a Databricks agent &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Custom Scorers and mlflow.genai.evaluate(): Evaluating an Agent from Its Traces","description":"Write MLflow custom scorers with @scorer, score an agent step by step from its traces, re-score stored traces, and mix code scorers with built-in judges.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-07","dateModified":"2026-11-07","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/mlflow-genai-evaluate-custom-scorers"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I write a custom scorer for mlflow.genai.evaluate?", "acceptedAnswer": {"@type": "Answer", "text": "Write a Python function, decorate it with @scorer from mlflow.genai.scorers, and give it keyword arguments for what it needs: inputs, outputs, expectations or trace. Return a bool, a number, a string or a Feedback with a rationale, and pass the function in the scorers list of mlflow.genai.evaluate."}}, {"@type": "Question", "name": "Can a custom scorer evaluate an agent's intermediate steps?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. A scorer that takes the trace argument can search its spans, for example the retriever span, and grade what that step returned. That shows whether a wrong answer came from bad retrieval or from the model ignoring good context."}}, {"@type": "Question", "name": "Can I re-run evaluation without calling my agent again?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Pass stored traces, for example from mlflow.search_traces, as the data argument and omit predict_fn. The scorers grade the recorded traces, and expectations stored with them are available to scorers that need ground truth."}}, {"@type": "Question", "name": "Which MLflow built-in judges need ground truth?", "acceptedAnswer": {"@type": "Answer", "text": "Correctness, RetrievalSufficiency and ToolCallCorrectness need ground truth in expectations. RelevanceToQuery, RetrievalRelevance, RetrievalGroundedness, Safety, Guidelines and ToolCallEfficiency do not."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

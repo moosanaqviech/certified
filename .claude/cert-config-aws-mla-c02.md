@@ -47,6 +47,9 @@ official MLA-C02 exam guide at docs.aws.amazon.com).
       convention that only the first course keeps the bare
       practice-exam-NN.html; the retired MLA-C01 course used mla-c01-).
     All files live in aws-machine-learning-engineer-associate-mla-c02/.
+    Readiness quiz: ready/aws-mla-c02.html (served at /ready/aws-mla-c02),
+      live 7 Nov 2026: 12 questions, domains d1 to d4 at 3/3/3/3, Ch 08,
+      10, 11 / 22, 24, 26 / 40, 42, 56 / 68, 75, 76.
 
 ## Terminology rules
 
