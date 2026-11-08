@@ -60,7 +60,9 @@ curriculum-index-aws-aif-c01.md (chapter placement; LOCKED 11 Oct 2026, transcri
       practice-exam-NN.html; DEA-C01 uses aws-, MLA-C02 uses mla-c02-).
       Exams 01 to 04 are section exams; 05 to 07 are the sealed full mocks.
     Practice hub: practice/aws-aif-c01.html (served at /practice/aws-aif-c01).
-    Readiness quiz: ready/aws-aif-c01.html (served at /ready/aws-aif-c01).
+    Readiness quiz: ready/aws-aif-c01.html (served at /ready/aws-aif-c01),
+      live 7 Nov 2026: 12 questions, domains d1 to d5 at 2/3/3/2/2, Ch 07,
+      14 / 19, 20, 26 / 30, 35, 41 / 46, 50 / 52, 56.
     All lessons and exams live in aws-ai-practitioner/.
 
 ## Terminology rules
