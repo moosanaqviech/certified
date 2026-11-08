@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batch Inference with ai_query(): Every Argument, Structured Output and Error Handling</title>
+<meta name="description" content="Databricks ai_query() in depth: every argument, request shapes, structured output, failOnError for large jobs, and running batch inference in production.">
+<link rel="canonical" href="https://certify.courses/blog/databricks-ai-query-batch-inference">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Batch Inference with ai_query(): Every Argument, Structured Output and Error Handling">
+<meta property="og:description" content="Databricks ai_query() in depth: every argument, request shapes, structured output, failOnError for large jobs, and running batch inference in production.">
+<meta property="og:url" content="https://certify.courses/blog/databricks-ai-query-batch-inference">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;background:var(--surface-2);padding:1px 6px;border-radius:6px;color:var(--ink);}
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;}
+  pre code{background:none;padding:0;font-size:13.5px;line-height:1.6;white-space:pre;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+  ol{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  .cmp code{overflow-wrap:anywhere;}
+  .diagram{margin:12px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px 12px;}
+  .diagram svg{display:block;width:100%;max-width:480px;height:auto;margin:0 auto;}
+  .diagram figcaption{font-size:13px;line-height:1.5;color:var(--ink-faint);margin-top:10px;text-align:center;}
+  .d-box{fill:var(--surface-2);stroke:var(--line);stroke-width:1;}
+  .d-bad{fill:rgba(240,122,106,0.08);stroke:rgba(240,122,106,0.55);stroke-width:1;}
+  .d-good{fill:rgba(52,211,166,0.07);stroke:rgba(52,211,166,0.5);stroke-width:1;}
+  .d-chip{fill:var(--bg);stroke:var(--line);stroke-width:1;}
+  .d-step{font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:0.12em;fill:var(--gold);}
+  .d-txt{font-family:var(--body);font-size:13px;font-weight:500;fill:var(--ink);}
+  .d-soft{font-family:var(--body);font-size:12px;font-weight:500;fill:var(--ink-soft);}
+  .d-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;fill:var(--ink);}
+  .d-red{fill:#f07a6a;}
+  .d-green{fill:var(--green);}
+  .d-gold{fill:var(--gold);}
+  .d-faint{fill:var(--ink-faint);}
+  .d-line{stroke:var(--line);stroke-width:1;}
+  .d-arrow{stroke:var(--ink-faint);stroke-width:1.5;fill:none;}
+  .d-head{fill:var(--ink-faint);}
+  .d-dim{opacity:0.38;}
+  @media(max-width:420px){.cmp th,.cmp td{padding:10px 11px;font-size:14px;}}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-generative-ai-engineer-associate-certification-guide">GenAI Engineer Guide</a><span>&rsaquo;</span>
+    <span>Batch inference with ai_query()</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks GenAI Engineer &middot; Deep dive</div>
+    <h1>Batch Inference with ai_query(): Every Argument, Structured Output and Error Handling</h1>
+    <p class="lede"><strong>ai_query()</strong> is the Databricks SQL function that sends each row of a query to a Model Serving endpoint and returns the model's response as a column. It takes an endpoint and a request, plus optional arguments for the return type, error handling, model parameters, structured output and image files, and Databricks parallelises and retries the calls.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="scope">
+    <h2>What this deep dive adds</h2>
+    <p class="answer">Chapter 37 of the course covers when batch inference beats a real-time endpoint, the shaping arguments by name, and the <code>failOnError</code> default that sinks large jobs. This post is the reference behind it: every argument with its runtime requirement, the request shape for each endpoint type, structured output in both styles, a job that keeps its failed rows for a retry, and how to run and cost it in production.</p>
+    <p>Batch inference with <code>ai_query()</code> is a Section 4 (Assembling and Deploying Applications) objective in the 18 March 2026 exam guide. The serving endpoints it calls are covered in <a href="mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam">the Foundation Model APIs and AI Gateway post</a>.</p>
+  </section>
+
+  <section id="arguments">
+    <h2>Every argument</h2>
+    <table class="cmp">
+      <thead><tr><th>Argument</th><th class="col-h">What it does</th></tr></thead>
+      <tbody>
+        <tr><th><code>endpoint</code></th><td class="col-h">Required. A STRING literal naming a Foundation Model, external model or custom model endpoint in the same workspace. The caller needs CAN QUERY on it.</td></tr>
+        <tr><th><code>request</code></th><td class="col-h">Required. A STRING for Foundation Model and external endpoints; a column or a STRUCT whose field names match the model's inputs for a custom endpoint.</td></tr>
+        <tr><th><code>returnType</code></th><td class="col-h">The expected type for a custom endpoint, written like the schema argument of <code>from_json</code>. Optional from Runtime 15.2, when it is inferred from the model schema.</td></tr>
+        <tr><th><code>failOnError</code></th><td class="col-h">Default <code>true</code>. Set <code>false</code> to get a STRUCT of the response and an error message per row instead of a failed query. Runtime 15.3 or above.</td></tr>
+        <tr><th><code>modelParameters</code></th><td class="col-h">A struct of model parameters such as <code>max_tokens</code> and <code>temperature</code>. Values must be constants, not column-dependent. Runtime 15.3 or above.</td></tr>
+        <tr><th><code>responseFormat</code></th><td class="col-h">Structured output for chat foundation models only: a DDL-style schema string, or a JSON string of type <code>text</code>, <code>json_object</code> or <code>json_schema</code>.</td></tr>
+        <tr><th><code>files</code></th><td class="col-h">Image input for multimodal models: <code>files =&gt; content</code>, where <code>content</code> is a binary column such as the one <code>read_files</code> returns. JPEG and PNG only.</td></tr>
+      </tbody>
+    </table>
+    <p>Two details catch people. When <code>modelParameters</code> leaves <code>temperature</code> unset, <code>ai_query()</code> uses <strong>0.0</strong>, not the endpoint's usual default, so batch output is deterministic unless you ask otherwise. And the function needs Databricks Runtime 15.4 LTS or above (the docs announce a move to 17.3 LTS) and does not run on Databricks SQL Classic warehouses.</p>
+    <p class="fnote">From the Databricks SQL reference page "ai_query function" (last updated 5 November 2026). Newer examples there write models as <code>system.ai.&lt;model&gt;</code>; this post uses the <code>databricks-</code> endpoint names that the AI Functions overview recommends for batch work. Use the name your workspace's Serving page lists.</p>
+  </section>
+
+  <section id="request">
+    <h2>The request for each endpoint type</h2>
+    <p>A chat or completion model on Foundation Model APIs takes a string, so build the prompt with <code>||</code>, <code>CONCAT()</code> or <code>format_string()</code>:</p>
+<pre><code>SELECT ticket_id,
+       ai_query(
+         'databricks-meta-llama-3-3-70b-instruct',
+         'Summarise this support ticket in one sentence: ' || body
+       ) AS summary
+FROM support.tickets;</code></pre>
+    <p>A custom model takes the features it was trained on, as a struct, and a <code>returnType</code> when its signature does not supply one:</p>
+<pre><code>SELECT order_id,
+       ai_query(
+         endpoint   =&gt; 'churn-classifier',
+         request    =&gt; named_struct('tenure_months', tenure_months,
+                                    'plan', plan,
+                                    'monthly_spend', monthly_spend),
+         returnType =&gt; 'DOUBLE'
+       ) AS churn_score
+FROM crm.customers;</code></pre>
+    <p>A custom chat model or agent that expects a messages array gets one built with <code>named_struct</code> and <code>ARRAY</code>, with <code>returnType</code> describing the response shape. Wrapping a call in a SQL function (<code>CREATE FUNCTION ... RETURN ai_query(...)</code>) and granting EXECUTE on it lets analysts reuse a vetted prompt without seeing or editing it.</p>
+  </section>
+
+  <section id="structured">
+    <h2>Structured output: parameters and schemas</h2>
+    <p>For extraction and classification, ask for a schema instead of parsing free text. A JSON schema with <code>"strict": true</code> constrains the model to it, and an <code>enum</code> limits a field to fixed labels:</p>
+<pre><code>SELECT ticket_id,
+       ai_query(
+         'databricks-meta-llama-3-3-70b-instruct',
+         'Classify this support ticket: ' || body,
+         modelParameters =&gt; named_struct('max_tokens', 200),
+         responseFormat  =&gt; '{
+           "type": "json_schema",
+           "json_schema": {
+             "name": "ticket_triage",
+             "schema": {
+               "type": "object",
+               "properties": {
+                 "category": {"type": "string",
+                              "enum": ["billing", "bug", "account", "other"]},
+                 "urgent":   {"type": "boolean"}
+               }
+             },
+             "strict": true
+           }
+         }'
+       ) AS triage
+FROM support.tickets;</code></pre>
+    <p>With the <code>json_schema</code> type the column holds a JSON string, so read fields with <code>get_json_object(triage, '$.category')</code> or convert it with <code>from_json</code>. The DDL style (<code>'STRUCT&lt;category:STRING, urgent:BOOLEAN&gt;'</code>) is a shorter way to state the same schema. <code>responseFormat</code> works only against chat foundation models; for a custom model, the shape comes from <code>returnType</code>.</p>
+  </section>
+
+  <section id="errors">
+    <h2>failOnError: a job that keeps its failures</h2>
+    <p>With the default <code>failOnError =&gt; true</code>, one row that the endpoint rejects (an input over the model's limit, for example) fails the whole query, and a ten-million-row run loses all its work. Set it to <code>false</code> and each row returns a struct with two fields:</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 360 250" role="img" aria-labelledby="aq1t aq1d">
+        <title id="aq1t">The same batch with failOnError true and false</title>
+        <desc id="aq1d">Four rows go to ai_query and the third row fails at the endpoint. With failOnError true, the whole query fails and no results are written. With failOnError false, every row returns a struct: rows one, two and four have a response and a null errorMessage, row three has a null response and an error message, so the job finishes and the failed row can be retried.</desc>
+        <text class="d-step" x="10" y="18">FAILONERROR =&gt; TRUE (DEFAULT)</text>
+        <rect class="d-box" x="10" y="28" width="40" height="24" rx="6"/><text class="d-mono" x="30" y="44" text-anchor="middle">r1</text>
+        <rect class="d-box" x="56" y="28" width="40" height="24" rx="6"/><text class="d-mono" x="76" y="44" text-anchor="middle">r2</text>
+        <rect class="d-bad" x="102" y="28" width="40" height="24" rx="6"/><text class="d-mono" x="122" y="44" text-anchor="middle">r3</text>
+        <rect class="d-box d-dim" x="148" y="28" width="40" height="24" rx="6"/><text class="d-mono d-dim" x="168" y="44" text-anchor="middle">r4</text>
+        <rect class="d-bad" x="210" y="24" width="140" height="32" rx="8"/>
+        <text class="d-txt" x="280" y="44" text-anchor="middle">Query fails</text>
+        <text class="d-soft" x="10" y="78">One endpoint error, and no rows are written.</text>
+        <text class="d-step" x="10" y="112">FAILONERROR =&gt; FALSE</text>
+        <text class="d-soft" x="110" y="132" text-anchor="middle">response</text>
+        <text class="d-soft" x="270" y="132" text-anchor="middle">errorMessage</text>
+        <rect class="d-good" x="10" y="140" width="340" height="20" rx="6"/>
+        <text class="d-mono" x="30" y="154" text-anchor="middle">r1</text><text class="d-mono" x="110" y="154" text-anchor="middle">"Refund issued..."</text><text class="d-mono" x="270" y="154" text-anchor="middle">null</text>
+        <rect class="d-good" x="10" y="164" width="340" height="20" rx="6"/>
+        <text class="d-mono" x="30" y="178" text-anchor="middle">r2</text><text class="d-mono" x="110" y="178" text-anchor="middle">"Password reset..."</text><text class="d-mono" x="270" y="178" text-anchor="middle">null</text>
+        <rect class="d-bad" x="10" y="188" width="340" height="20" rx="6"/>
+        <text class="d-mono" x="30" y="202" text-anchor="middle">r3</text><text class="d-mono" x="110" y="202" text-anchor="middle">null</text><text class="d-mono" x="270" y="202" text-anchor="middle">"...too long"</text>
+        <rect class="d-good" x="10" y="212" width="340" height="20" rx="6"/>
+        <text class="d-mono" x="30" y="226" text-anchor="middle">r4</text><text class="d-mono" x="110" y="226" text-anchor="middle">"Bug logged..."</text><text class="d-mono" x="270" y="226" text-anchor="middle">null</text>
+        <text class="d-soft" x="10" y="246">The job finishes; r3 is kept for a retry.</text>
+      </svg>
+      <figcaption>failOnError decides whether one bad row costs you one row or the whole run.</figcaption>
+    </figure>
+    <p>That turns a fragile job into a two-step pattern: write everything, then retry only what failed.</p>
+<pre><code>CREATE OR REPLACE TABLE support.ticket_summaries AS
+SELECT ticket_id,
+       ai_query(
+         'databricks-meta-llama-3-3-70b-instruct',
+         'Summarise this support ticket in one sentence: ' || body,
+         failOnError =&gt; false
+       ) AS result
+FROM support.tickets;
+
+-- Rows to fix and rerun
+SELECT ticket_id, result.errorMessage
+FROM support.ticket_summaries
+WHERE result.errorMessage IS NOT NULL;</code></pre>
+    <p>Successful rows have a null <code>errorMessage</code>; failed rows have a null <code>response</code>. The flag covers errors from the model endpoint only; per the reference, a row that fails for any other reason still fails the whole query.</p>
+  </section>
+
+  <section id="production">
+    <h2>Running it in production</h2>
+    <ul>
+      <li><strong>One query, full dataset.</strong> Databricks manages parallelism, retries and scaling, and its guidance is to submit the whole table in a single query rather than splitting it into small batches yourself.</li>
+      <li><strong>Databricks-hosted endpoints.</strong> For batch work the docs recommend the provisionless, Databricks-hosted foundation model endpoints (prefixed <code>databricks-</code>) over provisioned throughput.</li>
+      <li><strong>Where it runs.</strong> The same call works in a scheduled job, a Lakeflow Spark Declarative Pipelines materialized view (with expectations to validate the output), or Structured Streaming for incremental inference.</li>
+      <li><strong>What it costs.</strong> <code>ai_query()</code> is billed for the endpoint it calls, on top of the query's own compute. Hosted foundation model usage appears in the billing system table under the <code>MODEL_SERVING</code> product with the <code>BATCH_INFERENCE</code> offering type, which is how to attribute it to a job or warehouse.</li>
+    </ul>
+    <p>For common tasks, the task-specific functions (<code>ai_classify</code>, <code>ai_extract</code>, <code>ai_summarize</code>, <code>ai_parse_document</code> and others) need no endpoint or prompt, and Databricks recommends them for getting started. <code>ai_query()</code> is the general-purpose option when you choose the model, write the prompt or call a custom endpoint.</p>
+    <p class="fnote">From the Databricks pages "Transform unstructured data using AI Functions" and "Deploy batch inference pipelines".</p>
+  </section>
+
+  <section id="exam">
+    <h2>What this means for the exam</h2>
+    <div class="callout"><p><strong>Exam tip:</strong> a whole-table job that dies on a few bad rows points to <code>failOnError =&gt; false</code>; free text that downstream code cannot parse points to <code>responseFormat</code>; a custom model endpoint points to a STRUCT request and <code>returnType</code>. Offline scoring of a table is <code>ai_query()</code>, not a loop calling a real-time endpoint.</p></div>
+    <p>Distractors fix the wrong layer: a lower temperature for errors, a Python loop for scale, or a classic warehouse, where AI Functions do not run.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What does failOnError do in Databricks ai_query?</summary><div class="fa"><p>failOnError controls what happens when the endpoint rejects a row. The default, true, fails the whole query; false returns a struct per row with a response field and an errorMessage field, so the job finishes and failed rows can be found and retried.</p></div></details>
+      <details><summary>How do I get structured JSON output from ai_query?</summary><div class="fa"><p>Pass responseFormat with a JSON schema (type json_schema, ideally with strict set to true) or a DDL-style schema string. It works only for chat foundation models, and with json_schema the column holds a JSON string that get_json_object or from_json can read.</p></div></details>
+      <details><summary>Can ai_query call a custom model, not just an LLM?</summary><div class="fa"><p>Yes. ai_query calls custom model serving endpoints too: pass the input features as a STRUCT whose field names match the model's inputs, and give returnType when the model schema does not define the output, for example 'DOUBLE' for a score.</p></div></details>
+      <details><summary>What is the default temperature in ai_query?</summary><div class="fa"><p>ai_query uses a temperature of 0.0 when modelParameters does not set one, which differs from the usual endpoint defaults. Other model parameters fall back to the defaults in the Foundation Model REST API reference.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the chapter</h2>
+    <p>Batch inference with ai_query() is Chapter 37 of the Databricks Generative AI Engineer Associate course, in Unit 4, Assembling and Deploying Applications, with exam-style checks on failOnError and structured output.</p>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-37-batch-inference-ai-query.html" class="cta">Open Chapter 37 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="mosaic-ai-gateway-foundation-model-apis-genai-engineer-exam">Mosaic AI Gateway and Foundation Model APIs &rarr;</a>
+    <a href="mosaic-ai-agent-framework-responses-agent-deploy">Build, log and deploy a Databricks agent &rarr;</a>
+    <a href="../databricks-generative-ai-engineer-associate/lesson-35-serving-foundation-model-apis.html">Chapter 35: serving on Foundation Model APIs &rarr;</a>
+    <a href="../practice/databricks-genai-associate">GenAI Engineer Associate practice hub &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Batch Inference with ai_query(): Every Argument, Structured Output and Error Handling","description":"Databricks ai_query() in depth: every argument, request shapes, structured output, failOnError for large jobs, and running batch inference in production.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-07","dateModified":"2026-11-07","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/databricks-ai-query-batch-inference"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What does failOnError do in Databricks ai_query?", "acceptedAnswer": {"@type": "Answer", "text": "failOnError controls what happens when the endpoint rejects a row. The default, true, fails the whole query; false returns a struct per row with a response field and an errorMessage field, so the job finishes and failed rows can be found and retried."}}, {"@type": "Question", "name": "How do I get structured JSON output from ai_query?", "acceptedAnswer": {"@type": "Answer", "text": "Pass responseFormat with a JSON schema (type json_schema, ideally with strict set to true) or a DDL-style schema string. It works only for chat foundation models, and with json_schema the column holds a JSON string that get_json_object or from_json can read."}}, {"@type": "Question", "name": "Can ai_query call a custom model, not just an LLM?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. ai_query calls custom model serving endpoints too: pass the input features as a STRUCT whose field names match the model's inputs, and give returnType when the model schema does not define the output, for example 'DOUBLE' for a score."}}, {"@type": "Question", "name": "What is the default temperature in ai_query?", "acceptedAnswer": {"@type": "Answer", "text": "ai_query uses a temperature of 0.0 when modelParameters does not set one, which differs from the usual endpoint defaults. Other model parameters fall back to the defaults in the Foundation Model REST API reference."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

@@ -35,7 +35,10 @@ course home's "Full-length mock exams" section; 178 questions in all). The
 mocks are a sealed pool: never reuse their questions in the section exams
 and never draw them into drills. The course launched free, is now paid
 (Units 1 to 3 free through their practice exam, $9.99 unlock), has no
-readiness quiz, and has a practice hub at practice/databricks-da-associate
+readiness quiz (deliberately, as for GenAI: the guide publishes no domain
+weights and the frozen readiness engine prints "% of exam" under every bar;
+the hub's Readiness check, weighted by objective count, covers it), and has
+a practice hub at practice/databricks-da-associate
 (see the practice hubs paragraph below). Exam guide names come first, with
 the 2026 docs renames mentioned once each, see the cert config. Its blog
 cluster is complete: eight posts listed in the Data Analyst Associate block
@@ -64,7 +67,11 @@ against the official 18 Mar 2026 exam guide PDF on 12 Aug 2026. All 55
 chapters across 6 units are live and cover all 56 objectives, and all seven
 genai-practice-exam-NN.html exams (01-07) are live. Exams map to objectives
 and SAMPLE them: the real exam is 45 scored questions against 56 objectives,
-so one full mock cannot cover them all).
+so one full mock cannot cover them all. No public readiness quiz, by
+decision (7 Nov 2026): the guide publishes no domain weights and the frozen
+readiness engine prints "% of exam" under every bar, so a quiz would
+misstate the guide; the practice hub's Readiness check, labelled "% of
+objectives", covers it.)
 Complete: Databricks Certified Associate Developer for Apache Spark (see
 curriculum-index-databricks-spark-developer-associate.md and
 cert-config-databricks-spark-developer-associate.md; the index is LOCKED,
@@ -129,7 +136,11 @@ together reach all 69 objectives; their own scenarios: retail and finance,
 health and public sector, media, travel and industry), listed in the course
 home's "Full-length mock exams" section; 208 questions in all. The mocks are
 a sealed pool: never reuse their questions in the section exams and never
-draw them into drills. The course home lists all 58 chapters and its
+draw them into drills. A public readiness quiz lives at ready/aws-aif-c01
+(12 new questions, five domains at the official 20/24/28/14/14 weights,
+counts 2/3/3/2/2, scenarios reused from none of the seven exams), linked
+from the catalog row, the pillar guide and the study plan post. The course
+home lists all 58 chapters and its
 Practice toggle links the hub at practice/aws-aif-c01 (see the practice hubs
 paragraph below). Paid from launch: course id aws-aif, $9.99, Unit 1 free through
 aif-practice-exam-01, registered in gate.ts, _shared.mjs and build_sitemap.py;
@@ -286,7 +297,11 @@ each course). Each course lives in its own top-level folder and has its own
   domains at the 28/24/24/24 weighting, surfaced in a separate "Full-length
   mock exams" section of the course index). The course and its exams are now
   content-complete (see cert-config-aws-mla-c02.md for the badge,
-  terminology, and palette registry). The last chapter of the course (76)
+  terminology, and palette registry). A public readiness quiz lives at
+  ready/aws-mla-c02 (12 new questions, four domains at the official
+  28/24/24/24 weights, counts 3/3/3/3, scenarios reused from none of the
+  seven exams), linked from the catalog row, the pillar guide and the
+  study plan post. The last chapter of the course (76)
   carries `next` pointing at the Unit 4 practice exam. The practice exams
   use the `mla-c02-practice-exam-NN.html` prefix.
   The previous exam version, MLA-C01, was RETIRED on 27 Sep 2026 (last
