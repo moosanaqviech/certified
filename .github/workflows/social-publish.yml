@@ -1,0 +1,97 @@
+name: Social publish
+
+# Posts queued carousels from social-kit/schedule.json to Instagram and the
+# Facebook Page via the Meta Graph API (social-kit/bin/publish.mjs).
+#
+# Safety: this runs as a DRY RUN unless BOTH are true:
+#   1. the repo variable SOCIAL_LIVE is "true" (Settings > Secrets and
+#      variables > Actions > Variables), and
+#   2. the run is the schedule, or a manual run with mode = live.
+# A pull request that touches social-kit only ever validates.
+# Approval is the merge: a post goes out only once its schedule entry and its
+# rendered JPGs are on main (and Netlify has deployed them, which the script
+# checks with a HEAD request before posting).
+#
+# Secrets (Actions secrets): META_PAGE_TOKEN, FB_PAGE_ID, IG_USER_ID.
+# Optional variable: META_GRAPH_VERSION (default in publish.mjs).
+
+on:
+  schedule:
+    # Every 3 hours at :23, so a post goes out within 3 h of its publish_at.
+    - cron: "23 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run validates and prints; live posts (also needs SOCIAL_LIVE=true)"
+        type: choice
+        options: [dry-run, live]
+        default: dry-run
+      scope:
+        description: "due = entries whose publish_at has passed; all = every queued entry (dry-run only)"
+        type: choice
+        options: [due, all]
+        default: due
+  pull_request:
+    paths:
+      - "social-kit/**"
+      - ".github/workflows/social-publish.yml"
+
+permissions:
+  contents: write   # commit the posted.json ledger back to main after a live run
+
+concurrency:
+  group: social-publish   # never two publishers at once
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Decide mode
+        id: mode
+        run: |
+          live=false
+          if [ "${{ vars.SOCIAL_LIVE }}" = "true" ]; then
+            if [ "${{ github.event_name }}" = "schedule" ]; then live=true; fi
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" = "live" ]; then live=true; fi
+          fi
+          flags=""
+          if [ "$live" = "true" ]; then flags="--live"; else
+            flags="--check-urls"
+            if [ "${{ inputs.scope }}" = "all" ] || [ "${{ github.event_name }}" = "pull_request" ]; then flags="--all"; fi
+          fi
+          echo "live=$live" >> "$GITHUB_OUTPUT"
+          echo "flags=$flags" >> "$GITHUB_OUTPUT"
+          echo "mode: live=$live flags=$flags"
+
+      - name: Test the publisher against a fake Graph API
+        if: github.event_name == 'pull_request'
+        working-directory: social-kit
+        run: node test/publish.test.mjs
+
+      - name: Publish
+        working-directory: social-kit
+        env:
+          META_PAGE_TOKEN: ${{ steps.mode.outputs.live == 'true' && secrets.META_PAGE_TOKEN || '' }}
+          FB_PAGE_ID: ${{ steps.mode.outputs.live == 'true' && secrets.FB_PAGE_ID || '' }}
+          IG_USER_ID: ${{ steps.mode.outputs.live == 'true' && secrets.IG_USER_ID || '' }}
+          META_GRAPH_VERSION: ${{ vars.META_GRAPH_VERSION }}
+        run: node bin/publish.mjs ${{ steps.mode.outputs.flags }}
+
+      - name: Commit the ledger
+        # Runs even if one platform failed, so what did post is recorded.
+        if: always() && steps.mode.outputs.live == 'true'
+        run: |
+          if git diff --quiet -- social-kit/posted.json; then echo "ledger unchanged"; exit 0; fi
+          git config user.name "certify-social-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add social-kit/posted.json
+          git commit -m "social: record posts in posted.json"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push origin HEAD:main && exit 0; sleep 5; done
+          echo "could not push the ledger"; exit 1

@@ -229,4 +229,63 @@ Chapter 11 of our GenAI Engineer Associate course lets you work that corpus inte
     captionFb:
 `The official GenAI Engineer Associate guide opens its sample questions with a chunking cost problem. The key: a new chunk starts every (size minus overlap) tokens, so the stride sets the embedding bill. Raising chunk size AND reducing overlap both stretch it. Chapter 11 of our GenAI course works the numbers interactively: https://certify.courses`,
   },
+
+  // ---- POST 21 ----
+  {
+    slug: 'poisoning-or-clash',
+    format: 'carousel',
+    source: 'Databricks Context Engineer Associate, Unit 1, Ch 3, objective 1.3 (Certify numbering)',
+    slides: [
+      { layout: 'hook', lines: ['Your agent got', 'the policy wrong.', 'Which failure?'] },
+      {
+        layout: 'tension',
+        lines: ['Same symptom.', 'Two different fixes.'],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'CONTEXT POISONING',
+        headlineLines: ['A fact with no source'],
+        bodyLines: [
+          'A false claim enters the window,',
+          'gets saved to notes, then gets cited.',
+          'Fix: validate before saving.',
+        ],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'CONTEXT CLASH',
+        headlineLines: ['Two real sources disagree'],
+        bodyLines: [
+          'Two wordings retrieved together,',
+          'one says $500, one says $1,000.',
+          'Fix: retrieve only the authoritative one.',
+        ],
+      },
+      {
+        layout: 'value',
+        eyebrow: 'THE TEST IN A TRACE',
+        headlineLines: ['Find the source'],
+        goldHeadline: true,
+        bodyLines: [
+          'No source anywhere: poisoning.',
+          'Two sources that disagree: clash.',
+        ],
+      },
+      { layout: 'cta', lines: ['Name the failure.', 'Then fix it.'], url: 'certify.courses' },
+    ],
+    captionIg:
+`"The agent got the policy wrong" is not a diagnosis. The new Databricks Context Engineer Associate exam names four context failure modes, and two of them look identical from the outside.
+
+Context poisoning is a false fact that enters the window, often a model summary that misstates a tool result, then gets saved to notes and cited for the rest of the session. Context clash is two real sources that disagree, like two versions of a policy wording retrieved together.
+
+The fixes are opposite. Poisoning is stopped at entry: check claims against their source before they are written to memory, and clear what is already there. Clash is resolved before injection: retrieve only the current, authoritative source, and make instruction precedence explicit.
+
+The test fits in one line: look in the trace for the bad fact's source. No source anywhere is poisoning. Two sources that disagree is clash.
+
+Chapter 3 of our Context Engineer Associate course walks both through real traces. All 48 chapters, seven unit exams and three full mocks are live, and the course is free. certify.courses`,
+    hashtags:
+'#databricks #contextengineering #aiagents #genai #llm #rag #agenticai #databrickscertification #certificationprep #aiengineer #mlflow #promptengineering #techcertification #machinelearning',
+    captionFb:
+`"The agent got it wrong" is not a diagnosis. Context poisoning: a false fact with no source, saved and cited (validate before saving). Context clash: two real sources that disagree (retrieve only the authoritative one). Chapter 3 of the new Databricks Context Engineer Associate course, free with all 48 chapters live: https://certify.courses/databricks-context-engineer-associate/`,
+  },
 ];

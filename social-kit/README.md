@@ -15,10 +15,14 @@ and a `captions.txt` (IG caption + hashtags, FB variant).
     lib/tokens.mjs      brand tokens, extracted verbatim from shipped SVGs
     lib/layouts.mjs     layouts: hook, tension, value, value-shot, stat, single, cta
     lib/validate.mjs    brand gate: dashes, word limits, gold budget, hashtags
-    content/posts.mjs   the content (posts 16-20)
+    content/posts.mjs   the content (posts 16-21)
     bin/capture.mjs     screenshots the live site into assets/ (see below)
     assets/             captured screens used by value-shot frames
     render.mjs          validate -> build SVG -> rasterize -> JPG -> captions
+    bin/publish.mjs     posts queued carousels to Instagram + Facebook (Graph API)
+    schedule.json       the posting queue
+    posted.json         the ledger of what already went out (written by CI)
+    test/               publisher test against a fake Graph API
     fonts/static/       static Fraunces + Hanken instances (see below)
     fonts/fonts.conf    local fontconfig so the build is self-contained
 
@@ -77,3 +81,46 @@ array (each names a layout + copy) plus `captionIg`, `hashtags`, `captionFb`.
 Rules the validator enforces: no em/en dashes anywhere, hook <= 8 words, body
 <= 15, exactly one gold element per value/single frame (use `em` for a second
 emphasis), 10-30 hashtags. Carousels open on `hook`, close on `cta`.
+
+
+## Publishing (Instagram + Facebook)
+
+Rendered JPGs in `out/` are committed, and Netlify publishes the repo root, so
+every slide is public at `https://certify.courses/social-kit/out/<slug>/<file>.jpg`.
+Instagram's API fetches images by URL (it takes no upload), so that URL is the
+whole hosting story. Never delete a posted slug's JPGs.
+
+To queue a post:
+
+1. Add it to `content/posts.mjs`, run `node render.mjs`, commit `out/<slug>/`.
+2. Add an entry to `schedule.json`:
+
+       { "slug": "poisoning-or-clash", "publish_at": "2026-11-18T14:00:00Z",
+         "platforms": ["instagram", "facebook"] }
+
+3. Open a PR. CI validates the queue and runs the publisher test. Merging is
+   the approval: the scheduled workflow posts it on the first run after
+   `publish_at` (every 3 hours, at :23), once Netlify serves the images.
+
+`bin/publish.mjs` refuses a schedule entry without rendered JPGs, a caption
+over 2,200 characters, more than 30 hashtags, more than 10 slides, or a dash.
+A (slug, platform) pair already in `posted.json` is never posted again.
+
+    node bin/publish.mjs              dry run of what is due now
+    node bin/publish.mjs --all        dry run of every queued entry
+    node bin/publish.mjs --check-urls dry run plus a HEAD check of each image
+    node test/publish.test.mjs        end-to-end test against a fake Graph API
+
+Going live (`.github/workflows/social-publish.yml`) needs, in the repo's
+Actions settings:
+
+- secrets `META_PAGE_TOKEN` (a system user token with `pages_manage_posts`,
+  `pages_read_engagement`, `pages_show_list`, `instagram_basic`,
+  `instagram_content_publish`; it is exchanged for the Page token
+  automatically), `FB_PAGE_ID`, `IG_USER_ID`;
+- variable `SOCIAL_LIVE` = `true`. Until it is set, every run is a dry run.
+- optional variable `META_GRAPH_VERSION` (default `v23.0` in publish.mjs;
+  set it to the current version listed in Meta's Graph API changelog).
+
+First live post: run the workflow by hand (Actions, Social publish, mode
+`live`) and watch the log, rather than waiting for the schedule.
