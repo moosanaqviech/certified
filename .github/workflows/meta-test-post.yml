@@ -1,0 +1,113 @@
+name: Meta test post
+
+# Manual-only smoke test for the Facebook Page + Instagram publishing setup.
+# Uses repo secrets META_PAGE_TOKEN (system user token), FB_PAGE_ID, IG_USER_ID.
+# Tokens are sent in headers/POST bodies only and are never printed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to post
+        type: choice
+        options: [both, facebook, instagram]
+        default: both
+      image_url:
+        description: Public JPEG URL (Instagram requires JPEG)
+        default: https://certify.courses/social-kit/out/learn-recall-reason/01-hook.jpg
+      caption:
+        description: Post caption
+        default: "Test post from Certify automation. https://certify.courses"
+
+permissions:
+  contents: read
+
+env:
+  GRAPH: https://graph.facebook.com/v23.0
+  SU_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
+  FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+  IG_USER_ID: ${{ secrets.IG_USER_ID }}
+  IMAGE_URL: ${{ inputs.image_url }}
+  CAPTION: ${{ inputs.caption }}
+
+jobs:
+  facebook:
+    if: inputs.target == 'both' || inputs.target == 'facebook'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Page access token
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -H "Authorization: Bearer $SU_TOKEN" \
+            "$GRAPH/$FB_PAGE_ID?fields=access_token,name")
+          page_token=$(echo "$resp" | jq -r '.access_token // empty')
+          if [ -z "$page_token" ]; then
+            echo "Could not get Page token:"; echo "$resp" | jq '.error // .'; exit 1
+          fi
+          echo "::add-mask::$page_token"
+          echo "PAGE_TOKEN=$page_token" >> "$GITHUB_ENV"
+          echo "Page: $(echo "$resp" | jq -r .name)"
+
+      - name: Publish photo post to Page
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -X POST "$GRAPH/$FB_PAGE_ID/photos" \
+            --data-urlencode "url=$IMAGE_URL" \
+            --data-urlencode "caption=$CAPTION" \
+            --data-urlencode "access_token=$PAGE_TOKEN")
+          post_id=$(echo "$resp" | jq -r '.post_id // .id // empty')
+          if [ -z "$post_id" ]; then
+            echo "Facebook publish failed:"; echo "$resp" | jq '.error // .'; exit 1
+          fi
+          link=$(curl -sS -H "Authorization: Bearer $PAGE_TOKEN" \
+            "$GRAPH/$post_id?fields=permalink_url" | jq -r '.permalink_url // empty')
+          echo "Facebook post id: $post_id"
+          echo "Facebook permalink: $link"
+          echo "### Facebook: $link" >> "$GITHUB_STEP_SUMMARY"
+
+  instagram:
+    if: inputs.target == 'both' || inputs.target == 'instagram'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create media container
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -X POST "$GRAPH/$IG_USER_ID/media" \
+            --data-urlencode "image_url=$IMAGE_URL" \
+            --data-urlencode "caption=$CAPTION" \
+            --data-urlencode "access_token=$SU_TOKEN")
+          cid=$(echo "$resp" | jq -r '.id // empty')
+          if [ -z "$cid" ]; then
+            echo "Container creation failed:"; echo "$resp" | jq '.error // .'; exit 1
+          fi
+          echo "CID=$cid" >> "$GITHUB_ENV"
+          echo "Container: $cid"
+
+      - name: Wait for container to finish processing
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            status=$(curl -sS -H "Authorization: Bearer $SU_TOKEN" \
+              "$GRAPH/$CID?fields=status_code" | jq -r '.status_code // "UNKNOWN"')
+            echo "status: $status"
+            [ "$status" = "FINISHED" ] && exit 0
+            [ "$status" = "ERROR" ] && exit 1
+            sleep 5
+          done
+          echo "Timed out waiting for container"; exit 1
+
+      - name: Publish to Instagram
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -X POST "$GRAPH/$IG_USER_ID/media_publish" \
+            --data-urlencode "creation_id=$CID" \
+            --data-urlencode "access_token=$SU_TOKEN")
+          mid=$(echo "$resp" | jq -r '.id // empty')
+          if [ -z "$mid" ]; then
+            echo "Instagram publish failed:"; echo "$resp" | jq '.error // .'; exit 1
+          fi
+          link=$(curl -sS -H "Authorization: Bearer $SU_TOKEN" \
+            "$GRAPH/$mid?fields=permalink" | jq -r '.permalink // empty')
+          echo "Instagram media id: $mid"
+          echo "Instagram permalink: $link"
+          echo "### Instagram: $link" >> "$GITHUB_STEP_SUMMARY"
