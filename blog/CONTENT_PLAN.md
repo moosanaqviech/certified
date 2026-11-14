@@ -150,6 +150,25 @@ Note on the Filename column: published posts are `.html` files in the
 | 6 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | Yes | blog/databricks-ml-associate-vs-data-engineer-associate.html |
 | 7 | Databricks ML Associate vs AWS Machine Learning Engineer Associate: how they compare | "databricks vs aws machine learning certification" | Yes | blog/databricks-ml-associate-vs-aws-machine-learning-engineer-associate.html |
 
+## Databricks Context Engineer Associate
+
+Course complete (48 chapters, 7 unit exams, 3 mocks, free at launch). Terminology follows
+`.claude/cert-config-databricks-context-engineer-associate.md`: "Databricks AI Search" (the
+docs' new name for Vector Search, mentioned once), "Genie space", "Lakebase", the four failure
+modes in lower case. Link the course, `../practice/databricks-context-associate` and
+`../ready/databricks-context-associate` where they genuinely help.
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Context Engineer Associate certification guide (pillar) | "databricks context engineer associate certification guide" | Yes | blog/databricks-context-engineer-associate-certification-guide.html |
+| 2 | Databricks Context Engineer Associate exam cost, format and question types (multiple selection, unscored items) | "what's on the databricks context engineer exam" | No | |
+| 3 | Study plan and prep time for the Databricks Context Engineer Associate exam | "databricks context engineer study plan" / "how long to prepare" | No | |
+| 4 | Context poisoning, clash, distraction and confusion: the four failure modes on the Context Engineer exam | "context poisoning vs context clash" | No | |
+| 5 | Databricks AI Search for agent retrieval: Delta Sync vs Direct Access, sync modes, hybrid search and reranking | "databricks ai search delta sync vs direct access" | No | |
+| 6 | Agent memory on Databricks: session vs cross-session memory with Lakebase | "databricks agent memory lakebase" | No | |
+| 7 | Databricks Context Engineer vs Generative AI Engineer Associate: which to take first | "databricks context engineer vs genai engineer" | No | |
+| 8 | Is the Databricks Context Engineer Associate certification worth it in 2026 | "is databricks context engineer certification worth it" | No | |
+
 ## AWS Certified Cloud Practitioner (CLF-C02)
 
 | Priority | Topic | Search Intent | Published | Filename |

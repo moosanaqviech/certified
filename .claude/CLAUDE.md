@@ -152,6 +152,35 @@ question should hinge on it. The same holds for Amazon SageMaker Clarify and
 Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
 pages (checked 14 Oct 2026): lessons name Clarify with that status, A2I not
 at all, and teach the practices (subgroup analysis, human review) instead.)
+Complete: Databricks Certified Context Engineer Associate (see
+curriculum-index-databricks-context-engineer-associate.md and
+cert-config-databricks-context-engineer-associate.md; the index is LOCKED,
+verified against the official 29 Jul 2026 exam guide on 6 Nov 2026: 7 units
+mirroring the seven weighted sections (16/9/20/18/13/11/13, official), 48
+chapters covering all 45 objectives, v2 template, one case-study company
+(Larkspur Mutual) bookending every lesson. The course lives in
+`databricks-context-engineer-associate/` with the `ctx-practice-exam-NN.html`
+prefix: 01 to 07 are the unit exams (one per unit, one question per chapter,
+48 in all; each unit's last chapter points at its exam) and 08 to 10 are the
+three sealed full mocks (45 questions, 90 minutes, weighted like the real
+exam, a few select-two items, headers read `/* QN - Ch N */`), listed in the
+course home's "Full-length mock exams" section; 183 questions in all. The
+mocks are a sealed pool: never reuse their questions in the unit exams and
+never draw them into drills. Course id `ctx-assoc`; the course is FREE at
+launch (every chapter in each exam's CHAPTERS.free, not registered in gate.ts
+or _shared.mjs, catalog row "Free, every unit open at launch"); gating it
+later means adding it to gate.ts and _shared.mjs, narrowing every free list
+(exams, readiness quiz, hub FREE_CHAPTERS) and flipping the hub's SOURCES to
+free:false past the free unit. The practice hub is
+practice/databricks-context-associate (see the practice hubs paragraph
+below). A public readiness quiz lives at ready/databricks-context-associate
+(12 new questions, none at Larkspur, five clusters re-grouped from the seven
+sections: Foundations and Instructions 25, Retrieval 20, Memory 18, Tools 13,
+Compaction and Multi-Agent 24, counts 3/2/2/2/3). The pillar guide is
+blog/databricks-context-engineer-associate-certification-guide; the rest of
+its eight-post cluster is queued in blog/CONTENT_PLAN.md. Terminology follows
+the guide: "Databricks AI Search" and "Genie space", each docs rename named
+once, see the cert config.)
 In progress: AWS Certified Solutions Architect Associate (SAA-C03) (see
 curriculum-index-aws-saa-c03.md and cert-config-aws-saa-c03.md; the index is
 LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
@@ -323,8 +352,9 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/databricks-genai-associate.html`), Data Analyst Associate
 (`practice/databricks-da-associate.html`), Spark Developer Associate
 (`practice/databricks-spark-associate.html`), AWS MLA-C02
-(`practice/aws-mla-c02.html`), AWS AIF-C01 (`practice/aws-aif-c01.html`)
-and AWS SAA-C03 (`practice/aws-saa-c03.html`) have hubs, so every live
+(`practice/aws-mla-c02.html`), AWS AIF-C01 (`practice/aws-aif-c01.html`),
+AWS SAA-C03 (`practice/aws-saa-c03.html`) and Context Engineer Associate
+(`practice/databricks-context-associate.html`) have hubs, so every live
 course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub runs its two sealed
@@ -383,7 +413,17 @@ palette: it drills from the four unit exams (`saa-practice-exam-01` to
 weighted 12-question Readiness check from the unit exams, and its four
 bars carry the official 30/26/24/20 weights, so they read "% of exam".
 Its course id is `aws-saa` (the course home's and the exams' id) and its
-pass target is 72, matching the course's exams.
+pass target is 72, matching the course's exams. The Context Engineer
+Associate hub is the Spark clone in the Databricks palette: it drills from the
+seven unit exams (`ctx-practice-exam-01` to `07`, tagged by each question's
+`Ch NN` header against the chapter ranges 1-8, 9-13, 14-23, 24-31, 32-37,
+38-42, 43-48, one per official section), uses the three sealed mocks (`08` to
+`10`, 45 questions, 90 minutes; the hub adds one header regex for their
+`QN - Ch N` form) as its mock pool, runs a weighted 12-question Readiness
+check from the unit exams, and its seven bars carry the official
+16/9/20/18/13/11/13 weights, so they read "% of exam". Its pass target is 70
+(our practice target; the guide publishes no cut score). Every source is
+free:true while the course is free.
 
 ## Author identity and trust pages
 
