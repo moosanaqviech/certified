@@ -207,10 +207,21 @@ pyfunc through spark_udf), 12 Optuna with MlflowStorage and
 MlflowSparkStudy, 13 Ray Tune on setup_ray_cluster with MLflow, 14
 vertical vs horizontal scaling (TO), 15 data vs model parallelism (TO),
 16 Ray vs Spark (TO), plus mlp-practice-exam-02 (8 questions, 16
-minutes); chapter 16's NAV.next is mlp-practice-exam-02. The other 36 chapters
+minutes); chapter 16's NAV.next is mlp-practice-exam-02. Unit 3 is live
+too (15 Nov 2026), in the lilac Unit 3 palette: 17 nested runs, 18 custom
+metrics, params, artifacts and tags, 19 custom PyFunc with request-time
+features, 20 point-in-time lookups (timeseries_columns,
+timestamp_lookup_key, lookback_window), 21 Feature Engineering client
+pipelines (create_table, write_table merge, scheduled jobs), 22 Online
+Feature Stores (create_online_store, publish_table modes; legacy online
+tables named once as retired), 23 streaming features (streaming
+write_table, CONTINUOUS publish), 24 on-demand features (UC Python UDF via
+FeatureFunction) and Feature Serving endpoints, plus mlp-practice-exam-03
+(8 questions, 16 minutes); chapter 24's NAV.next is mlp-practice-exam-03.
+The other 28 chapters
 show "Coming soon" and the Practice toggle is disabled (no hub yet). The
 course is linked site-wide (15 Nov 2026): a root catalog row with the
-"Units 1 to 2 live" building badge (update its chapter, question and mock counts
+"Units 1 to 3 live" building badge (update its chapter, question and mock counts
 as units ship, then rerun build_catalog.py), catalog.json entry
 `databricks-mlp` (never rename it), the footer's Courses column, a free row
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
