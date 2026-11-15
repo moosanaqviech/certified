@@ -72,9 +72,9 @@ non-deprecated features.
     Registry: "Models in Unity Catalog" with version aliases (champion,
       challenger). Workspace Model Registry stages (Staging, Production) only
       as a contrast case in Ch 28.
-    Serving: the guide says "Databricks Model Serving". Check the docs before
-      Unit 6 (the docs also use "Mosaic AI Model Serving") and record the
-      chosen name here. Endpoints carry "served entities"; traffic is split
+    Serving: "Model Serving" (Databricks Model Serving), as the guide and the
+      current docs write it (checked 15 Nov 2026; older pages said "Mosaic
+      AI Model Serving", which lessons do not use). Endpoints carry "served entities"; traffic is split
       across them. "Route optimization" for high-throughput endpoints.
     Tuning: "Optuna" with MlflowStorage and MlflowSparkStudy for distributed
       trials logged to MLflow; "Ray Tune" on "Ray on Databricks". Hyperopt is
