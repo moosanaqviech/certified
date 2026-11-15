@@ -181,6 +181,24 @@ blog/databricks-context-engineer-associate-certification-guide; the rest of
 its eight-post cluster is queued in blog/CONTENT_PLAN.md. Terminology follows
 the guide: "Databricks AI Search" and "Genie space", each docs rename named
 once, see the cert config.)
+In progress: Databricks Certified Machine Learning Professional (see
+curriculum-index-databricks-ml-professional.md and
+cert-config-databricks-ml-professional.md; the index is LOCKED on 15 Nov 2026,
+verified against the official 30 Sep 2025 exam guide PDF: 6 units and 52
+chapters covering all 47 objectives, v2 template, one case-study company
+(Fernway Market) bookending every lesson. Units 1 to 3 split Section 1 (Model
+Development, 44%) along its sub-headings, Units 4 and 5 split Section 2
+(MLOps, 44%), Unit 6 is Section 3 (Model Deployment, 12%). The course lives
+in `databricks-machine-learning-professional/` with the
+`mlp-practice-exam-NN.html` prefix (01 to 06 unit exams, 07 to 09 sealed
+59-question, 120-minute mocks) and course id `ml-pro`. Only the chapter
+catalog exists so far: the course home lists all 52 chapters as "Coming
+soon", its Practice toggle is disabled, and it is not yet in the root
+catalog, catalog.json, the footer or sitemap.xml; add those when Unit 1
+ships, and register the course in gate.ts and _shared.mjs once it is priced.
+Terminology teaches the current product names (data profiling, Online
+Feature Stores, Declarative Automation Bundles) and names each guide-era
+name once, see the cert config.)
 In progress: AWS Certified Solutions Architect Associate (SAA-C03) (see
 curriculum-index-aws-saa-c03.md and cert-config-aws-saa-c03.md; the index is
 LOCKED on 21 Oct 2026 against the official SAA-C03 exam guide PDF: 89
