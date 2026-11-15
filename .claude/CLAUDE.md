@@ -199,10 +199,18 @@ batch and streaming scoring, 08 Spark ML vs single-node inference (TO)),
 plus mlp-practice-exam-01 (8 questions, one per chapter, 16 minutes, 70%
 practice target, CHAPTERS table with course "ml-pro" and every chapter in
 free while the course is unpriced). Chapter 08 closes Unit 1, so its
-NAV.next is mlp-practice-exam-01 ("Practice test"). The other 44 chapters
+NAV.next is mlp-practice-exam-01 ("Practice test"). Unit 2 is live too
+(15 Nov 2026), in the aqua Unit 2 palette: 09 Spark ML vs pandas UDFs and
+function APIs, 10 group-specific training with applyInPandas and MLflow
+child runs, 11 group-specific inference (load once per group, router
+pyfunc through spark_udf), 12 Optuna with MlflowStorage and
+MlflowSparkStudy, 13 Ray Tune on setup_ray_cluster with MLflow, 14
+vertical vs horizontal scaling (TO), 15 data vs model parallelism (TO),
+16 Ray vs Spark (TO), plus mlp-practice-exam-02 (8 questions, 16
+minutes); chapter 16's NAV.next is mlp-practice-exam-02. The other 36 chapters
 show "Coming soon" and the Practice toggle is disabled (no hub yet). The
 course is linked site-wide (15 Nov 2026): a root catalog row with the
-"Unit 1 live" building badge (update its chapter, question and mock counts
+"Units 1 to 2 live" building badge (update its chapter, question and mock counts
 as units ship, then rerun build_catalog.py), catalog.json entry
 `databricks-mlp` (never rename it), the footer's Courses column, a free row
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
