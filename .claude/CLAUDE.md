@@ -248,9 +248,16 @@ deploying with the Deployments SDK vs REST API vs UI, 52 querying with
 REST vs the Deployments SDK predict, plus mlp-practice-exam-06 (6
 questions, 12 minutes); chapter 52, the last chapter, closes Unit 6, so its
 NAV.next is mlp-practice-exam-06 ("Practice test"). All 52 chapters and
-the six unit exams are live (52 questions). Still to build: the three
-sealed mocks (mlp-practice-exam-07 to 09) and the practice hub; until the
-hub ships the Practice toggle stays disabled. The
+the six unit exams are live (52 questions), and so are the three sealed
+full mocks (15 Nov 2026): mlp-practice-exam-07 to 09, 59 single-answer
+questions each in 120 minutes, 9/9/8/11/15/7 by unit (44/44/12 by
+section), every chapter at least once per mock, headers read
+`/* QN - Ch N */`, their own scenarios (07 bank and insurer, 08 clinics
+and utility, 09 streaming, airline and freight), listed in the course
+home's "Full-length mock exams" section; 229 questions in all. The mocks
+are a sealed pool: never reuse their questions in the unit exams and never
+draw them into drills. Still to build: the practice hub; until it ships
+the Practice toggle stays disabled. The
 course is linked site-wide (15 Nov 2026): a root catalog row with the
 "Units 1 to 6 live" building badge (update its chapter, question and mock counts
 as units ship, then rerun build_catalog.py), catalog.json entry
