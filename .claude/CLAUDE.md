@@ -660,6 +660,14 @@ sealed pool: never reuse them in unit exams and never draw them into the
 Practice hub's drills; the hub's Full mock mode is the only thing that reads
 them besides the exam page itself.
 
+## Videos (YouTube)
+
+The `certified-video` skill (`.claude/skills/certified-video/`) turns lessons and exams into
+narrated videos: chapter explainers (16:9) and exam-question Shorts (9:16). Storyboards are
+kept in `.claude/videos/<course-folder>/<slug>.py`; renders go to the gitignored `video-out/`
+and are never committed. Sealed mocks never appear in videos (the extractor refuses them), and
+Shorts use new questions written in the course's exam style.
+
 ## Revisions
 
 Prefer targeted edits (single card, single question, single value) over
