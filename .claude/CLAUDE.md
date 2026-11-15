@@ -217,11 +217,22 @@ Feature Stores (create_online_store, publish_table modes; legacy online
 tables named once as retired), 23 streaming features (streaming
 write_table, CONTINUOUS publish), 24 on-demand features (UC Python UDF via
 FeatureFunction) and Feature Serving endpoints, plus mlp-practice-exam-03
-(8 questions, 16 minutes); chapter 24's NAV.next is mlp-practice-exam-03.
-The other 28 chapters
+(8 questions, 16 minutes); chapter 24's NAV.next is mlp-practice-exam-03. Unit 4 is live too
+(15 Nov 2026), in the lime Unit 4 palette: 25 the deploy-code lifecycle
+pipeline (dev, staging, prod; PR unit tests, staging integration tests,
+release branch; Challenger and Champion), 26 deploy code vs deploy models
+(TO), 27 mapping Databricks features to lifecycle activities, 28 model
+versions and aliases in Unity Catalog (stages named once as legacy), 29
+unit testing notebook functions with pytest, 30 which tests run where, 31
+end-to-end integration tests and selective re-runs, 32 notebooks vs Python
+modules (TO), 33 scalable ML environments (workspace and catalog per
+environment, read-only prod for dev), 34 Declarative Automation Bundles
+(formerly Databricks Asset Bundles, named once), plus mlp-practice-exam-04
+(10 questions, 20 minutes); chapter 34's NAV.next is mlp-practice-exam-04.
+The other 18 chapters
 show "Coming soon" and the Practice toggle is disabled (no hub yet). The
 course is linked site-wide (15 Nov 2026): a root catalog row with the
-"Units 1 to 3 live" building badge (update its chapter, question and mock counts
+"Units 1 to 4 live" building badge (update its chapter, question and mock counts
 as units ship, then rerun build_catalog.py), catalog.json entry
 `databricks-mlp` (never rename it), the footer's Courses column, a free row
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
