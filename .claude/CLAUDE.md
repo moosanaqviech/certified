@@ -191,11 +191,21 @@ Development, 44%) along its sub-headings, Units 4 and 5 split Section 2
 (MLOps, 44%), Unit 6 is Section 3 (Model Deployment, 12%). The course lives
 in `databricks-machine-learning-professional/` with the
 `mlp-practice-exam-NN.html` prefix (01 to 06 unit exams, 07 to 09 sealed
-59-question, 120-minute mocks) and course id `ml-pro`. Only the chapter
-catalog exists so far: the course home lists all 52 chapters as "Coming
-soon", its Practice toggle is disabled, and it is not yet in the root
-catalog, catalog.json, the footer or sitemap.xml; add those when Unit 1
-ships, and register the course in gate.ts and _shared.mjs once it is priced.
+59-question, 120-minute mocks) and course id `ml-pro`. Unit 1 is live
+(15 Nov 2026): chapters 01 to 08 on the v2 template in the ember Unit 1
+palette (Spark ML fit, pipelines, feature transformers, estimator choice,
+05 CrossValidator vs TrainValidationSplit (TO), evaluators and metrics,
+batch and streaming scoring, 08 Spark ML vs single-node inference (TO)),
+plus mlp-practice-exam-01 (8 questions, one per chapter, 16 minutes, 70%
+practice target, CHAPTERS table with course "ml-pro" and every chapter in
+free while the course is unpriced). Chapter 08 closes Unit 1, so its
+NAV.next is mlp-practice-exam-01 ("Practice test"). The other 44 chapters
+show "Coming soon", the Practice toggle is disabled, and the course is not
+yet in the root catalog, catalog.json, the footer or sitemap.xml; add those
+at launch, and register the course in gate.ts and _shared.mjs once it is
+priced. validate.py requires every exam's CHAPTERS.list to mirror all
+chapters that have a `file:` in UNITS, so regenerate the list in each live
+exam when a unit ships.
 Terminology teaches the current product names (data profiling, Online
 Feature Stores, Declarative Automation Bundles) and names each guide-era
 name once, see the cert config.)
