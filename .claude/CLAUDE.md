@@ -181,7 +181,7 @@ blog/databricks-context-engineer-associate-certification-guide; the rest of
 its eight-post cluster is queued in blog/CONTENT_PLAN.md. Terminology follows
 the guide: "Databricks AI Search" and "Genie space", each docs rename named
 once, see the cert config.)
-In progress: Databricks Certified Machine Learning Professional (see
+Complete: Databricks Certified Machine Learning Professional (see
 curriculum-index-databricks-ml-professional.md and
 cert-config-databricks-ml-professional.md; the index is LOCKED on 15 Nov 2026,
 verified against the official 30 Sep 2025 exam guide PDF: 6 units and 52
@@ -256,11 +256,13 @@ section), every chapter at least once per mock, headers read
 and utility, 09 streaming, airline and freight), listed in the course
 home's "Full-length mock exams" section; 229 questions in all. The mocks
 are a sealed pool: never reuse their questions in the unit exams and never
-draw them into drills. Still to build: the practice hub; until it ships
-the Practice toggle stays disabled. The
-course is linked site-wide (15 Nov 2026): a root catalog row with the
-"Units 1 to 6 live" building badge (update its chapter, question and mock counts
-as units ship, then rerun build_catalog.py), catalog.json entry
+draw them into drills. The practice hub is live at
+practice/databricks-ml-professional (see the practice hubs paragraph
+below), linked from the course home's Learn / Practice toggle, the root
+catalog row, the practice index and the footer's Practice column. The
+course is content-complete and linked site-wide (15 Nov 2026): a root
+catalog row with the "Live now" badge (52 chapters, 229 questions, 3
+mocks; rerun build_catalog.py when a count changes), catalog.json entry
 `databricks-mlp` (never rename it), the footer's Courses column, a free row
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
 the sitemap while the course is free. Register it in gate.ts and
@@ -443,8 +445,9 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/databricks-da-associate.html`), Spark Developer Associate
 (`practice/databricks-spark-associate.html`), AWS MLA-C02
 (`practice/aws-mla-c02.html`), AWS AIF-C01 (`practice/aws-aif-c01.html`),
-AWS SAA-C03 (`practice/aws-saa-c03.html`) and Context Engineer Associate
-(`practice/databricks-context-associate.html`) have hubs, so every live
+AWS SAA-C03 (`practice/aws-saa-c03.html`), Context Engineer Associate
+(`practice/databricks-context-associate.html`) and ML Professional
+(`practice/databricks-ml-professional.html`) have hubs, so every live
 course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
 files as timed 90-minute sessions; the Professional hub runs its two sealed
@@ -513,7 +516,17 @@ seven unit exams (`ctx-practice-exam-01` to `07`, tagged by each question's
 check from the unit exams, and its seven bars carry the official
 16/9/20/18/13/11/13 weights, so they read "% of exam". Its pass target is 70
 (our practice target; the guide publishes no cut score). Every source is
-free:true while the course is free.
+free:true while the course is free. The ML Professional hub is the same
+clone: it drills from the six unit exams (`mlp-practice-exam-01` to `06`,
+tagged by each question's `Ch NN` header against the chapter ranges 1-8,
+9-16, 17-24, 25-34, 35-46, 47-52, one bar per course unit), uses the three
+sealed mocks (`07` to `09`, 59 questions, 120 minutes, the same `QN - Ch N`
+headers) as its mock pool, and runs a weighted 12-question Readiness check
+from the unit exams. The guide publishes only section weights (44/44/12),
+so the unit weights 15/15/14/20/24/12 split each section by chapter count
+and the bars read "about N% of exam". Its course id is `ml-pro`, its pass
+target is 70 (our practice target; the guide publishes no cut score), and
+every source is free:true while the course is unpriced.
 
 ## Author identity and trust pages
 
