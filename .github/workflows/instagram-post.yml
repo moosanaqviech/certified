@@ -1,9 +1,12 @@
 name: Instagram post
 
-# Publishes one social-kit post to Instagram.
+# Publishes one social-kit post to Instagram and records it.
+# Which post: the `slug` input, or (if empty) the first slug in
+#   social-kit/content/posts.mjs that is not yet in social-kit/posted.json.
 # Images: social-kit/out/<slug>/*.jpg (sorted), served from certify.courses.
 # Caption: the "=== INSTAGRAM ===" section of social-kit/out/<slug>/captions.txt.
 # One image -> single post; 2 to 10 images -> carousel.
+# After publishing, appends the post to social-kit/posted.json and pushes to main.
 # Uses secrets META_PAGE_TOKEN (system user token) and IG_USER_ID.
 # Tokens go in headers/POST bodies only and are never printed.
 
@@ -11,11 +14,20 @@ on:
   workflow_dispatch:
     inputs:
       slug:
-        description: social-kit/out folder to post (e.g. job-failed-which-log)
-        required: true
+        description: social-kit/out folder to post. Leave empty to post the next unposted one.
+        required: false
+        default: ""
+      force:
+        description: Post even if this slug is already in posted.json
+        type: boolean
+        default: false
+      dry_run:
+        description: Only show which post would go out; publish nothing
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: instagram-post
@@ -26,7 +38,10 @@ env:
   SITE: https://certify.courses
   SU_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
   IG_USER_ID: ${{ secrets.IG_USER_ID }}
-  SLUG: ${{ inputs.slug }}
+  INPUT_SLUG: ${{ inputs.slug }}
+  FORCE: ${{ inputs.force }}
+  DRY_RUN: ${{ inputs.dry_run }}
+  LOG: social-kit/posted.json
 
 jobs:
   post:
@@ -34,35 +49,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: social-kit/out
+          ref: main
+          sparse-checkout: social-kit
 
-      - name: Collect images and caption
+      - name: Choose post
         run: |
           set -euo pipefail
-          case "$SLUG" in *[!a-z0-9-]*|"") echo "Invalid slug: $SLUG"; exit 1;; esac
+          [ -f "$LOG" ] || echo '[]' > "$LOG"
+          posted=$(jq -r '.[].slug' "$LOG")
+
+          if [ -n "$INPUT_SLUG" ]; then
+            slug="$INPUT_SLUG"
+            if grep -qxF "$slug" <<< "$posted" && [ "$FORCE" != "true" ]; then
+              echo "::error::$slug is already in $LOG. Re-run with force to post it again."
+              exit 1
+            fi
+          else
+            slug=""
+            for s in $(grep -oE "slug: *'[a-z0-9-]+'" social-kit/content/posts.mjs | sed -E "s/.*'(.*)'/\1/"); do
+              if ! grep -qxF "$s" <<< "$posted" && [ -d "social-kit/out/$s" ]; then slug="$s"; break; fi
+            done
+            if [ -z "$slug" ]; then
+              echo "Every rendered post in posts.mjs is already in $LOG. Nothing to post."
+              echo "### Nothing to post: all social-kit posts are in posted.json" >> "$GITHUB_STEP_SUMMARY"
+              echo "NOTHING=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          fi
+          case "$slug" in *[!a-z0-9-]*) echo "Invalid slug: $slug"; exit 1;; esac
+          echo "Selected: $slug"
+          echo "SLUG=$slug" >> "$GITHUB_ENV"
+
+      - name: Collect images and caption
+        if: env.NOTHING != 'true'
+        run: |
+          set -euo pipefail
           dir="social-kit/out/$SLUG"
           [ -d "$dir" ] || { echo "No such folder: $dir"; exit 1; }
 
-          ls "$dir"/*.jpg 2>/dev/null | sort | xargs -n1 basename > images.txt || true
-          n=$(wc -l < images.txt)
+          ls "$dir"/*.jpg 2>/dev/null | sort | xargs -n1 basename > /tmp/images.txt || true
+          n=$(wc -l < /tmp/images.txt)
           if [ "$n" -lt 1 ] || [ "$n" -gt 10 ]; then
             echo "Need 1 to 10 JPEGs in $dir, found $n"; exit 1
           fi
 
           awk '/^=== INSTAGRAM ===/{f=1;next} /^=== /{f=0} f' "$dir/captions.txt" \
-            | sed -e '/./,$!d' | sed -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' > caption.txt
-          [ -s caption.txt ] || { echo "No INSTAGRAM caption in $dir/captions.txt"; exit 1; }
-          echo "Caption: $(wc -c < caption.txt) chars, $(grep -o '#[A-Za-z0-9_]*' caption.txt | wc -l) hashtags"
+            | sed -e '/./,$!d' | sed -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' > /tmp/caption.txt
+          [ -s /tmp/caption.txt ] || { echo "No INSTAGRAM caption in $dir/captions.txt"; exit 1; }
+          echo "Caption: $(wc -c < /tmp/caption.txt) chars, $(grep -o '#[A-Za-z0-9_]*' /tmp/caption.txt | wc -l) hashtags"
+          echo "First line: $(head -1 /tmp/caption.txt | cut -c1-120)"
 
+          : > /tmp/urls.txt
           while read -r f; do
             url="$SITE/$dir/$f"
             type=$(curl -sI "$url" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
             echo "$url -> ${type:-no response}"
             [ "$type" = "image/jpeg" ] || { echo "Not a public JPEG: $url"; exit 1; }
-            echo "$url" >> urls.txt
-          done < images.txt
+            echo "$url" >> /tmp/urls.txt
+          done < /tmp/images.txt
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "### Dry run: would post \`$SLUG\` ($n image(s))" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Create media containers
+        if: env.NOTHING != 'true' && env.DRY_RUN != 'true'
         run: |
           set -euo pipefail
           wait_ready() {
@@ -83,27 +134,28 @@ jobs:
             echo "$id"
           }
 
-          n=$(wc -l < urls.txt)
+          n=$(wc -l < /tmp/urls.txt)
           if [ "$n" -eq 1 ]; then
-            cid=$(create --data-urlencode "image_url=$(cat urls.txt)" \
-                         --data-urlencode "caption@caption.txt")
+            cid=$(create --data-urlencode "image_url=$(cat /tmp/urls.txt)" \
+                         --data-urlencode "caption@/tmp/caption.txt")
           else
             children=()
             while read -r url; do
               child=$(create --data-urlencode "image_url=$url" -d "is_carousel_item=true")
               echo "slide container: $child"
               children+=("$child")
-            done < urls.txt
+            done < /tmp/urls.txt
             for c in "${children[@]}"; do wait_ready "$c"; done
             cid=$(create -d "media_type=CAROUSEL" \
                          --data-urlencode "children=$(IFS=,; echo "${children[*]}")" \
-                         --data-urlencode "caption@caption.txt")
+                         --data-urlencode "caption@/tmp/caption.txt")
           fi
           echo "post container: $cid"
           wait_ready "$cid"
           echo "CID=$cid" >> "$GITHUB_ENV"
 
       - name: Publish
+        if: env.NOTHING != 'true' && env.DRY_RUN != 'true'
         run: |
           set -euo pipefail
           resp=$(curl -sS -X POST "$GRAPH/$IG_USER_ID/media_publish" \
@@ -115,4 +167,27 @@ jobs:
             "$GRAPH/$mid?fields=permalink" | jq -r '.permalink // empty')
           echo "Instagram media id: $mid"
           echo "Instagram permalink: $link"
+          echo "MEDIA_ID=$mid" >> "$GITHUB_ENV"
+          echo "PERMALINK=$link" >> "$GITHUB_ENV"
           echo "### Posted \`$SLUG\` to Instagram: $link" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record in posted.json
+        if: env.NOTHING != 'true' && env.DRY_RUN != 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git pull --rebase --quiet origin main
+            [ -f "$LOG" ] || echo '[]' > "$LOG"
+            jq --arg slug "$SLUG" --arg date "$(date -u +%F)" --arg link "$PERMALINK" --arg mid "$MEDIA_ID" \
+              '. + [{slug: $slug, posted_at: $date, permalink: $link, media_id: $mid, via: "instagram-post workflow"}]' \
+              "$LOG" > /tmp/log.json && mv /tmp/log.json "$LOG"
+            git add "$LOG"
+            git commit --quiet -m "Record Instagram post: $SLUG"
+            if git push --quiet origin HEAD:main; then echo "Recorded $SLUG in $LOG"; exit 0; fi
+            git reset --quiet --hard HEAD~1
+            sleep 5
+          done
+          echo "::error::Posted $SLUG ($PERMALINK) but could not push $LOG. Add it by hand so it is not posted twice."
+          exit 1
