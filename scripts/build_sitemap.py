@@ -201,7 +201,10 @@ FREE_STEMS = {
 
 # Free courses: every page ships. Empty since every live course gained an
 # unlock; a new course that launches open goes here until it is gated.
-OPEN_COURSES = ["databricks-context-engineer-associate"]
+OPEN_COURSES = [
+    "databricks-context-engineer-associate",
+    "databricks-machine-learning-professional",
+]
 
 COURSES = OPEN_COURSES + list(FREE_STEMS)
 
