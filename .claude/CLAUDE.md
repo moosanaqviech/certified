@@ -228,11 +228,22 @@ end-to-end integration tests and selective re-runs, 32 notebooks vs Python
 modules (TO), 33 scalable ML environments (workspace and catalog per
 environment, read-only prod for dev), 34 Declarative Automation Bundles
 (formerly Databricks Asset Bundles, named once), plus mlp-practice-exam-04
-(10 questions, 20 minutes); chapter 34's NAV.next is mlp-practice-exam-04.
-The other 18 chapters
+(10 questions, 20 minutes); chapter 34's NAV.next is mlp-practice-exam-04. Unit 5 is live too
+(15 Nov 2026), in the rose Unit 5 palette: 35 triggering retraining (SQL
+alert plus webhook, schedule first), 36 selecting the top model (log loss
+for threshold actions), 37 numerical vs categorical drift tests (TO), 38
+profile types (TO; data profiling named once as formerly Lakehouse
+Monitoring), 39 building a monitor with w.data_quality.create_monitor
+(quality_monitors named as deprecated), 40 monitoring pipeline anatomy,
+41 baseline vs consecutive drift (TO), 42 drift alerts and alert fatigue,
+43 performance trends from AI Gateway-enabled inference tables, 44 custom
+metrics, 45 slicing and granularity, 46 endpoint health metrics, plus
+mlp-practice-exam-05 (12 questions, 24 minutes); chapter 46's NAV.next is
+mlp-practice-exam-05.
+The other 6 chapters
 show "Coming soon" and the Practice toggle is disabled (no hub yet). The
 course is linked site-wide (15 Nov 2026): a root catalog row with the
-"Units 1 to 4 live" building badge (update its chapter, question and mock counts
+"Units 1 to 5 live" building badge (update its chapter, question and mock counts
 as units ship, then rerun build_catalog.py), catalog.json entry
 `databricks-mlp` (never rename it), the footer's Courses column, a free row
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
