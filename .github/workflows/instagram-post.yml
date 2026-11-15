@@ -1,0 +1,118 @@
+name: Instagram post
+
+# Publishes one social-kit post to Instagram.
+# Images: social-kit/out/<slug>/*.jpg (sorted), served from certify.courses.
+# Caption: the "=== INSTAGRAM ===" section of social-kit/out/<slug>/captions.txt.
+# One image -> single post; 2 to 10 images -> carousel.
+# Uses secrets META_PAGE_TOKEN (system user token) and IG_USER_ID.
+# Tokens go in headers/POST bodies only and are never printed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: social-kit/out folder to post (e.g. job-failed-which-log)
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: instagram-post
+  cancel-in-progress: false
+
+env:
+  GRAPH: https://graph.facebook.com/v23.0
+  SITE: https://certify.courses
+  SU_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
+  IG_USER_ID: ${{ secrets.IG_USER_ID }}
+  SLUG: ${{ inputs.slug }}
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: social-kit/out
+
+      - name: Collect images and caption
+        run: |
+          set -euo pipefail
+          case "$SLUG" in *[!a-z0-9-]*|"") echo "Invalid slug: $SLUG"; exit 1;; esac
+          dir="social-kit/out/$SLUG"
+          [ -d "$dir" ] || { echo "No such folder: $dir"; exit 1; }
+
+          ls "$dir"/*.jpg 2>/dev/null | sort | xargs -n1 basename > images.txt || true
+          n=$(wc -l < images.txt)
+          if [ "$n" -lt 1 ] || [ "$n" -gt 10 ]; then
+            echo "Need 1 to 10 JPEGs in $dir, found $n"; exit 1
+          fi
+
+          awk '/^=== INSTAGRAM ===/{f=1;next} /^=== /{f=0} f' "$dir/captions.txt" \
+            | sed -e '/./,$!d' | sed -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' > caption.txt
+          [ -s caption.txt ] || { echo "No INSTAGRAM caption in $dir/captions.txt"; exit 1; }
+          echo "Caption: $(wc -c < caption.txt) chars, $(grep -o '#[A-Za-z0-9_]*' caption.txt | wc -l) hashtags"
+
+          while read -r f; do
+            url="$SITE/$dir/$f"
+            type=$(curl -sI "$url" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+            echo "$url -> ${type:-no response}"
+            [ "$type" = "image/jpeg" ] || { echo "Not a public JPEG: $url"; exit 1; }
+            echo "$url" >> urls.txt
+          done < images.txt
+
+      - name: Create media containers
+        run: |
+          set -euo pipefail
+          wait_ready() {
+            for i in $(seq 1 30); do
+              s=$(curl -sS -H "Authorization: Bearer $SU_TOKEN" \
+                "$GRAPH/$1?fields=status_code" | jq -r '.status_code // "UNKNOWN"')
+              [ "$s" = "FINISHED" ] && return 0
+              [ "$s" = "ERROR" ] && { echo "Container $1 errored"; return 1; }
+              sleep 4
+            done
+            echo "Timed out on container $1"; return 1
+          }
+          create() {
+            resp=$(curl -sS -X POST "$GRAPH/$IG_USER_ID/media" "$@" \
+              --data-urlencode "access_token=$SU_TOKEN")
+            id=$(echo "$resp" | jq -r '.id // empty')
+            [ -n "$id" ] || { echo "Container creation failed:" >&2; echo "$resp" | jq '.error // .' >&2; return 1; }
+            echo "$id"
+          }
+
+          n=$(wc -l < urls.txt)
+          if [ "$n" -eq 1 ]; then
+            cid=$(create --data-urlencode "image_url=$(cat urls.txt)" \
+                         --data-urlencode "caption@caption.txt")
+          else
+            children=()
+            while read -r url; do
+              child=$(create --data-urlencode "image_url=$url" -d "is_carousel_item=true")
+              echo "slide container: $child"
+              children+=("$child")
+            done < urls.txt
+            for c in "${children[@]}"; do wait_ready "$c"; done
+            cid=$(create -d "media_type=CAROUSEL" \
+                         --data-urlencode "children=$(IFS=,; echo "${children[*]}")" \
+                         --data-urlencode "caption@caption.txt")
+          fi
+          echo "post container: $cid"
+          wait_ready "$cid"
+          echo "CID=$cid" >> "$GITHUB_ENV"
+
+      - name: Publish
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -X POST "$GRAPH/$IG_USER_ID/media_publish" \
+            --data-urlencode "creation_id=$CID" \
+            --data-urlencode "access_token=$SU_TOKEN")
+          mid=$(echo "$resp" | jq -r '.id // empty')
+          [ -n "$mid" ] || { echo "Publish failed:"; echo "$resp" | jq '.error // .'; exit 1; }
+          link=$(curl -sS -H "Authorization: Bearer $SU_TOKEN" \
+            "$GRAPH/$mid?fields=permalink" | jq -r '.permalink // empty')
+          echo "Instagram media id: $mid"
+          echo "Instagram permalink: $link"
+          echo "### Posted \`$SLUG\` to Instagram: $link" >> "$GITHUB_STEP_SUMMARY"
