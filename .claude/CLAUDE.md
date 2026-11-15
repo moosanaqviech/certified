@@ -191,11 +191,26 @@ Development, 44%) along its sub-headings, Units 4 and 5 split Section 2
 (MLOps, 44%), Unit 6 is Section 3 (Model Deployment, 12%). The course lives
 in `databricks-machine-learning-professional/` with the
 `mlp-practice-exam-NN.html` prefix (01 to 06 unit exams, 07 to 09 sealed
-59-question, 120-minute mocks) and course id `ml-pro`. Only the chapter
-catalog exists so far: the course home lists all 52 chapters as "Coming
-soon", its Practice toggle is disabled, and it is not yet in the root
-catalog, catalog.json, the footer or sitemap.xml; add those when Unit 1
-ships, and register the course in gate.ts and _shared.mjs once it is priced.
+59-question, 120-minute mocks) and course id `ml-pro`. Unit 1 is live
+(15 Nov 2026): chapters 01 to 08 on the v2 template in the ember Unit 1
+palette (Spark ML fit, pipelines, feature transformers, estimator choice,
+05 CrossValidator vs TrainValidationSplit (TO), evaluators and metrics,
+batch and streaming scoring, 08 Spark ML vs single-node inference (TO)),
+plus mlp-practice-exam-01 (8 questions, one per chapter, 16 minutes, 70%
+practice target, CHAPTERS table with course "ml-pro" and every chapter in
+free while the course is unpriced). Chapter 08 closes Unit 1, so its
+NAV.next is mlp-practice-exam-01 ("Practice test"). The other 44 chapters
+show "Coming soon" and the Practice toggle is disabled (no hub yet). The
+course is linked site-wide (15 Nov 2026): a root catalog row with the
+"Unit 1 live" building badge (update its chapter, question and mock counts
+as units ship, then rerun build_catalog.py), catalog.json entry
+`databricks-mlp` (never rename it), the footer's Courses column, a free row
+on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
+the sitemap while the course is free. Register it in gate.ts and
+_shared.mjs, and move it from OPEN_COURSES to FREE_STEMS, once it is
+priced. validate.py requires every exam's CHAPTERS.list to mirror all
+chapters that have a `file:` in UNITS, so regenerate the list in each live
+exam when a unit ships.
 Terminology teaches the current product names (data profiling, Online
 Feature Stores, Declarative Automation Bundles) and names each guide-era
 name once, see the cert config.)
