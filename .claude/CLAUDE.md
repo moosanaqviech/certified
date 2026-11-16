@@ -267,7 +267,10 @@ mocks; rerun build_catalog.py when a count changes), catalog.json entry
 on /pricing, and OPEN_COURSES in build_sitemap.py, so every page ships in
 the sitemap while the course is free. Register it in gate.ts and
 _shared.mjs, and move it from OPEN_COURSES to FREE_STEMS, once it is
-priced. validate.py requires every exam's CHAPTERS.list to mirror all
+priced. Its blog cluster has five posts (16 Nov 2026), listed in the Machine
+Learning Professional block of blog/CONTENT_PLAN.md, with the pillar guide
+blog/databricks-machine-learning-professional-certification-guide linked
+from the catalog row. validate.py requires every exam's CHAPTERS.list to mirror all
 chapters that have a `file:` in UNITS, so regenerate the list in each live
 exam when a unit ships.
 Terminology teaches the current product names (data profiling, Online
