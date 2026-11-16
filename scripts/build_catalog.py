@@ -10,7 +10,9 @@ so the page stays the one place they are typed and catalog.json can never
 disagree with it.
 
 What it owns: the optional display fields in FIELDS below, accent and ink,
-and generated_at. accent and ink are the vendor tile colours the page draws
+generated_at, and the order of the certs array: live certs are written in the
+order their rows appear on the page (grouped by vendor, then track, then
+level), so the page is also the one place the order is typed. accent and ink are the vendor tile colours the page draws
 (style.css .cert-logo--<vendor>: accent is the tile tint's base colour, ink
 the glyph colour), so the app's tiles match the site's. What it leaves alone:
 every other key (id, vendor, track, exam_code, units, ...), which stays
@@ -247,6 +249,13 @@ def build(catalog, page, css):
         raise CatalogError(
             "the catalog page has live rows with no live catalog.json entry: "
             + ", ".join(f"{f}/" for f in missing))
+
+    # Live certs follow the page's row order (vendor, then track, then level),
+    # so the app lists courses the way the site does. Entries with no live row
+    # keep their relative order after them (the sort is stable).
+    position = {folder: i for i, folder in enumerate(rows)}
+    certs.sort(key=lambda c: position.get(folder_of(c.get("lesson_url")), len(position))
+               if c.get("status") == "live" else len(position))
     return certs
 
 

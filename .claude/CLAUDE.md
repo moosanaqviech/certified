@@ -827,7 +827,13 @@ ready_url, guide_url, price, price_note) are filled by
 and accent and ink from the vendor tile colours in style.css
 (`.cert-logo--<vendor>`), so when a row or a tile colour changes, re-run it.
 Each display field is optional and omitted when the row shows no value; a
-row's chapter count must equal lessons_total or the script fails. The `guard-catalog` workflow runs it with `--check`
+row's chapter count must equal lessons_total or the script fails. Course
+order is one rule everywhere a full course list appears (the catalog rows,
+catalog.json, the /pricing table, the /practice/ index and the footer's
+Courses and Practice columns): vendor, then track with related courses
+adjacent, then level (Foundational, Associate, Professional). Insert a new
+course next to its track, never append it; the script writes catalog.json's
+certs in the page's row order. The `guard-catalog` workflow runs it with `--check`
 and validates against `catalog.schema.json`
 (additionalProperties false, so a new key needs a schema entry first).
 
