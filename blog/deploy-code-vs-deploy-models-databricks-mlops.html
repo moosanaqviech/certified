@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<!-- Meta Pixel Code -->
+<script data-fbpixel>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '4477591755892377');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=4477591755892377&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deploy Code vs Deploy Models on Databricks: Which MLOps Pattern to Use</title>
+<meta name="description" content="Deploy code moves training code through dev, staging and prod and retrains in each. Deploy models promotes a trained artifact. When Databricks recommends each.">
+<link rel="canonical" href="https://certify.courses/blog/deploy-code-vs-deploy-models-databricks-mlops">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#14161c">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Deploy Code vs Deploy Models on Databricks: Which MLOps Pattern to Use">
+<meta property="og:description" content="Databricks recommends deploy code in most situations: the training code is promoted and production trains on production data. When deploy models still wins.">
+<meta property="og:url" content="https://certify.courses/blog/deploy-code-vs-deploy-models-databricks-mlops">
+<meta property="og:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://certify.courses/assets/og-image.png">
+<meta property="og:site_name" content="Certify">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#161a22;--surface-2:#1d2230;--ink:#f3f0ea;--ink-soft:#a7a59f;--ink-faint:#6b6a66;--gold:#e3b84a;--green:#34d3a6;--line:rgba(255,255,255,0.08);--display:"Fraunces",Georgia,serif;--body:"Hanken Grotesk",system-ui,sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:radial-gradient(1100px 650px at 50% -8%,#1a1d29 0%,transparent 58%),var(--bg);font-family:var(--body);color:var(--ink);min-height:100vh;line-height:1.62;}
+  .app{max-width:720px;margin:0 auto;padding:0 20px 90px;}
+  .topnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:22px 4px 0;font-size:13px;}
+  .topnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;}
+  .topnav a:hover{color:var(--gold);}
+  .topnav span{color:var(--ink-faint);}
+  .hero{padding:30px 4px 20px;}
+  .kicker{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px;}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(29px,6.2vw,42px);line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px;}
+  .lede{font-size:18px;color:var(--ink);max-width:34em;}
+  .lede strong{color:var(--gold);font-weight:600;}
+  .updated{margin-top:16px;font-size:12.5px;color:var(--ink-faint);}
+  section{margin-top:40px;}
+  h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,4.2vw,28px);letter-spacing:-0.02em;line-height:1.16;margin-bottom:13px;scroll-margin-top:20px;}
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-0.01em;margin:20px 0 7px;}
+  p{color:var(--ink-soft);font-size:16.5px;margin-bottom:14px;}
+  p strong{color:var(--ink);font-weight:600;}
+  a{color:var(--gold);}
+  .answer{font-size:17.5px;color:var(--ink);}
+  .cmp{width:100%;border-collapse:collapse;margin:6px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .cmp th,.cmp td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:15px;vertical-align:top;}
+  .cmp thead th{font-family:var(--display);font-size:16px;color:var(--ink);font-weight:600;}
+  .cmp thead th:nth-child(2){color:var(--gold);}
+  .cmp tbody tr:last-child td,.cmp tbody tr:last-child th{border-bottom:none;}
+  .cmp tbody th{color:var(--ink-soft);font-weight:600;width:30%;}
+  .cmp td{color:var(--ink);font-weight:500;}
+  .cmp td:first-of-type{color:var(--ink);}
+  .cmp .col-h{background:rgba(227,184,74,0.06);}
+  .fnote{font-size:13px;color:var(--ink-faint);margin-top:10px;}
+  ul{margin:0 0 14px 0;padding-left:20px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:7px;}
+  .pick{display:grid;gap:12px;grid-template-columns:1fr;margin-top:6px;}
+  @media(min-width:560px){.pick{grid-template-columns:1fr 1fr;}}
+  .pickcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 20px;}
+  .pickcard.gold{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .pickcard h3{margin-top:0;}
+  .pickcard p{font-size:15px;margin-bottom:0;}
+  .faq{margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);}
+  .faq details{border-bottom:1px solid var(--line);}
+  .faq details:last-child{border-bottom:none;}
+  .faq summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;font-size:16px;color:var(--ink);display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--gold);font-size:22px;font-weight:600;flex:0 0 auto;transition:transform .2s ease;}
+  .faq details[open] summary::after{transform:rotate(45deg);}
+  .faq .fa{padding:0 20px 16px;}
+  .faq .fa p{font-size:15.5px;margin:0;}
+  .ctacard{margin-top:42px;background:linear-gradient(180deg,rgba(227,184,74,0.10),rgba(227,184,74,0.04));border:1px solid rgba(227,184,74,0.32);border-radius:20px;padding:28px 24px;text-align:center;}
+  .ctacard h2{margin-bottom:10px;}
+  .ctacard p{max-width:32em;margin:0 auto 20px;color:var(--ink-soft);}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#14110c;font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;text-decoration:none;transition:transform .15s ease;}
+  .cta:active{transform:scale(.97);}
+  .related{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);}
+  .related b{display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:12px;}
+  .related a{display:block;color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .related a:last-child{border-bottom:none;}
+  .related a:hover{color:var(--gold);}
+  footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7;}
+  footer a{color:var(--ink-soft);}
+  .tiers{display:grid;gap:12px;grid-template-columns:1fr;margin:6px 0;}
+  @media(min-width:600px){.tiers{grid-template-columns:repeat(3,1fr);}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:18px 18px;text-align:center;}
+  .tier.mid{border-color:rgba(227,184,74,0.34);background:rgba(227,184,74,0.06);}
+  .tier b{display:block;font-family:var(--display);font-size:30px;font-weight:600;color:var(--gold);line-height:1;margin-bottom:6px;}
+  .tier .who{font-size:13.5px;color:var(--ink-soft);}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:8px;}
+  .plan .wk{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .plan .wk:last-child{border-bottom:none;}
+  .plan .wk .lbl{flex:0 0 76px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--gold);padding-top:1px;}
+  .plan .wk .desc{font-size:15px;color:var(--ink-soft);}
+  .plan .wk .desc b{color:var(--ink);font-weight:600;}
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .callout p{margin:0;font-size:15.5px;}
+</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<div class="app">
+
+  <nav class="topnav">
+    <a href="../">Certify</a><span>&rsaquo;</span>
+    <a href="databricks-machine-learning-professional-certification-guide">ML Professional Guide</a><span>&rsaquo;</span>
+    <span>Deploy code vs deploy models</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">Databricks ML Professional &middot; MLOps</div>
+    <h1>Deploy Code vs Deploy Models on Databricks: Which MLOps Pattern to Use</h1>
+    <p class="lede">Deploy code and deploy models are the two Databricks patterns for moving machine learning to production. In <strong>deploy code</strong>, the training code is promoted through development, staging and production, and the model is trained in each. In <strong>deploy models</strong>, a model trained in development is promoted as an artifact. Databricks recommends deploy code in most situations.</p>
+    <p class="updated">Last updated November 2026.</p>
+    <div class="byline" data-author-card data-variant="byline" style="margin-top:14px"></div>
+  </header>
+
+  <section id="same">
+    <h2>What the two patterns share</h2>
+    <p>Both end in the same place: a registered model version in the production catalog, loaded by batch jobs or a serving endpoint through an alias. Both also need the supporting code (feature engineering, inference, monitoring) to reach production somehow. The only question is <strong>what crosses the environment boundary</strong>: the recipe, or the finished model.</p>
+  </section>
+
+  <section id="code">
+    <h2>Deploy code (recommended)</h2>
+    <p>Training code is developed in the development environment and the same code moves to staging and then production. The model is trained three times: in development while it is being built, in staging on a limited subset of data as part of integration tests, and in production on the full production data to produce the final model.</p>
+    <ul>
+      <li><strong>It works when production data is restricted.</strong> Only the production environment needs to read production data.</li>
+      <li><strong>Automated retraining is safer.</strong> The code that retrains has been reviewed, tested and approved.</li>
+      <li><strong>Supporting code follows the same path.</strong> Feature, inference and monitoring pipelines go through the same staging tests as training.</li>
+    </ul>
+    <p>The costs: handing code to collaborators has a learning curve for data scientists, and they still need to review training results from production, since they are the ones who can spot an ML-specific problem.</p>
+  </section>
+
+  <section id="models">
+    <h2>Deploy models</h2>
+    <p>Training runs once, in development. The resulting artifact is tested in staging and then promoted to production, for example by copying the model version from the development catalog to the production catalog in Unity Catalog.</p>
+    <ul>
+      <li><strong>The handoff is simpler</strong> for data scientists.</li>
+      <li><strong>Training happens once</strong>, which matters when a run is very expensive.</li>
+    </ul>
+    <p>The costs are structural. Development must be able to read production data, which security rules often forbid. Automated retraining is awkward, because a model retrained in development may not be accepted as production-ready. And the supporting pipelines still have to be deployed to production separately.</p>
+  </section>
+
+  <section id="table">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <thead><tr><th>Axis</th><th class="col-h">Deploy code</th><th>Deploy models</th></tr></thead>
+      <tbody>
+        <tr><th>What is promoted</th><td class="col-h">Training code</td><td>Trained model artifact</td></tr>
+        <tr><th>Where the final model is trained</th><td class="col-h">Production, on production data</td><td>Development</td></tr>
+        <tr><th>Production data access</th><td class="col-h">Production only</td><td>Development needs it too</td></tr>
+        <tr><th>Automated retraining</th><td class="col-h">Safe: reviewed code retrains</td><td>Tricky</td></tr>
+        <tr><th>Training cost</th><td class="col-h">One run per environment</td><td>One run in total</td></tr>
+        <tr><th>Supporting code</th><td class="col-h">Same path, same tests</td><td>Deployed separately</td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">Advantages, disadvantages and the recommendation are from the Databricks documentation page <a href="https://docs.databricks.com/aws/en/machine-learning/mlops/deployment-patterns" target="_blank" rel="noopener">Model deployment patterns</a>, checked November 2026.</p>
+  </section>
+
+  <section id="choose">
+    <h2>How to choose</h2>
+    <p>Start from deploy code and look for a reason to leave it. The documentation lists three situations where deploy models is worth considering:</p>
+    <ul>
+      <li>Model training is very expensive or hard to reproduce.</li>
+      <li>All work is done in a single Databricks workspace.</li>
+      <li>There are no external repos and no CI/CD process.</li>
+    </ul>
+    <p>There is also a documented <strong>hybrid</strong>: deploy code to staging, train there on the full production dataset, then deploy that model to production. It saves the production training run at the price of extra operational cost in staging.</p>
+    <h3>Two worked cases</h3>
+    <p>A churn model retrains weekly on customer data that only the production workspace may read, and every change needs review. Restricted data, regular retraining and mandatory review all point to <strong>deploy code</strong>: a scheduled production job retrains with approved code.</p>
+    <p>An image embedding model takes three days on a GPU cluster to fine-tune and changes twice a year. Training it again in staging and production would triple the cost for the same model. That is the <strong>deploy models</strong> case: train once, validate the version in staging, copy it to the production catalog and move its alias. Its inference code still travels the deploy-code path.</p>
+  </section>
+
+  <section id="exam">
+    <h2>How this shows up on the ML Professional exam</h2>
+    <p>The model lifecycle opens the MLOps section, which carries 44% of the Databricks Machine Learning Professional exam, and the guide frames deploy code as the default strategy. Scenario questions tend to hide the signal in a constraint: who can read production data, how often the model retrains, how costly one training run is. Read for those three before reading the options.</p>
+    <p>In the course, <a href="../databricks-machine-learning-professional/lesson-25-deploy-code-lifecycle-pipeline.html">Chapter 25</a> walks the full deploy-code pipeline (pull request, staging integration tests, release branch) and <a href="../databricks-machine-learning-professional/lesson-26-deploy-code-vs-deploy-models.html">Chapter 26</a> covers this trade-off with quiz questions in both directions.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <div class="faq">
+      <details><summary>What is the difference between deploy code and deploy models on Databricks?</summary><div class="fa"><p>In deploy code, the training code is promoted from development to staging to production and the model is trained in each environment. In deploy models, the model is trained once in development and the trained artifact is promoted.</p></div></details>
+      <details><summary>Which deployment pattern does Databricks recommend for MLOps?</summary><div class="fa"><p>Databricks recommends deploy code in most situations, and it is the pattern built into the recommended MLOps workflow. It lets production train on production data and makes automated retraining safer because the code has been reviewed and tested.</p></div></details>
+      <details><summary>When should I use deploy models instead of deploy code?</summary><div class="fa"><p>Consider deploy models when training is very expensive or hard to reproduce, when all work happens in a single Databricks workspace, or when there are no external repos or CI/CD process. Development must be able to read production data for it to work.</p></div></details>
+      <details><summary>Does deploy code mean the model is trained more than once?</summary><div class="fa"><p>Yes. The model is trained in development, again in staging on a limited subset of data during integration tests, and finally in production on the full production data. The production run produces the model that is actually used.</p></div></details>
+    </div>
+  </section>
+
+  <div class="ctacard">
+    <h2>Back to the lifecycle chapters</h2>
+    <p>Unit 4 of the ML Professional course covers the lifecycle, testing and environments in ten short chapters, with a unit exam at the end. Every unit is free to open.</p>
+    <a href="../databricks-machine-learning-professional/lesson-26-deploy-code-vs-deploy-models.html" class="cta">Open Chapter 26 &rarr;</a>
+  </div>
+
+  <nav class="related">
+    <b>Keep reading</b>
+    <a href="databricks-machine-learning-professional-certification-guide">The complete Databricks ML Professional certification guide &rarr;</a>
+    <a href="how-long-to-prepare-databricks-machine-learning-professional">How long to prepare for the ML Professional exam &rarr;</a>
+    <a href="databricks-machine-learning-associate-vs-professional">Databricks ML Associate vs Professional &rarr;</a>
+    <a href="mlflow-databricks-machine-learning-associate-exam">MLflow for the ML Associate exam, explained &rarr;</a>
+  </nav>
+
+  <footer>
+    Built as a learning project &middot; exam details reflect the 2026 versions. Always confirm current details in the official exam guides.
+    <br><a href="../pricing">Pricing</a> &middot; <a href="../how-lessons-are-made#report">Report a question</a> &middot; <a href="https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/" rel="me noopener" target="_blank">LinkedIn</a>
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Deploy Code vs Deploy Models on Databricks: Which MLOps Pattern to Use","description":"Deploy code moves training code through dev, staging and prod and retrains in each. Deploy models promotes a trained artifact. When Databricks recommends each.","author":{"@type":"Person","@id":"https://certify.courses/about#moosa","name":"Moosa","jobTitle":"Technical Trainer","url":"https://certify.courses/about","image":"https://certify.courses/assets/moosa.jpg","sameAs":["https://www.linkedin.com/in/mohammed-moosa-naqvi-66b87262/","https://apps.apple.com/us/app/certify/id6786034656","https://play.google.com/store/apps/details?id=app.certify.mobile"]},"publisher":{"@type":"Organization","name":"Certify","url":"https://certify.courses/"},"datePublished":"2026-11-16","dateModified":"2026-11-16","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https://certify.courses/blog/deploy-code-vs-deploy-models-databricks-mlops"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the difference between deploy code and deploy models on Databricks?","acceptedAnswer":{"@type":"Answer","text":"In deploy code, the training code is promoted from development to staging to production and the model is trained in each environment. In deploy models, the model is trained once in development and the trained artifact is promoted."}},{"@type":"Question","name":"Which deployment pattern does Databricks recommend for MLOps?","acceptedAnswer":{"@type":"Answer","text":"Databricks recommends deploy code in most situations, and it is the pattern built into the recommended MLOps workflow. It lets production train on production data and makes automated retraining safer because the code has been reviewed and tested."}},{"@type":"Question","name":"When should I use deploy models instead of deploy code?","acceptedAnswer":{"@type":"Answer","text":"Consider deploy models when training is very expensive or hard to reproduce, when all work happens in a single Databricks workspace, or when there are no external repos or CI/CD process. Development must be able to read production data for it to work."}},{"@type":"Question","name":"Does deploy code mean the model is trained more than once?","acceptedAnswer":{"@type":"Answer","text":"Yes. The model is trained in development, again in staging on a limited subset of data during integration tests, and finally in production on the full production data. The production run produces the model that is actually used."}}]}
+</script>
+
+<script src="../assets/author-card.js" defer></script>
+</body>
+</html>

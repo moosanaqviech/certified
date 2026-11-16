@@ -150,6 +150,22 @@ Note on the Filename column: published posts are `.html` files in the
 | 6 | Databricks ML Associate vs Data Engineer Associate: which to take first | "databricks ml associate vs data engineer associate" | Yes | blog/databricks-ml-associate-vs-data-engineer-associate.html |
 | 7 | Databricks ML Associate vs AWS Machine Learning Engineer Associate: how they compare | "databricks vs aws machine learning certification" | Yes | blog/databricks-ml-associate-vs-aws-machine-learning-engineer-associate.html |
 
+## Databricks Machine Learning Professional
+
+Course complete (52 chapters, 6 unit exams, 3 mocks, free at launch). Terminology follows
+`.claude/cert-config-databricks-ml-professional.md`: data profiling (formerly Lakehouse
+Monitoring), Online Feature Stores, Declarative Automation Bundles, aliases not stages. Never
+state a cut score. Link the course and `../practice/databricks-ml-professional` where they
+genuinely help; there is no readiness quiz.
+
+| Priority | Topic | Search Intent | Published | Filename |
+|---|---|---|---|---|
+| 1 | Complete Databricks Machine Learning Professional certification guide (pillar) | "databricks machine learning professional certification guide" | Yes | blog/databricks-machine-learning-professional-certification-guide.html |
+| 2 | Databricks Machine Learning Professional exam cost, format and question types | "what's on the databricks ml professional exam" | Yes | blog/databricks-machine-learning-professional-exam-cost-format.html |
+| 3 | Study plan and prep time for the Databricks Machine Learning Professional exam | "databricks ml professional study plan" / "how long to prepare" | Yes | blog/how-long-to-prepare-databricks-machine-learning-professional.html |
+| 4 | Databricks ML Associate vs Professional: which to take first | "databricks ml associate vs professional" | Yes | blog/databricks-machine-learning-associate-vs-professional.html |
+| 5 | Deploy code vs deploy models: the two Databricks MLOps deployment patterns (trade-off, chapter 26) | "deploy code vs deploy models databricks" | Yes | blog/deploy-code-vs-deploy-models-databricks-mlops.html |
+
 ## Databricks Context Engineer Associate
 
 Course complete (48 chapters, 7 unit exams, 3 mocks, free at launch). Terminology follows
