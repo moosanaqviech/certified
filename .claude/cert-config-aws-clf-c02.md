@@ -120,6 +120,21 @@ page must be fetched before the chapter that teaches them is written.
       Well-Architected Tool". The framework was restructured on 16 Nov 2026
       (pillar whitepapers merged into one document, a new Cloud Foundations
       section); the six pillars are unchanged. Ch 04 names the change once.
+    Security Hub (checked 20 Nov 2026): "AWS Security Hub" is now the
+      unified service that correlates findings from GuardDuty, Inspector,
+      Macie and posture checks; the standards checks (FSBP, CIS, PCI DSS)
+      are documented as "AWS Security Hub CSPM". Ch 18 teaches both and
+      names the split once.
+    Root-only tasks (IAM docs, checked 20 Nov 2026): standalone accounts
+      need root only to change the account email, root password and root
+      access keys, plus closing or reopening the account, restoring IAM
+      permissions, activating IAM billing access, S3 MFA delete, Reserved
+      Instance Marketplace seller registration and GovCloud sign-up.
+      Changing other account settings (and the support plan) is no
+      longer listed: never test it as root-only.
+    Support plans: Developer Support and Business Support are
+      discontinued on 1 Jan 2027 (Trusted Advisor docs); teach only the
+      four guide 1.3 plans.
     Out-of-scope services (the guide's list, for example AWS Transfer
       Family, Amazon MSK, AWS Network Firewall, AWS CodeDeploy, AWS
       CloudShell, Amazon FSx for Lustre) never appear as a correct answer;
@@ -177,7 +192,15 @@ each band ships.
                                            RGB units from the nearest, #9fabd1)
       Unit 1 Ch 07-12  aqua       #3cf2f2  (migration and economics; 34.5 from
                                            the nearest, AIF's #5be3f0)
-    Every Unit 1 lesson uses --bg #080d14 and the extra named colors --warm
+      Unit 2 Ch 13-17, 19-25, 27-28  steel slate  #bcc8d8  (security and
+                                           identity; 34.6 from the nearest,
+                                           #a0c4ec; the steel band near
+                                           AIF's #77b1c5 is crowded, so this
+                                           is a paler steel)
+      Unit 2 Ch 18, 26  rose  #fc447c  (threat detection and attack
+                                           protection; 31.4 from the
+                                           nearest, #f43f5e)
+    Every Unit 1 and Unit 2 lesson uses --bg #080d14 and the extra named colors --warm
     #ffb703, --rose #f4a3b4, --lav #c4b5fd, --mint #86efac.
 
 Trade-off lessons (TO in the index) rely on their own chapter accent.

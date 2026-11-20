@@ -167,7 +167,13 @@ sky #a0c4ec (Ch 01 to 06) and aqua #3cf2f2 (Ch 07 to 12), every data-step
 element with an inline pointer-events:none, plus clf-practice-exam-01 (12
 questions, 24 minutes, 70% practice target, select-two items on Ch 04 and
 07). Chapter 12 closes Unit 1, so its NAV.next is clf-practice-exam-01
-("Practice test"). Paid from launch: $9.99, Unit 1 free through
+("Practice test"). Unit 2 is live too (20 Nov 2026): chapters 13 to 28
+(Security and Compliance; 15 and 20 are TO) in steel slate #bcc8d8, with
+rose #fc447c on the threat chapters 18 and 26, plus clf-practice-exam-02
+(16 questions, 32 minutes, select-two items on Ch 14, 18 and 22); chapter
+28's NAV.next is clf-practice-exam-02. Lessons name AWS Security Hub and
+AWS Security Hub CSPM once each, and teach the current root-only task list
+(changing the support plan is no longer root-only). Paid from launch: $9.99, Unit 1 free through
 clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
 and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
 to a $9.99 Stripe Price before Unit 2 ships. The root catalog row reads "In
