@@ -181,7 +181,16 @@ clf-practice-exam-03 (27 questions, 54 minutes, select-two items on Ch
 38, 49 and 53; letters 6/6/6/6); chapter 55's NAV.next is
 clf-practice-exam-03. Lessons name the docs titles AWS Quick and Amazon
 WorkSpaces Applications once each, state Amazon Q's status once, and never
-quote a Lambda timeout. Paid from launch: $9.99, Unit 1 free through
+quote a Lambda timeout. Unit 4 is live too (20 Nov 2026): chapters 56 to 64
+(Billing, Pricing, and Support; 56, 59 and 61 are TO) in lime #acf868
+(56-60) and mint #a4e8bc (61-64), plus clf-practice-exam-04 (9 questions,
+18 minutes, one select-two item on Ch 58; letters 2/2/2/2); chapter 64, the
+last chapter of the course, closes Unit 4, so its NAV.next is
+clf-practice-exam-04 ("Practice test"). All 64 chapters and the four unit
+exams (64 questions) are live; the three sealed mocks, the practice hub and
+the readiness quiz are still to come, so the catalog row keeps "In
+progress". No lesson or question quotes a price, discount percentage or
+support response time. Paid from launch: $9.99, Unit 1 free through
 clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
 and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
 to a $9.99 Stripe Price before Unit 2 ships. The root catalog row reads "In

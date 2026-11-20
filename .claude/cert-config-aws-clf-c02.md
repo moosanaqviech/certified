@@ -142,6 +142,10 @@ page must be fetched before the chapter that teaches them is written.
       Instance Marketplace seller registration and GovCloud sign-up.
       Changing other account settings (and the support plan) is no
       longer listed: never test it as root-only.
+    Purchasing (checked 20 Nov 2026): the EC2 docs recommend Savings Plans
+      over Reserved Instances; RI and Savings Plans discount sharing is
+      controlled by the management account (organization-wide, level
+      sharing, or per account). Discount percentages are never quoted.
     Support plans: Developer Support and Business Support are
       discontinued on 1 Jan 2027 (Trusted Advisor docs); teach only the
       four guide 1.3 plans.
@@ -217,7 +221,10 @@ each band ships.
         Ch 44-47 blue    #4a80d0  (networking)
         Ch 48-51 leaf    #74e834  (storage)
         Ch 52-55 magenta #f83cdc  (AI, analytics, integration, apps)
-    Every Unit 1 to Unit 3 lesson uses --bg #080d14 and the extra named colors --warm
+      Unit 4 (assigned 20 Nov 2026, kept clear of gold #d9a441 and AWS orange):
+        Ch 56-60 lime  #acf868  (pricing and cost tools; 37.7 from the nearest)
+        Ch 61-64 mint  #a4e8bc  (support and resources; 33.5 from the nearest)
+    Every lesson in the course uses --bg #080d14 and the extra named colors --warm
     #ffb703, --rose #f4a3b4, --lav #c4b5fd, --mint #86efac.
 
 Trade-off lessons (TO in the index) rely on their own chapter accent.
