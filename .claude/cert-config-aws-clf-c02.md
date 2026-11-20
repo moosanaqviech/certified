@@ -1,10 +1,9 @@
 # Cert Config: AWS Certified Cloud Practitioner (CLF-C02)
 
 Per-certification settings so the frozen engine rules stay generic. Pairs with
-curriculum-index-aws-clf-c02.md (chapter placement; DRAFT, transcribed from the
+curriculum-index-aws-clf-c02.md (chapter placement; LOCKED 20 Nov 2026, transcribed from the
 official exam guide PDF, version 1.3, dated October 29, 2026, downloaded from
-docs.aws.amazon.com on 20 Nov 2026). This file is a draft until the index
-locks.
+docs.aws.amazon.com on 20 Nov 2026). The index was LOCKED on 20 Nov 2026.
 
 ## Identity
 
@@ -104,8 +103,13 @@ page must be fetched before the chapter that teaches them is written.
     Migration: "AWS Application Migration Service" (never "CloudEndure" or
       "Server Migration Service"), "AWS Database Migration Service (AWS
       DMS)", "AWS Schema Conversion Tool (AWS SCT)", "Migration Evaluator".
-      AWS Migration Hub is in the in-scope list (verify its current status
-      and name on the docs page before Ch 08).
+      Checked 20 Nov 2026: the AWS docs now title Application Migration
+      Service "AWS Transform MGN"; lessons keep the guide's name and name the
+      docs title once (Ch 08). AWS Migration Hub (closed to new customers 7
+      Nov 2025) and AWS Application Discovery Service (closed to new
+      customers) are still in the guide's in-scope list: lessons teach what
+      each does, state the status once, name AWS Transform as the similar
+      current service, and no question hinges on either.
     Scaling: "Amazon EC2 Auto Scaling" for EC2 fleets, "AWS Auto Scaling"
       for the cross-service planner, "Elastic Load Balancing" for the
       service.
@@ -113,7 +117,9 @@ page must be fetched before the chapter that teaches them is written.
       apply if delivery or Flink comes up: "Amazon Data Firehose", "Amazon
       Managed Service for Apache Flink".
     Well-Architected: six pillars, sustainability included; "AWS
-      Well-Architected Tool".
+      Well-Architected Tool". The framework was restructured on 16 Nov 2026
+      (pillar whitepapers merged into one document, a new Cloud Foundations
+      section); the six pillars are unchanged. Ch 04 names the change once.
     Out-of-scope services (the guide's list, for example AWS Transfer
       Family, Amazon MSK, AWS Network Firewall, AWS CodeDeploy, AWS
       CloudShell, Amazon FSx for Lustre) never appear as a correct answer;
@@ -165,7 +171,14 @@ each band ships.
     Unit 4  Billing, Pricing, Support   mint and lime (money), kept clear of
                                         gold
 
-    Shipped accents: none yet.
+    Shipped accents (assigned 20 Nov 2026, checked against every --accent on
+    the site):
+      Unit 1 Ch 01-06  cloud sky  #a0c4ec  (value and design principles; 36.8
+                                           RGB units from the nearest, #9fabd1)
+      Unit 1 Ch 07-12  aqua       #3cf2f2  (migration and economics; 34.5 from
+                                           the nearest, AIF's #5be3f0)
+    Every Unit 1 lesson uses --bg #080d14 and the extra named colors --warm
+    #ffb703, --rose #f4a3b4, --lav #c4b5fd, --mint #86efac.
 
 Trade-off lessons (TO in the index) rely on their own chapter accent.
 

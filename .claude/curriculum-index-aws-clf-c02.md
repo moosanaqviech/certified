@@ -1,11 +1,11 @@
 Curriculum Index: AWS Certified Cloud Practitioner (CLF-C02)
 
-Status: DRAFT, not yet locked. Built on 20 Nov 2026 by downloading the official
+Status: LOCKED on 20 Nov 2026 by the user. Built that day by downloading the official
 exam guide PDF from docs.aws.amazon.com
 (docs.aws.amazon.com/pdfs/aws-certification/latest/cloud-practitioner-02/cloud-practitioner-02.pdf)
 and extracting its text; every task statement and skill below is transcribed
 from that PDF, not from third-party outlines. Nothing is authored until the
-user locks this file. Once locked, it is the authoritative source for unit and
+user locks this file (done 20 Nov 2026). Once locked, it is the authoritative source for unit and
 chapter placement: a later request that conflicts with it gets flagged with a
 proposed one-line fix rather than silently absorbed.
 
