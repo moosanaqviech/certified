@@ -254,7 +254,9 @@ Done after Unit 4 (20 Nov 2026): the three sealed mocks
 its Practice tab, catalog link, practice index card and footer Practice
 links, and the "Live now" catalog row.
 
+Readiness quiz done (20 Nov 2026): ready/aws-clf-c02, 12 questions at
+3/4/4/1, Ch 3, 6, 7 / 15, 18, 20, 21 / 38, 41, 49, 54 / 58, letters 3/3/3/3,
+linked from the catalog row, the pillar guide and the study plan post.
+
 Still to do:
-    The readiness quiz ready/aws-clf-c02 (12 new questions at 3/4/4/1 by
-      domain), then its catalog, pillar guide and study plan links.
     Owner, outside the repo: a $9.99 Stripe Price in STRIPE_PRICE_AWS_CLF.
