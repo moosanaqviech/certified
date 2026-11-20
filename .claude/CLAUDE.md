@@ -152,6 +152,36 @@ question should hinge on it. The same holds for Amazon SageMaker Clarify and
 Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
 pages (checked 14 Oct 2026): lessons name Clarify with that status, A2I not
 at all, and teach the practices (subgroup analysis, human review) instead.)
+In progress: AWS Certified Cloud Practitioner (CLF-C02) (see
+curriculum-index-aws-clf-c02.md and cert-config-aws-clf-c02.md; the index is
+LOCKED on 20 Nov 2026 against the official exam guide PDF version 1.3 dated
+29 Oct 2026: 4 units, 64 chapters covering all 88 skills (skill ids are ours,
+in guide order, frozen), the second Foundational-tier course. There is no
+CLF-C03: third-party pages that say so are wrong, the official guide is
+CLF-C02. The course lives in `aws-cloud-practitioner/` with the
+`clf-practice-exam-NN.html` prefix (01 to 04 unit exams, 05 to 07 sealed
+50-question, 90-minute mocks, all to come) and course id `aws-clf`; catalog
+id `aws-clf-c02` (never rename it). Unit 1 is live (20 Nov 2026): chapters 01
+to 12 on the v2 template (Cloud Concepts; 09 and 10 are TO), accents cloud
+sky #a0c4ec (Ch 01 to 06) and aqua #3cf2f2 (Ch 07 to 12), every data-step
+element with an inline pointer-events:none, plus clf-practice-exam-01 (12
+questions, 24 minutes, 70% practice target, select-two items on Ch 04 and
+07). Chapter 12 closes Unit 1, so its NAV.next is clf-practice-exam-01
+("Practice test"). Paid from launch: $9.99, Unit 1 free through
+clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
+and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
+to a $9.99 Stripe Price before Unit 2 ships. The root catalog row reads "In
+progress"; the course home's Practice tab is disabled ("Soon") until the hub
+at practice/aws-clf-c02 exists. The exam guide still names AWS Application
+Migration Service (docs: AWS Transform MGN), AWS Migration Hub and AWS
+Application Discovery Service (both closed to new customers): lessons name
+each status once and no question hinges on the closed services. Support plan
+names follow guide 1.3 and the AWS Support page: Basic Support, AWS Business
+Support+, AWS Enterprise Support, AWS Unified Operations. Its seven-post blog
+cluster (blog/CONTENT_PLAN.md) now points at the course home. validate.py
+requires every exam's CHAPTERS.list to mirror all chapters with a `file:` in
+UNITS, so regenerate the list in each live CLF exam when a unit ships (free
+stays 1 to 12).)
 Complete: Databricks Certified Context Engineer Associate (see
 curriculum-index-databricks-context-engineer-associate.md and
 cert-config-databricks-context-engineer-associate.md; the index is LOCKED,

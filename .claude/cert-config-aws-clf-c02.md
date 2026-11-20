@@ -193,25 +193,21 @@ renames and closed services must be checked against current AWS pages, never
 recalled. Prices are never quoted as numbers in a question; teach the
 relative order instead.
 
-## Site wiring still to do (outside this file's scope)
+## Site wiring
 
-    Course home aws-cloud-practitioner/index.html (clone of the AIF-C01
-      home: UNITS, ?app=1 detector and hide rule, Course and Product schema,
-      footer, unauthored chapters as "Coming soon").
-    Root index.html: catalog row with the Foundational badge, JSON-LD
-      ItemList entry, AWS count to "5 certifications".
-    catalog.json hand-edited keys, then scripts/build_catalog.py.
-    netlify/edge-functions/gate.ts and netlify/functions/_shared.mjs (course
-      aws-clf, STRIPE_PRICE_AWS_CLF), plus the netlify.toml env var comment.
-    scripts/build_sitemap.py FREE_STEMS mirroring the gate's free set, then
-      regenerate sitemap.xml.
-    pricing.html row; practice/index.html card once the hub exists.
-    Footer Courses column (and Practice column with the hub) in every page
-      that carries the footer: it is a hand-copied block.
-    Blog: point the seven CLF posts and the two comparison posts at the
-      course home; remove "Certified does not have a Cloud Practitioner
-      course" from blog/is-aws-cloud-practitioner-worth-it-first-cert-2026.html;
-      check every CLF post's support plan names and in-scope service names
-      against guide version 1.3.
-    .claude/CLAUDE.md course paragraph.
+Done with Unit 1 (20 Nov 2026): course home, root catalog row ("In
+progress") with JSON-LD entry and AWS count, catalog.json, gate.ts and
+_shared.mjs (aws-clf, STRIPE_PRICE_AWS_CLF), netlify.toml comment,
+build_sitemap.py FREE_STEMS and sitemap.xml, pricing.html row, the footer
+Courses column on every page carrying it, the CLF blog CTAs, and the
+support plan names in blog/aws-pricing-billing-cloud-practitioner-exam.html.
+
+Still to do:
+    Each unit: lessons, its unit exam, the course home UNITS files and
+      test row, every live exam's CHAPTERS.list, and the catalog row's
+      question count (then scripts/build_catalog.py).
+    After Unit 4: the three sealed mocks, the practice hub
+      practice/aws-clf-c02 (then the Practice tab, the catalog Practice
+      link, practice/index.html and the footer Practice column), the
+      readiness quiz ready/aws-clf-c02, and the row's "Live now" badge.
     Owner, outside the repo: a $9.99 Stripe Price in STRIPE_PRICE_AWS_CLF.
