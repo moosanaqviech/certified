@@ -152,7 +152,7 @@ question should hinge on it. The same holds for Amazon SageMaker Clarify and
 Amazon Augmented AI (A2I), both closed to new customers per their AWS docs
 pages (checked 14 Oct 2026): lessons name Clarify with that status, A2I not
 at all, and teach the practices (subgroup analysis, human review) instead.)
-In progress: AWS Certified Cloud Practitioner (CLF-C02) (see
+Complete: AWS Certified Cloud Practitioner (CLF-C02) (see
 curriculum-index-aws-clf-c02.md and cert-config-aws-clf-c02.md; the index is
 LOCKED on 20 Nov 2026 against the official exam guide PDF version 1.3 dated
 29 Oct 2026: 4 units, 64 chapters covering all 88 skills (skill ids are ours,
@@ -160,7 +160,7 @@ in guide order, frozen), the second Foundational-tier course. There is no
 CLF-C03: third-party pages that say so are wrong, the official guide is
 CLF-C02. The course lives in `aws-cloud-practitioner/` with the
 `clf-practice-exam-NN.html` prefix (01 to 04 unit exams, 05 to 07 sealed
-50-question, 90-minute mocks, all to come) and course id `aws-clf`; catalog
+50-question, 90-minute mocks) and course id `aws-clf`; catalog
 id `aws-clf-c02` (never rename it). Unit 1 is live (20 Nov 2026): chapters 01
 to 12 on the v2 template (Cloud Concepts; 09 and 10 are TO), accents cloud
 sky #a0c4ec (Ch 01 to 06) and aqua #3cf2f2 (Ch 07 to 12), every data-step
@@ -187,10 +187,22 @@ quote a Lambda timeout. Unit 4 is live too (20 Nov 2026): chapters 56 to 64
 18 minutes, one select-two item on Ch 58; letters 2/2/2/2); chapter 64, the
 last chapter of the course, closes Unit 4, so its NAV.next is
 clf-practice-exam-04 ("Practice test"). All 64 chapters and the four unit
-exams (64 questions) are live; the three sealed mocks, the practice hub and
-the readiness quiz are still to come, so the catalog row keeps "In
-progress". No lesson or question quotes a price, discount percentage or
-support response time. Paid from launch: $9.99, Unit 1 free through
+exams (64 questions) are live, and so are the three sealed full mocks
+(20 Nov 2026): clf-practice-exam-05 to 07, 50 questions in 90 minutes,
+12/15/17/6 by domain, five select-two items each, headers `/* QN · Ch NN
+- name · Skill x */`, their own scenarios (05 retail and financial
+services, 06 healthcare and public sector, 07 media, travel and
+manufacturing), chapters allocated so the three together reach all 64 and
+no chapter repeats a correct answer across mocks, listed in the course
+home's "Full-length mock exams" section; 214 questions in all. The mocks
+are a sealed pool: never reuse their questions in the unit exams and never
+draw them into drills. The practice hub is live at practice/aws-clf-c02
+(see the practice hubs paragraph below), linked from the course home's
+Learn / Practice toggle, the catalog row, the practice index and the
+footer's Practice column. The catalog row shows "Live now" (64 chapters,
+214 questions, 3 mocks). No public readiness quiz yet (ready/aws-clf-c02
+would be next). No lesson or question quotes a price, discount percentage
+or support response time. Paid from launch: $9.99, Unit 1 free through
 clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
 and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
 to a $9.99 Stripe Price before Unit 2 ships. The root catalog row reads "In
@@ -502,7 +514,8 @@ the course home. DE Associate, DE Professional, ML Associate, AWS DEA-C01
 (`practice/databricks-spark-associate.html`), AWS MLA-C02
 (`practice/aws-mla-c02.html`), AWS AIF-C01 (`practice/aws-aif-c01.html`),
 AWS SAA-C03 (`practice/aws-saa-c03.html`), Context Engineer Associate
-(`practice/databricks-context-associate.html`) and ML Professional
+(`practice/databricks-context-associate.html`), AWS CLF-C02
+(`practice/aws-clf-c02.html`) and ML Professional
 (`practice/databricks-ml-professional.html`) have hubs, so every live
 course has one.
 The Associate hub's Full mock mode runs the course's sealed `mock-exam-NN.html`
@@ -562,7 +575,16 @@ palette: it drills from the four unit exams (`saa-practice-exam-01` to
 weighted 12-question Readiness check from the unit exams, and its four
 bars carry the official 30/26/24/20 weights, so they read "% of exam".
 Its course id is `aws-saa` (the course home's and the exams' id) and its
-pass target is 72, matching the course's exams. The Context Engineer
+pass target is 72, matching the course's exams. The AWS CLF-C02 hub is the
+AIF-C01 clone in the same palette: it drills from the four unit exams
+(`clf-practice-exam-01` to `04`, tagged by each question's `Q# · Ch NN`
+header against the chapter ranges 1-12, 13-28, 29-55, 56-64, one per
+domain), uses the three sealed mocks (`05` to `07`, 50 questions, 90
+minutes) as its mock pool, runs a weighted 12-question Readiness check from
+the unit exams, and its four bars carry the official 24/30/34/12 weights, so
+they read "% of exam". Its course id is `aws-clf`, its pass target is 70
+(our practice target; the real exam reports a scaled 700 of 1,000), and
+FREE_CHAPTERS is 1 to 12. The Context Engineer
 Associate hub is the Spark clone in the Databricks palette: it drills from the
 seven unit exams (`ctx-practice-exam-01` to `07`, tagged by each question's
 `Ch NN` header against the chapter ranges 1-8, 9-13, 14-23, 24-31, 32-37,

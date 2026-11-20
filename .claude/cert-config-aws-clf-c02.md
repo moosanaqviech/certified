@@ -249,12 +249,12 @@ build_sitemap.py FREE_STEMS and sitemap.xml, pricing.html row, the footer
 Courses column on every page carrying it, the CLF blog CTAs, and the
 support plan names in blog/aws-pricing-billing-cloud-practitioner-exam.html.
 
+Done after Unit 4 (20 Nov 2026): the three sealed mocks
+(clf-practice-exam-05 to 07), the practice hub practice/aws-clf-c02 with
+its Practice tab, catalog link, practice index card and footer Practice
+links, and the "Live now" catalog row.
+
 Still to do:
-    Each unit: lessons, its unit exam, the course home UNITS files and
-      test row, every live exam's CHAPTERS.list, and the catalog row's
-      question count (then scripts/build_catalog.py).
-    After Unit 4: the three sealed mocks, the practice hub
-      practice/aws-clf-c02 (then the Practice tab, the catalog Practice
-      link, practice/index.html and the footer Practice column), the
-      readiness quiz ready/aws-clf-c02, and the row's "Live now" badge.
+    The readiness quiz ready/aws-clf-c02 (12 new questions at 3/4/4/1 by
+      domain), then its catalog, pillar guide and study plan links.
     Owner, outside the repo: a $9.99 Stripe Price in STRIPE_PRICE_AWS_CLF.
