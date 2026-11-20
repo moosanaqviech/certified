@@ -173,7 +173,15 @@ rose #fc447c on the threat chapters 18 and 26, plus clf-practice-exam-02
 (16 questions, 32 minutes, select-two items on Ch 14, 18 and 22); chapter
 28's NAV.next is clf-practice-exam-02. Lessons name AWS Security Hub and
 AWS Security Hub CSPM once each, and teach the current root-only task list
-(changing the support plan is no longer root-only). Paid from launch: $9.99, Unit 1 free through
+(changing the support plan is no longer root-only). Unit 3 is live too
+(20 Nov 2026): chapters 29 to 55 (Cloud Technology and Services; 31, 36,
+37, 40, 45, 47, 49, 50 and 54 are TO) in six bands (teal 29-34, coral
+35-39, violet 40-43, blue 44-47, leaf 48-51, magenta 52-55), plus
+clf-practice-exam-03 (27 questions, 54 minutes, select-two items on Ch
+38, 49 and 53; letters 6/6/6/6); chapter 55's NAV.next is
+clf-practice-exam-03. Lessons name the docs titles AWS Quick and Amazon
+WorkSpaces Applications once each, state Amazon Q's status once, and never
+quote a Lambda timeout. Paid from launch: $9.99, Unit 1 free through
 clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
 and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
 to a $9.99 Stripe Price before Unit 2 ships. The root catalog row reads "In

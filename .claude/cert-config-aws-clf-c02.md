@@ -86,7 +86,17 @@ page must be fetched before the chapter that teaches them is written.
       current docs still list under that name before Ch 52).
     End-user computing: "Amazon WorkSpaces Secure Browser" (formerly
       WorkSpaces Web, name the old one never); "Amazon AppStream 2.0" as the
-      guide writes it (verify the current docs name before Ch 55).
+      guide writes it. Checked 20 Nov 2026: its docs are now titled "Amazon
+      WorkSpaces Applications"; Ch 55 and exam 03 name that once.
+    BI: the docs title the suite "AWS Quick" with "Quick Sight" dashboards
+      (formerly Amazon QuickSight); lessons use the guide's "Amazon Quick"
+      and name the docs titles once (Ch 53).
+    Amazon Q (checked 20 Nov 2026): Amazon Q Business is closed to new
+      customers (AWS suggests Amazon Quick); the console chat is now the
+      "AWS assistant"; Q Developer IDE plugins end support 30 Apr 2027.
+      Ch 52 states this once; no question hinges on Amazon Q.
+    Lambda: the quotas page now gives a maximum timeout of 30 minutes, not
+      the 15 in older material; never quote a figure in a question.
     Identity: "AWS IAM Identity Center", never "AWS Single Sign-On" or "AWS
       SSO". "AWS Identity and Access Management (IAM)" on first mention.
     Billing: "AWS Cost and Usage Reports" (the guide's in-scope list) or
@@ -200,7 +210,14 @@ each band ships.
       Unit 2 Ch 18, 26  rose  #fc447c  (threat detection and attack
                                            protection; 31.4 from the
                                            nearest, #f43f5e)
-    Every Unit 1 and Unit 2 lesson uses --bg #080d14 and the extra named colors --warm
+      Unit 3 (assigned 20 Nov 2026, 30 or more RGB units from every accent):
+        Ch 29-34 teal    #74f8d8  (access and infrastructure)
+        Ch 35-39 coral   #d87c5c  (compute and developer tools)
+        Ch 40-43 violet  #bc3cf8  (databases)
+        Ch 44-47 blue    #4a80d0  (networking)
+        Ch 48-51 leaf    #74e834  (storage)
+        Ch 52-55 magenta #f83cdc  (AI, analytics, integration, apps)
+    Every Unit 1 to Unit 3 lesson uses --bg #080d14 and the extra named colors --warm
     #ffb703, --rose #f4a3b4, --lav #c4b5fd, --mint #86efac.
 
 Trade-off lessons (TO in the index) rely on their own chapter accent.
