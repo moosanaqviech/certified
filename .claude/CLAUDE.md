@@ -200,8 +200,11 @@ draw them into drills. The practice hub is live at practice/aws-clf-c02
 (see the practice hubs paragraph below), linked from the course home's
 Learn / Practice toggle, the catalog row, the practice index and the
 footer's Practice column. The catalog row shows "Live now" (64 chapters,
-214 questions, 3 mocks). No public readiness quiz yet (ready/aws-clf-c02
-would be next). No lesson or question quotes a price, discount percentage
+214 questions, 3 mocks). A public readiness quiz lives at
+ready/aws-clf-c02 (12 new questions, four domains at the official
+24/30/34/12 weights, counts 3/4/4/1, scenarios reused from none of the
+seven exams), linked from the catalog row's "Am I ready?", the pillar guide
+and the study plan post. No lesson or question quotes a price, discount percentage
 or support response time. Paid from launch: $9.99, Unit 1 free through
 clf-practice-exam-01, registered in gate.ts, _shared.mjs, build_sitemap.py
 and catalog.json; checkout needs the Netlify env var STRIPE_PRICE_AWS_CLF set
