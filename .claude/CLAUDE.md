@@ -449,7 +449,7 @@ Glacier storage classes instead.)
 `books/` holds a pilot for micro-learning on non-fiction books. It is a
 different product on a different engine and none of the lesson, exam or
 practice-hub rules in this file apply to it, except the hard rules on em
-dashes and SVG art. Milestones 1 and 2 of 4 are built (21 Nov 2026):
+dashes and SVG art. Milestones 1 to 3 of 4 are built (21 Nov 2026):
 
 - `books/engine/book-engine.v1.js` and `.css` are ONE shared engine loaded by
   every book lesson (the "no shared JS" rule belongs to the cert engines).
@@ -459,8 +459,23 @@ dashes and SVG art. Milestones 1 and 2 of 4 are built (21 Nov 2026):
   commit, done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
   answer, lesson_complete) carrying ids and right or wrong only, never the
-  learner's written text. Still to come: the spaced review session and book
-  capability map (milestone 3), video and scene cards (4).
+  learner's written text. Still to come: video and scene cards (milestone 4).
+- Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
+  five (gaps of 1, 3, 7, 16 and 35 days; right moves up one box, wrong goes
+  back to box 1, right in box 5 retires the card). `books/review/` (its logic
+  is `books/engine/book-review.v1.js`) builds a session of up to 8 due cards
+  in sessionStorage and opens each card's lesson with `?review=1`, where the
+  lesson engine shows just that card and hands on. A reviewable card may carry
+  `variants` (other wordings of the same question); review prefers one the
+  learner has not seen. A commit card is asked about once, a week later.
+- Each book home (`books/<book-id>/index.html`) lists its lessons as static
+  HTML and loads `books/engine/book-home.v1.js`, which marks each idea not
+  started, in progress, settling or mastered (every review card in box 3 or
+  higher) and offers the notes export and clear-data controls. The lesson
+  links there must match `book.json`; the validator checks them. A new book
+  is also added by hand to the list in `books/review/index.html`.
+- Lessons open from a local file, but folder links (the book home, the review
+  page) need a web server: test those with `python3 -m http.server`.
 - A card's type class is `be-t-<type>`; component classes are `be-<name>`.
   Keep the two apart: a card typed `bucket` once collided with `.be-bucket`.
 - A lesson is `books/<book-id>/lesson-NN-name.html`, copied from
@@ -476,6 +491,13 @@ dashes and SVG art. Milestones 1 and 2 of 4 are built (21 Nov 2026):
 - Progress is browser-only, under `books.v1.progress.<book-id>`,
   `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
   leaves the device.
+- Sourcing (owner's decision, 21 Nov 2026): lessons are original content and
+  no publisher or author is contacted. So for any book still in copyright:
+  write in our own words with our own examples, scenarios and diagrams; name
+  the book and author plainly; never quote the text or a translation, never
+  reuse its figures, cover art, chapter structure or its own stories and case
+  studies; a video card is an original scene, never a re-enactment from the
+  book. Set `rights.tier` to `original` (or `public-domain`) in `book.json`.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

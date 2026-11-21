@@ -38,11 +38,11 @@ FIELDS = {
     "concept": {"id", "type", "title", "body", "art", "alt", "steps"},
     "case": {"id", "type", "title", "body", "art", "alt", "steps"},
     "compare": {"id", "type", "title", "columns", "rows", "body"},
-    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "review"},
-    "sort": {"id", "type", "prompt", "items", "why", "review"},
-    "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review"},
+    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "review", "variants"},
+    "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
+    "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
     "commit": {"id", "type", "prompt", "minChars", "suggestions"},
-    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "review"},
+    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "review", "variants"},
     "reflect": {"id", "type", "prompt", "minChars", "example"},
     "done": {"id", "type", "title", "can"},
 }
@@ -207,6 +207,64 @@ def check_bucket(where, card, errors):
         errors.append(f"{where}: needs a why")
 
 
+def check_question(where, card, errors):
+    if card["type"] in ("choice", "predict"):
+        check_options(where, card, errors)
+    elif card["type"] == "sort":
+        check_sort(where, card, errors)
+    elif card["type"] == "bucket":
+        check_bucket(where, card, errors)
+
+
+def check_variants(where, card, errors):
+    """A variant is another wording of the same question, shown in review.
+    It overrides fields of its card and must be a complete question itself."""
+    variants = card.get("variants")
+    if variants is None:
+        return
+    if not card.get("review"):
+        errors.append(f"{where}: variants are only used in review; mark the card review: true")
+    if not isinstance(variants, list) or not 1 <= len(variants) <= 3:
+        errors.append(f"{where}: variants is a list of 1 to 3 alternative wordings")
+        return
+    locked = {"id", "type", "review", "variants", "art", "alt"}
+    for k, v in enumerate(variants, 1):
+        vw = f"{where} variant {k}"
+        if not isinstance(v, dict) or not v:
+            errors.append(f"{vw}: must be an object of overriding fields")
+            continue
+        bad = (set(v) & locked) | (set(v) - FIELDS[card["type"]])
+        if bad:
+            errors.append(f"{vw}: cannot set {sorted(bad)}")
+            continue
+        merged = dict(card)
+        merged.update(v)
+        if merged.get("prompt") == card.get("prompt"):
+            errors.append(f"{vw}: needs its own prompt, different from the card's")
+        check_question(vw, merged, errors)
+
+
+def check_home(folder, book, errors):
+    """The book home lists lessons as static HTML; it must match book.json."""
+    path = os.path.join(folder, "index.html")
+    rel = os.path.relpath(path, ".").replace(os.sep, "/")
+    if not os.path.exists(path):
+        errors.append(f"{rel}: the book needs a home page")
+        return
+    html = open(path, encoding="utf-8").read()
+    if EM_DASH in html:
+        errors.append(f"{rel}: contains an em dash")
+    if 'data-book="%s"' % book["id"] not in html:
+        errors.append(f"{rel}: <main> must carry data-book for {book['id']!r}")
+    if 'src="../engine/book-home.v1.js"' not in html:
+        errors.append(f"{rel}: must load ../engine/book-home.v1.js")
+    cans = {i["id"]: i["can"] for i in book["ideas"]}
+    listed = re.findall(r'<a href="([^"]+)" data-lesson="(\d+)" data-can="([^"]*)"', html)
+    want = [(l["file"], str(l["n"]), cans.get(l["idea"], "")) for l in book["lessons"]]
+    if listed != want:
+        errors.append(f"{rel}: the lesson links (href, data-lesson, data-can) must match book.json, in order")
+
+
 def check_lesson(path, book, errors):
     html = open(path, encoding="utf-8").read()
     name = os.path.basename(path)
@@ -298,14 +356,11 @@ def check_lesson(path, book, errors):
             errors.append(f"{where}: needs a body")
         if ctype == "cover" and not c.get("art"):
             errors.append(f"{where}: the cover needs art")
-        if ctype in ("choice", "predict"):
-            check_options(where, c, errors)
+        if ctype in ("choice", "predict", "sort", "bucket"):
+            check_question(where, c, errors)
+            check_variants(where, c, errors)
         if ctype == "compare":
             check_compare(where, c, errors)
-        if ctype == "sort":
-            check_sort(where, c, errors)
-        if ctype == "bucket":
-            check_bucket(where, c, errors)
         if ctype in ("reflect", "commit"):
             if not isinstance(c.get("minChars"), int) or c["minChars"] < 1:
                 errors.append(f"{where}: needs a positive minChars")
@@ -417,6 +472,8 @@ def check_book(folder, errors, only=None):
     for missing in sorted(set(idea_ids) - used):
         errors.append(f"{rel}: idea {missing!r} has no lesson")
 
+    if only is None:
+        check_home(folder, book, errors)
     for l in book["lessons"]:
         path = os.path.join(folder, l.get("file", ""))
         if os.path.exists(path) and (only is None or os.path.abspath(path) == os.path.abspath(only)):

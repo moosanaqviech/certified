@@ -65,9 +65,39 @@
   var notes = read(NKEY, {});
   var me = progress[lessonKey] || null;
 
+  /* ---------- review mode ----------
+     The review page (books/review/) builds a session of due cards, keeps it
+     in sessionStorage and opens the first card's lesson with ?review=1. In
+     that mode this engine shows only the session's cards from this lesson,
+     one at a time and unanswered, then hands on to the next lesson or back
+     to the review page. Lesson progress is not touched. */
+  var DAYS = { 1: 1, 2: 3, 3: 7, 4: 16, 5: 35 };
+  var SKEY = 'books.v1.session';
+  var CKEY = 'books.v1.commitments';
+  function sread(key) {
+    try {
+      var v = window.sessionStorage.getItem(key);
+      return v ? JSON.parse(v) : null;
+    } catch (e) { return null; }
+  }
+  function swrite(key, value) {
+    try { window.sessionStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+  var selfName = window.location.pathname.split('/').pop();
+  var selfFile = L.book + '/' + selfName;
+  var wantsReview = false;
+  try { wantsReview = !!new URLSearchParams(window.location.search).get('review'); } catch (e) {}
+  var session = wantsReview ? sread(SKEY) : null;
+  var reviewMode = !!(session && session.queue && session.queue.length);
+  var homeHref = reviewMode ? '../review/' : './';
+  var reviewCard = null;
+  var reviewVariant = 0;
+  var reviewAnswered = false;
+
   function now() { return new Date().toISOString(); }
   function fresh() { return { at: null, answers: {}, started: now(), completed: null }; }
   function save() {
+    if (reviewMode) return;
     progress[lessonKey] = me;
     write(PKEY, progress);
   }
@@ -132,12 +162,12 @@
 
   var top = h('div', 'be-top');
   var close = h('a', 'be-close', '&times;');
-  close.href = './';
-  close.setAttribute('aria-label', 'Back to the book');
+  close.href = homeHref;
+  close.setAttribute('aria-label', reviewMode ? 'Back to review' : 'Back to the book');
   var bar = h('div', 'be-bar');
   bar.setAttribute('aria-hidden', 'true');
-  var segs = cards.map(function (c) {
-    var s = h('span', 'be-seg' + (PRODUCING[c.type] ? ' is-do' : ''));
+  var segs = (reviewMode ? session.queue : cards).map(function (c) {
+    var s = h('span', 'be-seg' + (!reviewMode && PRODUCING[c.type] ? ' is-do' : ''));
     bar.appendChild(s);
     return s;
   });
@@ -199,6 +229,19 @@
   }
 
   function updateChrome() {
+    if (reviewMode) {
+      backBtn.hidden = true;
+      keys.hidden = true;
+      nextBtn.disabled = !reviewCard || gated(reviewCard);
+      nextBtn.textContent = session.pos >= session.queue.length - 1 ? 'Finish' : 'Next';
+      for (var r = 0; r < segs.length; r++) {
+        segs[r].classList.toggle('is-seen', r < session.pos);
+        segs[r].classList.toggle('is-now', r === session.pos);
+      }
+      count.textContent = (session.pos + 1) + ' / ' + session.queue.length;
+      note.hidden = storageOk;
+      return;
+    }
     var c = cards[i];
     var last = i === cards.length - 1;
     backBtn.disabled = i === 0;
@@ -221,6 +264,7 @@
 
   /* Store an answer. Answers are final for the visit. */
   function record(c, ans) {
+    if (reviewMode) { reviewRecord(c, ans); return; }
     ans.t = now();
     me.answers[c.id] = ans;
     save();
@@ -269,6 +313,13 @@
     if (old) old.parentNode.removeChild(old);
     var fb = h('div', 'be-feedback');
     parts.forEach(function (html) { if (html) fb.appendChild(h('p', '', html)); });
+    if (reviewMode && reviewAnswered) {
+      var again = h('a', 'be-link', 'Open the lesson this comes from');
+      again.href = selfName + '?back=' + encodeURIComponent(window.location.pathname + '?review=1');
+      var line = h('p');
+      line.appendChild(again);
+      fb.appendChild(line);
+    }
     (card.querySelector('.be-main') || card).appendChild(fb);
     /* Feedback can land below the fold on a phone: bring it into view. */
     if (fb.scrollIntoView && card.parentNode) fb.scrollIntoView({ block: 'nearest' });
@@ -763,6 +814,12 @@
     saveBtn.addEventListener('click', function () {
       notes[noteKey] = ta.value.trim();
       write(NKEY, notes);
+      if (c.type === 'commit') {
+        /* Kept so the review page can ask "Did you do it?" a week later. */
+        var made = read(CKEY, {});
+        made[L.book + '/' + L.n + '/' + c.id] = { text: notes[noteKey], t: now(), asked: null };
+        write(CKEY, made);
+      }
       record(c, { done: true, skipped: false });
       finish(true);
     });
@@ -806,9 +863,7 @@
   };
 
   /* ---------- render and navigation ---------- */
-  function render(focus) {
-    var c = cards[i];
-    stage.innerHTML = '';
+  function mount(c) {
     var card = h('section', 'be-card be-t-' + c.type);
     (BUILD[c.type] || BUILD.concept)(c, card);
 
@@ -823,7 +878,19 @@
       card.appendChild(main);
       card.classList.add('has-art');
     }
+    return card;
+  }
+  function focusHead(card) {
+    var head = card.querySelector('[data-head]');
+    if (!head) return;
+    head.setAttribute('tabindex', '-1');
+    try { head.focus({ preventScroll: true }); } catch (e) { head.focus(); }
+  }
 
+  function render(focus) {
+    var c = cards[i];
+    stage.innerHTML = '';
+    var card = mount(c);
     stage.appendChild(card);
     applySteps(c, card);
     stage.scrollTop = 0;
@@ -835,13 +902,87 @@
       save();
     }
     updateChrome();
-    if (focus) {
-      var head = card.querySelector('[data-head]');
-      if (head) {
-        head.setAttribute('tabindex', '-1');
-        try { head.focus({ preventScroll: true }); } catch (e) { head.focus(); }
-      }
+    if (focus) focusHead(card);
+  }
+
+  /* ---------- review mode: one due card at a time ---------- */
+  function showReview() {
+    var item;
+    while ((item = session.queue[session.pos]) && item.done) session.pos++;
+    swrite(SKEY, session);
+    if (!item) { window.location.replace('../review/?done=1'); return; }
+    if (item.file !== selfFile) { window.location.replace('../' + item.file + '?review=1'); return; }
+    var base = null, k;
+    for (k = 0; k < cards.length; k++) if (cards[k].id === item.card) base = cards[k];
+    if (!base || !PRODUCING[base.type]) {
+      /* The card was removed from the lesson: drop it from this session. */
+      item.done = true;
+      item.skipped = true;
+      showReview();
+      return;
     }
+    /* Prefer a wording the learner has not seen, so review tests the idea
+       and not the memory of one sentence. 0 is the lesson's own wording. */
+    var entry = read(RKEY, {})[item.id] || {};
+    var seen = entry.seen || [0];
+    var variants = base.variants || [];
+    reviewVariant = 0;
+    for (k = 1; k <= variants.length; k++) {
+      if (seen.indexOf(k) < 0) { reviewVariant = k; break; }
+    }
+    if (!reviewVariant && variants.length) {
+      reviewVariant = (entry.history ? entry.history.length : 0) % (variants.length + 1);
+    }
+    reviewCard = {};
+    var key;
+    for (key in base) if (Object.prototype.hasOwnProperty.call(base, key)) reviewCard[key] = base[key];
+    if (reviewVariant) {
+      var alt = variants[reviewVariant - 1];
+      for (key in alt) if (Object.prototype.hasOwnProperty.call(alt, key)) reviewCard[key] = alt[key];
+    }
+    reviewCard.id = base.id;
+    reviewCard.type = base.type;
+    me = { at: null, answers: {} };
+    reviewAnswered = false;
+    stage.innerHTML = '';
+    var card = mount(reviewCard);
+    stage.appendChild(card);
+    stage.scrollTop = 0;
+    updateChrome();
+    focusHead(card);
+  }
+  /* A correct review moves the card up one box; a wrong one sends it back to
+     box 1. A correct answer in the last box retires the card. */
+  function reviewRecord(c, ans) {
+    ans.t = now();
+    me.answers[c.id] = ans;
+    reviewAnswered = true;
+    var item = session.queue[session.pos];
+    var ok = !!ans.ok;
+    var queue = read(RKEY, {});
+    var e = queue[item.id];
+    if (e) {
+      e.history = e.history || [];
+      e.history.push({ t: ans.t, ok: ok });
+      if (!ok) e.box = 1;
+      else if (e.box >= 5) e.retired = true;
+      else e.box++;
+      e.due = new Date(Date.now() + DAYS[e.box] * 24 * 60 * 60 * 1000).toISOString();
+      e.seen = e.seen || [0];
+      if (e.seen.indexOf(reviewVariant) < 0) e.seen.push(reviewVariant);
+      write(RKEY, queue);
+      item.box = e.retired ? 6 : e.box;
+    }
+    item.done = true;
+    item.ok = ok;
+    swrite(SKEY, session);
+    track('answer', { card_id: c.id, card_type: c.type, correct: ok, review: true });
+    updateChrome();
+  }
+  function reviewNext() {
+    session.pos++;
+    swrite(SKEY, session);
+    showReview();
   }
 
   /* On completion, reviewable cards enter box 1, due tomorrow. The review
@@ -859,14 +1000,21 @@
       }
       if (!c.review) return;
       var id = L.book + '/' + L.n + '/' + c.id;
-      if (queue[id]) return;
-      queue[id] = { box: 1, due: due, history: first ? [{ t: first.t, ok: !!first.ok }] : [] };
+      if (queue[id]) {
+        queue[id].file = selfFile;
+        return;
+      }
+      queue[id] = {
+        box: 1, due: due, file: selfFile, seen: [0],
+        history: first ? [{ t: first.t, ok: !!first.ok }] : []
+      };
     });
     write(RKEY, queue);
     track('lesson_complete', { questions: asked, correct: right });
   }
 
   function revealStep() {
+    if (reviewMode) return false;
     var c = cards[i];
     if (stepsLeft(c) <= 0) return false;
     stepState[c.id] = (stepState[c.id] || 0) + 1;
@@ -875,6 +1023,7 @@
     return true;
   }
   function go(delta) {
+    if (reviewMode) { if (delta > 0) reviewNext(); return; }
     var to = i + delta;
     if (to < 0 || to >= cards.length) return;
     if (delta > 0) stepState[cards[i].id] = cards[i].steps || 0;
@@ -883,6 +1032,7 @@
   }
   function advance() {
     if (!started) return;
+    if (reviewMode) { if (reviewCard && !gated(reviewCard)) reviewNext(); return; }
     if (revealStep()) return;
     if (gated(cards[i])) return;
     go(1);
@@ -900,7 +1050,7 @@
     if (!started) return;
     var t = e.target;
     var typing = t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT');
-    if (e.key === 'Escape') { window.location.href = './'; return; }
+    if (e.key === 'Escape') { window.location.href = homeHref; return; }
     if (typing) return;
     if (e.key === 'ArrowRight') { advance(); e.preventDefault(); }
     else if (e.key === 'ArrowLeft') { go(-1); e.preventDefault(); }
@@ -917,7 +1067,7 @@
     var dx = e.changedTouches[0].clientX - touch.x;
     var dy = e.changedTouches[0].clientY - touch.y;
     touch = null;
-    if (NO_SWIPE[cards[i].type]) return;
+    if (reviewMode || NO_SWIPE[cards[i].type]) return;
     if (Math.abs(dx) < 60 || Math.abs(dy) > 40) return;
     if (dx > 0) { go(-1); return; }
     if (gated(cards[i])) return;
@@ -959,8 +1109,11 @@
     return lastAnswered;
   }
 
-  var at = resumeIndex();
-  if (me && at > 0) {
+  var at = reviewMode ? 0 : resumeIndex();
+  if (reviewMode) {
+    started = true;
+    showReview();
+  } else if (me && at > 0) {
     foot.hidden = true;
     var box = h('section', 'be-card be-resume');
     box.appendChild(h('p', 'be-tag', esc(L.title)));
