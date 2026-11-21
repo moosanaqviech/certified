@@ -1,0 +1,238 @@
+/* Book engine v1: shared shell styles.
+   Loaded by every book lesson page. A lesson page supplies only the four
+   palette values (--bg, --tint, --accent, --ink) in its own <style id="palette">
+   block, copied from the book's book.json. Do not put per-lesson CSS here. */
+
+:root {
+  --bg: #14161c;
+  --tint: #1c1f28;
+  --accent: #d9a441;
+  --ink: #f4efe4;
+  --ink-soft: color-mix(in srgb, var(--ink) 68%, var(--bg));
+  --ink-faint: color-mix(in srgb, var(--ink) 38%, var(--bg));
+  --line: color-mix(in srgb, var(--ink) 12%, transparent);
+  --accent-glow: color-mix(in srgb, var(--accent) 14%, transparent);
+  --good: #7fd6a4;
+  --bad: #f08a8a;
+  --display: "Fraunces", Georgia, serif;
+  --body: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* The engine hides things with the hidden attribute; no display rule may override it. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Plain-text summary shown before the engine starts and to no-script readers. */
+.summary { max-width: 34rem; margin: 0 auto; padding: 2rem 1.25rem; color: var(--ink-soft); line-height: 1.6; }
+.summary h1 { font-family: var(--display); color: var(--ink); font-size: 1.75rem; line-height: 1.2; }
+
+.be {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  max-width: 28.75rem;
+  margin: 0 auto;
+}
+
+/* ---------- top: close, progress, notices ---------- */
+.be-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.5rem;
+}
+.be-close {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.be-close:hover { background: var(--tint); color: var(--ink); }
+.be-bar { flex: 1; display: flex; gap: 3px; align-items: center; }
+.be-seg { flex: 1; height: 4px; border-radius: 2px; background: var(--line); transition: background 0.25s; }
+.be-seg.is-do { height: 8px; }
+.be-seg.is-seen { background: var(--ink-faint); }
+.be-seg.is-now { background: var(--accent); }
+.be-count { flex: none; font-size: 0.75rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; min-width: 2.5rem; text-align: right; }
+
+.be-note, .be-return {
+  margin: 0 1rem 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--tint);
+  color: var(--ink-soft);
+  font-size: 0.8125rem;
+}
+.be-return { display: block; color: var(--accent); text-decoration: none; font-weight: 600; }
+
+/* ---------- stage and card ---------- */
+.be-stage { flex: 1; overflow-y: auto; padding: 0.5rem 1.25rem 1rem; -webkit-overflow-scrolling: touch; }
+.be-card { min-height: 100%; display: flex; flex-direction: column; animation: be-in 0.35s ease both; }
+.be-card:focus, .be-card [data-head]:focus { outline: none; }
+@keyframes be-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.be-tag, .be-eyebrow {
+  margin: 0.5rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.be-card h1, .be-card h2 { font-family: var(--display); font-weight: 600; margin: 0 0 0.75rem; text-wrap: balance; }
+.be-card h1 { font-size: 2.25rem; line-height: 1.1; }
+.be-card h2 { font-size: 1.5rem; line-height: 1.2; }
+.be-lead { color: var(--ink-soft); font-size: 1.0625rem; line-height: 1.5; margin: 0 0 1rem; }
+.be-p { color: var(--ink-soft); font-size: 1.0625rem; line-height: 1.55; margin: 0 0 0.75rem; }
+.be-p strong, .be-lead strong { color: var(--ink); font-weight: 600; }
+.be-p code { font-size: 0.9em; background: var(--tint); padding: 0.1em 0.35em; border-radius: 0.25rem; }
+
+.be-art {
+  margin: 0.25rem 0 1rem;
+  border-radius: 1rem;
+  background: radial-gradient(circle at 50% 40%, var(--accent-glow), transparent 70%), var(--tint);
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+}
+.be-art svg { width: 100%; height: auto; display: block; max-height: 38vh; }
+.be-cover { justify-content: center; }
+.be-cover .be-art { margin: 1rem 0 1.5rem; }
+
+/* Step builds: hidden until revealed. Step elements never take pointer
+   events, so a revealed element can never sit over an answer and swallow a tap. */
+[data-step] { opacity: 0; transform: translateY(6px); transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: none; }
+[data-step].be-on { opacity: 1; transform: none; }
+.be-hint { margin-top: auto; padding-top: 0.5rem; text-align: center; color: var(--ink-faint); font-size: 0.8125rem; }
+
+/* ---------- questions ---------- */
+.be-options { display: grid; gap: 0.625rem; margin: 0.25rem 0 1rem; }
+.be-option {
+  appearance: none;
+  width: 100%;
+  min-height: 3rem;
+  text-align: left;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--tint);
+  border: 1.5px solid var(--line);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.be-option:hover:not(:disabled) { border-color: var(--ink-faint); }
+.be-option:focus-visible, .be-btn:focus-visible, .be-close:focus-visible, .be-text:focus-visible, .be-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.be-option:disabled { cursor: default; color: var(--ink-soft); }
+.be-option.is-right { border-color: var(--good); color: var(--ink); }
+.be-option.is-wrong { border-color: var(--bad); color: var(--ink); }
+.be-option.is-picked { border-color: var(--accent); color: var(--ink); }
+.be-mark { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.is-right .be-mark { color: var(--good); }
+.is-wrong .be-mark { color: var(--bad); }
+.is-picked .be-mark { color: var(--accent); }
+
+.be-feedback {
+  border-left: 3px solid var(--accent);
+  background: var(--tint);
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  animation: be-in 0.3s ease both;
+}
+.be-feedback p { margin: 0 0 0.5rem; color: var(--ink-soft); line-height: 1.5; font-size: 0.9688rem; }
+.be-feedback p:last-child { margin-bottom: 0; }
+.be-feedback strong { color: var(--ink); }
+
+/* ---------- reflection ---------- */
+.be-text {
+  width: 100%;
+  min-height: 7.5rem;
+  resize: vertical;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--tint);
+  border: 1.5px solid var(--line);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+}
+.be-text:disabled { color: var(--ink-soft); }
+.be-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0.625rem 0 1rem; }
+.be-counter { font-size: 0.8125rem; color: var(--ink-faint); }
+.be-link { appearance: none; background: none; border: 0; padding: 0.5rem 0; font: inherit; font-size: 0.875rem; color: var(--ink-soft); text-decoration: underline; cursor: pointer; }
+.be-private { font-size: 0.8125rem; color: var(--ink-faint); margin: 0 0 1rem; }
+
+/* ---------- done ---------- */
+.be-done { justify-content: center; text-align: center; }
+.be-badge { width: 4.5rem; height: 4.5rem; margin: 0 auto 1.25rem; border-radius: 50%; display: grid; place-items: center; background: var(--accent-glow); color: var(--accent); font-size: 2rem; }
+.be-can { color: var(--ink-soft); font-size: 1.0625rem; line-height: 1.5; margin: 0 0 1.5rem; }
+.be-can strong { display: block; color: var(--accent); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.35rem; }
+.be-actions { display: grid; gap: 0.625rem; }
+
+/* ---------- buttons and footer ---------- */
+.be-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--bg);
+}
+.be-btn:disabled { opacity: 0.35; cursor: default; }
+.be-btn.is-quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+.be-foot {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+.be-foot .be-next { flex: 1; }
+.be-foot [hidden] { display: none; }
+
+/* ---------- resume prompt ---------- */
+.be-resume { justify-content: center; text-align: center; }
+.be-resume h2 { margin-bottom: 0.5rem; }
+
+.be-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.be-error { padding: 2rem 1.25rem; color: var(--ink-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .be-card, .be-feedback { animation: none; }
+  [data-step] { transition: none; transform: none; }
+  .be-seg { transition: none; }
+}

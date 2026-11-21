@@ -444,6 +444,38 @@ listed in the cert config. Snowball Edge and vault-based Amazon Glacier are
 closed to new customers: lessons teach AWS Data Transfer Terminal and the S3
 Glacier storage classes instead.)
 
+## Books pilot (separate engine, not a certification course)
+
+`books/` holds a pilot for micro-learning on non-fiction books. It is a
+different product on a different engine and none of the lesson, exam or
+practice-hub rules in this file apply to it, except the hard rules on em
+dashes and SVG art. Milestone 1 of 4 is built (21 Nov 2026):
+
+- `books/engine/book-engine.v1.js` and `.css` are ONE shared engine loaded by
+  every book lesson (the "no shared JS" rule belongs to the cert engines).
+  Fixes there reach every lesson, so keep them backward compatible; a breaking
+  change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
+  choice, predict, reflect, done. Still to come: compare, sort, bucket, commit
+  and the desktop layout (milestone 2), the spaced review session (3), video
+  and scene cards (4).
+- A lesson is `books/<book-id>/lesson-NN-name.html`, copied from
+  `.claude/book-lesson-shell.html`, with its data as inline JSON (no script,
+  no HTML outside a card's `art` SVG). Card ids are permanent: saved progress
+  and review history point at them. Lesson order lives only in the book's
+  `book.json`; lessons carry no next or previous links.
+- `python3 scripts/validate_book.py books/<book-id>` must pass before a lesson
+  ships (12 to 20 cards, never more than two cards in a row with nothing to
+  do, every answer option explained, a hook in the first three cards, one
+  reflect card, two review cards, two step builds, palette matching
+  `book.json`).
+- Progress is browser-only, under `books.v1.progress.<book-id>`,
+  `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
+  leaves the device.
+- The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
+  is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
+  way until launch. `books/meditations/` is a sample book: its rights status
+  and its claims about the text are not yet reviewed.
+
 ## Site structure
 
 Root `index.html` is the multi-course catalog page (vendor list, links out to
