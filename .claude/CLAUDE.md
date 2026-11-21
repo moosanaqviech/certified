@@ -444,6 +444,78 @@ listed in the cert config. Snowball Edge and vault-based Amazon Glacier are
 closed to new customers: lessons teach AWS Data Transfer Terminal and the S3
 Glacier storage classes instead.)
 
+## Books pilot (separate engine, not a certification course)
+
+`books/` holds a pilot for micro-learning on non-fiction books. It is a
+different product on a different engine and none of the lesson, exam or
+practice-hub rules in this file apply to it, except the hard rules on em
+dashes and SVG art. All four engine milestones are built (21 Nov 2026):
+
+- `books/engine/book-engine.v1.js` and `.css` are ONE shared engine loaded by
+  every book lesson (the "no shared JS" rule belongs to the cert engines).
+  Fixes there reach every lesson, so keep them backward compatible; a breaking
+  change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
+  compare, scene, video, choice (single, or `select: N`), predict, sort,
+  bucket, reflect, commit, done. The layout is one column on a phone and two panes (art beside
+  text) from 900px. The engine sends GA4 events (lesson_start, card_view,
+  answer, lesson_complete) carrying ids and right or wrong only, never the
+  learner's written text.
+- A video card is optional (at most one per lesson, 30 to 60 seconds, and the
+  next card must ask the learner to act on it). It never gates Continue and
+  loads nothing until the poster is tapped. `host: "drive"` takes Google Drive
+  file ids (portrait and landscape), shared as "anyone with the link", and
+  embeds Drive's own player, so captions must be burned into the picture
+  (`captions: "burned-in"`); `host: "file"` takes .mp4 or .webm URLs and a
+  .vtt captions file, played in a plain `<video>`. Both need a poster image
+  per shape under the book's `media/` folder and a transcript. Drive is a
+  stopgap, not a video host: it shows Drive's interface, needs a second tap
+  to play, and limits heavy traffic. The two clips in the sample lesson are
+  labelled placeholders in the owner's Drive.
+- A scene card is an isometric SVG built in steps. Its `model` field is
+  reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
+- Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
+  five (gaps of 1, 3, 7, 16 and 35 days; right moves up one box, wrong goes
+  back to box 1, right in box 5 retires the card). `books/review/` (its logic
+  is `books/engine/book-review.v1.js`) builds a session of up to 8 due cards
+  in sessionStorage and opens each card's lesson with `?review=1`, where the
+  lesson engine shows just that card and hands on. A reviewable card may carry
+  `variants` (other wordings of the same question); review prefers one the
+  learner has not seen. A commit card is asked about once, a week later.
+- Each book home (`books/<book-id>/index.html`) lists its lessons as static
+  HTML and loads `books/engine/book-home.v1.js`, which marks each idea not
+  started, in progress, settling or mastered (every review card in box 3 or
+  higher) and offers the notes export and clear-data controls. The lesson
+  links there must match `book.json`; the validator checks them. A new book
+  is also added by hand to the list in `books/review/index.html`.
+- Lessons open from a local file, but folder links (the book home, the review
+  page) need a web server: test those with `python3 -m http.server`.
+- A card's type class is `be-t-<type>`; component classes are `be-<name>`.
+  Keep the two apart: a card typed `bucket` once collided with `.be-bucket`.
+- A lesson is `books/<book-id>/lesson-NN-name.html`, copied from
+  `.claude/book-lesson-shell.html`, with its data as inline JSON (no script,
+  no HTML outside a card's `art` SVG). Card ids are permanent: saved progress
+  and review history point at them. Lesson order lives only in the book's
+  `book.json`; lessons carry no next or previous links.
+- `python3 scripts/validate_book.py books/<book-id>` must pass before a lesson
+  ships (12 to 20 cards, never more than two cards in a row with nothing to
+  do, every answer option explained, a hook in the first three cards, one
+  reflect card, two review cards, two step builds, palette matching
+  `book.json`, and exactly one commit card on the book's last lesson only).
+- Progress is browser-only, under `books.v1.progress.<book-id>`,
+  `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
+  leaves the device.
+- Sourcing (owner's decision, 21 Nov 2026): lessons are original content and
+  no publisher or author is contacted. So for any book still in copyright:
+  write in our own words with our own examples, scenarios and diagrams; name
+  the book and author plainly; never quote the text or a translation, never
+  reuse its figures, cover art, chapter structure or its own stories and case
+  studies; a video card is an original scene, never a re-enactment from the
+  book. Set `rights.tier` to `original` (or `public-domain`) in `book.json`.
+- The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
+  is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
+  way until launch. `books/meditations/` is a two-lesson sample book: its
+  rights status and its claims about the text are not yet reviewed.
+
 ## Site structure
 
 Root `index.html` is the multi-course catalog page (vendor list, links out to
