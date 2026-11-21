@@ -26,17 +26,22 @@ MIN_REVIEW = 2
 MIN_STEPPED = 2
 MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
-# Card types the v1 engine renders today (milestone 1). Later milestones add
-# compare, sort, bucket, commit, video and scene: extend both sets then.
-TYPES = {"cover", "concept", "case", "choice", "predict", "reflect", "done"}
-PRODUCING = {"choice", "predict", "reflect"}
-REVIEWABLE = {"choice", "predict"}
+# Card types the v1 engine renders today (milestones 1 and 2). Milestone 4
+# adds video and scene: extend these sets then.
+TYPES = {"cover", "concept", "case", "compare", "choice", "predict", "sort",
+         "bucket", "reflect", "commit", "done"}
+PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
+REVIEWABLE = {"choice", "predict", "sort", "bucket"}
 
 FIELDS = {
     "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead"},
     "concept": {"id", "type", "title", "body", "art", "alt", "steps"},
     "case": {"id", "type", "title", "body", "art", "alt", "steps"},
-    "choice": {"id", "type", "prompt", "options", "art", "alt", "review"},
+    "compare": {"id", "type", "title", "columns", "rows", "body"},
+    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "review"},
+    "sort": {"id", "type", "prompt", "items", "why", "review"},
+    "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review"},
+    "commit": {"id", "type", "prompt", "minChars", "suggestions"},
     "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "review"},
     "reflect": {"id", "type", "prompt", "minChars", "example"},
     "done": {"id", "type", "title", "can"},
@@ -139,12 +144,67 @@ def check_options(where, card, errors):
         if not o.get(expl):
             errors.append(f"{where}: option {k} needs a \"{expl}\" (every option is explained, not only the right one)")
     flagged = sum(1 for o in opts if isinstance(o, dict) and o.get(flag))
-    if card["type"] == "choice" and flagged != 1:
-        errors.append(f"{where}: exactly one option must be correct, found {flagged}")
+    if card["type"] == "choice":
+        want = card.get("select", 1)
+        if not isinstance(want, int) or want < 1 or want >= len(opts):
+            errors.append(f"{where}: select must be a whole number smaller than the option count")
+        elif "select" in card and want < 2:
+            errors.append(f"{where}: leave select out for a single-answer question")
+        elif flagged != want:
+            errors.append(f"{where}: {want} option(s) must be correct, found {flagged}")
     if card["type"] == "predict" and flagged < 1:
         errors.append(f"{where}: at least one option must be marked best")
     if card["type"] == "predict" and not card.get("takeaway"):
         errors.append(f"{where}: predict cards need a takeaway")
+
+
+def check_compare(where, card, errors):
+    cols, rows = card.get("columns"), card.get("rows")
+    if not isinstance(cols, list) or not 2 <= len(cols) <= 4:
+        errors.append(f"{where}: needs 2 to 4 columns (the first may be an empty row-label column)")
+        return
+    if not isinstance(rows, list) or not 2 <= len(rows) <= 6:
+        errors.append(f"{where}: needs 2 to 6 rows")
+        return
+    for k, row in enumerate(rows, 1):
+        if not isinstance(row, list) or len(row) != len(cols):
+            errors.append(f"{where}: row {k} must have {len(cols)} cells")
+
+
+def check_sort(where, card, errors):
+    items = card.get("items")
+    if not isinstance(items, list) or not 3 <= len(items) <= 6 or not all(isinstance(i, str) and i for i in items):
+        errors.append(f"{where}: needs 3 to 6 text items, listed in the correct order")
+    elif len(set(items)) != len(items):
+        errors.append(f"{where}: items must be distinct")
+    if not card.get("why"):
+        errors.append(f"{where}: needs a why")
+
+
+def check_bucket(where, card, errors):
+    buckets, items = card.get("buckets"), card.get("items")
+    if not isinstance(buckets, list) or not 2 <= len(buckets) <= 3 or not all(
+            isinstance(b, dict) and set(b) == {"id", "name"} and b["id"] and b["name"] for b in buckets):
+        errors.append(f"{where}: needs 2 or 3 buckets, each with id and name")
+        return
+    ids = [b["id"] for b in buckets]
+    if len(set(ids)) != len(ids):
+        errors.append(f"{where}: bucket ids must be distinct")
+    if not isinstance(items, list) or not 4 <= len(items) <= 8:
+        errors.append(f"{where}: needs 4 to 8 items")
+        return
+    used = set()
+    for k, it in enumerate(items, 1):
+        if not isinstance(it, dict) or set(it) != {"text", "bucket"} or not it["text"]:
+            errors.append(f"{where}: item {k} needs text and bucket")
+        elif it["bucket"] not in ids:
+            errors.append(f"{where}: item {k} names an unknown bucket {it['bucket']!r}")
+        else:
+            used.add(it["bucket"])
+    if used != set(ids):
+        errors.append(f"{where}: every bucket needs at least one item")
+    if not card.get("why"):
+        errors.append(f"{where}: needs a why")
 
 
 def check_lesson(path, book, errors):
@@ -230,7 +290,7 @@ def check_lesson(path, book, errors):
         extra = set(c) - FIELDS[ctype]
         if extra:
             errors.append(f"{where}: unknown fields {sorted(extra)}")
-        if ctype in ("cover", "concept", "case", "done") and not c.get("title"):
+        if ctype in ("cover", "concept", "case", "compare", "done") and not c.get("title"):
             errors.append(f"{where}: needs a title")
         if ctype in PRODUCING and not c.get("prompt"):
             errors.append(f"{where}: needs a prompt")
@@ -240,9 +300,20 @@ def check_lesson(path, book, errors):
             errors.append(f"{where}: the cover needs art")
         if ctype in ("choice", "predict"):
             check_options(where, c, errors)
-        if ctype == "reflect":
+        if ctype == "compare":
+            check_compare(where, c, errors)
+        if ctype == "sort":
+            check_sort(where, c, errors)
+        if ctype == "bucket":
+            check_bucket(where, c, errors)
+        if ctype in ("reflect", "commit"):
             if not isinstance(c.get("minChars"), int) or c["minChars"] < 1:
                 errors.append(f"{where}: needs a positive minChars")
+        if ctype == "commit":
+            sugg = c.get("suggestions", [])
+            if not isinstance(sugg, list) or len(sugg) > 4 or not all(isinstance(x, str) and x for x in sugg):
+                errors.append(f"{where}: suggestions is a list of up to 4 short texts")
+        if ctype == "reflect":
             if not c.get("example"):
                 errors.append(f"{where}: needs an example answer to compare against")
         if ctype == "done" and not c.get("can"):
@@ -274,6 +345,12 @@ def check_lesson(path, book, errors):
         errors.append(f"{rel}: needs at least one case card")
     if types.count("reflect") != 1:
         errors.append(f"{rel}: needs exactly one reflect card, found {types.count('reflect')}")
+    is_last = bool(book["lessons"]) and book["lessons"][-1].get("file") == name
+    commits = types.count("commit")
+    if is_last and commits != 1:
+        errors.append(f"{rel}: the book's last lesson needs exactly one commit card, found {commits}")
+    if not is_last and commits:
+        errors.append(f"{rel}: a commit card belongs only on the book's last lesson")
     if sum(1 for c in cards if c.get("review")) < MIN_REVIEW:
         errors.append(f"{rel}: mark at least {MIN_REVIEW} cards review: true")
     if sum(1 for c in cards if c.get("steps")) < MIN_STEPPED:
@@ -282,7 +359,7 @@ def check_lesson(path, book, errors):
     # Correct answers should not sit in the same position every time.
     spots = [next(i for i, o in enumerate(c["options"]) if o.get("correct"))
              for c in cards if c.get("type") == "choice"
-             and isinstance(c.get("options"), list)
+             and not c.get("select") and isinstance(c.get("options"), list)
              and any(isinstance(o, dict) and o.get("correct") for o in c["options"])]
     if len(spots) >= 3 and len(set(spots)) == 1:
         errors.append(f"{rel}: every choice card has its correct answer in position {spots[0] + 1}; vary it")

@@ -449,15 +449,20 @@ Glacier storage classes instead.)
 `books/` holds a pilot for micro-learning on non-fiction books. It is a
 different product on a different engine and none of the lesson, exam or
 practice-hub rules in this file apply to it, except the hard rules on em
-dashes and SVG art. Milestone 1 of 4 is built (21 Nov 2026):
+dashes and SVG art. Milestones 1 and 2 of 4 are built (21 Nov 2026):
 
 - `books/engine/book-engine.v1.js` and `.css` are ONE shared engine loaded by
   every book lesson (the "no shared JS" rule belongs to the cert engines).
   Fixes there reach every lesson, so keep them backward compatible; a breaking
   change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
-  choice, predict, reflect, done. Still to come: compare, sort, bucket, commit
-  and the desktop layout (milestone 2), the spaced review session (3), video
-  and scene cards (4).
+  compare, choice (single, or `select: N`), predict, sort, bucket, reflect,
+  commit, done. The layout is one column on a phone and two panes (art beside
+  text) from 900px. The engine sends GA4 events (lesson_start, card_view,
+  answer, lesson_complete) carrying ids and right or wrong only, never the
+  learner's written text. Still to come: the spaced review session and book
+  capability map (milestone 3), video and scene cards (4).
+- A card's type class is `be-t-<type>`; component classes are `be-<name>`.
+  Keep the two apart: a card typed `bucket` once collided with `.be-bucket`.
 - A lesson is `books/<book-id>/lesson-NN-name.html`, copied from
   `.claude/book-lesson-shell.html`, with its data as inline JSON (no script,
   no HTML outside a card's `art` SVG). Card ids are permanent: saved progress
@@ -467,14 +472,14 @@ dashes and SVG art. Milestone 1 of 4 is built (21 Nov 2026):
   ships (12 to 20 cards, never more than two cards in a row with nothing to
   do, every answer option explained, a hook in the first three cards, one
   reflect card, two review cards, two step builds, palette matching
-  `book.json`).
+  `book.json`, and exactly one commit card on the book's last lesson only).
 - Progress is browser-only, under `books.v1.progress.<book-id>`,
   `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
   leaves the device.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
-  way until launch. `books/meditations/` is a sample book: its rights status
-  and its claims about the text are not yet reviewed.
+  way until launch. `books/meditations/` is a two-lesson sample book: its
+  rights status and its claims about the text are not yet reviewed.
 
 ## Site structure
 
