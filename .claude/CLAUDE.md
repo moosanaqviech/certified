@@ -449,17 +449,30 @@ Glacier storage classes instead.)
 `books/` holds a pilot for micro-learning on non-fiction books. It is a
 different product on a different engine and none of the lesson, exam or
 practice-hub rules in this file apply to it, except the hard rules on em
-dashes and SVG art. Milestones 1 to 3 of 4 are built (21 Nov 2026):
+dashes and SVG art. All four engine milestones are built (21 Nov 2026):
 
 - `books/engine/book-engine.v1.js` and `.css` are ONE shared engine loaded by
   every book lesson (the "no shared JS" rule belongs to the cert engines).
   Fixes there reach every lesson, so keep them backward compatible; a breaking
   change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
-  compare, choice (single, or `select: N`), predict, sort, bucket, reflect,
-  commit, done. The layout is one column on a phone and two panes (art beside
+  compare, scene, video, choice (single, or `select: N`), predict, sort,
+  bucket, reflect, commit, done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
   answer, lesson_complete) carrying ids and right or wrong only, never the
-  learner's written text. Still to come: video and scene cards (milestone 4).
+  learner's written text.
+- A video card is optional (at most one per lesson, 30 to 60 seconds, and the
+  next card must ask the learner to act on it). It never gates Continue and
+  loads nothing until the poster is tapped. `host: "drive"` takes Google Drive
+  file ids (portrait and landscape), shared as "anyone with the link", and
+  embeds Drive's own player, so captions must be burned into the picture
+  (`captions: "burned-in"`); `host: "file"` takes .mp4 or .webm URLs and a
+  .vtt captions file, played in a plain `<video>`. Both need a poster image
+  per shape under the book's `media/` folder and a transcript. Drive is a
+  stopgap, not a video host: it shows Drive's interface, needs a second tap
+  to play, and limits heavy traffic. The two clips in the sample lesson are
+  labelled placeholders in the owner's Drive.
+- A scene card is an isometric SVG built in steps. Its `model` field is
+  reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
   five (gaps of 1, 3, 7, 16 and 35 days; right moves up one box, wrong goes
   back to box 1, right in box 5 retires the card). `books/review/` (its logic

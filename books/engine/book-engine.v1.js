@@ -3,8 +3,8 @@
    <script type="application/json" id="lesson"> and a <main id="app"> mount.
    Payloads are data only: no script, no raw HTML outside a card's `art` SVG.
 
-   Card types: cover, concept, case, compare, choice (single or select-N),
-   predict, sort, bucket, reflect, commit, done.
+   Card types: cover, concept, case, compare, scene, video, choice (single or
+   select-N), predict, sort, bucket, reflect, commit, done.
    A breaking change ships as book-engine.v2.js; fixes to this file reach
    every v1 lesson at once, so keep them backward compatible. */
 (function () {
@@ -30,6 +30,8 @@
     concept: 'The idea',
     'case': 'A case',
     compare: 'Side by side',
+    scene: 'Picture it',
+    video: 'Watch',
     choice: 'Your turn',
     predict: 'What would you do?',
     sort: 'Put in order',
@@ -342,6 +344,90 @@
     addArt(c, card);
     addBody(c, card);
     if (c.steps) card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+  };
+
+  /* A scene is an isometric SVG, built in steps like any other art. The
+     `model` field is reserved for a true 3D scene in a later engine version;
+     today a card without art shows its `fallback` image. */
+  BUILD.scene = function (c, card) {
+    addHead(card, TAG.scene, c.title);
+    if (c.art) {
+      addArt(c, card);
+    } else if (c.fallback) {
+      var box = h('div', 'be-art');
+      var img = h('img');
+      img.src = c.fallback;
+      img.alt = c.alt || '';
+      box.appendChild(img);
+      card.appendChild(box);
+    }
+    addBody(c, card);
+    if (c.steps) card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+  };
+
+  /* A short scene. Optional in a lesson, never required to continue, and
+     nothing loads until the learner taps the poster. `host` is "drive" (the
+     sources are Google Drive file ids, shown in Drive's own player, with
+     captions burned into the picture) or "file" (the sources are video URLs,
+     played here with a captions track). The transcript is always available. */
+  BUILD.video = function (c, card) {
+    var wide = !!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches);
+    var shape = wide ? 'landscape' : 'portrait';
+    addHead(card, TAG.video, c.title);
+    var box = h('div', 'be-art be-video is-' + shape);
+    var poster = btn('be-poster');
+    poster.setAttribute('aria-label', 'Play the video, ' + c.seconds + ' seconds');
+    var still = h('img');
+    still.src = c.poster[shape];
+    still.alt = '';
+    poster.appendChild(still);
+    poster.appendChild(h('span', 'be-play', '&#9654;'));
+    box.appendChild(poster);
+    card.appendChild(box);
+    if (c.lead) card.appendChild(h('p', 'be-lead', fmt(c.lead)));
+    var script = h('details', 'be-transcript');
+    script.appendChild(h('summary', '', 'Read the transcript'));
+    script.appendChild(h('p', 'be-p', fmt(c.transcript)));
+    card.appendChild(script);
+
+    function fail() {
+      script.open = true;
+      box.hidden = true;
+      announce('The video could not be played. The transcript is shown instead.');
+    }
+    poster.addEventListener('click', function () {
+      if (window.navigator && window.navigator.onLine === false) { fail(); return; }
+      track('video_play', { card_id: c.id, shape: shape, host: c.host });
+      box.removeChild(poster);
+      if (c.host === 'drive') {
+        var frame = h('iframe');
+        frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(c.sources[shape]) + '/preview';
+        frame.title = plain(c.title);
+        frame.setAttribute('allow', 'autoplay; fullscreen');
+        frame.setAttribute('allowfullscreen', '');
+        box.appendChild(frame);
+        return;
+      }
+      var v = h('video');
+      v.controls = true;
+      v.setAttribute('playsinline', '');
+      v.poster = c.poster[shape];
+      if (c.captions && c.captions !== 'burned-in') {
+        var tr = h('track');
+        tr.kind = 'captions';
+        tr.src = c.captions;
+        tr.srclang = 'en';
+        tr.label = 'English';
+        tr.default = true;
+        v.appendChild(tr);
+      }
+      v.addEventListener('error', fail);
+      v.addEventListener('ended', function () { track('video_complete', { card_id: c.id }); });
+      v.src = c.sources[shape];
+      box.appendChild(v);
+      var playing = v.play();
+      if (playing && playing.catch) playing.catch(function () {});
+    });
   };
 
   BUILD.compare = function (c, card) {
@@ -1042,19 +1128,19 @@
   backBtn.addEventListener('click', function () { if (started) go(-1); });
 
   stage.addEventListener('click', function (e) {
-    if (!started || e.target.closest('button, a, textarea, input, [role="button"], .be-item')) return;
+    if (!started || e.target.closest('button, a, textarea, input, summary, video, [role="button"], .be-item')) return;
     revealStep();
   });
 
   document.addEventListener('keydown', function (e) {
     if (!started) return;
     var t = e.target;
-    var typing = t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT');
+    var typing = t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.tagName === 'VIDEO');
     if (e.key === 'Escape') { window.location.href = homeHref; return; }
     if (typing) return;
     if (e.key === 'ArrowRight') { advance(); e.preventDefault(); }
     else if (e.key === 'ArrowLeft') { go(-1); e.preventDefault(); }
-    else if (e.key === 'Enter' && !(t && t.closest && t.closest('button, a, [role="button"]'))) { advance(); e.preventDefault(); }
+    else if (e.key === 'Enter' && !(t && t.closest && t.closest('button, a, summary, [role="button"]'))) { advance(); e.preventDefault(); }
   });
 
   /* Swipe to move between cards. Off on cards where the learner drags things. */

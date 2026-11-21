@@ -26,10 +26,9 @@ MIN_REVIEW = 2
 MIN_STEPPED = 2
 MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
-# Card types the v1 engine renders today (milestones 1 and 2). Milestone 4
-# adds video and scene: extend these sets then.
-TYPES = {"cover", "concept", "case", "compare", "choice", "predict", "sort",
-         "bucket", "reflect", "commit", "done"}
+# Card types the v1 engine renders.
+TYPES = {"cover", "concept", "case", "compare", "scene", "video", "choice",
+         "predict", "sort", "bucket", "reflect", "commit", "done"}
 PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
 REVIEWABLE = {"choice", "predict", "sort", "bucket"}
 
@@ -38,6 +37,9 @@ FIELDS = {
     "concept": {"id", "type", "title", "body", "art", "alt", "steps"},
     "case": {"id", "type", "title", "body", "art", "alt", "steps"},
     "compare": {"id", "type", "title", "columns", "rows", "body"},
+    "scene": {"id", "type", "title", "body", "art", "alt", "steps", "model", "fallback"},
+    "video": {"id", "type", "title", "lead", "host", "sources", "poster", "captions",
+              "transcript", "seconds"},
     "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "review", "variants"},
     "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
     "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
@@ -207,6 +209,58 @@ def check_bucket(where, card, errors):
         errors.append(f"{where}: needs a why")
 
 
+MAX_VIDEOS = 1
+VIDEO_SECONDS = (30, 60)
+DRIVE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{20,}$")
+SHAPES = {"portrait", "landscape"}
+
+
+def check_video(where, card, folder, errors):
+    """A video card is optional, but one that exists must be complete: both
+    shapes, a poster for each, captions and a transcript."""
+    host = card.get("host")
+    if host not in ("drive", "file"):
+        errors.append(f"{where}: host must be \"drive\" or \"file\"")
+        return
+    sources, poster = card.get("sources"), card.get("poster")
+    if not isinstance(sources, dict) or set(sources) != SHAPES:
+        errors.append(f"{where}: sources needs portrait and landscape")
+    elif host == "drive" and not all(DRIVE_ID_RE.match(str(v)) for v in sources.values()):
+        errors.append(f"{where}: with host drive, each source is a Google Drive file id, not a link")
+    elif host == "file" and not all(re.search(r"\.(mp4|webm)(\?|$)", str(v)) for v in sources.values()):
+        errors.append(f"{where}: with host file, each source is a .mp4 or .webm URL")
+    if not isinstance(poster, dict) or set(poster) != SHAPES:
+        errors.append(f"{where}: poster needs portrait and landscape images")
+    else:
+        for shape, rel_path in poster.items():
+            if not os.path.exists(os.path.join(folder, str(rel_path))):
+                errors.append(f"{where}: poster {rel_path!r} does not exist")
+    caps = card.get("captions")
+    if host == "drive" and caps != "burned-in":
+        errors.append(f"{where}: Drive's player cannot load a captions file, so captions must be "
+                      f"part of the picture: set captions to \"burned-in\" once they are")
+    if host == "file" and caps != "burned-in" and not (
+            isinstance(caps, str) and caps.endswith(".vtt") and os.path.exists(os.path.join(folder, caps))):
+        errors.append(f"{where}: captions must be an existing .vtt file, or \"burned-in\"")
+    if not isinstance(card.get("transcript"), str) or len(card["transcript"]) < 40:
+        errors.append(f"{where}: needs a transcript")
+    secs = card.get("seconds")
+    if not isinstance(secs, int) or not VIDEO_SECONDS[0] <= secs <= VIDEO_SECONDS[1]:
+        errors.append(f"{where}: seconds must be {VIDEO_SECONDS[0]} to {VIDEO_SECONDS[1]}")
+
+
+def check_scene(where, card, folder, errors):
+    if not card.get("art") and not card.get("fallback"):
+        errors.append(f"{where}: needs art (an isometric SVG) or a fallback image")
+    if card.get("model") and not card.get("fallback"):
+        errors.append(f"{where}: a model needs a fallback image; the v1 engine shows only the fallback")
+    if card.get("fallback"):
+        if not os.path.exists(os.path.join(folder, str(card["fallback"]))):
+            errors.append(f"{where}: fallback {card['fallback']!r} does not exist")
+        if not card.get("alt"):
+            errors.append(f"{where}: the fallback image needs an alt text")
+
+
 def check_question(where, card, errors):
     if card["type"] in ("choice", "predict"):
         check_options(where, card, errors)
@@ -348,7 +402,7 @@ def check_lesson(path, book, errors):
         extra = set(c) - FIELDS[ctype]
         if extra:
             errors.append(f"{where}: unknown fields {sorted(extra)}")
-        if ctype in ("cover", "concept", "case", "compare", "done") and not c.get("title"):
+        if ctype in ("cover", "concept", "case", "compare", "scene", "video", "done") and not c.get("title"):
             errors.append(f"{where}: needs a title")
         if ctype in PRODUCING and not c.get("prompt"):
             errors.append(f"{where}: needs a prompt")
@@ -361,6 +415,10 @@ def check_lesson(path, book, errors):
             check_variants(where, c, errors)
         if ctype == "compare":
             check_compare(where, c, errors)
+        if ctype == "video":
+            check_video(where, c, os.path.dirname(path), errors)
+        if ctype == "scene":
+            check_scene(where, c, os.path.dirname(path), errors)
         if ctype in ("reflect", "commit"):
             if not isinstance(c.get("minChars"), int) or c["minChars"] < 1:
                 errors.append(f"{where}: needs a positive minChars")
@@ -400,6 +458,11 @@ def check_lesson(path, book, errors):
         errors.append(f"{rel}: needs at least one case card")
     if types.count("reflect") != 1:
         errors.append(f"{rel}: needs exactly one reflect card, found {types.count('reflect')}")
+    if types.count("video") > MAX_VIDEOS:
+        errors.append(f"{rel}: at most {MAX_VIDEOS} video card per lesson")
+    for k, t in enumerate(types):
+        if t == "video" and (k + 1 >= len(types) or types[k + 1] not in PRODUCING):
+            errors.append(f"{rel}: card {k + 1} is a video; the next card must ask the learner to act on it")
     is_last = bool(book["lessons"]) and book["lessons"][-1].get("file") == name
     commits = types.count("commit")
     if is_last and commits != 1:
