@@ -37,7 +37,7 @@ INK_SOFT = "#9fb0bb"
 
 # One canvas for every pose, in the logo's own coordinates (the C spans
 # x 264 to 668, y 256 to 768), with room above for a raised hand or a prop.
-VIEWBOX = (200, 150, 680, 680)
+VIEWBOX = (200, 150, 820, 680)
 
 # The check as drawn in the logo, and the point it pivots around.
 CHECK = [(664, 517), (708, 561), (793, 473)]
@@ -108,6 +108,21 @@ def sparks(cx, cy, r1=26, r2=46, angles=(-110, -50, 10)):
 
 
 AHA = move_check(rotate=-12, scale=1.25, dx=30, dy=-150)
+POINT = move_check(rotate=30, scale=0.9, dx=10, dy=-6)
+
+
+def pointer(points, reach=150, gap=20):
+    """A dashed gold line carrying on from the check's long arm, ending in a
+    dot: the target marker. In a scene, redraw it from the hand to the real
+    target (see the spec); here it shows the direction."""
+    (x1, y1), (x2, y2) = points[1], points[2]
+    L = math.hypot(x2 - x1, y2 - y1)
+    ux, uy = (x2 - x1) / L, (y2 - y1) / L
+    sx, sy = x2 + ux * gap, y2 + uy * gap
+    ex, ey = x2 + ux * (gap + reach), y2 + uy * (gap + reach)
+    return (f'<g id="prop"><line x1="{sx:.1f}" y1="{sy:.1f}" x2="{ex:.1f}" y2="{ey:.1f}" stroke="{GOLD}" '
+            f'stroke-width="7" stroke-linecap="round" stroke-dasharray="12 12"/>'
+            f'<circle cx="{ex + ux * 14:.1f}" cy="{ey + uy * 14:.1f}" r="7" fill="{GOLD}"/></g>')
 
 POSES = {
     "neutral": {
@@ -137,8 +152,8 @@ POSES = {
     "pointing": {
         "when": "directing attention",
         "eyes": eye("l", EYE_L, look=(13, 2)) + eye("r", EYE_R, look=(13, 2)),
-        "hand": hand(move_check(rotate=28, dx=52, dy=-12)),
-        "prop": "",
+        "hand": hand(POINT),
+        "prop": pointer(POINT),
     },
 }
 
@@ -165,7 +180,7 @@ def pose_svg(name, transform, d):
 
 
 def sheet_svg(poses):
-    cell_w, cell_h, cols = 420, 470, 3
+    cell_w, cell_h, cols = 420, 440, 3
     W, H = cell_w * cols + 60, 150 + cell_h * 2 + 40
     font = 'font-family="Hanken Grotesk, system-ui, sans-serif"'
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">',
@@ -185,7 +200,9 @@ def sheet_svg(poses):
         vb = " ".join(str(v) for v in VIEWBOX)
         parts.append(f'<rect x="{x0 + 10}" y="{y0}" width="{cell_w - 20}" height="{cell_h - 20}" rx="18" '
                      f'fill="none" stroke="{INK_SOFT}" stroke-opacity="0.25"/>')
-        parts.append(f'<svg x="{x0 + 30}" y="{y0 + 10}" width="{cell_w - 60}" height="{cell_w - 60}" viewBox="{vb}">'
+        art_w = cell_w - 40
+        art_h = round(art_w * VIEWBOX[3] / VIEWBOX[2])
+        parts.append(f'<svg x="{x0 + 20}" y="{y0 + 30}" width="{art_w}" height="{art_h}" viewBox="{vb}">'
                      + inner.replace('id="', f'id="{name}-').replace('url(#', f'url(#{name}-') + "</svg>")
         parts.append(f'<text x="{x0 + cell_w // 2}" y="{y0 + cell_h - 68}" fill="{INK}" font-size="24" '
                      f'font-weight="700" text-anchor="middle">{name}</text>')

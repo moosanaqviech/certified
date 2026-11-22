@@ -127,7 +127,13 @@ Poses (the full set; add one only by updating this list):
 | curious | one eye wider, pupils up and to the side | raised like a raised hand | the opening puzzle |
 | puzzled | eyes narrowed | tilted, with a small gold "?" above | the moment the naive answer fails |
 | aha | eyes wide | raised high, three gold sparks at its tip | the reveal |
-| pointing | looking at the target | extended toward the target | directing attention to one part |
+| pointing | looking at the target | extended, with a dashed gold line carrying on from its long arm to a target dot | directing attention to one part |
+
+The pose file's pointer line only shows the direction. In a scene, draw it
+fresh from the hand's tip to the real target (a `DashedLine` in gold,
+stroke 7 at 1080 px, ending in a gold dot just short of the part), grow it
+with `Create`, and remove it before the next pose. The line may cross empty
+backdrop, never a label or another quantity.
 
 Rules:
 
