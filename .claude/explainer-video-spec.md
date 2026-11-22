@@ -137,9 +137,11 @@ backdrop, never a label or another quantity.
 
 Rules:
 
-- Cee stands in a corner: bottom left in landscape, top left in portrait
-  (clear of the YouTube Shorts controls). It is about 12% of the frame's
-  short side. It never enters the diagram, and never covers a quantity.
+- Cee stands bottom left: in the corner in landscape, and in portrait just
+  above the Shorts safe area, under the diagram, with the words at the top.
+  (A top-left Cee in portrait made the pointer line cut through the text.)
+  The body is about 1.15 scene units tall (about 14% of the short side). It
+  never enters the diagram, and never covers a quantity.
 - At most three pose changes per clip. A typical clip: curious at the
   puzzle, puzzled at the wrong turn, aha at the reveal.
 - Cee is optional. A clip with no wrong turn can skip it.
@@ -191,6 +193,18 @@ one from the other.
   file's header. Never import 3Blue1Brown's own `manimlib` video code.
 - Scene source: `books/<book-id>/video-src/lesson-NN-<slug>.py`, one file per
   clip, committed. Renders are not committed: they go to YouTube.
+- Cee in a scene: always through `books/_shared/video/cee_manim.py`
+  (`Cee(height=1.15).move_to_anchor(...)`, `cee.pose(name)`,
+  `cee.point_at(point)`), never a bare `SVGMobject`. Manim re-centres and
+  rescales each SVG on its own bounds and drops gradients; the helper lines
+  every pose up on the body and paints the gradients back.
+  `books/_shared/video/cee_test_clip.py` is the working reference (30 s, both
+  shapes, all five poses), tested on Manim Community 0.22.1.
+- Install: `pip install manim` in a virtualenv (Debian's system setuptools
+  fails to build its `srt` dependency) after the Pango and Cairo dev
+  packages (`libpango1.0-dev libcairo2-dev pkg-config`). No LaTeX is needed
+  unless a scene uses `MathTex`. Render the two shapes one after the other,
+  not in parallel: they share Manim's text cache.
 - Render: `manim -qh --fps 30 -r 1920,1080` (landscape) and `-r 1080,1920`
   (portrait), with the background set from the book's `palette.bg`.
 - Posters: one frame per shape from the puzzle beat (Cee curious, the question
