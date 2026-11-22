@@ -455,8 +455,10 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   every book lesson (the "no shared JS" rule belongs to the cert engines).
   Fixes there reach every lesson, so keep them backward compatible; a breaking
   change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
-  compare, scene, video, choice (single, or `select: N`), predict, sort,
-  bucket, reflect, commit, done. The layout is one column on a phone and two panes (art beside
+  compare, scene, video, dialogue (two or three characters, one speech bubble
+  per tap), timeline (dated events, one per tap), figure (one big number),
+  choice (single, or `select: N`), predict, sort, bucket, reflect, commit,
+  done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
   answer, lesson_complete) carrying ids and right or wrong only, never the
   learner's written text.
@@ -496,6 +498,15 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   is also added by hand to the list in `books/review/index.html`.
 - Lessons open from a local file, but folder links (the book home, the review
   page) need a web server: test those with `python3 -m http.server`.
+- Variety rules (22 Nov 2026), for a book whose `book.json` sets
+  `"variety": true`: every card with art names its `look` (diagram,
+  illustration, comic, portrait or map), each lesson uses at least three
+  visual formats (the looks, plus dialogue, timeline, figure, compare, scene
+  and video cards), and no two neighbouring lessons open with the same card
+  type. Lessons no longer need a case card before the first concept; they
+  need one concrete card (case, dialogue, timeline or scene) somewhere. Vary
+  the lesson shape: story-led, puzzle-led, timeline-led, debate-led or
+  application-led.
 - A card's type class is `be-t-<type>`; component classes are `be-<name>`.
   Keep the two apart: a card typed `bucket` once collided with `.be-bucket`.
 - A lesson is `books/<book-id>/lesson-NN-name.html`, copied from
@@ -530,6 +541,21 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   from the book are its title, its author and the term "Infinity Principle",
   credited once in lesson 1. Do not add the book's own examples, historical
   stories or figures. Navy and cyan palette, set in its `book.json`.
+- Rebuild in progress (22 Nov 2026): the owner judged the six-lesson version
+  too far from the book, so `books/infinite-powers-v2/` is a part-by-part
+  summary written from the book's text (2019 Houghton Mifflin Harcourt
+  edition): one lesson per part, thirteen in all (Introduction, chapters 1 to
+  11, Conclusion). Lessons 1 to 3 (Introduction, 1 Infinity, 2 The Man Who
+  Harnessed Infinity) are built as a checkpoint for the owner; the other ten
+  are not written. For this book the owner has lifted the rule against
+  following the book's structure and retelling its stories and examples; the
+  other sourcing rules stand (our own wording, short credited phrases only,
+  none of the book's figures, all drawings original). Its `book.json` sets
+  `"variety": true` and `"partial": true` (the validator then skips the
+  commit-card rule, since an unfinished book has no last lesson). When all
+  thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
+  removed and lesson 13 carries the commit card. The book's text is never
+  committed: the repo is deployed publicly.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

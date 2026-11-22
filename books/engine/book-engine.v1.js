@@ -3,8 +3,9 @@
    <script type="application/json" id="lesson"> and a <main id="app"> mount.
    Payloads are data only: no script, no raw HTML outside a card's `art` SVG.
 
-   Card types: cover, concept, case, compare, scene, video, choice (single or
-   select-N), predict, sort, bucket, reflect, commit, done.
+   Card types: cover, concept, case, compare, scene, video, dialogue,
+   timeline, figure, choice (single or select-N), predict, sort, bucket,
+   reflect, commit, done.
    A breaking change ships as book-engine.v2.js; fixes to this file reach
    every v1 lesson at once, so keep them backward compatible. */
 (function () {
@@ -23,6 +24,11 @@
   }
   var cards = L.cards || [];
   if (!cards.length) return;
+  /* A dialogue shows one line per tap and a timeline one event per tap. */
+  cards.forEach(function (c) {
+    if (c.type === 'dialogue' && c.lines) c.steps = c.lines.length;
+    if (c.type === 'timeline' && c.events) c.steps = c.events.length;
+  });
 
   var PRODUCING = { choice: 1, predict: 1, sort: 1, bucket: 1, reflect: 1, commit: 1 };
   var NO_SWIPE = { sort: 1, bucket: 1 };
@@ -30,6 +36,9 @@
     concept: 'The idea',
     'case': 'A case',
     compare: 'Side by side',
+    dialogue: 'A conversation',
+    timeline: 'How it unfolded',
+    figure: 'One number',
     scene: 'Picture it',
     video: 'Watch',
     choice: 'Your turn',
@@ -463,6 +472,60 @@
       var playing = v.play();
       if (playing && playing.catch) playing.catch(function () {});
     });
+  };
+
+  /* Two or three characters talking. Each line is a speech bubble on its
+     speaker's side, shown one per tap. A cast member's avatar is a small SVG
+     (`art`) or, failing that, the first letter of the name. */
+  BUILD.dialogue = function (c, card) {
+    addHead(card, TAG.dialogue, c.title);
+    var cast = {};
+    (c.cast || []).forEach(function (m, k) {
+      cast[m.id] = { name: m.name, art: m.art, side: m.side || (k % 2 ? 'right' : 'left'), tone: k % 3 };
+    });
+    var box = h('div', 'be-talk');
+    (c.lines || []).forEach(function (ln, k) {
+      var who = cast[ln.who] || { name: ln.who, side: 'left', tone: 0 };
+      var row = h('div', 'be-line is-' + who.side + ' is-tone' + who.tone);
+      row.setAttribute('data-step', k + 1);
+      var face = h('span', 'be-face', who.art || esc(String(who.name).charAt(0)));
+      face.setAttribute('aria-hidden', 'true');
+      var bubble = h('div', 'be-bubble');
+      bubble.appendChild(h('span', 'be-who', esc(who.name)));
+      bubble.appendChild(h('span', 'be-said', fmt(ln.text)));
+      row.appendChild(face);
+      row.appendChild(bubble);
+      box.appendChild(row);
+    });
+    card.appendChild(box);
+    addBody(c, card);
+    card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+  };
+
+  /* Dated events on a vertical line, shown one per tap. */
+  BUILD.timeline = function (c, card) {
+    addHead(card, TAG.timeline, c.title);
+    var list = h('ol', 'be-time');
+    (c.events || []).forEach(function (ev, k) {
+      var li = h('li', 'be-event');
+      li.setAttribute('data-step', k + 1);
+      li.appendChild(h('span', 'be-when', esc(ev.when)));
+      li.appendChild(h('span', 'be-what', fmt(ev.label)));
+      if (ev.detail) li.appendChild(h('span', 'be-detail', fmt(ev.detail)));
+      list.appendChild(li);
+    });
+    card.appendChild(list);
+    addBody(c, card);
+    card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+  };
+
+  /* One striking number or short statement, set large. */
+  BUILD.figure = function (c, card) {
+    addHead(card, TAG.figure, c.title);
+    var big = h('p', 'be-big', fmt(c.value));
+    card.appendChild(big);
+    if (c.caption) card.appendChild(h('p', 'be-lead', fmt(c.caption)));
+    addBody(c, card);
   };
 
   BUILD.compare = function (c, card) {
@@ -1140,6 +1203,11 @@
     if (stepsLeft(c) <= 0) return false;
     stepState[c.id] = (stepState[c.id] || 0) + 1;
     applySteps(c, stage.firstChild);
+    /* On a long card the newly shown step can be below the fold. */
+    var shown = stage.querySelectorAll('[data-step="' + stepState[c.id] + '"]');
+    if (shown.length && shown[shown.length - 1].scrollIntoView) {
+      shown[shown.length - 1].scrollIntoView({ block: 'nearest' });
+    }
     updateChrome();
     return true;
   }
