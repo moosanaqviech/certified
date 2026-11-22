@@ -457,6 +457,7 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
   compare, scene, video, dialogue (two or three characters, one speech bubble
   per tap), timeline (dated events, one per tap), figure (one big number),
+  evolve (one diagram that changes with each tap, see below),
   choice (single, or `select: N`), predict, sort, bucket, reflect, commit,
   done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
@@ -491,13 +492,23 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   (the Infinity Principle, 43 s, captions burned in, narrated with the
   Kokoro `af_heart` text-to-speech voice via video-src/narrate.py),
   served from `media/` with `host: "file"` until it is uploaded to YouTube.
-- Evolving-diagram sample (22 Nov 2026): `books/_lab/evolving-diagram.html`,
-  a standalone page, not an engine card. One diagram persists across taps
-  and morphs (three puzzles collapse into the Infinity Principle, it branches
-  into cut and rebuild, a text-only beat, then four questions), with a short
-  paragraph per tap and optional Kokoro narration (`media/step-N.mp3`).
-  Pacing modelled on a pattern the owner liked in another app; the look is
-  ours. If approved it becomes an `evolve` card type in book-engine.v2.
+- Evolve card (22 Nov 2026): `"type": "evolve"` with `title`, `look`,
+  `alt`, an optional `label` and 3 to 7 `stages`, each `{text, art?,
+  audio?}`. One tap per stage; every stage's SVG shares one viewBox. The
+  engine animates between stages from attributes on top-level shapes: the
+  same `data-k` in two stages moves and scales the shape into its new place,
+  `data-into="k"` shrinks a leaving shape into the next stage's k,
+  `data-from="k"` grows an arriving shape out of the previous stage's k,
+  `data-draw` draws an arriving line, anything else fades. A stage without
+  art is a text-only beat that keeps the last picture, so the next picture
+  grows out of it. `audio` is per-stage narration, played only after the
+  learner turns narration on (remembered under `books.v1.sound`). The
+  validator checks the stage count, the shared viewBox, unique keys per
+  stage and that every from or into names a key in the nearest stage with
+  art. Reference: infinite-powers-v2 lesson 1, card `principle` (Kokoro
+  narration in `media/principle-N.mp3`). It was prototyped as a standalone
+  page from a pacing pattern the owner liked in another app; the look and
+  content are ours.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
