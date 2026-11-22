@@ -462,15 +462,22 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   learner's written text.
 - A video card is optional (at most one per lesson, 30 to 60 seconds, and the
   next card must ask the learner to act on it). It never gates Continue and
-  loads nothing until the poster is tapped. `host: "drive"` takes Google Drive
-  file ids (portrait and landscape), shared as "anyone with the link", and
-  embeds Drive's own player, so captions must be burned into the picture
-  (`captions: "burned-in"`); `host: "file"` takes .mp4 or .webm URLs and a
-  .vtt captions file, played in a plain `<video>`. Both need a poster image
-  per shape under the book's `media/` folder and a transcript. Drive is a
-  stopgap, not a video host: it shows Drive's interface, needs a second tap
-  to play, and limits heavy traffic. The two clips in the sample lesson are
-  labelled placeholders in the owner's Drive.
+  loads nothing until the poster is tapped. Three hosts, each taking a
+  portrait and a landscape source: `host: "youtube"` is the normal one (the
+  sources are 11-character video ids, embedded from youtube-nocookie.com,
+  `captions: "youtube"` or `"burned-in"`); `host: "file"` takes .mp4 or .webm
+  URLs and a .vtt captions file (or burned-in captions), played in a plain
+  `<video>`; `host: "drive"` takes Google Drive file ids and is a stopgap
+  only, because Drive's player is landscape on phones whatever the clip's
+  shape. Every video card needs a poster image per shape under the book's
+  `media/` folder and a transcript. The sample lesson plays two labelled
+  placeholder clips from `books/meditations/media/` with `host: "file"`
+  until real clips are on YouTube.
+- Real clip recipe: upload the vertical and the wide cut to YouTube as two
+  videos (the vertical one becomes a Short, which embeds fine), set each to
+  Public or Unlisted with embedding allowed (Private cannot be embedded), add
+  captions there or burn them in, then put the two ids in the card's
+  `sources` and replace its posters and transcript.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of

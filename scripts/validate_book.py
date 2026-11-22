@@ -212,6 +212,7 @@ def check_bucket(where, card, errors):
 MAX_VIDEOS = 1
 VIDEO_SECONDS = (30, 60)
 DRIVE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{20,}$")
+YOUTUBE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 SHAPES = {"portrait", "landscape"}
 
 
@@ -219,12 +220,14 @@ def check_video(where, card, folder, errors):
     """A video card is optional, but one that exists must be complete: both
     shapes, a poster for each, captions and a transcript."""
     host = card.get("host")
-    if host not in ("drive", "file"):
-        errors.append(f"{where}: host must be \"drive\" or \"file\"")
+    if host not in ("youtube", "file", "drive"):
+        errors.append(f"{where}: host must be \"youtube\", \"file\" or \"drive\"")
         return
     sources, poster = card.get("sources"), card.get("poster")
     if not isinstance(sources, dict) or set(sources) != SHAPES:
         errors.append(f"{where}: sources needs portrait and landscape")
+    elif host == "youtube" and not all(YOUTUBE_ID_RE.match(str(v)) for v in sources.values()):
+        errors.append(f"{where}: with host youtube, each source is the 11-character video id, not a link")
     elif host == "drive" and not all(DRIVE_ID_RE.match(str(v)) for v in sources.values()):
         errors.append(f"{where}: with host drive, each source is a Google Drive file id, not a link")
     elif host == "file" and not all(re.search(r"\.(mp4|webm)(\?|$)", str(v)) for v in sources.values()):
@@ -236,9 +239,13 @@ def check_video(where, card, folder, errors):
             if not os.path.exists(os.path.join(folder, str(rel_path))):
                 errors.append(f"{where}: poster {rel_path!r} does not exist")
     caps = card.get("captions")
+    if host == "youtube" and caps not in ("youtube", "burned-in"):
+        errors.append(f"{where}: captions must be \"youtube\" (a captions track uploaded with the "
+                      f"video) or \"burned-in\"")
     if host == "drive" and caps != "burned-in":
         errors.append(f"{where}: Drive's player cannot load a captions file, so captions must be "
-                      f"part of the picture: set captions to \"burned-in\" once they are")
+                      f"part of the picture: set captions to \"burned-in\" once they are. Drive's "
+                      f"player is also landscape on phones; prefer host youtube or file")
     if host == "file" and caps != "burned-in" and not (
             isinstance(caps, str) and caps.endswith(".vtt") and os.path.exists(os.path.join(folder, caps))):
         errors.append(f"{where}: captions must be an existing .vtt file, or \"burned-in\"")
