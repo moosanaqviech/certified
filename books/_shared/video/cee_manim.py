@@ -17,6 +17,7 @@ Why a helper, not a bare SVGMobject:
 - The pose files' pointer line only shows a direction; point_at() draws a
   live one to the real target.
 """
+import math
 import os
 
 from manim import (VGroup, VMobject, Circle, DashedLine, Dot, Transform, FadeIn,
@@ -115,10 +116,11 @@ class Cee(VGroup):
         return pts[-1]
 
     # ---- animation ------------------------------------------------------
-    def pose(self, name, run_time=0.6):
+    def pose(self, name, run_time=0.6, target=None):
         """Animate to a pose. Parts that exist in both poses morph; lids and
-        props that exist in only one fade."""
-        target = self.poses[name].copy()
+        props that exist in only one fade. `target` overrides the stored pose
+        (point_at passes one with the hand turned)."""
+        target = target if target is not None else self.poses[name].copy()
         anims = []
         if self.pointer is not None:
             anims.append(FadeOut(self.pointer))
@@ -127,15 +129,35 @@ class Cee(VGroup):
         self.current = name
         return AnimationGroup(*anims)
 
+    def aimed(self, point):
+        """The pointing pose turned toward `point`: the check rotates about
+        its corner until its long arm lines up with the target, and the
+        pupils look the same way. Works for targets to Cee's right, above or
+        below (Cee stands bottom left, so targets always are)."""
+        g = self.poses["pointing"].copy()
+        hand = g[4]
+        a = hand.get_anchors()            # P1, P2, P2, P3: short arm, then long arm
+        corner, tip = a[1], a[-1]
+        arm = tip - corner
+        want = point - corner
+        turn = math.atan2(want[1], want[0]) - math.atan2(arm[1], arm[0])
+        hand.rotate(turn, about_point=corner)
+        look = normalize(point - g[0].get_center())
+        for eye, pupil in zip(g[1], g[2]):
+            room = (eye.height - pupil.height) / 2 * 0.55
+            pupil.move_to(eye.get_center() + look * room)
+        return g
+
     def point_at(self, point, run_time=0.6, gap=0.14):
-        """Pointing pose, then a dashed gold line from the check's tip to
-        just short of `point`, ending in a gold dot."""
-        tip = self.hand_tip("pointing")
+        """Pointing pose aimed at `point`, then a dashed gold line from the
+        check's tip to just short of it, ending in a gold dot."""
+        target = self.aimed(point)
+        tip = target[4].get_anchors()[-1]
         direction = normalize(point - tip)
         end = point - direction * gap
         start = tip + direction * gap * 0.8
         line = DashedLine(start, end, color=GOLD, stroke_width=5, dash_length=0.12, dashed_ratio=0.55)
         dot = Dot(end, radius=0.065, color=GOLD)
-        to_pose = self.pose("pointing", run_time=run_time)   # clears any old pointer
+        to_pose = self.pose("pointing", run_time=run_time, target=target)   # clears any old pointer
         self.pointer = VGroup(line, dot)
         return Succession(to_pose, AnimationGroup(Create(line), FadeIn(dot), run_time=0.7))

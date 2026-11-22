@@ -129,8 +129,10 @@ Poses (the full set; add one only by updating this list):
 | aha | eyes wide | raised high, three gold sparks at its tip | the reveal |
 | pointing | looking at the target | extended, with a dashed gold line carrying on from its long arm to a target dot | directing attention to one part |
 
-The pose file's pointer line only shows the direction. In a scene, draw it
-fresh from the hand's tip to the real target (a `DashedLine` in gold,
+The pose file's pointer line only shows the direction. In a scene,
+`cee.point_at(point)` turns the check about its corner so the long arm aims
+at the target, moves the pupils to look the same way, and draws the line
+fresh from the tip to the real target (a `DashedLine` in gold,
 stroke 7 at 1080 px, ending in a gold dot just short of the part), grow it
 with `Create`, and remove it before the next pose. The line may cross empty
 backdrop, never a label or another quantity.
