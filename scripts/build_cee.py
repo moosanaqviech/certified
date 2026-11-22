@@ -13,8 +13,10 @@ Outputs, under books/_shared/video/:
   cee-sheet.svg        all five poses on the book backdrop, with labels
 
 Every pose shares one viewBox, so swapping poses in Manim keeps Cee in place.
-Fills are flat (no gradients) because Manim's SVG import does not render
-gradients. Parts carry ids (body, eye-l, eye-r, pupil-l, pupil-r, lid-l, lid-r, hand,
+The C and its lids carry the logo's lavender gradient and the check a gold
+gradient in the same direction. Manim's SVG import may drop gradients, so a
+scene re-applies them in code (see the spec) and the flat LAV and GOLD
+values are the fallback. Parts carry ids (body, eye-l, eye-r, pupil-l, pupil-r, lid-l, lid-r, hand,
 prop) so a scene can address them. The SVGs are committed; nothing on the
 site depends on this script.
 """
@@ -23,8 +25,10 @@ import math, os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "books", "_shared", "video")
 
-LAV = "#d3d6ff"      # the logo gradient's midpoint, flat
+LAV = "#d3d6ff"      # the logo gradient's midpoint: the flat fallback
+LAV_STOPS = ("#eef0ff", "#d3d6ff", "#aeb2ff")   # as in assets/logo-mark.svg
 GOLD = "#d9a441"
+GOLD_STOPS = ("#f3cf7a", "#d9a441", "#b5802b")  # light at the tip, deep at the base
 EYE = "#ffffff"
 PUPIL = "#0f1220"
 BG = "#0f1a24"       # infinite-powers palette.bg, for the sheet only
@@ -66,7 +70,7 @@ def move_check(rotate=0.0, scale=1.0, dx=0.0, dy=0.0):
 
 def hand(points, width=26):
     d = "M%s %s L%s %s L%s %s" % (points[0] + points[1] + points[2])
-    return (f'<path id="hand" d="{d}" fill="none" stroke="{GOLD}" '
+    return (f'<path id="hand" d="{d}" fill="none" stroke="url(#gold)" '
             f'stroke-width="{width}" stroke-linecap="round" stroke-linejoin="round"/>')
 
 
@@ -79,7 +83,7 @@ def eye(side, centre, rx=27, ry=32, look=(0, 0), pupil=12, lid=None):
     dot = f'<circle id="pupil-{side}" cx="{px}" cy="{py}" r="{pupil}" fill="{PUPIL}"/>'
     if lid is not None:
         top = (f'<path id="lid-{side}" d="M{cx - rx - 2} {cy + 2} A{rx + 2} {ry + 2} 0 0 1 {cx + rx + 2} {cy + 2} Z" '
-               f'fill="{LAV}" transform="rotate({lid} {cx} {cy})"/>')
+               f'fill="url(#lav)" transform="rotate({lid} {cx} {cy})"/>')
         return white + dot + top
     return white + dot
 
@@ -139,13 +143,21 @@ POSES = {
 }
 
 
+def defs():
+    def grad(gid, stops, x2, y2, units=""):
+        st = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in zip((0, 0.5, 1), stops))
+        return f'<linearGradient id="{gid}" x1="0" y1="0" x2="{x2}" y2="{y2}"{units}>{st}</linearGradient>'
+    return grad("lav", LAV_STOPS, 0.55, 1) + grad("gold", GOLD_STOPS, 0.3, 1)
+
+
 def pose_svg(name, transform, d):
     p = POSES[name]
     vb = " ".join(str(v) for v in VIEWBOX)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" '
             f'width="{VIEWBOX[2]}" height="{VIEWBOX[3]}">\n'
             f'  <title>Cee, {name}</title>\n'
-            f'  <g id="body" transform="{transform}"><path d="{d}" fill="{LAV}"/></g>\n'
+            f'  <defs>{defs()}</defs>\n'
+            f'  <g id="body" transform="{transform}"><path d="{d}" fill="url(#lav)"/></g>\n'
             f'  {p["eyes"]}\n'
             f'  {p["hand"]}\n'
             + (f'  {p["prop"]}\n' if p["prop"] else "")
@@ -174,7 +186,7 @@ def sheet_svg(poses):
         parts.append(f'<rect x="{x0 + 10}" y="{y0}" width="{cell_w - 20}" height="{cell_h - 20}" rx="18" '
                      f'fill="none" stroke="{INK_SOFT}" stroke-opacity="0.25"/>')
         parts.append(f'<svg x="{x0 + 30}" y="{y0 + 10}" width="{cell_w - 60}" height="{cell_w - 60}" viewBox="{vb}">'
-                     + inner.replace('id="', f'id="{name}-') + "</svg>")
+                     + inner.replace('id="', f'id="{name}-').replace('url(#', f'url(#{name}-') + "</svg>")
         parts.append(f'<text x="{x0 + cell_w // 2}" y="{y0 + cell_h - 68}" fill="{INK}" font-size="24" '
                      f'font-weight="700" text-anchor="middle">{name}</text>')
         parts.append(f'<text x="{x0 + cell_w // 2}" y="{y0 + cell_h - 40}" fill="{INK_SOFT}" font-size="17" '
