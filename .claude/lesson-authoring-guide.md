@@ -62,6 +62,8 @@ Keyboard and swipe still only move between cards: leaving a lesson always takes 
 ## SVGs
  
 Put each illustration in `A` as a template-string SVG keyed by name, then reference it inside a card with `${A.name}`. Use `viewBox` (typically `0 0 320 200` ish) and the palette vars for stroke / fill so art recolors with the theme.
+
+For a "what is inside this thing" concept, use the locked **anatomy card** (an object cut open, labels outside the art, one per tap): rules and a copy-paste skeleton are in `anatomy-card-spec.md`, and `data-pattern="anatomy"` on the SVG makes `scripts/validate.py` enforce them.
  
 ## Low-token workflow
  
