@@ -486,6 +486,10 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   in Manim Community, with Cee (the brand C with eyes and the gold check as
   its hand, no mouth, never speaks) as the only character. Never use
   3Blue1Brown's pi creatures, code or clips, or remake their scenes.
+  Cee's poses and the Manim helper live in `books/_shared/video/`. First real
+  clip (22 Nov 2026): infinite-powers-v2 lesson 1, card `principle-clip`
+  (the Infinity Principle, 43 s, captions burned in, no narration yet),
+  served from `media/` with `host: "file"` until it is uploaded to YouTube.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of

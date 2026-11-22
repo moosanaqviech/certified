@@ -183,7 +183,9 @@ one from the other.
   Keep everything inside a safe area: 120 px from the top, 380 px from the
   bottom and 160 px from the right (the Shorts controls).
 - **Landscape** 1920 x 1080, 30 fps. The diagram sits on the left two thirds
-  and the equation on the right third. 80 px margin on every side.
+  and the equation on the right third. 80 px margin on every side, and keep
+  captions and Cee out of the bottom 12% (130 px): the player's control bar
+  covers it whenever the clip is paused or just started.
 - Minimum sizes at 1080 px wide: words 44 px, equations 56 px, labels 36 px.
   Check on a real phone, not just the render.
 - One scene file renders both: a `SHAPE` switch sets the frame size and the
@@ -219,6 +221,13 @@ one from the other.
 - Upload and wire the card with the YouTube recipe in CLAUDE.md (two videos,
   Public or Unlisted, embedding allowed), then set `seconds` to the real
   length.
+- Until the clips are on YouTube, a card may use `host: "file"` with the two
+  renders committed under `books/<book-id>/media/` (H.264, `-crf 26`,
+  `+faststart`, no audio track while there is no narration; about 1 MB per
+  shape for 45 s). Swap to `host: "youtube"` and delete the files once
+  uploaded.
+- First real clip: `books/infinite-powers-v2/video-src/lesson-01-infinity-principle.py`
+  (lesson 1, card `principle-clip`, 43 s), the reference for new clips.
 
 ## Sourcing (hard rules)
 
