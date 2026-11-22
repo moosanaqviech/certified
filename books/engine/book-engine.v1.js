@@ -366,10 +366,10 @@
   };
 
   /* A short scene. Optional in a lesson, never required to continue, and
-     nothing loads until the learner taps the poster. `host` is "drive" (the
-     sources are Google Drive file ids, shown in Drive's own player, with
-     captions burned into the picture) or "file" (the sources are video URLs,
-     played here with a captions track). The transcript is always available. */
+     nothing loads until the learner taps the poster. `host` is "youtube" (the
+     sources are YouTube video ids), "file" (the sources are video URLs,
+     played here with a captions track) or "drive" (Google Drive file ids in
+     Drive's own player: a stopgap). The transcript is always available. */
   BUILD.video = function (c, card) {
     var wide = !!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches);
     var shape = wide ? 'landscape' : 'portrait';
@@ -399,12 +399,47 @@
       if (window.navigator && window.navigator.onLine === false) { fail(); return; }
       track('video_play', { card_id: c.id, shape: shape, host: c.host });
       box.removeChild(poster);
-      if (c.host === 'drive') {
+      if (c.host === 'youtube' || c.host === 'drive') {
         var frame = h('iframe');
-        frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(c.sources[shape]) + '/preview';
         frame.title = plain(c.title);
-        frame.setAttribute('allow', 'autoplay; fullscreen');
         frame.setAttribute('allowfullscreen', '');
+        if (c.host === 'drive') {
+          /* Drive's player is landscape on phones whatever the clip's shape:
+             a stopgap only. Prefer youtube or file. */
+          frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(c.sources[shape]) + '/preview';
+          frame.setAttribute('allow', 'autoplay; fullscreen');
+          box.appendChild(frame);
+          return;
+        }
+        /* YouTube's player fills the frame it is given, so a vertical clip
+           fills the portrait frame. The no-cookie domain sets nothing until
+           the learner plays. No YouTube script is loaded: the end of playback
+           is read from the player's own messages. */
+        var YT = 'https://www.youtube-nocookie.com';
+        var query = 'autoplay=1&playsinline=1&rel=0&modestbranding=1&cc_load_policy=1&enablejsapi=1';
+        if (/^https?:$/.test(window.location.protocol)) {
+          query += '&origin=' + encodeURIComponent(window.location.origin);
+        }
+        frame.src = YT + '/embed/' + encodeURIComponent(c.sources[shape]) + '?' + query;
+        frame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+        var ended = false;
+        frame.addEventListener('load', function () {
+          try {
+            frame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: c.id, channel: 'widget' }), YT);
+          } catch (e) {}
+        });
+        window.addEventListener('message', function (e) {
+          if (ended || e.origin !== YT || e.source !== frame.contentWindow) return;
+          var data = null;
+          try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+          if (!data) return;
+          var state = data.event === 'onStateChange' ? data.info
+            : (data.event === 'infoDelivery' && data.info ? data.info.playerState : null);
+          if (state === 0) {
+            ended = true;
+            track('video_complete', { card_id: c.id });
+          }
+        });
         box.appendChild(frame);
         return;
       }
