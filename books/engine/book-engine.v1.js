@@ -170,6 +170,9 @@
   /* ---------- chrome ---------- */
   app.innerHTML = '';
   app.className = 'be';
+  /* A lesson may ask for a visual style, such as "storybook" (light page,
+     picture first, bold filled art). The style is a class on the app. */
+  if (L.style) app.className += ' be-' + String(L.style).replace(/[^a-z]/g, '');
 
   var top = h('div', 'be-top');
   var close = h('a', 'be-close', '&times;');
@@ -290,6 +293,8 @@
   function addArt(c, card) {
     if (!c.art) return;
     var art = h('div', 'be-art', c.art);
+    /* The colour block behind the picture, chosen per card. */
+    if (c.tone) art.className += ' be-tone-' + String(c.tone).replace(/[^a-z]/g, '');
     var svg = art.querySelector('svg');
     if (svg) {
       if (c.alt) {

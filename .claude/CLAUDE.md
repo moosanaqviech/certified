@@ -556,6 +556,21 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
   removed and lesson 13 carries the commit card. The book's text is never
   committed: the repo is deployed publicly.
+- Storybook style (22 Nov 2026): the owner found the dark, line-drawn
+  lessons informative but boring and asked for something colourful, in the
+  manner of Imprint. A lesson whose JSON sets `"style": "storybook"` gets a
+  light page with the picture first on a colour block (a card's `tone`:
+  peach, sky, mint, sun, lilac or rose), large headings and dark buttons.
+  Pictures are bold, filled and multi-colour, drawn with the engine's
+  illustration variables (`--c-sun`, `--c-coral`, `--c-leaf` and so on in
+  `book-engine.v1.css`), never thin single-colour line art. Write one short
+  sentence in the heading and at most a line or two under it; cover the
+  chapter with more cards, not more words. The validator allows a storybook
+  lesson 18 to 36 cards, up to four cards in a row with nothing to do, and a
+  quarter of cards as questions. `books/infinite-powers-storybook/` is the
+  one-lesson sample (chapter 1, 35 cards) awaiting the owner's approval; if
+  approved, all thirteen parts are written this way and replace both
+  `books/infinite-powers/` and `books/infinite-powers-v2/`.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

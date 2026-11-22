@@ -34,25 +34,29 @@ PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
 REVIEWABLE = {"choice", "predict", "sort", "bucket"}
 
 FIELDS = {
-    "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead", "look"},
-    "concept": {"id", "type", "title", "body", "art", "alt", "steps", "look"},
-    "case": {"id", "type", "title", "body", "art", "alt", "steps", "look"},
+    "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead", "look", "tone"},
+    "concept": {"id", "type", "title", "body", "art", "alt", "steps", "look", "tone"},
+    "case": {"id", "type", "title", "body", "art", "alt", "steps", "look", "tone"},
     "compare": {"id", "type", "title", "columns", "rows", "body"},
-    "scene": {"id", "type", "title", "body", "art", "alt", "steps", "model", "fallback", "look"},
+    "scene": {"id", "type", "title", "body", "art", "alt", "steps", "model", "fallback", "look", "tone"},
     "video": {"id", "type", "title", "lead", "host", "sources", "poster", "captions",
               "transcript", "seconds"},
     "dialogue": {"id", "type", "title", "cast", "lines", "body"},
     "timeline": {"id", "type", "title", "events", "body"},
     "figure": {"id", "type", "title", "value", "caption", "body"},
-    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "look", "review", "variants"},
+    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "look", "review", "variants", "tone"},
     "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
     "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
     "commit": {"id", "type", "prompt", "minChars", "suggestions"},
-    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "look", "review", "variants"},
+    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "look", "review", "variants", "tone"},
     "reflect": {"id", "type", "prompt", "minChars", "example"},
     "done": {"id", "type", "title", "can"},
 }
-LESSON_FIELDS = {"schema", "book", "n", "title", "idea", "cards"}
+LESSON_FIELDS = {"schema", "book", "n", "title", "idea", "cards", "style"}
+# A storybook lesson has many short cards, so it may be longer and may run a
+# few more cards between questions. (min cards, max cards, passive run, share)
+STYLES = {None: (12, 20, 2, 1 / 3), "storybook": (18, 36, 4, 1 / 4)}
+TONES = {"peach", "sky", "mint", "sun", "lilac", "rose"}
 RIGHTS_TIERS = {"public-domain", "original", "licensed"}
 
 BASE = "https://certify.courses"
@@ -454,8 +458,11 @@ def check_lesson(path, book, errors):
     if not isinstance(cards, list) or not cards:
         errors.append(f"{rel}: no cards")
         return
+    if lesson.get("style") not in STYLES:
+        errors.append(f"{rel}: unknown style {lesson.get('style')!r}")
+    MIN_CARDS, MAX_CARDS, MAX_PASSIVE_RUN, MIN_PRODUCING_SHARE = STYLES.get(lesson.get("style"), STYLES[None])
     if not MIN_CARDS <= len(cards) <= MAX_CARDS:
-        errors.append(f"{rel}: {len(cards)} cards; a lesson has {MIN_CARDS} to {MAX_CARDS}")
+        errors.append(f"{rel}: {len(cards)} cards; a lesson in this style has {MIN_CARDS} to {MAX_CARDS}")
 
     seen = set()
     for k, c in enumerate(cards, 1):
@@ -493,6 +500,8 @@ def check_lesson(path, book, errors):
             check_timeline(where, c, errors)
         if ctype == "figure":
             check_figure(where, c, errors)
+        if "tone" in c and (c["tone"] not in TONES or not c.get("art")):
+            errors.append(f"{where}: tone is the colour behind a picture, one of {sorted(TONES)}")
         if "look" in c and c["look"] not in LOOKS:
             errors.append(f"{where}: look must be one of {sorted(LOOKS)}")
         if "look" in c and not c.get("art"):
@@ -531,7 +540,7 @@ def check_lesson(path, book, errors):
             errors.append(f"{rel}: card {k} is the {run}th card in a row with nothing to do; the limit is {MAX_PASSIVE_RUN}")
     producing = sum(1 for t in types if t in PRODUCING)
     if producing < len(types) * MIN_PRODUCING_SHARE:
-        errors.append(f"{rel}: {producing} of {len(types)} cards ask the learner to do something; at least a third must")
+        errors.append(f"{rel}: {producing} of {len(types)} cards ask the learner to do something; this style needs at least {MIN_PRODUCING_SHARE:.0%}")
     if not any(t in PRODUCING for t in types[:HOOK_WITHIN]):
         errors.append(f"{rel}: no question in the first {HOOK_WITHIN} cards; open with a hook")
     if not STORY_TYPES & set(types):
