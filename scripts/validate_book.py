@@ -27,24 +27,28 @@ MIN_STEPPED = 2
 MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
 # Card types the v1 engine renders.
-TYPES = {"cover", "concept", "case", "compare", "scene", "video", "choice",
+TYPES = {"cover", "concept", "case", "compare", "scene", "video", "dialogue",
+         "timeline", "figure", "choice",
          "predict", "sort", "bucket", "reflect", "commit", "done"}
 PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
 REVIEWABLE = {"choice", "predict", "sort", "bucket"}
 
 FIELDS = {
-    "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead"},
-    "concept": {"id", "type", "title", "body", "art", "alt", "steps"},
-    "case": {"id", "type", "title", "body", "art", "alt", "steps"},
+    "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead", "look"},
+    "concept": {"id", "type", "title", "body", "art", "alt", "steps", "look"},
+    "case": {"id", "type", "title", "body", "art", "alt", "steps", "look"},
     "compare": {"id", "type", "title", "columns", "rows", "body"},
-    "scene": {"id", "type", "title", "body", "art", "alt", "steps", "model", "fallback"},
+    "scene": {"id", "type", "title", "body", "art", "alt", "steps", "model", "fallback", "look"},
     "video": {"id", "type", "title", "lead", "host", "sources", "poster", "captions",
               "transcript", "seconds"},
-    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "review", "variants"},
+    "dialogue": {"id", "type", "title", "cast", "lines", "body"},
+    "timeline": {"id", "type", "title", "events", "body"},
+    "figure": {"id", "type", "title", "value", "caption", "body"},
+    "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "look", "review", "variants"},
     "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
     "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
     "commit": {"id", "type", "prompt", "minChars", "suggestions"},
-    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "review", "variants"},
+    "predict": {"id", "type", "prompt", "options", "takeaway", "art", "alt", "look", "review", "variants"},
     "reflect": {"id", "type", "prompt", "minChars", "example"},
     "done": {"id", "type", "title", "can"},
 }
@@ -158,6 +162,66 @@ def check_options(where, card, errors):
         errors.append(f"{where}: at least one option must be marked best")
     if card["type"] == "predict" and not card.get("takeaway"):
         errors.append(f"{where}: predict cards need a takeaway")
+
+
+# Visual formats, for the variety rules. A card with art names its `look`;
+# some card types are a format in themselves.
+LOOKS = {"diagram", "illustration", "comic", "portrait", "map"}
+FORMAT_TYPES = {"dialogue", "timeline", "figure", "compare", "scene", "video"}
+STORY_TYPES = {"case", "dialogue", "timeline", "scene"}
+MIN_FORMATS = 3
+
+
+def check_dialogue(where, card, errors):
+    cast, lines = card.get("cast"), card.get("lines")
+    if not isinstance(cast, list) or not 2 <= len(cast) <= 3:
+        errors.append(f"{where}: a dialogue has 2 or 3 cast members")
+        return
+    ids = []
+    for k, m in enumerate(cast, 1):
+        if not isinstance(m, dict) or not m.get("id") or not m.get("name"):
+            errors.append(f"{where}: cast member {k} needs id and name")
+            continue
+        extra = set(m) - {"id", "name", "side", "art"}
+        if extra:
+            errors.append(f"{where}: cast member {k} has unknown fields {sorted(extra)}")
+        if m.get("side") not in (None, "left", "right"):
+            errors.append(f"{where}: cast member {k} side must be left or right")
+        if m.get("art"):
+            check_art(f"{where} cast {m['id']}", {"type": "cover-avatar", "art": m["art"], "alt": "avatar"}, errors)
+        ids.append(m["id"])
+    if not isinstance(lines, list) or not 3 <= len(lines) <= 8:
+        errors.append(f"{where}: a dialogue has 3 to 8 lines")
+        return
+    for k, ln in enumerate(lines, 1):
+        if not isinstance(ln, dict) or set(ln) != {"who", "text"} or not ln["text"]:
+            errors.append(f"{where}: line {k} needs who and text")
+        elif ln["who"] not in ids:
+            errors.append(f"{where}: line {k} is spoken by {ln['who']!r}, who is not in the cast")
+        elif len(ln["text"]) > 220:
+            errors.append(f"{where}: line {k} is too long for a speech bubble (220 characters at most)")
+    if len({ln.get("who") for ln in lines if isinstance(ln, dict)}) < 2:
+        errors.append(f"{where}: a dialogue needs at least two speakers")
+
+
+def check_timeline(where, card, errors):
+    events = card.get("events")
+    if not isinstance(events, list) or not 3 <= len(events) <= 7:
+        errors.append(f"{where}: a timeline has 3 to 7 events")
+        return
+    for k, ev in enumerate(events, 1):
+        if not isinstance(ev, dict) or not ev.get("when") or not ev.get("label"):
+            errors.append(f"{where}: event {k} needs when and label")
+        elif set(ev) - {"when", "label", "detail"}:
+            errors.append(f"{where}: event {k} has unknown fields")
+
+
+def check_figure(where, card, errors):
+    value = card.get("value")
+    if not isinstance(value, str) or not 1 <= len(value) <= 24:
+        errors.append(f"{where}: value is the big number or phrase, 24 characters at most")
+    if not card.get("caption"):
+        errors.append(f"{where}: needs a caption saying what the number is")
 
 
 def check_compare(where, card, errors):
@@ -409,7 +473,8 @@ def check_lesson(path, book, errors):
         extra = set(c) - FIELDS[ctype]
         if extra:
             errors.append(f"{where}: unknown fields {sorted(extra)}")
-        if ctype in ("cover", "concept", "case", "compare", "scene", "video", "done") and not c.get("title"):
+        if ctype in ("cover", "concept", "case", "compare", "scene", "video", "dialogue", "timeline",
+                     "figure", "done") and not c.get("title"):
             errors.append(f"{where}: needs a title")
         if ctype in PRODUCING and not c.get("prompt"):
             errors.append(f"{where}: needs a prompt")
@@ -422,6 +487,16 @@ def check_lesson(path, book, errors):
             check_variants(where, c, errors)
         if ctype == "compare":
             check_compare(where, c, errors)
+        if ctype == "dialogue":
+            check_dialogue(where, c, errors)
+        if ctype == "timeline":
+            check_timeline(where, c, errors)
+        if ctype == "figure":
+            check_figure(where, c, errors)
+        if "look" in c and c["look"] not in LOOKS:
+            errors.append(f"{where}: look must be one of {sorted(LOOKS)}")
+        if "look" in c and not c.get("art"):
+            errors.append(f"{where}: look describes art, and this card has none")
         if ctype == "video":
             check_video(where, c, os.path.dirname(path), errors)
         if ctype == "scene":
@@ -459,10 +534,17 @@ def check_lesson(path, book, errors):
         errors.append(f"{rel}: {producing} of {len(types)} cards ask the learner to do something; at least a third must")
     if not any(t in PRODUCING for t in types[:HOOK_WITHIN]):
         errors.append(f"{rel}: no question in the first {HOOK_WITHIN} cards; open with a hook")
-    if "concept" in types and "case" in types and types.index("concept") < types.index("case"):
-        errors.append(f"{rel}: the first concept comes before any case; show a concrete case first")
-    if "case" not in types:
-        errors.append(f"{rel}: needs at least one case card")
+    if not STORY_TYPES & set(types):
+        errors.append(f"{rel}: needs something concrete: a case, dialogue, timeline or scene card")
+    # Variety rules, for books that opt in with "variety": true in book.json.
+    formats = {c.get("look", "diagram") for c in cards if c.get("art")} | (FORMAT_TYPES & set(types))
+    if book.get("variety"):
+        for k, c in enumerate(cards, 1):
+            if c.get("art") and "look" not in c:
+                errors.append(f"{rel} card {k} ({c.get('id', '?')}): name the art's look, one of {sorted(LOOKS)}")
+        if len(formats) < MIN_FORMATS:
+            errors.append(f"{rel}: uses {len(formats)} visual format(s) ({sorted(formats)}); "
+                          f"a lesson in this book needs at least {MIN_FORMATS}")
     if types.count("reflect") != 1:
         errors.append(f"{rel}: needs exactly one reflect card, found {types.count('reflect')}")
     if types.count("video") > MAX_VIDEOS:
@@ -478,7 +560,7 @@ def check_lesson(path, book, errors):
         errors.append(f"{rel}: a commit card belongs only on the book's last lesson")
     if sum(1 for c in cards if c.get("review")) < MIN_REVIEW:
         errors.append(f"{rel}: mark at least {MIN_REVIEW} cards review: true")
-    if sum(1 for c in cards if c.get("steps")) < MIN_STEPPED:
+    if sum(1 for c in cards if c.get("steps") or c.get("type") in ("dialogue", "timeline")) < MIN_STEPPED:
         errors.append(f"{rel}: at least {MIN_STEPPED} cards must use step builds")
 
     # Correct answers should not sit in the same position every time.
@@ -544,10 +626,27 @@ def check_book(folder, errors, only=None):
 
     if only is None:
         check_home(folder, book, errors)
+    openers = []
     for l in book["lessons"]:
         path = os.path.join(folder, l.get("file", ""))
         if os.path.exists(path) and (only is None or os.path.abspath(path) == os.path.abspath(only)):
             check_lesson(path, book, errors)
+        openers.append(opener_of(path) if os.path.exists(path) else None)
+    if book.get("variety") and only is None:
+        for k in range(1, len(openers)):
+            if openers[k] and openers[k] == openers[k - 1]:
+                errors.append(f"{rel}: lessons {k} and {k + 1} both open with a {openers[k]} card; "
+                              f"vary how neighbouring lessons begin")
+
+
+def opener_of(path):
+    """The type of the first card after the cover, or None."""
+    m = LESSON_RE.search(open(path, encoding="utf-8").read())
+    try:
+        cards = json.loads(m.group(1))["cards"] if m else []
+    except (ValueError, KeyError):
+        return None
+    return cards[1].get("type") if len(cards) > 1 else None
 
 
 def main(argv):
