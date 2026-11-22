@@ -488,7 +488,8 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   3Blue1Brown's pi creatures, code or clips, or remake their scenes.
   Cee's poses and the Manim helper live in `books/_shared/video/`. First real
   clip (22 Nov 2026): infinite-powers-v2 lesson 1, card `principle-clip`
-  (the Infinity Principle, 43 s, captions burned in, no narration yet),
+  (the Infinity Principle, 43 s, captions burned in, narrated with the
+  Kokoro `af_heart` text-to-speech voice via video-src/narrate.py),
   served from `media/` with `host: "file"` until it is uploaded to YouTube.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.

@@ -8,12 +8,16 @@ The example is ours: strips filling a curved area. The book's own
 illustrations are not used, and the circle (pizza) argument is kept for
 lesson 2, where the book makes it.
 
+Narration: Kokoro-82M text-to-speech (Apache-2.0), voice af_heart. Make the
+audio first (python narrate.py lesson-01 --models DIR, see narrate.py); the
+scene starts each line with its caption and waits for it to finish.
+
 Render from this folder, one shape after the other (they share a cache):
     manim -qh --fps 30 lesson-01-infinity-principle.py Clip -o lesson-01-169
     manim -qh --fps 30 -r 1080,1920 lesson-01-infinity-principle.py Clip -o lesson-01-916
 Renders are not committed to video-src; the card's copies live in ../media/.
 """
-import os, sys
+import os, sys, wave
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "_shared", "video"))
 from manim import *
@@ -46,6 +50,27 @@ SCRIPT = [
 ]
 
 
+# What the voice says: the script, with "eight, sixteen, sixty-four" split so
+# each count lands on its own strip change. narrate.py reads this list.
+NARRATION = [
+    "How much space is inside a curved shape?",
+    "A ruler only measures straight edges.",
+    "Try rectangles: width times height, easy.",
+    "But four of them miss the curve. See the gaps?",
+    "So cut thinner.",
+    "Eight strips.",
+    "Sixteen.",
+    "Sixty-four.",
+    "Each strip stays simple, and the gaps keep shrinking.",
+    "Go all the way: infinitely many, infinitely thin.",
+    "The gaps vanish. The strips add up to the exact area.",
+    "Cut it up, solve each piece, add them back.",
+    "That is the Infinity Principle.",
+    "But real things are made of atoms. Can you really keep cutting forever?",
+]
+AUDIO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", "lesson-01")
+
+
 def f(x):
     return 1.55 + 0.85 * np.sin(0.95 * x - 0.6) + 0.12 * x
 
@@ -71,17 +96,31 @@ class Clip(Scene):
         cap.move_to(UP * 4.35 if PORTRAIT else DOWN * 2.85 + RIGHT * 1.15)
         return cap
 
-    def say(self, i, extra=None, hold=None):
-        """Swap in caption i, run any extra animations with it, then hold
-        long enough to read it (about 140 words a minute)."""
+    def speak(self, k):
+        """Start narration line k now; return when it ends (scene time)."""
+        path = os.path.join(AUDIO, f"{k:02d}.wav")
+        with wave.open(path) as w:
+            dur = w.getnframes() / w.getframerate()
+        self.add_sound(path)
+        return self.renderer.time + dur
+
+    def wait_until(self, t, pause=0.35):
+        left = t + pause - self.renderer.time
+        if left > 0.02:
+            self.wait(left)
+
+    def say(self, i, k, extra=None, after=0.0, run_time=0.6):
+        """Swap in caption i and start narration line k with it, run any
+        extra animations alongside, then wait for the line to finish plus a
+        short pause (and `after` seconds of silence, for a question beat)."""
         new = self.caption(i)
         anims = [FadeIn(new, shift=UP * 0.08)]
         if getattr(self, "cap", None) is not None:
             anims.append(FadeOut(self.cap))
-        self.play(*anims, *(extra or []), run_time=0.6)
+        end = self.speak(k)
+        self.play(*anims, *(extra or []), run_time=run_time)
         self.cap = new
-        words = len(SCRIPT[i].split())
-        self.wait(hold if hold is not None else max(1.4, words / 2.35 - 0.6))
+        self.wait_until(end, pause=0.35 + after)
 
     # ---- scene ----------------------------------------------------------
     def construct(self):
@@ -103,10 +142,10 @@ class Clip(Scene):
         # 1. Puzzle
         self.play(FadeIn(cee, shift=UP * 0.2), run_time=0.7)
         self.play(Create(base), Create(left), Create(right), run_time=0.8)
-        self.say(0, extra=[Create(graph, run_time=1.4)])
+        self.say(0, 0, extra=[Create(graph)], run_time=1.4)
         ruler = VGroup(*[Line(axes.c2p(x, -0.18), axes.c2p(x, -0.08 if x % 1 else -0.32), color=INK,
                               stroke_width=2, stroke_opacity=0.7) for x in np.arange(0, 6.01, 0.5)])
-        self.say(1, extra=[Create(ruler, run_time=0.8)])
+        self.say(1, 1, extra=[Create(ruler)], run_time=0.8)
 
         # 2. Try: four rectangles
         def strips(n):
@@ -124,10 +163,10 @@ class Clip(Scene):
         rects = strips(4)
         mark = dx_mark(4)
         self.play(FadeOut(ruler), run_time=0.4)
-        self.say(2, extra=[LaggedStart(*[GrowFromEdge(r, DOWN) for r in rects], lag_ratio=0.2, run_time=1.4),
-                           FadeIn(mark)])
+        self.say(2, 2, extra=[LaggedStart(*[GrowFromEdge(r, DOWN) for r in rects], lag_ratio=0.2),
+                              FadeIn(mark)], run_time=1.4)
         self.bring_to_front(graph)
-        self.say(3, extra=[cee.pose("puzzled")], hold=2.6)   # the question beat: let it sit
+        self.say(3, 3, extra=[cee.pose("puzzled")], after=1.6)   # the question beat: let it sit
 
         # 3. Build: thinner strips
         count = Text("4 strips", font=FONT, font_size=30, color=INK)
@@ -136,9 +175,12 @@ class Clip(Scene):
             count.next_to(axes.c2p(3, 3.2), UP, buff=0.1)
         self.play(FadeIn(count), cee.pose("neutral"), run_time=0.5)
         new_cap = self.caption(4)
+        end = self.speak(4)                      # "So cut thinner."
         self.play(FadeOut(self.cap), FadeIn(new_cap), run_time=0.5)
         self.cap = new_cap
-        for n in (8, 16, 64):
+        self.wait_until(end, pause=0.15)
+        for k, n in zip((5, 6, 7), (8, 16, 64)):   # each count lands on its change
+            end = self.speak(k)
             nxt, nmark = strips(n), dx_mark(n)
             ncount = Text(f"{n} strips", font=FONT, font_size=30, color=INK).move_to(count, aligned_edge=RIGHT)
             if PORTRAIT:
@@ -147,17 +189,18 @@ class Clip(Scene):
                       run_time=1.1)
             self.bring_to_front(graph)
             rects = nxt
-            self.wait(0.5)
-        self.say(5)
+            self.wait_until(end, pause=0.25)
+        self.say(5, 8)
 
         # 4. Reveal: infinitely many, infinitely thin
         area = axes.get_area(graph, x_range=[0, 6], color=AREA, opacity=0.42)
         inf = Text("infinitely many", font=FONT, font_size=30, color=INK).move_to(count, aligned_edge=RIGHT)
         if PORTRAIT:
             inf.move_to(count)
-        self.say(6, extra=[ReplacementTransform(rects, area), FadeOut(mark), Transform(count, inf)])
+        self.say(6, 9, extra=[ReplacementTransform(rects, area), FadeOut(mark), Transform(count, inf)],
+                 run_time=1.2)
         outline = VGroup(graph.copy(), left.copy(), right.copy(), base.copy()).set_stroke(GOLD, width=6)
-        self.say(7, extra=[Create(outline, run_time=1.2), cee.pose("aha")])
+        self.say(7, 10, extra=[Create(outline), cee.pose("aha")], run_time=1.2)
 
         # 5. Name it
         title = Text("The Infinity Principle", font=FONT, font_size=40, weight=BOLD, color=INK)
@@ -165,11 +208,11 @@ class Clip(Scene):
             title.move_to(UP * 5.6)
         else:
             title.to_edge(UP, buff=0.45)
-        self.say(8, extra=[FadeOut(count)])
-        self.say(9, extra=[Write(title, run_time=1.0)])
+        self.say(8, 11, extra=[FadeOut(count)])
+        self.say(9, 12, extra=[Write(title)], run_time=1.0)
 
         # 6. Hand on: point at the area, ask the next card's question
         target = axes.c2p(0.9, f(0.9) * 0.45)
         self.play(cee.point_at(target))
-        self.say(10, hold=3.2)
+        self.say(10, 13, after=1.4)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.8)

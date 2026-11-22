@@ -172,6 +172,12 @@ Voice: second person, plain words, short sentences, present tense. Say
 "notice", "look", "what if". Never "obviously", "simply" or "trivially". No
 em dashes in the script, captions or on screen. Narration is recorded by the
 owner or with a text-to-speech voice whose licence covers commercial use.
+The default voice is Kokoro-82M (Apache-2.0) voice `af_heart` at speed 0.95,
+made with `books/<book-id>/video-src/narrate.py`: one WAV per line from the
+scene's `NARRATION` list (audio is regenerable and gitignored). The scene
+starts each line with its caption (`speak`, `say`) and waits for it to end
+plus 0.35 s; split a line where a count or a word must land on a visual
+change. Keep the caption text (`SCRIPT`) and the spoken text the same words.
 No music, or one quiet royalty-free bed under -24 LUFS.
 
 ## Two shapes
@@ -223,8 +229,8 @@ one from the other.
   length.
 - Until the clips are on YouTube, a card may use `host: "file"` with the two
   renders committed under `books/<book-id>/media/` (H.264, `-crf 26`,
-  `+faststart`, no audio track while there is no narration; about 1 MB per
-  shape for 45 s). Swap to `host: "youtube"` and delete the files once
+  `+faststart`; narration as AAC 96k at 48 kHz, levelled with
+  `loudnorm=I=-16:TP=-1.5`; about 1.6 MB per shape for 43 s). Swap to `host: "youtube"` and delete the files once
   uploaded.
 - First real clip: `books/infinite-powers-v2/video-src/lesson-01-infinity-principle.py`
   (lesson 1, card `principle-clip`, 43 s), the reference for new clips.
