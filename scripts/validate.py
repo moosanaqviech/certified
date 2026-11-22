@@ -548,6 +548,8 @@ def check_lesson_v2(info, payload, rep):
     else:
         rep.ok("v2 engine: no step cards (a valid v2 file may be a pure v1-style lesson)")
 
+    check_anatomy_cards(cards, rep)
+
     # SMIL animation is banned across the whole payload (rule: CSS keyframes
     # only, so the reduced-motion guard covers everything). Ignore matches that
     # sit inside a JS/HTML comment (documentation mentioning the tag names).
@@ -558,6 +560,69 @@ def check_lesson_v2(info, payload, rep):
         rep.fail(f"SMIL animation element(s) in the payload ({where}); v2 forbids SMIL, use CSS keyframes inside the SVG <style> under the reduced-motion guard")
     else:
         rep.ok("no SMIL animation elements (CSS keyframes only, as v2 requires)")
+
+
+# Anatomy cards (spec: .claude/anatomy-card-spec.md). A card opts in by putting
+# data-pattern="anatomy" on its <svg>. The checks hold the locked layout: the
+# 272x200 canvas, 3 to 7 outside labels in the right-hand column, nothing but
+# small context tags on the drawing, a sans-serif fallback on the SVG text,
+# inline pointer-events:none on every step group, and swap captions stacked
+# in one grid cell so the caption never pushes the art around.
+ANATOMY_SVG_RE = re.compile(r'<svg\b[^>]*data-pattern="anatomy"[^>]*>.*?</svg>', re.S)
+ANATOMY_TEXT_RE = re.compile(r'<text\b([^>]*)>')
+ANATOMY_LABEL_X = 140
+ANATOMY_MAX_LABELS = 7
+ANATOMY_MIN_LABELS = 3
+
+
+def _attr(attrs, name):
+    m = re.search(r'\b' + name + r'="([^"]*)"', attrs)
+    return m.group(1) if m else None
+
+
+def check_anatomy_cards(cards, rep):
+    seen = 0
+    for idx, c in enumerate(cards):
+        html = c.get("html") or ""
+        for m in ANATOMY_SVG_RE.finditer(html):
+            seen += 1
+            svg = m.group(0)
+            errs = []
+            vb = _attr(svg[:svg.index(">")], "viewBox")
+            if vb != "0 0 272 200":
+                errs.append(f'viewBox must be "0 0 272 200", found {vb!r}')
+            if c.get("steps") is None:
+                errs.append("an anatomy card must be a step build (steps:N, one label per tap)")
+            names, on_drawing = 0, 0
+            for t in ANATOMY_TEXT_RE.finditer(svg):
+                a = t.group(1)
+                x = float(_attr(a, "x") or 0)
+                size = float(_attr(a, "font-size") or 0)
+                if x >= ANATOMY_LABEL_X:
+                    if _attr(a, "font-weight") == "700":
+                        names += 1
+                elif size > 8:
+                    errs.append(f"text at x={x:g} sits on the drawing at font-size {size:g}; labels belong in the column at x>={ANATOMY_LABEL_X} (only context tags of 8 or smaller may sit on the art)")
+                else:
+                    on_drawing += 1
+            if not ANATOMY_MIN_LABELS <= names <= ANATOMY_MAX_LABELS:
+                errs.append(f"{names} label names; an anatomy card carries {ANATOMY_MIN_LABELS} to {ANATOMY_MAX_LABELS}")
+            if on_drawing > 2:
+                errs.append(f"{on_drawing} context tags on the drawing; at most 2")
+            if re.search(r'font-family="Hanken Grotesk"', svg) or "sans-serif" not in svg:
+                errs.append('SVG text needs the fallback font-family="Hanken Grotesk, system-ui, sans-serif"')
+            for g in re.finditer(r'<g\b([^>]*)\bdata-step="\d+"[^>]*>', svg):
+                if "pointer-events:none" not in g.group(0).replace(" ", ""):
+                    errs.append("every data-step group needs an inline style=\"pointer-events:none\"")
+                    break
+            if 'class="stepcap-swap"' in html and not re.search(r'class="stepcap-swap"[^>]*display:grid', html):
+                errs.append('the swap captions must stack in one grid cell: style="display:grid" on .stepcap-swap and grid-area:1/1 on each caption')
+            if errs:
+                for e in errs:
+                    rep.fail(f"card {idx}: anatomy card: {e}")
+            else:
+                rep.ok(f"card {idx}: anatomy card follows the locked pattern ({names} labels)")
+    return seen
 
 
 def _check_stepcaps(idx, cap_nodes, rep):

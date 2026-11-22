@@ -919,6 +919,20 @@ use SMIL (`<animate>`, `<animateTransform>`, `<animateMotion>`): the v2 engine
 and the validator forbid it, and only CSS keyframes are covered by the
 reduced-motion guard.
 
+## Anatomy cards (locked pattern, 22 Nov 2026)
+
+For a "what is inside this thing, and what does each part do" concept (a VPC,
+a Delta table, a Spark executor, a serving endpoint), use an anatomy card: the
+object cut open in flat palette-var art, 3 to 7 labels outside the drawing in
+one right-hand column, each a name plus "(what it does)" with one straight
+leader line whose dot lands on that exact part, name coloured by the part's
+family, revealed one label per tap. Spec and copy-paste skeleton:
+`.claude/anatomy-card-spec.md`; reference: card 3 of
+`aws-solutions-architect-associate/lesson-08-network-segmentation.html`. Put
+`data-pattern="anatomy"` on the SVG: `scripts/validate.py` then enforces the
+272x200 canvas, the label count and column, the sans-serif fallback, inline
+`pointer-events:none` on step groups and grid-stacked swap captions.
+
 ## Hard rules for all generated content
 
 - NO em dashes anywhere (content, options, explanations, commit messages).
