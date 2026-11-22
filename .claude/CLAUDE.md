@@ -518,6 +518,18 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   reuse its figures, cover art, chapter structure or its own stories and case
   studies; a video card is an original scene, never a re-enactment from the
   book. Set `rights.tier` to `original` (or `public-domain`) in `book.json`.
+- First real book (22 Nov 2026): `books/infinite-powers/`, a six-lesson
+  companion to *Infinite Powers* by Steven Strogatz (in copyright, so
+  `rights.tier` is `original`): 01 slice it thin, 02 curves are straight up
+  close, 03 how fast right now (the derivative), 04 adding up the slivers (the
+  integral), 05 two questions one answer (the fundamental theorem), 06 rules
+  of change (differential equations; it carries the commit card). 13 cards
+  each, 15 in lesson 6, no video cards, lesson 1 marked free. The lessons
+  teach the mathematics with our own scenarios (a pond, a cyclist, a bath, a
+  rumour, cooling tea) and step-built graph diagrams; the only things taken
+  from the book are its title, its author and the term "Infinity Principle",
+  credited once in lesson 1. Do not add the book's own examples, historical
+  stories or figures. Navy and cyan palette, set in its `book.json`.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its
