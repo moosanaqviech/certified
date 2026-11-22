@@ -480,6 +480,12 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   Public or Unlisted with embedding allowed (Private cannot be embedded), add
   captions there or burn them in, then put the two ids in the card's
   `sources` and replace its posters and transcript.
+- What goes inside a clip (22 Nov 2026): `.claude/explainer-video-spec.md`.
+  Animated-maths explainer style (dark backdrop, one colour per quantity from
+  the book's variable table, morphs not cuts, puzzle before notation), built
+  in Manim Community, with Cee (the brand C with eyes and the gold check as
+  its hand, no mouth, never speaks) as the only character. Never use
+  3Blue1Brown's pi creatures, code or clips, or remake their scenes.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
