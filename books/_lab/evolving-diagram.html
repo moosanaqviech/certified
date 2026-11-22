@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Evolving diagram sample</title>
+<link rel="canonical" href="https://certify.courses/books/_lab/evolving-diagram.html">
+<link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<!--
+  Lab sample, not an engine card type (22 Nov 2026). One diagram persists
+  across taps and evolves: three puzzles collapse into one idea, the idea
+  branches into two halves, a text-only beat, then the halves branch again.
+  Content: infinite-powers-v2 lesson 1, in our own words. Narration: Kokoro
+  af_heart (Apache-2.0), media/step-N.mp3. If it is approved, it becomes an
+  "evolve" card type in book-engine.v2.
+-->
+<style>
+:root {
+  --bg: #0f1a24; --tint: #17242f; --ink: #eef3f5;
+  --ink-soft: color-mix(in srgb, var(--ink) 68%, var(--bg));
+  --line: color-mix(in srgb, var(--ink) 14%, transparent);
+  --cyan: #5cc8d8; --lav: #b9b4f5; --coral: #f07a6a; --mint: #7fd6a4; --gold: #d9a441;
+  --dark: #0f1a24;
+  --ease: cubic-bezier(.65, 0, .25, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+  font-family: "Hanken Grotesk", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+.app { max-width: 480px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column;
+  padding: max(14px, env(safe-area-inset-top)) 20px max(18px, env(safe-area-inset-bottom)); }
+.top { display: flex; align-items: center; gap: 14px; }
+.back { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line); background: none;
+  color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.back:disabled { opacity: .3; }
+.bar { flex: 1; display: flex; gap: 5px; }
+.bar i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
+.bar i::after { content: ""; position: absolute; inset: 0; background: var(--cyan); transform: scaleX(0);
+  transform-origin: left; transition: transform .5s var(--ease); }
+.bar i.on::after { transform: scaleX(1); }
+.eyebrow { margin: 20px 0 8px; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--cyan); font-weight: 700; }
+.text { position: relative; min-height: 7.4rem; }
+.text p { position: absolute; inset: 0 0 auto; margin: 0; font-family: "Fraunces", Georgia, serif;
+  font-weight: 500; font-size: 1.35rem; line-height: 1.3; text-wrap: pretty;
+  opacity: 0; transform: translateY(8px); transition: opacity .45s, transform .45s var(--ease); pointer-events: none; }
+.text p em { color: var(--gold); font-style: italic; }
+.text p.on { opacity: 1; transform: none; transition-delay: .15s; }
+body[data-step="4"] .text { min-height: 0; }
+body[data-step="4"] .text p.on { position: relative; margin-top: 18vh; }
+
+.panel { margin-top: 12px; background: var(--tint); border-radius: 26px; padding: 14px 10px 6px;
+  border: 1px solid var(--line); transition: opacity .5s, transform .6s var(--ease); }
+.panel .label { margin: 4px 0 0 12px; font-size: .8rem; font-weight: 700; color: var(--ink-soft); }
+body[data-step="4"] .panel { opacity: 0; transform: translateY(24px) scale(.97); pointer-events: none; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: "Hanken Grotesk", system-ui, sans-serif; }
+
+/* every moving part transitions; each step below only states where things are */
+.mv { transition: transform .8s var(--ease), opacity .55s var(--ease); }
+.ln { fill: none; stroke: var(--ink-soft); stroke-width: 1.4; stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset .7s var(--ease) .35s, opacity .3s; opacity: 0; }
+
+/* pills: step 1 */
+#p1 { transform: translate(112px, 112px) rotate(-7deg); }
+#p2 { transform: translate(226px, 160px) rotate(5deg); }
+#p3 { transform: translate(140px, 204px) rotate(-3deg); }
+.pill { opacity: 1; }
+body:not([data-step="1"]) #p1, body:not([data-step="1"]) #p2, body:not([data-step="1"]) #p3 {
+  transform: translate(170px, 150px) scale(.25) rotate(0); opacity: 0; }
+body[data-step="1"].arrive .pill { animation: drop .9s var(--ease) both; }
+body[data-step="1"].arrive #p2 { animation-delay: .15s; }
+body[data-step="1"].arrive #p3 { animation-delay: .3s; }
+@keyframes drop { from { translate: 0 -260px; opacity: 0; rotate: 18deg; } to { translate: 0 0; opacity: 1; rotate: 0deg; } }
+
+/* the root idea */
+#root { transform: translate(170px, 150px) scale(0); opacity: 0; }
+body[data-step="2"] #root { transform: translate(170px, 150px) scale(1); opacity: 1; transition-delay: .2s; }
+body[data-step="3"] #root, body[data-step="4"] #root { transform: translate(170px, 74px) scale(.6); opacity: 1; }
+body[data-step="5"] #root { transform: translate(170px, 50px) scale(.56); opacity: 1; }
+.rootsub { transition: opacity .4s; }
+body[data-step="3"] .rootsub, body[data-step="4"] .rootsub, body[data-step="5"] .rootsub { opacity: 0; }
+
+/* the two halves */
+#cut  { transform: translate(170px, 74px) scale(0); opacity: 0; }
+#add  { transform: translate(170px, 74px) scale(0); opacity: 0; }
+body[data-step="3"] #cut, body[data-step="4"] #cut { transform: translate(86px, 208px) scale(1); opacity: 1; transition-delay: .25s; }
+body[data-step="3"] #add, body[data-step="4"] #add { transform: translate(254px, 208px) scale(1); opacity: 1; transition-delay: .35s; }
+body[data-step="5"] #cut { transform: translate(92px, 140px) scale(.68); opacity: 1; }
+body[data-step="5"] #add { transform: translate(248px, 140px) scale(.68); opacity: 1; }
+.halfsub { transition: opacity .4s; }
+body[data-step="5"] .halfsub { opacity: 0; }
+
+/* the four questions */
+.leaf { transform: translate(var(--x), 140px) scale(0); opacity: 0; }
+body[data-step="5"] .leaf { transform: translate(var(--x), 252px) scale(1); opacity: 1; }
+body[data-step="5"] #l2 { transition-delay: .1s; } body[data-step="5"] #l3 { transition-delay: .2s; }
+body[data-step="5"] #l4 { transition-delay: .3s; }
+body[data-step="5"] .leaf { transition-delay: .35s; }
+
+body[data-step="3"] .ln3, body[data-step="5"] .ln5 { stroke-dashoffset: 0; opacity: 1; }
+
+.foot { margin-top: auto; padding-top: 18px; display: flex; align-items: center; gap: 12px; }
+.sound { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--tint);
+  color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.hint { color: var(--ink-soft); font-size: .9rem; }
+.hint b { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mv, .ln, .text p, .panel, .bar i::after { transition: none !important; }
+  body[data-step="1"].arrive .pill { animation: none; }
+}
+</style>
+</head>
+<body data-step="1" class="arrive">
+<div class="app" id="app">
+  <div class="top">
+    <button class="back" id="back" aria-label="Back" disabled>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11.5 3 5.5 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="eyebrow">Infinite Powers · Lesson 1</div>
+  <div class="text" aria-live="polite">
+    <p data-s="1">Ask people what calculus is about, and you hear three puzzles: curved shapes, things in motion, and things that change.</p>
+    <p data-s="2">Strogatz argues that one idea cracks all three. He calls it the <em>Infinity Principle</em>.</p>
+    <p data-s="3">It works in two halves. Cut a hard thing into infinitely many simple pieces. Then add the pieces back up.</p>
+    <p data-s="4">The cutting is a pretence. Real things are made of atoms, yet treating them as smooth is exactly what makes the method work.</p>
+    <p data-s="5">Each half answers its own questions. Cutting finds slopes and speeds. Adding back finds areas and totals.</p>
+  </div>
+
+  <div class="panel" aria-hidden="true">
+    <div class="label">What calculus is for</div>
+    <svg viewBox="0 0 340 292">
+      <!-- connectors: step 3 (root to halves), step 5 (root to halves, halves to leaves) -->
+      <path class="ln ln3" pathLength="1" d="M138 74 H86 V156"/>
+      <path class="ln ln3" pathLength="1" d="M202 74 H254 V156"/>
+      <path class="ln ln5" pathLength="1" d="M121 50 H92 V105"/>
+      <path class="ln ln5" pathLength="1" d="M219 50 H248 V105"/>
+      <path class="ln ln5" pathLength="1" d="M92 176 V196 H50 V222 M92 196 H134 V222"/>
+      <path class="ln ln5" pathLength="1" d="M248 176 V196 H206 V222 M248 196 H290 V222"/>
+
+      <!-- the three puzzles -->
+      <g id="p1" class="mv pill"><rect x="-66" y="-21" width="132" height="42" rx="21" fill="var(--cyan)"/><text y="6" text-anchor="middle" font-size="17" font-weight="700" fill="var(--dark)">CURVES?</text></g>
+      <g id="p2" class="mv pill"><rect x="-64" y="-21" width="128" height="42" rx="21" fill="var(--lav)"/><text y="6" text-anchor="middle" font-size="17" font-weight="700" fill="var(--dark)">MOTION?</text></g>
+      <g id="p3" class="mv pill"><rect x="-66" y="-21" width="132" height="42" rx="21" fill="var(--coral)"/><text y="6" text-anchor="middle" font-size="17" font-weight="700" fill="var(--dark)">CHANGE?</text></g>
+
+      <!-- the one idea -->
+      <g id="root" class="mv">
+        <circle r="88" fill="var(--gold)"/>
+        <text y="-4" text-anchor="middle" font-size="17" font-weight="700" fill="var(--dark)">THE INFINITY</text>
+        <text y="18" text-anchor="middle" font-size="17" font-weight="700" fill="var(--dark)">PRINCIPLE</text>
+        <text class="rootsub" y="46" text-anchor="middle" font-size="11.5" fill="var(--dark)" opacity=".75">one idea, three puzzles</text>
+      </g>
+
+      <!-- the two halves, each drawn at the origin and moved by CSS -->
+      <g id="cut" class="mv">
+        <circle r="62" fill="var(--cyan)"/>
+        <g transform="translate(0,-14)">
+          <path d="M-30 12 C-16 -16 4 -18 30 -2" fill="none" stroke="var(--dark)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M-18 14 V-4 M-6 14 V-12 M6 14 V-12 M18 14 V-7" stroke="var(--dark)" stroke-width="1.6" stroke-dasharray="3 3"/>
+        </g>
+        <text y="24" text-anchor="middle" font-size="15" font-weight="700" fill="var(--dark)">CUT</text>
+        <text class="halfsub" y="40" text-anchor="middle" font-size="9.5" fill="var(--dark)" opacity=".75">differential calculus</text>
+      </g>
+      <g id="add" class="mv">
+        <circle r="62" fill="var(--mint)"/>
+        <g transform="translate(0,-14)">
+          <rect x="-28" y="2" width="12" height="12" rx="1.5" fill="var(--dark)"/>
+          <rect x="-14" y="-6" width="12" height="20" rx="1.5" fill="var(--dark)"/>
+          <rect x="0" y="-12" width="12" height="26" rx="1.5" fill="var(--dark)"/>
+          <rect x="14" y="-8" width="12" height="22" rx="1.5" fill="var(--dark)"/>
+        </g>
+        <text y="24" text-anchor="middle" font-size="15" font-weight="700" fill="var(--dark)">REBUILD</text>
+        <text class="halfsub" y="40" text-anchor="middle" font-size="9.5" fill="var(--dark)" opacity=".75">integral calculus</text>
+      </g>
+
+      <!-- the four questions -->
+      <g id="l1" class="mv leaf" style="--x:50px"><circle r="34" fill="color-mix(in srgb, var(--cyan) 30%, var(--tint))" stroke="var(--cyan)" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">SLOPES</text></g>
+      <g id="l2" class="mv leaf" style="--x:134px"><circle r="34" fill="color-mix(in srgb, var(--cyan) 30%, var(--tint))" stroke="var(--cyan)" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">SPEEDS</text></g>
+      <g id="l3" class="mv leaf" style="--x:206px"><circle r="34" fill="color-mix(in srgb, var(--mint) 30%, var(--tint))" stroke="var(--mint)" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">AREAS</text></g>
+      <g id="l4" class="mv leaf" style="--x:290px"><circle r="34" fill="color-mix(in srgb, var(--mint) 30%, var(--tint))" stroke="var(--mint)" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">TOTALS</text></g>
+    </svg>
+  </div>
+
+  <div class="foot">
+    <button class="sound" id="sound" aria-label="Turn narration on" aria-pressed="false">
+      <svg id="ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"></svg>
+    </button>
+    <span class="hint"><b>Tap anywhere</b> to continue</span>
+  </div>
+</div>
+<script>
+(function () {
+  var N = 5, step = 1, soundOn = false;
+  var body = document.body, back = document.getElementById('back');
+  var soundBtn = document.getElementById('sound'), ico = document.getElementById('ico');
+  var audio = new Audio();
+  var OFF = '<path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+  var ON = '<path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+  function speak() {
+    audio.pause();
+    if (!soundOn) return;
+    audio.src = 'media/step-' + step + '.mp3';
+    audio.play().catch(function () {});
+  }
+  function show(n) {
+    step = Math.max(1, Math.min(N, n));
+    body.dataset.step = step;
+    body.classList.toggle('arrive', false);
+    document.querySelectorAll('.text p').forEach(function (p) { p.classList.toggle('on', +p.dataset.s === step); });
+    document.querySelectorAll('.bar i').forEach(function (b, i) { b.classList.toggle('on', i < step); });
+    back.disabled = step === 1;
+    speak();
+  }
+  document.getElementById('app').addEventListener('click', function (e) {
+    if (e.target.closest('button')) return;
+    if (step < N) show(step + 1);
+  });
+  back.addEventListener('click', function () { show(step - 1); });
+  soundBtn.addEventListener('click', function () {
+    soundOn = !soundOn;
+    ico.innerHTML = soundOn ? ON : OFF;
+    soundBtn.setAttribute('aria-pressed', soundOn);
+    soundBtn.setAttribute('aria-label', soundOn ? 'Turn narration off' : 'Turn narration on');
+    speak();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if (step < N) show(step + 1); }
+    if (e.key === 'ArrowLeft') show(step - 1);
+  });
+  ico.innerHTML = OFF;
+  document.querySelectorAll('.text p').forEach(function (p) { p.classList.toggle('on', +p.dataset.s === 1); });
+  document.querySelector('.bar i').classList.add('on');
+})();
+</script>
+</body>
+</html>

@@ -491,6 +491,13 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   (the Infinity Principle, 43 s, captions burned in, narrated with the
   Kokoro `af_heart` text-to-speech voice via video-src/narrate.py),
   served from `media/` with `host: "file"` until it is uploaded to YouTube.
+- Evolving-diagram sample (22 Nov 2026): `books/_lab/evolving-diagram.html`,
+  a standalone page, not an engine card. One diagram persists across taps
+  and morphs (three puzzles collapse into the Infinity Principle, it branches
+  into cut and rebuild, a text-only beat, then four questions), with a short
+  paragraph per tap and optional Kokoro narration (`media/step-N.mp3`).
+  Pacing modelled on a pattern the owner liked in another app; the look is
+  ours. If approved it becomes an `evolve` card type in book-engine.v2.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
