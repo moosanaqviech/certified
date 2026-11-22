@@ -541,6 +541,21 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   from the book are its title, its author and the term "Infinity Principle",
   credited once in lesson 1. Do not add the book's own examples, historical
   stories or figures. Navy and cyan palette, set in its `book.json`.
+- Rebuild in progress (22 Nov 2026): the owner judged the six-lesson version
+  too far from the book, so `books/infinite-powers-v2/` is a part-by-part
+  summary written from the book's text (2019 Houghton Mifflin Harcourt
+  edition): one lesson per part, thirteen in all (Introduction, chapters 1 to
+  11, Conclusion). Lessons 1 to 3 (Introduction, 1 Infinity, 2 The Man Who
+  Harnessed Infinity) are built as a checkpoint for the owner; the other ten
+  are not written. For this book the owner has lifted the rule against
+  following the book's structure and retelling its stories and examples; the
+  other sourcing rules stand (our own wording, short credited phrases only,
+  none of the book's figures, all drawings original). Its `book.json` sets
+  `"variety": true` and `"partial": true` (the validator then skips the
+  commit-card rule, since an unfinished book has no last lesson). When all
+  thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
+  removed and lesson 13 carries the commit card. The book's text is never
+  committed: the repo is deployed publicly.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

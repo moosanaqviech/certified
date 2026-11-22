@@ -554,6 +554,8 @@ def check_lesson(path, book, errors):
             errors.append(f"{rel}: card {k + 1} is a video; the next card must ask the learner to act on it")
     is_last = bool(book["lessons"]) and book["lessons"][-1].get("file") == name
     commits = types.count("commit")
+    if book.get("partial"):
+        is_last = False   # a book still being written has no last lesson yet
     if is_last and commits != 1:
         errors.append(f"{rel}: the book's last lesson needs exactly one commit card, found {commits}")
     if not is_last and commits:
