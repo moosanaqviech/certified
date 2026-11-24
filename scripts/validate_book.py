@@ -19,9 +19,17 @@ import sys
 
 # ---- limits: the proposals from the strategy doc, tuned from pilot data ----
 MIN_CARDS, MAX_CARDS = 12, 20
-MAX_PASSIVE_RUN = 2          # consecutive non-producing cards after the cover
-MIN_PRODUCING_SHARE = 1 / 3
-HOOK_WITHIN = 3              # a producing card must appear in the first N cards
+MAX_PASSIVE_RUN = 5          # consecutive non-producing cards after the cover: books are read more than drilled
+# Practice is measured across the whole book, so one lesson can be mostly
+# visual while another is mostly practice; each lesson keeps a small floor.
+MIN_PRODUCING_SHARE = 1 / 5  # per lesson
+BOOK_PRODUCING_SHARE = 1 / 3 # across all of a book's lessons
+HOOK_WITHIN = 5              # a lesson may open with a puzzle, story, number or diagram;
+                             # its first question lands by card N
+QUESTION_TYPES = {"choice", "predict", "sort", "bucket"}
+MIN_QUESTION_KINDS = 2       # a lesson with 3+ questions mixes at least this many kinds;
+                             # with "mix": true, no kind may be more than half
+OPENER_WINDOW = 3            # in variety books, no two lessons this close open alike
 MIN_REVIEW = 2
 MIN_STEPPED = 2
 MIN_OPTIONS, MAX_OPTIONS = 2, 4
@@ -614,9 +622,22 @@ def check_lesson(path, book, errors):
             errors.append(f"{rel}: card {k} is the {run}th card in a row with nothing to do; the limit is {MAX_PASSIVE_RUN}")
     producing = sum(1 for t in types if t in PRODUCING)
     if producing < len(types) * MIN_PRODUCING_SHARE:
-        errors.append(f"{rel}: {producing} of {len(types)} cards ask the learner to do something; at least a third must")
+        errors.append(f"{rel}: {producing} of {len(types)} cards ask the learner to do something; at least a fifth must")
     if not any(t in PRODUCING for t in types[:HOOK_WITHIN]):
-        errors.append(f"{rel}: no question in the first {HOOK_WITHIN} cards; open with a hook")
+        errors.append(f"{rel}: no question in the first {HOOK_WITHIN} cards; the first question must land by card {HOOK_WITHIN}")
+    # Mix the kinds of question: not a lesson of nothing but multiple choice.
+    questions = [t for t in types if t in QUESTION_TYPES]
+    kinds = set(questions)
+    if len(questions) >= 3 and len(kinds) < MIN_QUESTION_KINDS:
+        errors.append(f"{rel}: all {len(questions)} questions are {sorted(kinds)[0]} cards; "
+                      f"mix at least {MIN_QUESTION_KINDS} kinds of {sorted(QUESTION_TYPES)}")
+    # The "no kind above half" cap is opt-in ("mix": true in book.json) so
+    # books written before it keep passing; new books turn it on.
+    if book.get("mix") and len(questions) >= 4:
+        top = max(kinds, key=questions.count)
+        if questions.count(top) * 2 > len(questions):
+            errors.append(f"{rel}: {questions.count(top)} of {len(questions)} questions are {top} cards; "
+                          f"no kind may be more than half")
     if not STORY_TYPES & set(types):
         errors.append(f"{rel}: needs something concrete: a case, dialogue, timeline or scene card")
     # Variety rules, for books that opt in with "variety": true in book.json.
@@ -711,17 +732,34 @@ def check_book(folder, errors, only=None):
 
     if only is None:
         check_home(folder, book, errors)
-    openers = []
+    openers, all_types = [], []
     for l in book["lessons"]:
         path = os.path.join(folder, l.get("file", ""))
         if os.path.exists(path) and (only is None or os.path.abspath(path) == os.path.abspath(only)):
             check_lesson(path, book, errors)
         openers.append(opener_of(path) if os.path.exists(path) else None)
+        all_types += lesson_types(path) if os.path.exists(path) else []
+    if only is None and all_types:
+        producing = sum(1 for t in all_types if t in PRODUCING)
+        if producing < len(all_types) * BOOK_PRODUCING_SHARE:
+            errors.append(f"{rel}: {producing} of {len(all_types)} cards across the book ask the learner "
+                          f"to do something; at least a third must")
     if book.get("variety") and only is None:
         for k in range(1, len(openers)):
-            if openers[k] and openers[k] == openers[k - 1]:
-                errors.append(f"{rel}: lessons {k} and {k + 1} both open with a {openers[k]} card; "
-                              f"vary how neighbouring lessons begin")
+            for back in range(1, OPENER_WINDOW):
+                j = k - back
+                if j >= 0 and openers[k] and openers[k] == openers[j]:
+                    errors.append(f"{rel}: lessons {j + 1} and {k + 1} both open with a {openers[k]} card; "
+                                  f"no two lessons within {OPENER_WINDOW} of each other may begin alike")
+
+
+def lesson_types(path):
+    """Every card type in a lesson, in order, or [] if it cannot be read."""
+    m = LESSON_RE.search(open(path, encoding="utf-8").read())
+    try:
+        return [c.get("type") for c in json.loads(m.group(1))["cards"]] if m else []
+    except (ValueError, KeyError):
+        return []
 
 
 def opener_of(path):
