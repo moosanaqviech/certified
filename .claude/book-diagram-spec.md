@@ -88,7 +88,7 @@ unlinked and noindex).
 ## 6. Do not
 
 - Draw people unless the idea needs a person.
-- Copy a book's figures, or redraw them closely.
+- Scan or trace a book's figures. Redrawing its chart or diagram in our own art, from the same facts, is fine.
 - Add decoration: borders, textures, drop shadows, clip art.
 - Put more than one idea, or more than seven labels, in a diagram.
 
