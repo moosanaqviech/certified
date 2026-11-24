@@ -544,10 +544,19 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   and review history point at them. Lesson order lives only in the book's
   `book.json`; lessons carry no next or previous links.
 - `python3 scripts/validate_book.py books/<book-id>` must pass before a lesson
-  ships (12 to 20 cards, never more than two cards in a row with nothing to
-  do, every answer option explained, a hook in the first three cards, one
+  ships (12 to 20 cards, never more than three cards in a row with nothing to
+  do, every answer option explained, the first question by card 5, one
   reflect card, two review cards, two step builds, palette matching
   `book.json`, and exactly one commit card on the book's last lesson only).
+  Loosened for variety (24 Nov 2026), because lessons had all started to
+  look alike: practice is at least a fifth of each lesson and a third across
+  the whole book, so a lesson can be mostly visual; a lesson with three or
+  more questions mixes at least two kinds (choice, predict, sort, bucket);
+  with `"mix": true` in `book.json` no kind may be more than half of a
+  lesson's questions (new books set it; older books predate it); and in
+  `"variety"` books no two lessons within three of each other open with the
+  same card type. Vary where the first question lands and how lessons open
+  (puzzle, story, number, evolve diagram).
 - Progress is browser-only, under `books.v1.progress.<book-id>`,
   `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
   leaves the device.
