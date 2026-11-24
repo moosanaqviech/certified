@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GBFP6K89Q6"></script>
+<script data-ga>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GBFP6K89Q6');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- engine: book-v1 -->
+<!-- ==== EDIT: lesson title ==== -->
+<title>Building a network · How the internet works</title>
+<!-- ==== EDIT: canonical. Self-referencing, absolute, keeps .html.
+     Form: https://certify.courses/books/<book-id>/<this-filename>.html ==== -->
+<link rel="canonical" href="https://certify.courses/books/internet/lesson-01-building-a-network.html">
+<!-- Pilot: kept out of search until the book product launches. Remove at launch. -->
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="manifest" href="../../site.webmanifest">
+<meta name="theme-color" content="#0f141f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../engine/book-engine.v1.css">
+<!-- ==== EDIT: palette. The four values from this book's book.json, unchanged. ==== -->
+<style id="palette">:root{--bg:#0f141f;--tint:#182030;--accent:#ffb86b;--ink:#eef1f5}</style>
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "f87a00f33c654abdab2b4c9a42d5aa21"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<main id="app">
+<!-- ==== EDIT: plain-text summary. Shown before the engine starts, to readers
+     without JavaScript and to search engines. Two or three sentences. ==== -->
+<article class="summary">
+<h1>Building a network</h1>
+<p>How a computer network is built from links, switches and routers, how it shares wires, how layers hide the mess, and what bandwidth and latency really mean. Adapted from Chapter 1 of Computer Networks: A Systems Approach by Larry Peterson and Bruce Davie (CC BY 4.0).</p>
+</article>
+</main>
+<!-- ==== EDIT: lesson JSON. Data only: no script, no HTML outside "art". ==== -->
+<script type="application/json" id="lesson">
+{
+  "schema": 1,
+  "book": "internet",
+  "n": 1,
+  "title": "Building a network",
+  "idea": "foundation",
+  "cards": [
+    {
+      "id": "cover",
+      "type": "cover",
+      "eyebrow": "How the internet works · Lesson 1",
+      "title": "Building a network",
+      "art": "<svg viewBox='0 0 320 190' xmlns='http://www.w3.org/2000/svg'><style>.p1{offset-path:path('M60 95 L130 50 L200 95 L265 60');animation:mv 3s linear infinite}.p2{offset-path:path('M60 95 L130 140 L200 95 L265 135');animation:mv 3s linear 1s infinite}.p3{offset-path:path('M265 135 L200 95 L130 50 L60 95');animation:mv 3s linear 2s infinite}@keyframes mv{from{offset-distance:0%}to{offset-distance:100%}}@media (prefers-reduced-motion: reduce){*{animation:none!important}}</style><g font-family='Hanken Grotesk, system-ui, sans-serif'><path d='M60 95 L130 50' stroke='var(--ink-faint)' stroke-width='2'/><path d='M60 95 L130 140' stroke='var(--ink-faint)' stroke-width='2'/><path d='M130 50 L200 95' stroke='var(--ink-faint)' stroke-width='2'/><path d='M130 140 L200 95' stroke='var(--ink-faint)' stroke-width='2'/><path d='M200 95 L265 60' stroke='var(--ink-faint)' stroke-width='2'/><path d='M200 95 L265 135' stroke='var(--ink-faint)' stroke-width='2'/><path d='M130 50 L130 140' stroke='var(--ink-faint)' stroke-width='2'/><circle cx='60' cy='95' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle cx='130' cy='50' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle cx='130' cy='140' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle cx='200' cy='95' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle cx='265' cy='60' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle cx='265' cy='135' r='11' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><circle class='p1' r='5' fill='var(--accent)'/><circle class='p2' r='5' fill='var(--accent)'/><circle class='p3' r='5' fill='var(--good)'/></g></svg>",
+      "look": "diagram",
+      "lead": "Suppose you had to build a network that could grow to cover the planet. What would you need? Adapted from Chapter 1 of Computer Networks: A Systems Approach by Larry Peterson and Bruce Davie (CC BY 4.0)."
+    },
+    {
+      "id": "click",
+      "type": "predict",
+      "prompt": "Start with something you do all day. You click a link to a simple web page. Roughly how many messages cross the internet before it appears?",
+      "options": [
+        {
+          "text": "One: the page itself",
+          "outcome": "The page is only part of it. Before it can be sent, a lot has to be arranged."
+        },
+        {
+          "text": "Two: a request and a reply",
+          "outcome": "That is the part you'd expect, but it hides most of the work."
+        },
+        {
+          "text": "More than a dozen",
+          "best": true,
+          "outcome": "Right. Even a plain page can take up to 17 messages, and far more if it has lots of images."
+        }
+      ],
+      "takeaway": "Most of those messages are setup and housekeeping you never see. Here is where they go."
+    },
+    {
+      "id": "seventeen",
+      "type": "case",
+      "title": "One click, up to 17 messages",
+      "steps": 4,
+      "body": [
+        "The chapter's example is a click on one author's home page, at **www.cs.princeton.edu**.",
+        {
+          "step": 1,
+          "text": "**Up to 6** to turn the name into the server's numeric address, 128.112.136.35."
+        },
+        {
+          "step": 2,
+          "text": "**3** to set up a TCP connection between your browser and the server."
+        },
+        {
+          "step": 3,
+          "text": "**4** for the request and the page, each one acknowledged."
+        },
+        {
+          "step": 4,
+          "text": "**4** to tear the connection down. That is up to 17 for one plain page, before counting the background chatter that keeps the internet running."
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "type": "evolve",
+      "title": "Building a network from the ground up",
+      "look": "diagram",
+      "label": "Connectivity",
+      "alt": "Five stages: two computers on a wire; several sharing one wire; a cloud of switches with hosts outside; three clouds joined by routers; one big cloud around them all.",
+      "stages": [
+        {
+          "text": "All those messages need a path. The simplest network is two computers, or **nodes**, joined by a **link**: a cable, a fibre, a radio channel.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><path data-k='l1' data-draw='' d='M110 140 L230 140' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><g data-k='h1'><rect x='74' y='128' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M82 155 H98' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h2'><rect x='234' y='128' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M242 155 H258' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='c'><text x='170' y='272' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>a link joins two nodes</text></g></svg>"
+        },
+        {
+          "text": "Several nodes can share one link, as Wi-Fi and mobile networks do. But a shared link only reaches so far and holds so many, so it usually serves the **last mile** to your home.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><path data-k='bus' data-draw='' d='M50 110 L290 110' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='d0' data-draw='' d='M80 110 L80 150' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='d1' data-draw='' d='M140 110 L140 150' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='d2' data-draw='' d='M200 110 L200 150' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='d3' data-draw='' d='M260 110 L260 150' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><g data-k='h1'><rect x='64' y='158' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M72 185 H88' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h2'><rect x='124' y='158' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M132 185 H148' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h3' data-from='h2'><rect x='184' y='158' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M192 185 H208' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h4' data-from='h2'><rect x='244' y='158' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M252 185 H268' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='c'><text x='170' y='272' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>many nodes share one link, like Wi-Fi</text></g></svg>"
+        },
+        {
+          "text": "Wiring every computer to every other is hopeless. Instead, **switches** pass data along from link to link. The switches form the network; the **hosts** outside it just use it.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><ellipse data-k='net' data-from='bus' cx='170' cy='140' rx='90' ry='62' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><path data-k='s12' data-draw='' d='M140 115 L200 115' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='s23' data-draw='' d='M200 115 L170 170' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='s31' data-draw='' d='M170 170 L140 115' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><rect data-k='s1' data-from='bus' x='131' y='106' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s2' data-from='bus' x='191' y='106' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s3' data-from='bus' x='161' y='161' width='18' height='18' rx='3' fill='var(--accent)'/><path data-k='e1' data-draw='' d='M52 72 L140 115' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e2' data-draw='' d='M288 72 L200 115' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e3' data-draw='' d='M52 212 L170 170' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e4' data-draw='' d='M288 212 L170 170' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><g data-k='h1'><rect x='24' y='52' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M32 79 H48' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h2'><rect x='284' y='52' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M292 79 H308' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h3'><rect x='24' y='192' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M32 219 H48' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h4'><rect x='284' y='192' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M292 219 H308' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='c'><text x='170' y='272' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>switches inside the cloud, hosts outside</text></g></svg>"
+        },
+        {
+          "text": "Now join separate networks with **routers**. The result is an **internetwork**, an internet for short. The Internet with a capital I is the one we all use.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><ellipse data-k='net' cx='100' cy='148' rx='56' ry='46' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><ellipse data-k='n2' data-from='net' cx='240' cy='95' rx='56' ry='42' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><ellipse data-k='n3' data-from='net' cx='240' cy='205' rx='56' ry='42' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><path data-k='r1a' data-draw='' d='M150 128 L172 116' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r1b' data-draw='' d='M172 116 L188 106' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r2a' data-draw='' d='M150 170 L172 184' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r2b' data-draw='' d='M172 184 L188 196' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><circle data-k='r1' data-from='net' cx='172' cy='116' r='11' fill='var(--good)'/><circle data-k='r2' data-from='net' cx='172' cy='184' r='11' fill='var(--good)'/><rect data-k='s1' x='77' y='129' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s2' x='105' y='151' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s3' x='231' y='86' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s4' data-from='s3' x='231' y='196' width='18' height='18' rx='3' fill='var(--accent)'/><path data-k='e1' data-draw='' d='M46 72 L66 116' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e3' data-draw='' d='M46 226 L66 182' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e2' data-draw='' d='M300 50 L280 66' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e4' data-draw='' d='M300 248 L280 234' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><g data-k='h1'><rect x='16' y='52' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M24 79 H40' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h3'><rect x='16' y='216' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M24 243 H40' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h2'><rect x='296' y='30' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M304 57 H320' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h4'><rect x='296' y='238' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M304 265 H320' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='c'><text x='170' y='286' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>routers (green) join networks into an internet</text></g></svg>"
+        },
+        {
+          "text": "An internet is itself a network, so internets can join into bigger ones, clouds of clouds. To reach anyone, each node needs an **address**, and choosing the path towards it is **routing**.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><ellipse data-k='big' data-from='net' cx='170' cy='145' rx='162' ry='124' fill='none' stroke='var(--ink-soft)' stroke-width='2' stroke-dasharray='6 5'/><ellipse data-k='net' cx='100' cy='148' rx='56' ry='46' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><ellipse data-k='n2' data-from='net' cx='240' cy='95' rx='56' ry='42' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><ellipse data-k='n3' data-from='net' cx='240' cy='205' rx='56' ry='42' fill='none' stroke='var(--ink-soft)' stroke-width='2'/><path data-k='r1a' data-draw='' d='M150 128 L172 116' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r1b' data-draw='' d='M172 116 L188 106' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r2a' data-draw='' d='M150 170 L172 184' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='r2b' data-draw='' d='M172 184 L188 196' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><circle data-k='r1' data-from='net' cx='172' cy='116' r='11' fill='var(--good)'/><circle data-k='r2' data-from='net' cx='172' cy='184' r='11' fill='var(--good)'/><rect data-k='s1' x='77' y='129' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s2' x='105' y='151' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s3' x='231' y='86' width='18' height='18' rx='3' fill='var(--accent)'/><rect data-k='s4' data-from='s3' x='231' y='196' width='18' height='18' rx='3' fill='var(--accent)'/><path data-k='e1' data-draw='' d='M46 72 L66 116' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e3' data-draw='' d='M46 226 L66 182' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e2' data-draw='' d='M300 50 L280 66' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><path data-k='e4' data-draw='' d='M300 248 L280 234' stroke='var(--ink-faint)' stroke-width='2' fill='none'/><g data-k='h1'><rect x='16' y='52' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M24 79 H40' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h3'><rect x='16' y='216' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M24 243 H40' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h2'><rect x='296' y='30' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M304 57 H320' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='h4'><rect x='296' y='238' width='32' height='22' rx='4' fill='var(--tint)' stroke='var(--ink-soft)' stroke-width='2'/><path d='M304 265 H320' stroke='var(--ink-soft)' stroke-width='2'/></g><g data-k='addr'><text x='52' y='46' text-anchor='start' font-size='10' font-weight='600' fill='var(--accent)'>128.112.136.35</text></g><g data-k='c'><text x='170' y='286' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>an internet is a network too: clouds of clouds</text></g></svg>"
+        }
+      ]
+    },
+    {
+      "id": "define",
+      "type": "choice",
+      "review": true,
+      "prompt": "So what counts as a network, in the chapter's own definition?",
+      "options": [
+        {
+          "text": "Only the cables and radio links, nothing else",
+          "why": "Links are the bottom layer, but the definition also covers networks built from other networks."
+        },
+        {
+          "text": "Two or more nodes joined by a link, or two or more networks joined by a node",
+          "why": "Right. The definition is recursive, which is how a network can grow to cover the world.",
+          "correct": true
+        },
+        {
+          "text": "Any set of computers owned by one company",
+          "why": "Ownership has nothing to do with it; the Internet joins networks run by many owners."
+        },
+        {
+          "text": "Only networks that use the Internet Protocol",
+          "why": "The definition comes before any particular protocol."
+        }
+      ],
+      "variants": [
+        {
+          "prompt": "What does a router do, in the chapter's terms?",
+          "options": [
+            {
+              "text": "It joins two or more networks and forwards messages between them",
+              "why": "Right. That is what turns separate networks into an internet.",
+              "correct": true
+            },
+            {
+              "text": "It stores web pages",
+              "why": "That is a server's job."
+            },
+            {
+              "text": "It replaces the need for addresses",
+              "why": "Routers rely on addresses to decide where to forward."
+            },
+            {
+              "text": "It connects exactly two computers",
+              "why": "That is a single link."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "share",
+      "type": "concept",
+      "title": "Sharing one wire",
+      "steps": 3,
+      "art": "<svg viewBox='0 0 320 190' xmlns='http://www.w3.org/2000/svg' data-pattern='flow'><g font-family='Hanken Grotesk, system-ui, sans-serif'><g data-step='1' style='pointer-events:none'><text x='90' y='50' text-anchor='end' font-size='11' font-weight='600' fill='var(--ink)'>Fixed slots</text><rect x='98' y='34' width='30' height='24' rx='4' fill='var(--accent)'/><text x='113' y='50' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><rect x='132' y='34' width='30' height='24' rx='4' stroke='var(--ink-faint)' stroke-dasharray='3 3' fill='none'/><rect x='166' y='34' width='30' height='24' rx='4' stroke='var(--ink-faint)' stroke-dasharray='3 3' fill='none'/><rect x='200' y='34' width='30' height='24' rx='4' fill='var(--accent)'/><text x='215' y='50' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><rect x='234' y='34' width='30' height='24' rx='4' stroke='var(--ink-faint)' stroke-dasharray='3 3' fill='none'/><rect x='268' y='34' width='30' height='24' rx='4' fill='var(--accent)'/><text x='283' y='50' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S3</text><text x='98' y='72' text-anchor='start' font-size='10' fill='var(--ink-soft)'>S2's empty slots go unused</text></g><g data-step='2' style='pointer-events:none'><text x='90' y='110' text-anchor='end' font-size='11' font-weight='600' fill='var(--ink)'>On demand</text><rect x='98' y='94' width='30' height='24' rx='4' fill='var(--accent)'/><text x='113' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><rect x='132' y='94' width='30' height='24' rx='4' fill='var(--accent)'/><text x='147' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><rect x='166' y='94' width='30' height='24' rx='4' fill='var(--good)'/><text x='181' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S3</text><rect x='200' y='94' width='30' height='24' rx='4' fill='var(--accent)'/><text x='215' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><rect x='234' y='94' width='30' height='24' rx='4' fill='var(--good)'/><text x='249' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S3</text><rect x='268' y='94' width='30' height='24' rx='4' fill='var(--accent)'/><text x='283' y='110' text-anchor='middle' font-size='10' font-weight='700' fill='var(--bg)'>S1</text><text x='98' y='132' text-anchor='start' font-size='10' fill='var(--ink-soft)'>no idle gaps: whoever has data sends</text></g><g data-step='3' style='pointer-events:none'><text x='90' y='166' text-anchor='end' font-size='11' font-weight='600' fill='var(--bad)'>Too busy</text><rect x='100' y='146' width='140' height='32' rx='6' fill='none' stroke='var(--bad)' stroke-width='2'/><rect x='106' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='128' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='150' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='172' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='194' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='216' y='150' width='18' height='24' rx='3' fill='var(--accent)'/><rect x='252' y='150' width='18' height='24' rx='3' fill='none' stroke='var(--bad)' stroke-dasharray='3 3'/></g></g></svg>",
+      "look": "diagram",
+      "alt": "Three rows of time slots: fixed slots with gaps, slots filled on demand, and a full buffer dropping a packet.",
+      "body": [
+        "Joining everyone raises a new problem: many conversations want the same link at once. Sharing a link is called **multiplexing**.",
+        {
+          "step": 1,
+          "text": "**Fixed turns:** each sender gets its own time slot (or its own frequency, like TV channels). A sender with nothing to say wastes its turn."
+        },
+        {
+          "step": 2,
+          "text": "**On demand:** data goes out in limited-size **packets**, from whoever has something to send. This is **statistical multiplexing**, and it is why the internet uses packet switching: no idle gaps."
+        },
+        {
+          "step": 3,
+          "text": "**The price:** if packets arrive faster than the link can send them, the switch stores them; when its memory fills, it drops some. The switch is **congested**."
+        }
+      ]
+    },
+    {
+      "id": "idle",
+      "type": "predict",
+      "prompt": "Back to your web page. It loads in a second, then you read it for two minutes. With fixed time slots, what happens to your share of the link while you read?",
+      "options": [
+        {
+          "text": "It sits idle and nobody can use it",
+          "best": true,
+          "outcome": "Right. That waste is why computer networks share on demand: while you read, your slot would carry nothing."
+        },
+        {
+          "text": "It is given to whoever needs it",
+          "outcome": "That is what on-demand sharing does. Fixed slots cannot hand a turn to someone else."
+        },
+        {
+          "text": "It downloads the next page in advance",
+          "outcome": "The network has no idea what you will click next."
+        }
+      ],
+      "takeaway": "Computer traffic is bursty: long silences, then sudden demands. Sharing by packet suits it."
+    },
+    {
+      "id": "fail",
+      "type": "concept",
+      "title": "Networks fail, in three ways",
+      "steps": 3,
+      "body": [
+        "A good network also hides failures from the apps that use it. The chapter sorts them into three kinds:",
+        {
+          "step": 1,
+          "text": "**Bit errors:** a 1 flips to a 0, from lightning, a power surge or a microwave oven. Rare: about 1 bit in a million on copper, 1 in a trillion or better on fibre."
+        },
+        {
+          "step": 2,
+          "text": "**Lost packets:** usually a congested switch with no room left, sometimes a software bug that forwards a packet the wrong way."
+        },
+        {
+          "step": 3,
+          "text": "**Broken links and nodes:** a crashed machine, a power cut, a cable dug up by a careless digger. A packet network can often route around them."
+        }
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "bucket",
+      "review": true,
+      "prompt": "Apps need different things from the network. Which kind of channel suits each?",
+      "buckets": [
+        {
+          "id": "rr",
+          "name": "Request and reply: every message must arrive, exactly once"
+        },
+        {
+          "id": "ms",
+          "name": "Message stream: in order and on time, a lost frame is fine"
+        }
+      ],
+      "items": [
+        {
+          "text": "Downloading a file",
+          "bucket": "rr"
+        },
+        {
+          "text": "A video call",
+          "bucket": "ms"
+        },
+        {
+          "text": "Fetching an article from a digital library",
+          "bucket": "rr"
+        },
+        {
+          "text": "Watching a film on demand",
+          "bucket": "ms"
+        }
+      ],
+      "why": "A file with a missing piece is broken, so it needs guaranteed delivery. Video can skip a frame, but frames must stay in order and keep coming."
+    },
+    {
+      "id": "wrap",
+      "type": "evolve",
+      "title": "Layers: how a message gets wrapped",
+      "look": "diagram",
+      "label": "Encapsulation",
+      "alt": "A message gains a TCP header, then an IP header, then a Wi-Fi header, and arrives with all three removed.",
+      "stages": [
+        {
+          "text": "Providing those channels on top of messy links is too much for one program, so networks are built in **layers**, each hiding the one below. Watch your click's request go down them.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><g data-k='msg'><rect x='95' y='120' width='150' height='44' rx='6' fill='var(--tint)'/><text x='170.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--ink)'>GET /index.html</text></g><g data-k='c'><text x='170' y='200' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>the browser's request: just bytes to the layers below</text></g><text x='170' y='80' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>on your device</text></svg>"
+        },
+        {
+          "text": "Each layer adds a small **header** in front, with instructions for its partner layer on the other machine. TCP's says which app the data is for and in what order.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><g data-k='tcp' data-from='msg'><rect x='55' y='120' width='56' height='44' rx='6' fill='var(--accent)'/><text x='83.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>TCP</text></g><g data-k='msg'><rect x='115' y='120' width='150' height='44' rx='6' fill='var(--tint)'/><text x='190.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--ink)'>GET /index.html</text></g><g data-k='c'><text x='170' y='200' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>TCP adds a header: which app, which order</text></g><text x='170' y='80' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>on your device</text></svg>"
+        },
+        {
+          "text": "The IP layer adds its own header with the **address** of the destination.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><g data-k='ip' data-from='tcp'><rect x='25' y='120' width='50' height='44' rx='6' fill='var(--good)'/><text x='50.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>IP</text></g><g data-k='tcp'><rect x='79' y='120' width='56' height='44' rx='6' fill='var(--accent)'/><text x='107.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>TCP</text></g><g data-k='msg'><rect x='139' y='120' width='150' height='44' rx='6' fill='var(--tint)'/><text x='214.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--ink)'>GET /index.html</text></g><g data-k='c'><text x='170' y='200' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>IP adds the destination address</text></g><text x='170' y='80' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>on your device</text></svg>"
+        },
+        {
+          "text": "The link layer adds one more for the wire or radio. Routers along the way look only at the IP header; the rest is just cargo.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><g data-k='eth' data-from='ip' data-into='msg'><rect x='10' y='120' width='54' height='44' rx='6' fill='var(--ink-soft)'/><text x='37.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>Wi-Fi</text></g><g data-k='ip' data-into='msg'><rect x='68' y='120' width='44' height='44' rx='6' fill='var(--good)'/><text x='90.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>IP</text></g><g data-k='tcp' data-into='msg'><rect x='116' y='120' width='50' height='44' rx='6' fill='var(--accent)'/><text x='141.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--bg)'>TCP</text></g><g data-k='msg'><rect x='170' y='120' width='150' height='44' rx='6' fill='var(--tint)'/><text x='245.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--ink)'>GET /index.html</text></g><path d='M68 112 V96 H112 V112' fill='none' stroke='var(--good)' stroke-width='2'/><text x='90' y='90' text-anchor='middle' font-size='10' fill='var(--good)'>routers read only this</text><g data-k='c'><text x='170' y='200' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>the link adds its own header and the packet leaves</text></g><text x='170' y='60' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>on the wire</text></svg>"
+        },
+        {
+          "text": "At the server each layer reads and removes its header, in reverse order. The app receives exactly the bytes that were sent. This wrapping is called **encapsulation**.",
+          "art": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 292' font-family='Hanken Grotesk, system-ui, sans-serif'><g data-k='msg'><rect x='95' y='120' width='150' height='44' rx='6' fill='var(--tint)'/><text x='170.0' y='147' text-anchor='middle' font-size='12' font-weight='700' fill='var(--ink)'>GET /index.html</text></g><g data-k='c'><text x='170' y='200' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>headers removed in reverse order: the same bytes arrive</text></g><text x='170' y='80' text-anchor='middle' font-size='12' fill='var(--ink-soft)'>on the server</text></svg>"
+        }
+      ]
+    },
+    {
+      "id": "hourglass",
+      "type": "concept",
+      "title": "The internet is shaped like an hourglass",
+      "steps": 4,
+      "art": "<svg viewBox='0 0 320 190' xmlns='http://www.w3.org/2000/svg' data-pattern='comparison'><g font-family='Hanken Grotesk, system-ui, sans-serif'><g data-step='1' style='pointer-events:none'><path d='M30 28 H290 L250 62 H70 Z' fill='var(--tint)' stroke='var(--ink-faint)'/><text x='160' y='50' text-anchor='middle' font-size='11' font-weight='600' fill='var(--ink)'>Apps: HTTP, email, video...</text></g><g data-step='2' style='pointer-events:none'><path d='M70 66 H250 L210 96 H110 Z' fill='var(--tint)' stroke='var(--accent)'/><text x='160' y='86' text-anchor='middle' font-size='11' font-weight='600' fill='var(--accent)'>TCP or UDP</text></g><g data-step='3' style='pointer-events:none'><rect x='120' y='100' width='80' height='26' rx='4' fill='var(--good)'/><text x='160' y='118' text-anchor='middle' font-size='13' font-weight='700' fill='var(--bg)'>IP</text><text x='212' y='118' text-anchor='start' font-size='10' fill='var(--good)'>the narrow waist</text></g><g data-step='4' style='pointer-events:none'><path d='M110 130 H210 L290 166 H30 Z' fill='var(--tint)' stroke='var(--ink-faint)'/><text x='160' y='155' text-anchor='middle' font-size='11' font-weight='600' fill='var(--ink)'>Ethernet, Wi-Fi, 4G and 5G...</text></g></g></svg>",
+      "look": "diagram",
+      "alt": "An hourglass: many apps on top, TCP and UDP below, a single IP layer at the waist, many network technologies at the bottom.",
+      "body": [
+        "Stack the internet's layers and they make an hourglass.",
+        {
+          "step": 1,
+          "text": "Wide at the top: countless apps, all built on shared protocols such as HTTP for the web."
+        },
+        {
+          "step": 2,
+          "text": "**TCP** gives a reliable stream; **UDP** just sends individual messages."
+        },
+        {
+          "step": 3,
+          "text": "One protocol at the waist: **IP**, which every network agrees to carry."
+        },
+        {
+          "step": 4,
+          "text": "Wide at the bottom: any technology that can move IP packets. Because the waist stays fixed, apps above and networks below can change freely."
+        },
+        "The people who set these standards, at the IETF, insist on working software before agreement, summed up in David Clark's line \"rough consensus and running code\"."
+      ]
+    },
+    {
+      "id": "layers",
+      "type": "sort",
+      "review": true,
+      "prompt": "Put the internet's layers in order, from the top (nearest you) to the bottom (nearest the wire).",
+      "items": [
+        "Application: HTTP",
+        "Transport: TCP or UDP",
+        "Internet: IP",
+        "Network: Ethernet or Wi-Fi"
+      ],
+      "why": "Your app talks HTTP, TCP or UDP carry it between programs, IP moves it between networks, and the bottom layer moves it across one link. In the older seven-layer model these are layers 7, 4, 3 and 2."
+    },
+    {
+      "id": "image",
+      "type": "estimate",
+      "prompt": "Now speed. A digital library sends you a 25-megabyte image over a 10-megabit-per-second link. Roughly how many seconds does sending it take?",
+      "answer": 20,
+      "tolerance": 4,
+      "unit": "seconds",
+      "why": "25 megabytes is 200 megabits (8 bits per byte), and 200 ÷ 10 = 20 seconds. Whether the library is 1 ms or 100 ms away barely matters: 20.001 seconds against 20.1."
+    },
+    {
+      "id": "pipe",
+      "type": "explorable",
+      "title": "When more bandwidth stops helping",
+      "body": [
+        "That was a **bandwidth** problem: how many bits per second the link carries. The other measure is **latency**, the time to get there and back, called the round-trip time.",
+        "Fetch a 1-megabyte file from 100 ms away. Total time = round trip + size ÷ bandwidth. Drag the bandwidth up."
+      ],
+      "slider": {
+        "id": "b",
+        "label": "Link bandwidth (Mbps)",
+        "min": 2,
+        "max": 1000,
+        "step": 1,
+        "value": 10
+      },
+      "plot": {
+        "view": "curve",
+        "mark": "slider",
+        "x": [
+          2,
+          1000
+        ],
+        "y": [
+          0,
+          80
+        ],
+        "f": "8/(0.1 + 8/x)",
+        "xLabel": "bandwidth (Mbps)",
+        "yLabel": "speed you get (Mbps)"
+      },
+      "readouts": [
+        {
+          "label": "Transfer time",
+          "expr": "100 + 8000/b",
+          "digits": 0,
+          "unit": " ms"
+        },
+        {
+          "label": "Speed you get",
+          "expr": "8/(0.1 + 8/b)",
+          "digits": 1,
+          "unit": " Mbps"
+        },
+        {
+          "label": "Time spent on the round trip",
+          "expr": "100*0.1/(0.1 + 8/b)",
+          "digits": 0,
+          "unit": "%"
+        }
+      ],
+      "goal": {
+        "readout": 2,
+        "op": "above",
+        "value": 50,
+        "text": "Past here, most of the wait is the round trip, which no upgrade can shorten.",
+        "prompt": "Goal: find the bandwidth where more than half the time is spent on the round trip."
+      },
+      "why": "At 1 Gbps the transfer takes 108 ms, so you get 74.1 Mbps, not 1,000. Light takes the same time to cross a continent whatever the bandwidth."
+    },
+    {
+      "id": "inflight",
+      "type": "compare",
+      "title": "Bits in flight",
+      "columns": [
+        "Link",
+        "Round trip",
+        "In flight"
+      ],
+      "rows": [
+        [
+          "Wi-Fi, 54 Mbps, 50 m",
+          "0.33 μs",
+          "18 bits"
+        ],
+        [
+          "Satellite, 1 Gbps",
+          "230 ms",
+          "230 Mb"
+        ],
+        [
+          "Fibre, 10 Gbps, 4,000 km",
+          "40 ms",
+          "400 Mb"
+        ]
+      ],
+      "body": [
+        "Picture the link as a pipe: latency is its length, bandwidth its width. Multiply them and you get how many bits are on their way at once, sent but not yet heard back about.",
+        "(Mb is megabits.) A sender must keep that many bits in flight or it leaves the pipe partly empty."
+      ]
+    },
+    {
+      "id": "faster",
+      "type": "spot",
+      "review": true,
+      "prompt": "Someone pays to upgrade a 1 Mbps link to 100 Mbps to speed up a tiny request: one byte out, one byte back, 100 ms round trip. Which line is wrong?",
+      "working": [
+        {
+          "text": "The round trip takes 100 ms, whatever the bandwidth."
+        },
+        {
+          "text": "Sending one byte takes 8 μs at 1 Mbps and 0.08 μs at 100 Mbps."
+        },
+        {
+          "text": "So the reply now comes back 100 times faster.",
+          "wrong": true,
+          "why": "The total was 100 ms plus 8 μs; now it is 100 ms plus 0.08 μs. Both round to 100 ms. A tiny request is latency bound, so extra bandwidth changes nothing."
+        },
+        {
+          "text": "So the upgrade was worth it for this app."
+        }
+      ],
+      "why": "For small messages, distance and the speed of light set the time. For big files, bandwidth does."
+    },
+    {
+      "id": "jitter",
+      "type": "concept",
+      "title": "Why video buffers first",
+      "steps": 2,
+      "body": [
+        "Some apps care less about average speed than about steadiness. Video sends a frame every 33 ms, 30 times a second.",
+        {
+          "step": 1,
+          "text": "Packets wait in different queues along the way, so they arrive unevenly spaced. That variation is **jitter**. A late frame means a stutter."
+        },
+        {
+          "step": 2,
+          "text": "The fix is not to remove jitter but to know how bad it gets: the player holds back a few frames in a **buffer** before starting, so it always has the next one ready."
+        }
+      ]
+    },
+    {
+      "id": "yours",
+      "type": "reflect",
+      "prompt": "Think of the last time something online felt slow: a page, a call, a download. Was it latency, bandwidth or jitter, and why do you think so?",
+      "minChars": 30,
+      "example": "My video call froze while a big download worked fine. The download needs bandwidth; the call needs steady, quick delivery, so it was probably jitter or delay."
+    },
+    {
+      "id": "done",
+      "type": "done",
+      "title": "Lesson complete",
+      "can": "Describe how links, switches and routers build an internet, why it shares links by packet, how layers wrap a message, and when latency matters more than bandwidth."
+    }
+  ]
+}
+</script>
+<script src="../engine/book-engine.v1.js"></script>
+</body>
+</html>

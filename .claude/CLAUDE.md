@@ -642,6 +642,23 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   `book.json` sets `variety`, `mix` and `partial`. The simulate card's `bets`
   model (a running profit line, "New season" keeps old runs faint) was added
   to the engine for it.
+- First topic course (24 Nov 2026): `books/internet/`, "How the internet
+  works", adapted from *Computer Networks: A Systems Approach* by Larry
+  Peterson and Bruce Davie, which is openly licensed CC BY 4.0 (source
+  cloned from github.com/SystemsApproach/book; `rights.tier` is `licensed`).
+  CC BY needs attribution, so every lesson's cover lead and the book home
+  credit the book, authors and licence, and `rights.note` lists the changes.
+  One lesson so far, from Chapter 1 (Foundation), 19 cards: the 17-message
+  click, an evolve card that builds a network from one link to clouds of
+  clouds, multiplexing, three kinds of failure, channels, an encapsulation
+  evolve card, the hourglass, the layers, the 25 MB image, a bandwidth slider
+  (1 MB at 1 Gbps and 100 ms RTT gives 74.1 Mbps), the delay x bandwidth
+  table and jitter. The sockets section is left out (it is for programmers),
+  and the chapter's 75 Mbps uncompressed-video figure is not used (its own
+  numbers give about 60). The textbook is for computer science students, so
+  later lessons keep to its order and examples but leave out the deep
+  technical sections. The No Starch book *How the Internet Really Works* was
+  the first choice but needs an EPUB from the owner.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its
