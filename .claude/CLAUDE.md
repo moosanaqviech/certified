@@ -585,6 +585,18 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
   removed and lesson 13 carries the commit card. The book's text is never
   committed: the repo is deployed publicly.
+- Faith pilot (24 Nov 2026): `books/ethics-and-spiritual-growth/`, three
+  lessons on Chapter 5 (The Stormy Sea of Life) of *Ethics and Spiritual
+  Growth* by Sayyid Mujtaba Musavi Lari, translated by Ali Quli Qara'i (in
+  copyright, `rights.tier` original, `partial: true`): 01 why the storm
+  feels worse now, 02 what hardship is for, 03 anchors in the storm. Our own
+  wording throughout; the Qur'an and the sayings of the Prophet and the
+  Imams are given with references and an "in meaning" rendering, never the
+  translator's text; honorifics on every mention; no drawings of people,
+  and no dialogue cards that put words in sacred figures' mouths; the
+  chapter's uncited statistics are left out; lesson 3 names a doctor or
+  counsellor alongside a trusted friend. One evolve card per lesson with
+  Kokoro narration. Needs a scholar's review before it goes beyond a pilot.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its
