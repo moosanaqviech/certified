@@ -19,7 +19,7 @@ import sys
 
 # ---- limits: the proposals from the strategy doc, tuned from pilot data ----
 MIN_CARDS, MAX_CARDS = 12, 20
-MAX_PASSIVE_RUN = 3          # consecutive non-producing cards after the cover
+MAX_PASSIVE_RUN = 5          # consecutive non-producing cards after the cover: books are read more than drilled
 # Practice is measured across the whole book, so one lesson can be mostly
 # visual while another is mostly practice; each lesson keeps a small floor.
 MIN_PRODUCING_SHARE = 1 / 5  # per lesson

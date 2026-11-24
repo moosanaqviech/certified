@@ -544,7 +544,7 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   and review history point at them. Lesson order lives only in the book's
   `book.json`; lessons carry no next or previous links.
 - `python3 scripts/validate_book.py books/<book-id>` must pass before a lesson
-  ships (12 to 20 cards, never more than three cards in a row with nothing to
+  ships (12 to 20 cards, never more than five cards in a row with nothing to
   do, every answer option explained, the first question by card 5, one
   reflect card, two review cards, two step builds, palette matching
   `book.json`, and exactly one commit card on the book's last lesson only).
