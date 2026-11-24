@@ -248,11 +248,10 @@ one from the other.
   but with our own framing, layout, colours and narration.
 - Never name or imitate another channel in a clip, its title or its
   description.
-- The book's own sourcing rules still apply (CLAUDE.md, books section): our
-  own wording, short credited phrases only, none of the book's figures, and
-  the book's text never committed. For `infinite-powers-v2` the owner has
-  allowed retelling the book's stories and examples; for other books in
-  copyright a clip is an original scene, never a re-enactment from the book.
+- The book's own sourcing rules apply (CLAUDE.md, books section, relaxed 24
+  Nov 2026): a clip may retell or re-enact the book's stories and redraw its
+  diagrams from the same facts, in our own words and art; no scans of its
+  figures, no long verbatim narration, and the book's text never committed.
 
 ## Checks before shipping
 

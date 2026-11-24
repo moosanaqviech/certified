@@ -530,9 +530,9 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   nothing to anchor them (no book, textbook or syllabus deciding scope, order
   and what matters) the lessons read as abstract, disconnected facts with
   scenarios invented as props. Rule: no book course without a source. A book
-  course follows its book; an idea course would need an openly licensed
-  textbook or a published syllabus behind it, the way Certified follows the
-  exam guide.
+  course follows its book; an idea course needs a textbook, popular book or
+  published syllabus behind it (the relaxed sourcing rules apply), the way
+  Certified follows the exam guide.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
@@ -584,13 +584,21 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
 - Progress is browser-only, under `books.v1.progress.<book-id>`,
   `books.v1.notes.<book-id>` and `books.v1.review`. Reflection text never
   leaves the device.
-- Sourcing (owner's decision, 21 Nov 2026): lessons are original content and
-  no publisher or author is contacted. So for any book still in copyright:
-  write in our own words with our own examples, scenarios and diagrams; name
-  the book and author plainly; never quote the text or a translation, never
-  reuse its figures, cover art, chapter structure or its own stories and case
-  studies; a video card is an original scene, never a re-enactment from the
-  book. Set `rights.tier` to `original` (or `public-domain`) in `book.json`.
+- Sourcing (owner's decision, relaxed 24 Nov 2026; replaces the strict 21 Nov
+  rules): the owner accepts grey areas, so lessons may lean on a book as
+  closely as a commercial summary app does. No publisher or author is
+  contacted. Allowed for any book, in copyright or not: follow its structure
+  and order, one lesson per part or chapter; retell its arguments, examples,
+  stories, case studies and historical anecdotes; use its terms and coined
+  phrases; quote short passages (a sentence or a few, credited, as many as a
+  lesson needs); redraw its charts and diagrams in our own art from the same
+  facts and data; re-enact its stories in a video card; show the cover as a
+  small thumbnail to identify the book. The only lines kept: no long verbatim
+  passages or line-by-line paraphrase of whole pages (write in our own
+  words), no scans or copies of the book's figures, photos or illustrations,
+  and the book's text is never committed (the repo deploys publicly). Name
+  the book and author plainly. Set `rights.tier` to `original` (or
+  `public-domain`, `licensed`) and say in `rights.note` what was used.
 - First real book (22 Nov 2026): `books/infinite-powers/`, a six-lesson
   companion to *Infinite Powers* by Steven Strogatz (in copyright, so
   `rights.tier` is `original`): 01 slice it thin, 02 curves are straight up
@@ -601,18 +609,15 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   teach the mathematics with our own scenarios (a pond, a cyclist, a bath, a
   rumour, cooling tea) and step-built graph diagrams; the only things taken
   from the book are its title, its author and the term "Infinity Principle",
-  credited once in lesson 1. Do not add the book's own examples, historical
-  stories or figures. Navy and cyan palette, set in its `book.json`.
+  credited once in lesson 1 (written under the old strict rules, which is
+  why it reads far from the book). Navy and cyan palette, set in its `book.json`.
 - Rebuild in progress (22 Nov 2026): the owner judged the six-lesson version
   too far from the book, so `books/infinite-powers-v2/` is a part-by-part
   summary written from the book's text (2019 Houghton Mifflin Harcourt
   edition): one lesson per part, thirteen in all (Introduction, chapters 1 to
   11, Conclusion). Lessons 1 to 3 (Introduction, 1 Infinity, 2 The Man Who
   Harnessed Infinity) are built as a checkpoint for the owner; the other ten
-  are not written. For this book the owner has lifted the rule against
-  following the book's structure and retelling its stories and examples; the
-  other sourcing rules stand (our own wording, short credited phrases only,
-  none of the book's figures, all drawings original). Its `book.json` sets
+  are not written. It follows the relaxed sourcing rules above. Its `book.json` sets
   `"variety": true` and `"partial": true` (the validator then skips the
   commit-card rule, since an unfinished book has no last lesson). When all
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
