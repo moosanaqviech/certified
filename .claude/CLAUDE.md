@@ -458,8 +458,10 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   compare, scene, video, dialogue (two or three characters, one speech bubble
   per tap), timeline (dated events, one per tap), figure (one big number),
   evolve (one diagram that changes with each tap, see below),
-  choice (single, or `select: N`), predict, sort, bucket, reflect, commit,
-  done. The layout is one column on a phone and two panes (art beside
+  explorable (a slider driving a live chart), simulate (coins, dice or drift,
+  run in batches), choice (single, or `select: N`), predict, sort, bucket,
+  estimate (a number within a tolerance), label (place names on a drawing),
+  spot (tap the wrong line of a worked solution), reflect, commit, done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
   answer, lesson_complete) carrying ids and right or wrong only, never the
   learner's written text.
@@ -509,6 +511,20 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   narration in `media/principle-N.mp3`). It was prototyped as a standalone
   page from a pacing pattern the owner liked in another app; the look and
   content are ours.
+- Diagrams and interactive cards (24 Nov 2026): `.claude/book-diagram-spec.md`
+  is the book counterpart of the anatomy spec. It sets the canvas (320 x 190,
+  340 x 292 in evolve stages), colour roles from palette variables, step-build
+  and evolve planning, and a seven-pattern library (anatomy, flow, graph,
+  comparison, tree, cycle, scale) with skeletons. Put `data-pattern` on an SVG
+  and `validate_book.py` enforces the canvas, a minimum font size of 9,
+  palette-variable colours, a text limit per pattern and the anatomy label
+  column. It is also the authoring reference for the five interactive cards
+  (explorable, estimate, simulate, label, spot): lesson data stays code-free
+  (maths expressions parsed by the engine, built-in simulation models), and
+  the validator checks every expression, name, target and tolerance.
+  Estimate, label, spot and an explorable with a goal count as questions.
+  `books/card-lab/` is the unlinked, noindex test bed that uses every one;
+  drive it in a phone browser after any engine change to those cards.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
