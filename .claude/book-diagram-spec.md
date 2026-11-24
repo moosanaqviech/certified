@@ -87,8 +87,7 @@ unlinked and noindex).
 
 ## 6. Do not
 
-- Draw people unless the idea needs a person. Never draw prophets, Imams,
-  companions or other sacred figures.
+- Draw people unless the idea needs a person.
 - Copy a book's figures, or redraw them closely.
 - Add decoration: borders, textures, drop shadows, clip art.
 - Put more than one idea, or more than seven labels, in a diagram.

@@ -618,15 +618,6 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
   removed and lesson 13 carries the commit card. The book's text is never
   committed: the repo is deployed publicly.
-- Faith pilot withdrawn (24 Nov 2026): a three-lesson pilot on Chapter 5 of
-  *Ethics and Spiritual Growth* (Musavi Lari) was taken down at the owner's
-  request. Paraphrase drifted from the author's meaning (invented framings
-  and stories), and the exercise rules broke up a reflective text. Do not
-  rebuild it in the standard lesson format. The agreed direction for such
-  texts is a reading mode: the work's own sections in order, faithful to the
-  author, sacred texts quoted from a reliable translation, no quizzes, at
-  most an optional unscored reflection, visuals only where the author uses
-  an image. Rights to the translation are not yet settled.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its
