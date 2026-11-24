@@ -423,7 +423,7 @@ EXPR_CONSTS = {"pi", "e"}
 VIEW_VARS = {"riemann": {"n", "dx", "area", "exact", "error"},
              "secant": {"h", "slope", "exact", "error"},
              "curve": {"start", "end"}}
-SIM_MODELS = {"coins": {"p", "unit", "win", "label"}, "dice": {"dice", "sides"}, "drift": {"start", "advantage", "size"}}
+SIM_MODELS = {"coins": {"p", "unit", "win", "label"}, "dice": {"dice", "sides"}, "drift": {"start", "advantage", "size"}, "bets": {"p", "odds", "unit", "label"}}
 
 
 def expr_names(src):
@@ -535,6 +535,8 @@ def check_simulate(where, card, errors):
         errors.append(f"{where}: use 1 to 6 dice with 2 to 20 sides")
     if model == "drift" and not (0 < params.get("start", 0.1) < 1 and -0.5 < params.get("advantage", 0) < 1 and 10 <= params.get("size", 200) <= 2000):
         errors.append(f"{where}: drift needs start in (0, 1), advantage in (-0.5, 1) and size 10 to 2000")
+    if model == "bets" and not (0 < params.get("p", 0.5) < 1 and is_num(params.get("odds", 1)) and 0 < params.get("odds", 1) <= 50):
+        errors.append(f"{where}: bets needs p between 0 and 1 and odds above 0 (fractional, 1 = evens)")
     runs = card.get("runs", [10, 100, 1000])
     if not (isinstance(runs, list) and 1 <= len(runs) <= 3 and all(isinstance(n, int) and 1 <= n <= 1000 for n in runs)):
         errors.append(f"{where}: runs is a list of 1 to 3 batch sizes, each 1 to 1000")

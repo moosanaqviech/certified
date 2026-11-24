@@ -1007,6 +1007,35 @@
         return [['Rolls', numFmt(s.n, 0)], ['Most common total', s.n ? String(bi) : '-']];
       }
     },
+    /* bets: a bettor's running profit, one unit staked per bet. p is the
+       chance each bet wins, odds the fractional pay-out (1 = evens, 7/5 =
+       1.4). "New season" keeps the last four seasons faint. */
+    bets: {
+      init: function (p, old) { var lines = old && old.n ? old.lines.concat([old.line]).slice(-4) : (old ? old.lines : []); return { n: 0, won: 0, profit: 0, line: [[0, 0]], lines: lines }; },
+      step: function (s, p) {
+        var o = p.odds == null ? 1 : p.odds;
+        s.n++;
+        if (Math.random() < (p.p == null ? 0.5 : p.p)) { s.won++; s.profit += o; } else s.profit -= 1;
+        if (s.n <= 100 || s.n % Math.ceil(s.n / 300) === 0) s.line.push([s.n, s.profit]);
+      },
+      cap: 10000,
+      unit: 'bets',
+      draw: function (s, p) {
+        var all = s.lines.concat([s.line]), span = 100, m = 10;
+        all.forEach(function (l) { l.forEach(function (t) { span = Math.max(span, t[0]); m = Math.max(m, Math.abs(t[1])); }); });
+        m = Math.ceil(m * 1.1);
+        var ch = chart([0, span], [-m, m], p.unit || 'bets', p.label || 'profit'), out = ch.head;
+        out += '<line x1="' + PAD.l + '" y1="' + ch.sy(0).toFixed(1) + '" x2="' + (CW - PAD.r) + '" y2="' + ch.sy(0).toFixed(1) + '" class="be-target"/>';
+        s.lines.forEach(function (l) { out += '<path d="' + pathOf(l.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve is-old"/>'; });
+        out += '<path d="' + pathOf(s.line.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve"/>';
+        return out + '</svg>';
+      },
+      reads: function (s, p) {
+        var u = p.unit ? p.unit.charAt(0).toUpperCase() + p.unit.slice(1) : 'Bets';
+        var pr = (s.profit < 0 ? '-' : '') + numFmt(Math.abs(s.profit), Math.abs(s.profit) < 100 && s.profit % 1 ? 1 : 0);
+        return [[u, numFmt(s.n, 0)], ['Won', s.n ? numFmt(s.won / s.n * 100, 1) + '%' : '-'], [p.label ? p.label.charAt(0).toUpperCase() + p.label.slice(1) : 'Profit', pr]];
+      }
+    },
     drift: {
       init: function (p, old) { var lines = old ? old.lines.concat([old.line]).slice(-4) : []; return { gen: 0, share: p.start == null ? 0.1 : p.start, line: [[0, p.start == null ? 0.1 : p.start]], lines: lines }; },
       step: function (s, p) {
@@ -1052,8 +1081,9 @@
       });
       ctr.appendChild(b);
     });
-    var reset = btn('be-btn is-quiet', c.model === 'drift' ? 'New population' : 'Reset');
-    reset.addEventListener('click', function () { state = model.init(p, c.model === 'drift' ? state : null); paint(); });
+    var keep = c.model === 'drift' || c.model === 'bets';
+    var reset = btn('be-btn is-quiet', c.model === 'drift' ? 'New population' : c.model === 'bets' ? 'New season' : 'Reset');
+    reset.addEventListener('click', function () { state = model.init(p, keep ? state : null); paint(); });
     ctr.appendChild(reset);
     card.appendChild(ctr);
     card.appendChild(reads);

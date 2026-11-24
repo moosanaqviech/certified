@@ -623,6 +623,25 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
   removed and lesson 13 carries the commit card. The book's text is never
   committed: the repo is deployed publicly.
+- Second real book (24 Nov 2026): `books/ten-equations/`, a chapter-by-chapter
+  companion to *The Ten Equations that Rule the World* by David Sumpter
+  (Allen Lane, 2020), written from the book's EPUB under the relaxed sourcing
+  rules (the text stays in the scratchpad, never the repo). Ten lessons
+  planned, one per equation, the Introduction (TEN, data, model, nonsense)
+  folded into lesson 1. Each lesson follows one arc: the book's own dilemma
+  as the hook, its story carried through, an evolve card that builds the
+  equation, an interactive card that reproduces the book's own numbers, and
+  the author's "use it too" advice. Lesson 1 (the betting equation, 19
+  cards, free) is built as the owner's checkpoint: Jan and Marius at the 2018
+  World Cup, the equation 1/(1 + αx^β) with α = 1.16, β = 1.25 fitted to 284
+  matches, a slider on the long-shot bias (the equation and the odds agree
+  near x = 0.55), the 2014 table, Colombia v Japan and a 3% edge season.
+  The book has small slips (Black Wednesday for 1987, 17 for 24 times the
+  signal in chapter 3, an endnote's "at least 5 interviews"); lessons state
+  the corrected figure. Leave out the sensitive asides in chapters 9 and 10.
+  `book.json` sets `variety`, `mix` and `partial`. The simulate card's `bets`
+  model (a running profit line, "New season" keeps old runs faint) was added
+  to the engine for it.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

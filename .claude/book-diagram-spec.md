@@ -305,6 +305,11 @@ must reach the goal, Continue waits, and it counts as practice.
   - `dice` (`dice`, `sides`): a histogram of totals.
   - `drift` (`start`, `advantage`, `size`): a trait's share over generations,
     with "New population" keeping the last runs faint for comparison.
+  - `bets` (`p`, `odds`, plus optional `unit` and `label`): a bettor's running
+    profit staking one unit per bet, where `p` is the chance a bet wins and
+    `odds` the fractional pay-out (1 is evens, 7/5 is 1.4); the edge per bet
+    is p x (1 + odds) - 1. "New season" keeps the last four seasons faint, so
+    an edge's bumpy road shows.
 - `runs` are one to three batch sizes. It is not graded, so follow it with a
   question that uses what the learner just saw.
 - A new model means engine work: add it to `SIM` in the engine and to
