@@ -423,7 +423,7 @@ EXPR_CONSTS = {"pi", "e"}
 VIEW_VARS = {"riemann": {"n", "dx", "area", "exact", "error"},
              "secant": {"h", "slope", "exact", "error"},
              "curve": {"start", "end"}}
-SIM_MODELS = {"coins": {"p"}, "dice": {"dice", "sides"}, "drift": {"start", "advantage", "size"}}
+SIM_MODELS = {"coins": {"p", "unit", "win", "label"}, "dice": {"dice", "sides"}, "drift": {"start", "advantage", "size"}}
 
 
 def expr_names(src):
@@ -484,6 +484,8 @@ def check_explorable(where, card, errors):
             return
     if plot["view"] == "secant" and not (is_num(plot.get("at")) and plot["x"][0] <= plot["at"] <= plot["x"][1]):
         errors.append(f"{where}: a secant plot needs \"at\", the point whose slope is measured, inside plot.x")
+    if "mark" in plot and (plot["view"] != "curve" or plot["mark"] != "slider"):
+        errors.append(f"{where}: plot.mark is only \"slider\", on a curve view")
     if plot["view"] == "riemann" and sl.get("step", 1) % 1:
         errors.append(f"{where}: a riemann slider counts strips, so its step must be a whole number")
     try:

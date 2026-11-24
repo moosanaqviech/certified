@@ -525,6 +525,21 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   Estimate, label, spot and an explorable with a goal count as questions.
   `books/card-lab/` is the unlinked, noindex test bed that uses every one;
   drive it in a phone browser after any engine change to those cards.
+- First idea course (24 Nov 2026): `books/chance/`, "Chance: how luck really
+  works", six lessons of 12 cards: 01 the coin has no memory (streaks), 02
+  the birthday surprise, 03 why the casino always wins (law of large
+  numbers), 04 when a positive test misleads (base rates), 05 good bets that
+  lose (expected value), 06 why we fear the wrong things (relative and
+  absolute risk; it carries the commit card). Original content, no source
+  book (`author` "Certify"), `"variety"` and `"mix"` both on, each lesson
+  opening with a different card type, and every new card type in use. Every
+  probability figure was computed exactly, not recalled (for example 81% for
+  a run of six in 100 flips, 50.7% at 23 birthdays, 9% for a positive on a
+  99% test at 1 in 1,000, a 2.7% European roulette edge); the birthday
+  explorable uses the standard approximation and the card states the exact
+  figure. Lesson 1 is free. Chosen to open the idea shelf instead of
+  calculus, which can follow once people trust the app. Unlinked and
+  noindex like the rest of `books/`.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of

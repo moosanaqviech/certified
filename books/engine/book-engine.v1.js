@@ -863,7 +863,11 @@
       out += '<circle cx="' + ch.sx(a).toFixed(1) + '" cy="' + ch.sy(ya).toFixed(1) + '" r="3.5" class="be-pt"/><circle cx="' + ch.sx(b).toFixed(1) + '" cy="' + ch.sy(yb).toFixed(1) + '" r="3" class="be-pt"/>';
     }
     if (P.view === 'curve') {
-      out += '<circle cx="' + ch.sx(P.x[1]).toFixed(1) + '" cy="' + ch.sy(ch.clamp(env.end)).toFixed(1) + '" r="3.5" class="be-pt"/>';
+      /* mark: "slider" puts the point at x = the slider's value (a curve
+         you read off, like chance against group size); otherwise the end. */
+      var mx = P.mark === 'slider' ? val : P.x[1];
+      out += '<circle cx="' + ch.sx(mx).toFixed(1) + '" cy="' + ch.sy(ch.clamp(at(mx))).toFixed(1) + '" r="4" class="be-pt"/>';
+      if (P.mark === 'slider') out += '<line x1="' + ch.sx(mx).toFixed(1) + '" y1="' + ch.sy(P.y[0]).toFixed(1) + '" x2="' + ch.sx(mx).toFixed(1) + '" y2="' + ch.sy(ch.clamp(at(mx))).toFixed(1) + '" class="be-run"/>';
     }
     return out + '</svg>';
   }
@@ -970,13 +974,17 @@
       cap: 10000,
       unit: 'flips',
       draw: function (s, p) {
-        var ch = chart([0, Math.max(10, s.n)], [0, 1], 'flips', 'share of heads'), target = p.p == null ? 0.5 : p.p;
+        var ch = chart([0, Math.max(10, s.n)], [0, 1], p.unit || 'flips', p.label || 'share of heads'), target = p.p == null ? 0.5 : p.p;
         var out = ch.head + '<line x1="' + PAD.l + '" y1="' + ch.sy(target).toFixed(1) + '" x2="' + (CW - PAD.r) + '" y2="' + ch.sy(target).toFixed(1) + '" class="be-target"/>';
         if (s.trace.length) out += '<path d="' + pathOf(s.trace.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve"/>';
         return out + '</svg>';
       },
-      reads: function (s) {
-        return [['Flips', numFmt(s.n, 0)], ['Heads', numFmt(s.heads, 0)], ['Share of heads', s.n ? numFmt(s.heads / s.n * 100, 1) + '%' : '-']];
+      reads: function (s, p) {
+        s.unitName = p.unit ? p.unit.charAt(0).toUpperCase() + p.unit.slice(1) : null;
+        s.winName = p.win || null;
+        s.labelName = p.label ? p.label.charAt(0).toUpperCase() + p.label.slice(1) : null;
+        var u = s.unitName || 'Flips', l = s.labelName || 'Share of heads';
+        return [[u, numFmt(s.n, 0)], [s.winName || 'Heads', numFmt(s.heads, 0)], [l, s.n ? numFmt(s.heads / s.n * 100, 1) + '%' : '-']];
       }
     },
     dice: {

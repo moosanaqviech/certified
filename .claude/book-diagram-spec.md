@@ -269,7 +269,9 @@ must reach the goal, Continue waits, and it counts as practice.
   - `secant`: the line from `at` to `at + h`. The slider is h. Readouts may use
     `h slope exact error`.
   - `curve`: f with the slider inside it, for growth and interest. Readouts
-    may use `start end`.
+    may use `start end`. With `"mark": "slider"` the point sits at x = the
+    slider's value instead of the end, for a curve the learner reads off
+    (chance against group size).
 - Every readout may also use the slider's name.
 - `goal.op` is `below`, `above` or `within` (with a `within` tolerance).
 - Use it when the insight is in the movement: the limit, the rate, the growth.
@@ -298,7 +300,9 @@ must reach the goal, Continue waits, and it counts as practice.
 ```
 
 - Models:
-  - `coins` (`p`): the running share of heads against a dashed target.
+  - `coins` (`p`, plus optional `unit`, `win` and `label` to rename flips,
+    heads and share of heads, say for bets on red): the running share
+    against a dashed target.
   - `dice` (`dice`, `sides`): a histogram of totals.
   - `drift` (`start`, `advantage`, `size`): a trait's share over generations,
     with "New population" keeping the last runs faint for comparison.
