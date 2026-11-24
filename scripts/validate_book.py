@@ -26,7 +26,7 @@ MIN_PRODUCING_SHARE = 1 / 5  # per lesson
 BOOK_PRODUCING_SHARE = 1 / 3 # across all of a book's lessons
 HOOK_WITHIN = 5              # a lesson may open with a puzzle, story, number or diagram;
                              # its first question lands by card N
-QUESTION_TYPES = {"choice", "predict", "sort", "bucket"}
+QUESTION_TYPES = {"choice", "predict", "sort", "bucket", "estimate", "label", "spot", "explorable+"}
 MIN_QUESTION_KINDS = 2       # a lesson with 3+ questions mixes at least this many kinds;
                              # with "mix": true, no kind may be more than half
 OPENER_WINDOW = 3            # in variety books, no two lessons this close open alike
@@ -36,10 +36,11 @@ MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
 # Card types the v1 engine renders.
 TYPES = {"cover", "concept", "case", "compare", "scene", "video", "dialogue",
-         "timeline", "figure", "evolve", "choice",
+         "timeline", "figure", "evolve", "explorable", "simulate", "choice", "estimate", "label", "spot",
          "predict", "sort", "bucket", "reflect", "commit", "done"}
-PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
-REVIEWABLE = {"choice", "predict", "sort", "bucket"}
+# "explorable+" is an explorable card with a goal: it asks for something.
+PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit", "estimate", "label", "spot", "explorable+"}
+REVIEWABLE = {"choice", "predict", "sort", "bucket", "estimate", "label", "spot"}
 
 FIELDS = {
     "cover": {"id", "type", "eyebrow", "title", "art", "alt", "lead", "look"},
@@ -53,6 +54,11 @@ FIELDS = {
     "timeline": {"id", "type", "title", "events", "body"},
     "figure": {"id", "type", "title", "value", "caption", "body"},
     "evolve": {"id", "type", "title", "label", "alt", "look", "stages"},
+    "explorable": {"id", "type", "title", "body", "slider", "plot", "readouts", "goal", "why"},
+    "simulate": {"id", "type", "title", "body", "model", "params", "runs"},
+    "estimate": {"id", "type", "prompt", "answer", "tolerance", "unit", "digits", "why", "art", "alt", "look", "review", "variants"},
+    "label": {"id", "type", "prompt", "art", "alt", "look", "targets", "distractors", "why", "review", "variants"},
+    "spot": {"id", "type", "prompt", "working", "why", "art", "alt", "look", "review", "variants"},
     "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "look", "review", "variants"},
     "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
     "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
@@ -176,7 +182,8 @@ def check_options(where, card, errors):
 # Visual formats, for the variety rules. A card with art names its `look`;
 # some card types are a format in themselves.
 LOOKS = {"diagram", "illustration", "comic", "portrait", "map"}
-FORMAT_TYPES = {"dialogue", "timeline", "figure", "compare", "scene", "video", "evolve"}
+FORMAT_TYPES = {"dialogue", "timeline", "figure", "compare", "scene", "video", "evolve",
+                "explorable", "explorable+", "simulate", "label"}
 STORY_TYPES = {"case", "dialogue", "timeline", "scene"}
 MIN_FORMATS = 3
 
@@ -409,6 +416,217 @@ def check_evolve(where, card, folder, errors):
                 errors.append(f"{where} stage {k + 1}: data-into={a['data-into']!r} names no shape in the stage after")
 
 
+# ---- interactive cards ----
+EXPR_TOKEN = re.compile(r"\s*(\d+\.?\d*(?:e[+-]?\d+)?|\.\d+|[A-Za-z_][A-Za-z_0-9]*|[-+*/^(),])")
+EXPR_FUNCS = {"sin", "cos", "tan", "exp", "ln", "log", "sqrt", "abs", "floor", "round", "min", "max", "pow"}
+EXPR_CONSTS = {"pi", "e"}
+VIEW_VARS = {"riemann": {"n", "dx", "area", "exact", "error"},
+             "secant": {"h", "slope", "exact", "error"},
+             "curve": {"start", "end"}}
+SIM_MODELS = {"coins": {"p", "unit", "win", "label"}, "dice": {"dice", "sides"}, "drift": {"start", "advantage", "size"}}
+
+
+def expr_names(src):
+    """The variable names an expression uses, or raise ValueError if it would
+    not parse in the engine (a token-level check plus balanced parentheses)."""
+    pos, names, depth, toks = 0, set(), 0, []
+    src = str(src)
+    while pos < len(src):
+        m = EXPR_TOKEN.match(src, pos)
+        if not m:
+            if src[pos:].strip() == "":
+                break
+            raise ValueError(f"cannot read {src[pos:]!r}")
+        toks.append(m.group(1))
+        pos = m.end()
+    for k, t in enumerate(toks):
+        if t == "(":
+            depth += 1
+        elif t == ")":
+            depth -= 1
+            if depth < 0:
+                raise ValueError("unbalanced parentheses")
+        elif re.match(r"[A-Za-z_]", t):
+            follows = toks[k + 1] if k + 1 < len(toks) else None
+            if t in EXPR_FUNCS and follows == "(":
+                continue
+            if t not in EXPR_CONSTS:
+                names.add(t)
+    if depth:
+        raise ValueError("unbalanced parentheses")
+    if not toks:
+        raise ValueError("empty expression")
+    return names
+
+
+def is_num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def check_explorable(where, card, errors):
+    sl, plot = card.get("slider"), card.get("plot")
+    if not isinstance(sl, dict) or not all(k in sl for k in ("id", "label", "min", "max", "value")):
+        errors.append(f"{where}: slider needs id, label, min, max and value")
+        return
+    if not re.match(r"^[A-Za-z_][A-Za-z_0-9]*$", str(sl["id"])) or sl["id"] in EXPR_FUNCS | EXPR_CONSTS | {"x"}:
+        errors.append(f"{where}: slider id must be a plain name, not x or a function name")
+    if not all(is_num(sl.get(k)) for k in ("min", "max", "value")) or not sl["min"] < sl["max"] or not sl["min"] <= sl["value"] <= sl["max"]:
+        errors.append(f"{where}: slider needs numbers with min < max and min <= value <= max")
+    if "step" in sl and (not is_num(sl["step"]) or sl["step"] <= 0):
+        errors.append(f"{where}: slider step must be a positive number")
+    if not isinstance(plot, dict) or plot.get("view") not in VIEW_VARS:
+        errors.append(f"{where}: plot.view must be one of {sorted(VIEW_VARS)}")
+        return
+    for axis in ("x", "y"):
+        r = plot.get(axis)
+        if not (isinstance(r, list) and len(r) == 2 and all(is_num(v) for v in r) and r[0] < r[1]):
+            errors.append(f"{where}: plot.{axis} must be [low, high]")
+            return
+    if plot["view"] == "secant" and not (is_num(plot.get("at")) and plot["x"][0] <= plot["at"] <= plot["x"][1]):
+        errors.append(f"{where}: a secant plot needs \"at\", the point whose slope is measured, inside plot.x")
+    if "mark" in plot and (plot["view"] != "curve" or plot["mark"] != "slider"):
+        errors.append(f"{where}: plot.mark is only \"slider\", on a curve view")
+    if plot["view"] == "riemann" and sl.get("step", 1) % 1:
+        errors.append(f"{where}: a riemann slider counts strips, so its step must be a whole number")
+    try:
+        bad = expr_names(plot.get("f", "")) - {"x", sl["id"]}
+        if bad:
+            errors.append(f"{where}: plot.f uses unknown names {sorted(bad)}; it may use x and {sl['id']}")
+    except ValueError as e:
+        errors.append(f"{where}: plot.f does not parse: {e}")
+    reads = card.get("readouts") or []
+    if not isinstance(reads, list) or not 1 <= len(reads) <= 3:
+        errors.append(f"{where}: needs 1 to 3 readouts")
+        reads = reads if isinstance(reads, list) else []
+    allowed = VIEW_VARS[plot["view"]] | {sl["id"]}
+    for k, r in enumerate(reads):
+        if not isinstance(r, dict) or not r.get("label") or not r.get("expr"):
+            errors.append(f"{where}: readout {k + 1} needs a label and an expr")
+            continue
+        try:
+            bad = expr_names(r["expr"]) - allowed
+            if bad:
+                errors.append(f"{where}: readout {k + 1} uses unknown names {sorted(bad)}; it may use {sorted(allowed)}")
+        except ValueError as e:
+            errors.append(f"{where}: readout {k + 1} does not parse: {e}")
+    g = card.get("goal")
+    if g is not None:
+        if not isinstance(g, dict) or not isinstance(g.get("readout"), int) or not 0 <= g["readout"] < len(reads) \
+                or g.get("op") not in ("below", "above", "within") or not is_num(g.get("value")) or not g.get("text"):
+            errors.append(f"{where}: goal needs readout (an index), op (below, above or within), value and text")
+        elif g["op"] == "within" and not is_num(g.get("within")):
+            errors.append(f"{where}: a within goal needs a within tolerance")
+        if not card.get("why"):
+            errors.append(f"{where}: an explorable with a goal needs a why, shown when it is reached")
+
+
+def check_simulate(where, card, errors):
+    model = card.get("model")
+    if model not in SIM_MODELS:
+        errors.append(f"{where}: model must be one of {sorted(SIM_MODELS)}")
+        return
+    params = card.get("params", {})
+    if not isinstance(params, dict) or set(params) - SIM_MODELS[model]:
+        errors.append(f"{where}: params for {model} may be {sorted(SIM_MODELS[model])}")
+        return
+    if model == "coins" and "p" in params and not (is_num(params["p"]) and 0 < params["p"] < 1):
+        errors.append(f"{where}: p must be between 0 and 1")
+    if model == "dice" and not (1 <= params.get("dice", 2) <= 6 and 2 <= params.get("sides", 6) <= 20):
+        errors.append(f"{where}: use 1 to 6 dice with 2 to 20 sides")
+    if model == "drift" and not (0 < params.get("start", 0.1) < 1 and -0.5 < params.get("advantage", 0) < 1 and 10 <= params.get("size", 200) <= 2000):
+        errors.append(f"{where}: drift needs start in (0, 1), advantage in (-0.5, 1) and size 10 to 2000")
+    runs = card.get("runs", [10, 100, 1000])
+    if not (isinstance(runs, list) and 1 <= len(runs) <= 3 and all(isinstance(n, int) and 1 <= n <= 1000 for n in runs)):
+        errors.append(f"{where}: runs is a list of 1 to 3 batch sizes, each 1 to 1000")
+
+
+def check_estimate(where, card, errors):
+    if not is_num(card.get("answer")) or not is_num(card.get("tolerance")) or card["tolerance"] <= 0:
+        errors.append(f"{where}: needs a numeric answer and a positive tolerance")
+    if not card.get("why"):
+        errors.append(f"{where}: needs a why explaining the answer")
+
+
+def check_label(where, card, errors):
+    art = card.get("art") or ""
+    if not art:
+        errors.append(f"{where}: needs the drawing to label as art")
+        return
+    m = re.search(r"viewBox=['\"]([\d.\s-]+)['\"]", art)
+    vb = [float(v) for v in m.group(1).split()] if m else [0, 0, 320, 190]
+    targets = card.get("targets")
+    if not isinstance(targets, list) or not 3 <= len(targets) <= 6:
+        errors.append(f"{where}: needs 3 to 6 targets")
+        return
+    labels = []
+    for k, t in enumerate(targets, 1):
+        if not isinstance(t, dict) or not t.get("label") or not is_num(t.get("x")) or not is_num(t.get("y")):
+            errors.append(f"{where}: target {k} needs label, x and y")
+            continue
+        if not (vb[0] <= t["x"] <= vb[0] + vb[2] and vb[1] <= t["y"] <= vb[1] + vb[3]):
+            errors.append(f"{where}: target {k} ({t['label']}) is outside the drawing")
+        labels.append(t["label"])
+    labels += card.get("distractors", [])
+    if len(labels) != len(set(labels)):
+        errors.append(f"{where}: every name must be different")
+    pts = [(t["x"], t["y"]) for t in targets if isinstance(t, dict) and is_num(t.get("x")) and is_num(t.get("y"))]
+    for a in range(len(pts)):
+        for b in range(a + 1, len(pts)):
+            if abs(pts[a][0] - pts[b][0]) < vb[2] * 0.12 and abs(pts[a][1] - pts[b][1]) < vb[3] * 0.1:
+                errors.append(f"{where}: targets {a + 1} and {b + 1} are too close to tap apart")
+    if not card.get("why"):
+        errors.append(f"{where}: needs a why")
+
+
+def check_spot(where, card, errors):
+    steps = card.get("working")
+    if not isinstance(steps, list) or not 3 <= len(steps) <= 7 or not all(isinstance(st, dict) and st.get("text") for st in steps):
+        errors.append(f"{where}: needs working: 3 to 7 lines, each with text")
+        return
+    wrong = [st for st in steps if st.get("wrong")]
+    if len(wrong) != 1:
+        errors.append(f"{where}: exactly one line of the working must be marked wrong, found {len(wrong)}")
+    elif not wrong[0].get("why"):
+        errors.append(f"{where}: the wrong line needs a why")
+
+
+# ---- book diagram patterns (.claude/book-diagram-spec.md) ----
+PATTERNS = {"anatomy", "flow", "graph", "comparison", "tree", "cycle", "scale"}
+PATTERN_BOXES = {"0 0 320 190", "0 0 340 292"}
+PATTERN_MAX_TEXT = {"anatomy": 16, "flow": 14, "graph": 12, "comparison": 16, "tree": 14, "cycle": 12, "scale": 14}
+MIN_FONT = 9
+
+
+def check_pattern(where, art, errors):
+    """Rules every patterned diagram follows, from the book diagram spec."""
+    m = re.search(r"data-pattern=['\"]([a-z]+)['\"]", art)
+    if not m:
+        return
+    pat = m.group(1)
+    if pat not in PATTERNS:
+        errors.append(f"{where}: data-pattern {pat!r} is not one of {sorted(PATTERNS)}")
+        return
+    box = re.search(r"viewBox=['\"]([^'\"]+)['\"]", art)
+    if not box or " ".join(box.group(1).split()) not in PATTERN_BOXES:
+        errors.append(f"{where}: a {pat} diagram uses viewBox 0 0 320 190 (or 0 0 340 292 in an evolve card)")
+    for size in re.findall(r"font-size=['\"]?([\d.]+)", art) + re.findall(r"font-size:\s*([\d.]+)", art):
+        if float(size) < MIN_FONT:
+            errors.append(f"{where}: text at font-size {size} is too small to read on a phone; use {MIN_FONT} or more")
+            break
+    for attr, val in re.findall(r"\s(fill|stroke)=['\"]([^'\"]+)['\"]", art):
+        if not re.match(r"^(var\(--[\w-]+\)|none|transparent|currentColor|url\(#[\w-]+\))$", val.strip()):
+            errors.append(f"{where}: {attr}={val!r}: colours come from palette variables (var(--...)), not raw values")
+            break
+    texts = len(re.findall(r"<text\b", art))
+    if texts > PATTERN_MAX_TEXT[pat]:
+        errors.append(f"{where}: {texts} text elements is too many for a {pat} diagram (at most {PATTERN_MAX_TEXT[pat]})")
+    if pat == "anatomy":
+        xs = [float(x) for x in re.findall(r"<text[^>]*\sx=['\"]([\d.]+)", art)]
+        if sum(1 for x in xs if x < 180) > 2:
+            errors.append(f"{where}: an anatomy diagram keeps its labels in the right-hand column (x 180 and up), "
+                          f"with at most two small tags on the drawing")
+
+
 def check_scene(where, card, folder, errors):
     if not card.get("art") and not card.get("fallback"):
         errors.append(f"{where}: needs art (an isometric SVG) or a fallback image")
@@ -428,6 +646,12 @@ def check_question(where, card, errors):
         check_sort(where, card, errors)
     elif card["type"] == "bucket":
         check_bucket(where, card, errors)
+    elif card["type"] == "estimate":
+        check_estimate(where, card, errors)
+    elif card["type"] == "label":
+        check_label(where, card, errors)
+    elif card["type"] == "spot":
+        check_spot(where, card, errors)
 
 
 def check_variants(where, card, errors):
@@ -563,15 +787,15 @@ def check_lesson(path, book, errors):
         if extra:
             errors.append(f"{where}: unknown fields {sorted(extra)}")
         if ctype in ("cover", "concept", "case", "compare", "scene", "video", "dialogue", "timeline",
-                     "figure", "evolve", "done") and not c.get("title"):
+                     "figure", "evolve", "explorable", "simulate", "done") and not c.get("title"):
             errors.append(f"{where}: needs a title")
-        if ctype in PRODUCING and not c.get("prompt"):
+        if ctype in PRODUCING and ctype != "explorable+" and not c.get("prompt"):
             errors.append(f"{where}: needs a prompt")
         if ctype in ("concept", "case") and not c.get("body"):
             errors.append(f"{where}: needs a body")
         if ctype == "cover" and not c.get("art"):
             errors.append(f"{where}: the cover needs art")
-        if ctype in ("choice", "predict", "sort", "bucket"):
+        if ctype in ("choice", "predict", "sort", "bucket", "estimate", "label", "spot"):
             check_question(where, c, errors)
             check_variants(where, c, errors)
         if ctype == "compare":
@@ -592,6 +816,15 @@ def check_lesson(path, book, errors):
             check_scene(where, c, os.path.dirname(path), errors)
         if ctype == "evolve":
             check_evolve(where, c, os.path.dirname(path), errors)
+            for st in c.get("stages") or []:
+                if isinstance(st, dict) and st.get("art"):
+                    check_pattern(where, st["art"], errors)
+        if ctype == "explorable":
+            check_explorable(where, c, errors)
+        if ctype == "simulate":
+            check_simulate(where, c, errors)
+        if c.get("art"):
+            check_pattern(where, c["art"], errors)
         if ctype in ("reflect", "commit"):
             if not isinstance(c.get("minChars"), int) or c["minChars"] < 1:
                 errors.append(f"{where}: needs a positive minChars")
@@ -609,7 +842,7 @@ def check_lesson(path, book, errors):
         check_art(where, c, errors)
         check_steps(where, c, errors)
 
-    types = [c.get("type") for c in cards]
+    types = [etype(c) for c in cards]
     if types[0] != "cover" or types.count("cover") != 1:
         errors.append(f"{rel}: the first card, and only the first, is the cover")
     if types[-1] != "done" or types.count("done") != 1:
@@ -753,11 +986,18 @@ def check_book(folder, errors, only=None):
                                   f"no two lessons within {OPENER_WINDOW} of each other may begin alike")
 
 
+def etype(c):
+    """A card's type for the counting rules: an explorable with a goal asks
+    the learner for something, so it counts as "explorable+"."""
+    t = c.get("type") if isinstance(c, dict) else None
+    return "explorable+" if t == "explorable" and c.get("goal") else t
+
+
 def lesson_types(path):
     """Every card type in a lesson, in order, or [] if it cannot be read."""
     m = LESSON_RE.search(open(path, encoding="utf-8").read())
     try:
-        return [c.get("type") for c in json.loads(m.group(1))["cards"]] if m else []
+        return [etype(c) for c in json.loads(m.group(1))["cards"]] if m else []
     except (ValueError, KeyError):
         return []
 

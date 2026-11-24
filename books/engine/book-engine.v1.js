@@ -31,8 +31,10 @@
     if (c.type === 'evolve' && c.stages) c.steps = Math.max(0, c.stages.length - 1);
   });
 
-  var PRODUCING = { choice: 1, predict: 1, sort: 1, bucket: 1, reflect: 1, commit: 1 };
-  var NO_SWIPE = { sort: 1, bucket: 1 };
+  var PRODUCING = { choice: 1, predict: 1, sort: 1, bucket: 1, reflect: 1, commit: 1, estimate: 1, label: 1, spot: 1 };
+  /* An explorable with a goal asks for something; one without is to play with. */
+  function producing(c) { return !!PRODUCING[c.type] || (c.type === 'explorable' && !!c.goal); }
+  var NO_SWIPE = { sort: 1, bucket: 1, explorable: 1, label: 1 };
   var TAG = {
     concept: 'The idea',
     'case': 'A case',
@@ -43,6 +45,11 @@
     scene: 'Picture it',
     video: 'Watch',
     evolve: 'Watch it build',
+    explorable: 'Try it',
+    estimate: 'Estimate',
+    simulate: 'Run it',
+    label: 'Label it',
+    spot: 'Spot the mistake',
     choice: 'Your turn',
     predict: 'What would you do?',
     sort: 'Put in order',
@@ -180,7 +187,7 @@
   var bar = h('div', 'be-bar');
   bar.setAttribute('aria-hidden', 'true');
   var segs = (reviewMode ? session.queue : cards).map(function (c) {
-    var s = h('span', 'be-seg' + (!reviewMode && PRODUCING[c.type] ? ' is-do' : ''));
+    var s = h('span', 'be-seg' + (!reviewMode && producing(c) ? ' is-do' : ''));
     bar.appendChild(s);
     return s;
   });
@@ -228,7 +235,7 @@
   var nextLesson = null;
 
   function stepsLeft(c) { return (c.steps || 0) - (stepState[c.id] || 0); }
-  function gated(c) { return !!PRODUCING[c.type] && !me.answers[c.id]; }
+  function gated(c) { return producing(c) && !me.answers[c.id]; }
 
   function applySteps(c, card) {
     var n = stepState[c.id] || 0;
@@ -703,6 +710,477 @@
       if (n > 0) track('evolve_stage', { card_id: c.id, stage: n + 1 });
       speak(n);
     };
+  };
+
+  /* ==========================================================================
+     Interactive cards (24 Nov 2026): explorable, estimate, simulate, label,
+     spot. Lessons stay data-only: curves are maths expressions parsed here
+     (numbers, x, slider ids, + - * / ^, parentheses, a few functions), and
+     simulations are built-in models. Nothing in a lesson is ever run as code.
+     ========================================================================== */
+  var MATH_FN = {
+    sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log10 || function (v) { return Math.log(v) / Math.LN10; },
+    sqrt: Math.sqrt, abs: Math.abs, floor: Math.floor, round: Math.round, min: Math.min, max: Math.max, pow: Math.pow
+  };
+  var MATH_CONST = { pi: Math.PI, e: Math.E };
+  /* Compile an expression to a function of an environment object, or throw. */
+  function compileExpr(src) {
+    var toks = [], re = /\s*(\d+\.?\d*(?:e[+-]?\d+)?|\.\d+|[A-Za-z_][A-Za-z_0-9]*|[-+*\/^(),])/gy, m, pos = 0;
+    src = String(src);
+    while (pos < src.length) {
+      re.lastIndex = pos;
+      m = re.exec(src);
+      if (!m) { if (/^\s*$/.test(src.slice(pos))) break; throw new Error('bad expression: ' + src); }
+      toks.push(m[1]);
+      pos = re.lastIndex;
+    }
+    var i = 0;
+    function peek() { return toks[i]; }
+    function take(t) { if (toks[i] !== t) throw new Error('expected ' + t + ' in ' + src); i++; }
+    function expr() {
+      var a = term();
+      while (peek() === '+' || peek() === '-') {
+        var op = toks[i++], b = term(), l = a;
+        a = op === '+' ? (function (l, b) { return function (v) { return l(v) + b(v); }; })(l, b)
+                       : (function (l, b) { return function (v) { return l(v) - b(v); }; })(l, b);
+      }
+      return a;
+    }
+    function term() {
+      var a = unary();
+      while (peek() === '*' || peek() === '/') {
+        var op = toks[i++], b = unary(), l = a;
+        a = op === '*' ? (function (l, b) { return function (v) { return l(v) * b(v); }; })(l, b)
+                       : (function (l, b) { return function (v) { return l(v) / b(v); }; })(l, b);
+      }
+      return a;
+    }
+    function unary() {
+      if (peek() === '-') { i++; var u = unary(); return function (v) { return -u(v); }; }
+      if (peek() === '+') { i++; return unary(); }
+      return power();
+    }
+    function power() {
+      var base = primary();
+      if (peek() === '^') { i++; var ex = unary(); return function (v) { return Math.pow(base(v), ex(v)); }; }
+      return base;
+    }
+    function primary() {
+      var t = toks[i++];
+      if (t === undefined) throw new Error('unexpected end in ' + src);
+      if (t === '(') { var e = expr(); take(')'); return e; }
+      if (/^[\d.]/.test(t)) { var n = parseFloat(t); return function () { return n; }; }
+      if (/^[A-Za-z_]/.test(t)) {
+        if (peek() === '(' && MATH_FN[t]) {
+          i++;
+          var args = [expr()];
+          while (peek() === ',') { i++; args.push(expr()); }
+          take(')');
+          var fn = MATH_FN[t];
+          return function (v) { return fn.apply(null, args.map(function (a) { return a(v); })); };
+        }
+        if (MATH_CONST[t] !== undefined) { var c = MATH_CONST[t]; return function () { return c; }; }
+        return function (v) { return v[t]; };
+      }
+      throw new Error('unexpected ' + t + ' in ' + src);
+    }
+    var out = expr();
+    if (i < toks.length) throw new Error('unexpected ' + toks[i] + ' in ' + src);
+    return out;
+  }
+  function numFmt(v, digits) {
+    if (!isFinite(v)) return '-';
+    var d = digits == null ? 2 : digits;
+    return Number(v).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  /* A chart: axes in a 320 x 200 box, with scale helpers. */
+  var CW = 320, CH = 200, PAD = { l: 34, r: 12, t: 12, b: 26 };
+  function chart(xr, yr, xLabel, yLabel, noXTick) {
+    var sx = function (x) { return PAD.l + (x - xr[0]) / (xr[1] - xr[0]) * (CW - PAD.l - PAD.r); };
+    var sy = function (y) { return CH - PAD.b - (y - yr[0]) / (yr[1] - yr[0]) * (CH - PAD.t - PAD.b); };
+    var svg = '<svg viewBox="0 0 ' + CW + ' ' + CH + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<line x1="' + PAD.l + '" y1="' + (CH - PAD.b) + '" x2="' + (CW - PAD.r) + '" y2="' + (CH - PAD.b) + '" class="be-ax"/>' +
+      '<line x1="' + PAD.l + '" y1="' + PAD.t + '" x2="' + PAD.l + '" y2="' + (CH - PAD.b) + '" class="be-ax"/>' +
+      '<text x="' + (CW - PAD.r) + '" y="' + (CH - 6) + '" text-anchor="end" class="be-axt">' + esc(xLabel || '') + '</text>' +
+      '<text x="' + (PAD.l + 6) + '" y="' + (PAD.t + 9) + '" class="be-axt">' + esc(yLabel || '') + '</text>' +
+      (noXTick ? '' : '<text x="' + PAD.l + '" y="' + (CH - 8) + '" text-anchor="middle" class="be-axt">' + esc(String(+xr[0].toFixed(3))) + '</text>') +
+      '<text x="' + (PAD.l - 4) + '" y="' + (CH - PAD.b) + '" text-anchor="end" class="be-axt">' + esc(String(+yr[0].toFixed(3))) + '</text>' +
+      '<text x="' + (PAD.l - 4) + '" y="' + (PAD.t + 10) + '" text-anchor="end" class="be-axt">' + esc(String(+yr[1].toFixed(3))) + '</text>';
+    return { sx: sx, sy: sy, head: svg, clamp: function (y) { return Math.max(yr[0] - (yr[1] - yr[0]) * 0.05, Math.min(yr[1] + (yr[1] - yr[0]) * 0.05, y)); } };
+  }
+  function pathOf(pts) {
+    return pts.map(function (p, k) { return (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+  }
+
+  /* ---------- explorable: drag a slider, watch the picture and the numbers ---------- */
+  function exploreEnv(c, val) {
+    var P = c.plot, env = {}, f = c._f;
+    env[c.slider.id] = val;
+    var at = function (x) { env.x = x; return f(env); };
+    var x0 = P.x[0], x1 = P.x[1];
+    if (P.view === 'riemann') {
+      var n = Math.max(1, Math.round(val)), dx = (x1 - x0) / n, s = 0, k;
+      for (k = 0; k < n; k++) s += at(x0 + k * dx) * dx;
+      var N = 600, h = (x1 - x0) / N, ex = at(x0) + at(x1);
+      for (k = 1; k < N; k++) ex += at(x0 + k * h) * (k % 2 ? 4 : 2);
+      ex *= h / 3;
+      env.n = n; env.dx = dx; env.area = s; env.exact = ex; env.error = Math.abs(s - ex) / Math.abs(ex) * 100;
+    } else if (P.view === 'secant') {
+      var a = P.at, hh = val;
+      env.h = hh;
+      env.slope = (at(a + hh) - at(a)) / hh;
+      env.exact = (at(a + 1e-6) - at(a - 1e-6)) / 2e-6;
+      env.error = Math.abs(env.slope - env.exact);
+    } else {
+      env.end = at(x1);
+      env.start = at(x0);
+    }
+    env[c.slider.id] = val;
+    return env;
+  }
+  function exploreSvg(c, val, env) {
+    var P = c.plot, ch = chart(P.x, P.y, P.xLabel, P.yLabel), f = c._f, e2 = {}, k, pts = [];
+    e2[c.slider.id] = val;
+    var at = function (x) { e2.x = x; return f(e2); };
+    var out = ch.head;
+    if (P.view === 'riemann') {
+      var n = env.n, dx = env.dx;
+      for (k = 0; k < n; k++) {
+        var xl = P.x[0] + k * dx, y = at(xl);
+        out += '<rect x="' + ch.sx(xl).toFixed(1) + '" y="' + ch.sy(Math.max(0, y)).toFixed(1) + '" width="' + Math.max(0.6, ch.sx(xl + dx) - ch.sx(xl)).toFixed(1) +
+          '" height="' + Math.abs(ch.sy(0) - ch.sy(y)).toFixed(1) + '" class="be-strip"' + (n > 40 ? ' style="stroke-width:0"' : '') + '/>';
+      }
+    }
+    for (k = 0; k <= 160; k++) { var x = P.x[0] + (P.x[1] - P.x[0]) * k / 160; pts.push([ch.sx(x), ch.sy(ch.clamp(at(x)))]); }
+    out += '<path d="' + pathOf(pts) + '" class="be-curve"/>';
+    if (P.view === 'secant') {
+      var a = P.at, b = a + env.h, ya = at(a), yb = at(b), m = env.slope;
+      var xa = P.x[0], xb = P.x[1];
+      out += '<line x1="' + ch.sx(xa).toFixed(1) + '" y1="' + ch.sy(ch.clamp(ya + m * (xa - a))).toFixed(1) + '" x2="' + ch.sx(xb).toFixed(1) + '" y2="' + ch.sy(ch.clamp(ya + m * (xb - a))).toFixed(1) + '" class="be-secant"/>';
+      out += '<line x1="' + ch.sx(a).toFixed(1) + '" y1="' + ch.sy(ya).toFixed(1) + '" x2="' + ch.sx(b).toFixed(1) + '" y2="' + ch.sy(ya).toFixed(1) + '" class="be-run"/>';
+      out += '<line x1="' + ch.sx(b).toFixed(1) + '" y1="' + ch.sy(ya).toFixed(1) + '" x2="' + ch.sx(b).toFixed(1) + '" y2="' + ch.sy(yb).toFixed(1) + '" class="be-rise"/>';
+      out += '<circle cx="' + ch.sx(a).toFixed(1) + '" cy="' + ch.sy(ya).toFixed(1) + '" r="3.5" class="be-pt"/><circle cx="' + ch.sx(b).toFixed(1) + '" cy="' + ch.sy(yb).toFixed(1) + '" r="3" class="be-pt"/>';
+    }
+    if (P.view === 'curve') {
+      /* mark: "slider" puts the point at x = the slider's value (a curve
+         you read off, like chance against group size); otherwise the end. */
+      var mx = P.mark === 'slider' ? val : P.x[1];
+      out += '<circle cx="' + ch.sx(mx).toFixed(1) + '" cy="' + ch.sy(ch.clamp(at(mx))).toFixed(1) + '" r="4" class="be-pt"/>';
+      if (P.mark === 'slider') out += '<line x1="' + ch.sx(mx).toFixed(1) + '" y1="' + ch.sy(P.y[0]).toFixed(1) + '" x2="' + ch.sx(mx).toFixed(1) + '" y2="' + ch.sy(ch.clamp(at(mx))).toFixed(1) + '" class="be-run"/>';
+    }
+    return out + '</svg>';
+  }
+  function goalMet(c, env) {
+    var g = c.goal, r = c.readouts[g.readout], v = r._e(env);
+    if (g.op === 'below') return v < g.value;
+    if (g.op === 'above') return v > g.value;
+    return Math.abs(v - g.value) <= (g.within || 0);
+  }
+  BUILD.explorable = function (c, card) {
+    addHead(card, TAG.explorable, c.title);
+    try {
+      c._f = c._f || compileExpr(c.plot.f);
+      (c.readouts || []).forEach(function (r) { r._e = r._e || compileExpr(r.expr); });
+    } catch (e) {
+      card.appendChild(h('p', 'be-error', 'This interactive could not be loaded.'));
+      return;
+    }
+    var S = c.slider;
+    var art = h('div', 'be-art be-explore');
+    card.appendChild(art);
+    (c.body || []).forEach(function (b) { card.appendChild(h('p', 'be-p', fmt(typeof b === 'string' ? b : b.text))); });
+    var wrap = h('label', 'be-slider');
+    var name = h('span', 'be-slider-name');
+    var input = document.createElement('input');
+    input.type = 'range';
+    input.min = S.min; input.max = S.max; input.step = S.step || 1;
+    input.value = me.answers[c.id] && me.answers[c.id].v != null ? me.answers[c.id].v : S.value;
+    wrap.appendChild(name);
+    wrap.appendChild(input);
+    card.appendChild(wrap);
+    var reads = h('div', 'be-readouts');
+    reads.setAttribute('aria-live', 'polite');
+    card.appendChild(reads);
+    var hit = false;
+    function paint() {
+      var v = parseFloat(input.value), env = exploreEnv(c, v);
+      art.innerHTML = exploreSvg(c, v, env);
+      name.innerHTML = fmt(S.label) + ': <strong>' + esc(numFmt(v, S.digits == null ? (S.step && S.step < 1 ? 2 : 0) : S.digits)) + (S.unit ? ' ' + esc(S.unit) : '') + '</strong>';
+      reads.innerHTML = (c.readouts || []).map(function (r) {
+        return '<span class="be-read"><span>' + fmt(r.label) + '</span><strong>' + esc(numFmt(r._e(env), r.digits)) + (r.unit ? ' ' + esc(r.unit) : '') + '</strong></span>';
+      }).join('');
+      if (c.goal && !hit && goalMet(c, env)) {
+        hit = true;
+        if (!me.answers[c.id]) record(c, { ok: true, v: v });
+        feedback(card, ['<strong>' + fmt(c.goal.text || 'Goal reached.') + '</strong> ' + fmt(c.why || '')]);
+        announce(plain(c.goal.text || 'Goal reached.'));
+      }
+    }
+    input.addEventListener('input', paint);
+    if (c.goal) card.appendChild(h('p', 'be-how', fmt(c.goal.prompt || 'Move the slider to reach the goal.')));
+    paint();
+    if (me.answers[c.id] && !hit) { hit = true; feedback(card, ['<strong>' + fmt(c.goal ? c.goal.text || 'Goal reached.' : '') + '</strong> ' + fmt(c.why || '')]); }
+    if (!c.goal && c.why) card.appendChild(h('p', 'be-p', fmt(c.why)));
+  };
+
+  /* ---------- estimate: type a number, credit within a tolerance ---------- */
+  function showEstimate(c, card, ans, speak) {
+    var ok = ans.ok;
+    var parts = [verdict(ok) + 'Your estimate: <strong>' + esc(numFmt(ans.v, c.digits == null ? 0 : c.digits)) + '</strong>. ' +
+      'The answer: <strong>' + esc(numFmt(c.answer, c.digits == null ? 0 : c.digits)) + (c.unit ? ' ' + esc(c.unit) : '') + '</strong>' +
+      (ok ? '.' : ', and anything within ' + esc(numFmt(c.tolerance, c.digits == null ? 0 : c.digits)) + ' counts.'), fmt(c.why || '')];
+    feedback(card, parts);
+    if (speak) announce((ok ? 'Correct. ' : 'Not quite. ') + 'The answer is ' + c.answer + '.');
+  }
+  BUILD.estimate = function (c, card) {
+    addHead(card, TAG.estimate, c.prompt);
+    addArt(c, card);
+    var row = h('div', 'be-est');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'decimal';
+    input.className = 'be-text be-num';
+    input.setAttribute('aria-label', 'Your estimate');
+    input.placeholder = 'Your estimate';
+    row.appendChild(input);
+    if (c.unit) row.appendChild(h('span', 'be-unit', esc(c.unit)));
+    card.appendChild(row);
+    var check = btn('be-btn be-check', 'Check');
+    check.disabled = true;
+    card.appendChild(check);
+    function value() { var t = input.value.replace(/[,\s]/g, ''); return t === '' ? NaN : parseFloat(t); }
+    if (me.answers[c.id]) {
+      input.value = me.answers[c.id].v; input.disabled = true; check.hidden = true;
+      showEstimate(c, card, me.answers[c.id], false);
+      return;
+    }
+    input.addEventListener('input', function () { check.disabled = !isFinite(value()); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !check.disabled) { e.preventDefault(); check.click(); } });
+    check.addEventListener('click', function () {
+      var v = value();
+      if (!isFinite(v) || me.answers[c.id]) return;
+      input.disabled = true; check.hidden = true;
+      record(c, { v: v, ok: Math.abs(v - c.answer) <= c.tolerance });
+      showEstimate(c, card, me.answers[c.id], true);
+    });
+  };
+
+  /* ---------- simulate: run a built-in model many times ---------- */
+  var SIM = {
+    coins: {
+      init: function (p) { return { n: 0, heads: 0, trace: [] }; },
+      step: function (s, p) { s.n++; if (Math.random() < (p.p == null ? 0.5 : p.p)) s.heads++; if (s.n <= 50 || s.n % Math.ceil(s.n / 200) === 0) s.trace.push([s.n, s.heads / s.n]); },
+      cap: 10000,
+      unit: 'flips',
+      draw: function (s, p) {
+        var ch = chart([0, Math.max(10, s.n)], [0, 1], p.unit || 'flips', p.label || 'share of heads'), target = p.p == null ? 0.5 : p.p;
+        var out = ch.head + '<line x1="' + PAD.l + '" y1="' + ch.sy(target).toFixed(1) + '" x2="' + (CW - PAD.r) + '" y2="' + ch.sy(target).toFixed(1) + '" class="be-target"/>';
+        if (s.trace.length) out += '<path d="' + pathOf(s.trace.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve"/>';
+        return out + '</svg>';
+      },
+      reads: function (s, p) {
+        s.unitName = p.unit ? p.unit.charAt(0).toUpperCase() + p.unit.slice(1) : null;
+        s.winName = p.win || null;
+        s.labelName = p.label ? p.label.charAt(0).toUpperCase() + p.label.slice(1) : null;
+        var u = s.unitName || 'Flips', l = s.labelName || 'Share of heads';
+        return [[u, numFmt(s.n, 0)], [s.winName || 'Heads', numFmt(s.heads, 0)], [l, s.n ? numFmt(s.heads / s.n * 100, 1) + '%' : '-']];
+      }
+    },
+    dice: {
+      init: function (p) { var d = p.dice || 2, f = p.sides || 6, c = []; for (var k = 0; k <= d * f; k++) c.push(0); return { n: 0, counts: c }; },
+      step: function (s, p) { var d = p.dice || 2, f = p.sides || 6, t = 0; for (var k = 0; k < d; k++) t += 1 + Math.floor(Math.random() * f); s.counts[t]++; s.n++; },
+      cap: 20000,
+      unit: 'rolls',
+      draw: function (s, p) {
+        var d = p.dice || 2, f = p.sides || 6, max = Math.max.apply(null, s.counts) || 1;
+        var ch = chart([d - 0.5, d * f + 0.5], [0, max], 'total', 'times', true), out = ch.head, w = ch.sx(1) - ch.sx(0);
+        for (var t = d; t <= d * f; t++) {
+          out += '<rect x="' + (ch.sx(t) - w * 0.4).toFixed(1) + '" y="' + ch.sy(s.counts[t]).toFixed(1) + '" width="' + (w * 0.8).toFixed(1) + '" height="' + (ch.sy(0) - ch.sy(s.counts[t])).toFixed(1) + '" class="be-bar"/>';
+          if (d * f - d <= 16) out += '<text x="' + ch.sx(t).toFixed(1) + '" y="' + (CH - 14) + '" text-anchor="middle" class="be-axt">' + t + '</text>';
+        }
+        return out + '</svg>';
+      },
+      reads: function (s, p) {
+        var best = -1, bi = 0;
+        s.counts.forEach(function (v, k) { if (v > best) { best = v; bi = k; } });
+        return [['Rolls', numFmt(s.n, 0)], ['Most common total', s.n ? String(bi) : '-']];
+      }
+    },
+    drift: {
+      init: function (p, old) { var lines = old ? old.lines.concat([old.line]).slice(-4) : []; return { gen: 0, share: p.start == null ? 0.1 : p.start, line: [[0, p.start == null ? 0.1 : p.start]], lines: lines }; },
+      step: function (s, p) {
+        var sAdv = p.advantage || 0, N = p.size || 200, q = s.share * (1 + sAdv) / (1 + s.share * sAdv), k = 0;
+        for (var i = 0; i < N; i++) if (Math.random() < q) k++;
+        s.share = k / N; s.gen++; s.line.push([s.gen, s.share]);
+      },
+      cap: 500,
+      unit: 'generations',
+      draw: function (s, p) {
+        var span = Math.max(20, s.gen, s.lines.reduce(function (m, l) { return Math.max(m, l.length - 1); }, 0));
+        var ch = chart([0, span], [0, 1], 'generations', 'share with the trait'), out = ch.head;
+        s.lines.forEach(function (l) { out += '<path d="' + pathOf(l.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve is-old"/>'; });
+        out += '<path d="' + pathOf(s.line.map(function (t) { return [ch.sx(t[0]), ch.sy(t[1])]; })) + '" class="be-curve"/>';
+        return out + '</svg>';
+      },
+      reads: function (s) { return [['Generation', numFmt(s.gen, 0)], ['Share with the trait', numFmt(s.share * 100, 0) + '%']]; }
+    }
+  };
+  BUILD.simulate = function (c, card) {
+    addHead(card, TAG.simulate, c.title);
+    var model = SIM[c.model];
+    if (!model) { card.appendChild(h('p', 'be-error', 'This simulation could not be loaded.')); return; }
+    var p = c.params || {};
+    var art = h('div', 'be-art be-explore');
+    card.appendChild(art);
+    (c.body || []).forEach(function (b) { card.appendChild(h('p', 'be-p', fmt(typeof b === 'string' ? b : b.text))); });
+    var reads = h('div', 'be-readouts');
+    reads.setAttribute('aria-live', 'polite');
+    var ctr = h('div', 'be-simctl');
+    var state = model.init(p);
+    function paint() {
+      art.innerHTML = model.draw(state, p);
+      reads.innerHTML = model.reads(state, p).map(function (r) { return '<span class="be-read"><span>' + esc(r[0]) + '</span><strong>' + esc(r[1]) + '</strong></span>'; }).join('');
+    }
+    (c.runs || [10, 100, 1000]).forEach(function (n) {
+      var b = btn('be-btn is-quiet', 'Run ' + numFmt(n, 0));
+      b.addEventListener('click', function () {
+        var room = model.cap - (state.n != null ? state.n : state.gen);
+        for (var k = 0; k < Math.min(n, room); k++) model.step(state, p);
+        paint();
+        track('simulate_run', { card_id: c.id, runs: n });
+      });
+      ctr.appendChild(b);
+    });
+    var reset = btn('be-btn is-quiet', c.model === 'drift' ? 'New population' : 'Reset');
+    reset.addEventListener('click', function () { state = model.init(p, c.model === 'drift' ? state : null); paint(); });
+    ctr.appendChild(reset);
+    card.appendChild(ctr);
+    card.appendChild(reads);
+    paint();
+  };
+
+  /* ---------- label: place each name on its part of a drawing ---------- */
+  BUILD.label = function (c, card) {
+    addHead(card, TAG.label, c.prompt);
+    var targets = c.targets || [];
+    var tmp = h('div', '', c.art || '');
+    var svg = tmp.querySelector('svg');
+    var vb = svg && svg.getAttribute('viewBox') ? svg.getAttribute('viewBox').split(/[\s,]+/).map(Number) : [0, 0, 320, 190];
+    var box = h('div', 'be-art be-labelart');
+    var stage = h('div', 'be-labelstage');
+    stage.style.maxWidth = 'calc(38vh * ' + (vb[2] / vb[3]).toFixed(4) + ')';
+    if (svg) {
+      svg.setAttribute('role', 'img');
+      if (c.alt) svg.setAttribute('aria-label', c.alt);
+      stage.appendChild(svg);
+    }
+    box.appendChild(stage);
+    card.appendChild(box);
+    card.appendChild(h('p', 'be-how', 'Tap a name, then tap the spot it belongs to. Tap a filled spot to clear it.'));
+    var chosen = null, placed = {}, spots = [], chips = [];
+    targets.forEach(function (t, k) {
+      var s = btn('be-spot', String(k + 1));
+      s.style.left = ((t.x - vb[0]) / vb[2] * 100).toFixed(2) + '%';
+      s.style.top = ((t.y - vb[1]) / vb[3] * 100).toFixed(2) + '%';
+      s.setAttribute('aria-label', 'Spot ' + (k + 1) + ', empty');
+      stage.appendChild(s);
+      spots.push(s);
+    });
+    var names = targets.map(function (t) { return t.label; }).concat(c.distractors || []);
+    var order = shuffled(names.length, c.id);
+    var tray = h('div', 'be-chips');
+    order.forEach(function (k) {
+      var ch = btn('be-chip', fmt(names[k]));
+      ch.dataset.k = k;
+      ch.setAttribute('aria-pressed', 'false');
+      tray.appendChild(ch);
+      chips[k] = ch;
+    });
+    card.appendChild(tray);
+    var check = btn('be-btn be-check', 'Check');
+    check.disabled = true;
+    card.appendChild(check);
+    function refresh() {
+      spots.forEach(function (s, k) {
+        var at = placed[k];
+        s.innerHTML = at == null ? String(k + 1) : fmt(names[at]);
+        s.classList.toggle('is-filled', at != null);
+        s.setAttribute('aria-label', 'Spot ' + (k + 1) + (at == null ? ', empty' : ', ' + plain(names[at])));
+      });
+      chips.forEach(function (ch, k) {
+        var used = Object.keys(placed).some(function (s) { return placed[s] === k; });
+        ch.disabled = used || !!me.answers[c.id];
+        ch.classList.toggle('is-sel', chosen === k);
+        ch.setAttribute('aria-pressed', chosen === k ? 'true' : 'false');
+      });
+      check.disabled = Object.keys(placed).length !== targets.length;
+    }
+    function show(ans, speak) {
+      check.hidden = true;
+      spots.forEach(function (s, k) {
+        s.disabled = true;
+        var right = ans.placed[k] === k;
+        s.classList.add(right ? 'is-right' : 'is-wrong');
+        if (!right) s.innerHTML = fmt(names[k]);
+      });
+      chips.forEach(function (ch) { ch.disabled = true; });
+      var wrong = targets.filter(function (t, k) { return ans.placed[k] !== k; }).length;
+      feedback(card, [verdict(ans.ok) + (ans.ok ? 'Every name is in its place.' : wrong + ' of ' + targets.length + ' were in the wrong place; the correct names are now shown.'), fmt(c.why || '')]);
+      if (speak) announce(ans.ok ? 'Correct.' : 'Not quite. The correct names are shown.');
+    }
+    if (me.answers[c.id]) { placed = me.answers[c.id].placed; refresh(); show(me.answers[c.id], false); return; }
+    chips.forEach(function (ch, k) {
+      ch.addEventListener('click', function () { chosen = chosen === k ? null : k; refresh(); });
+    });
+    spots.forEach(function (s, k) {
+      s.addEventListener('click', function () {
+        if (me.answers[c.id]) return;
+        if (placed[k] != null) { delete placed[k]; refresh(); return; }
+        if (chosen == null) return;
+        placed[k] = chosen; chosen = null; refresh();
+      });
+    });
+    check.addEventListener('click', function () {
+      var ok = targets.every(function (t, k) { return placed[k] === k; });
+      var copy = {};
+      Object.keys(placed).forEach(function (k) { copy[k] = placed[k]; });
+      record(c, { placed: copy, ok: ok });
+      show(me.answers[c.id], true);
+    });
+    refresh();
+  };
+
+  /* ---------- spot: tap the step where a worked solution goes wrong ---------- */
+  BUILD.spot = function (c, card) {
+    addHead(card, TAG.spot, c.prompt);
+    addArt(c, card);
+    var list = h('ol', 'be-steps');
+    var btns = (c.working || []).map(function (st, k) {
+      var li = h('li');
+      var b = btn('be-option be-stepbtn', '<span class="be-stepn">' + (k + 1) + '</span> ' + fmt(st.text));
+      li.appendChild(b);
+      list.appendChild(li);
+      return b;
+    });
+    card.appendChild(list);
+    var bad = -1;
+    (c.working || []).forEach(function (st, k) { if (st.wrong && bad < 0) bad = k; });
+    function show(ans, speak) {
+      lock(btns);
+      if (ans.pick !== bad) mark(btns[ans.pick], 'is-picked', 'Your pick');
+      mark(btns[bad], 'is-right', 'The mistake');
+      feedback(card, [verdict(ans.ok) + fmt(c.working[bad].why || ''), fmt(c.why || '')]);
+      if (speak) announce((ans.ok ? 'Correct. ' : 'Not quite. ') + 'The mistake is in step ' + (bad + 1) + '.');
+    }
+    if (me.answers[c.id]) { show(me.answers[c.id], false); return; }
+    btns.forEach(function (b, k) {
+      b.addEventListener('click', function () {
+        if (me.answers[c.id]) return;
+        record(c, { pick: k, ok: k === bad });
+        show(me.answers[c.id], true);
+      });
+    });
   };
 
   /* One striking number or short statement, set large. */
