@@ -457,6 +457,7 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   change ships as `book-engine.v2.js`. Card types today: cover, concept, case,
   compare, scene, video, dialogue (two or three characters, one speech bubble
   per tap), timeline (dated events, one per tap), figure (one big number),
+  evolve (one diagram that changes with each tap, see below),
   choice (single, or `select: N`), predict, sort, bucket, reflect, commit,
   done. The layout is one column on a phone and two panes (art beside
   text) from 900px. The engine sends GA4 events (lesson_start, card_view,
@@ -480,6 +481,34 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   Public or Unlisted with embedding allowed (Private cannot be embedded), add
   captions there or burn them in, then put the two ids in the card's
   `sources` and replace its posters and transcript.
+- What goes inside a clip (22 Nov 2026): `.claude/explainer-video-spec.md`.
+  Animated-maths explainer style (dark backdrop, one colour per quantity from
+  the book's variable table, morphs not cuts, puzzle before notation), built
+  in Manim Community, with Cee (the brand C with eyes and the gold check as
+  its hand, no mouth, never speaks) as the only character. Never use
+  3Blue1Brown's pi creatures, code or clips, or remake their scenes.
+  Cee's poses and the Manim helper live in `books/_shared/video/`. First real
+  clip (22 Nov 2026): infinite-powers-v2 lesson 1, card `principle-clip`
+  (the Infinity Principle, 43 s, captions burned in, narrated with the
+  Kokoro `af_heart` text-to-speech voice via video-src/narrate.py),
+  served from `media/` with `host: "file"` until it is uploaded to YouTube.
+- Evolve card (22 Nov 2026): `"type": "evolve"` with `title`, `look`,
+  `alt`, an optional `label` and 3 to 7 `stages`, each `{text, art?,
+  audio?}`. One tap per stage; every stage's SVG shares one viewBox. The
+  engine animates between stages from attributes on top-level shapes: the
+  same `data-k` in two stages moves and scales the shape into its new place,
+  `data-into="k"` shrinks a leaving shape into the next stage's k,
+  `data-from="k"` grows an arriving shape out of the previous stage's k,
+  `data-draw` draws an arriving line, anything else fades. A stage without
+  art is a text-only beat that keeps the last picture, so the next picture
+  grows out of it. `audio` is per-stage narration, played only after the
+  learner turns narration on (remembered under `books.v1.sound`). The
+  validator checks the stage count, the shared viewBox, unique keys per
+  stage and that every from or into names a key in the nearest stage with
+  art. Reference: infinite-powers-v2 lesson 1, card `principle` (Kokoro
+  narration in `media/principle-N.mp3`). It was prototyped as a standalone
+  page from a pacing pattern the owner liked in another app; the look and
+  content are ours.
 - A scene card is an isometric SVG built in steps. Its `model` field is
   reserved for true 3D in a later engine; v1 shows `art` or the `fallback`.
 - Spaced review: finishing a lesson puts its `review: true` cards in box 1 of
@@ -556,6 +585,18 @@ dashes and SVG art. All four engine milestones are built (21 Nov 2026):
   thirteen exist, the folder replaces `books/infinite-powers/`, `partial` is
   removed and lesson 13 carries the commit card. The book's text is never
   committed: the repo is deployed publicly.
+- Faith pilot (24 Nov 2026): `books/ethics-and-spiritual-growth/`, three
+  lessons on Chapter 5 (The Stormy Sea of Life) of *Ethics and Spiritual
+  Growth* by Sayyid Mujtaba Musavi Lari, translated by Ali Quli Qara'i (in
+  copyright, `rights.tier` original, `partial: true`): 01 why the storm
+  feels worse now, 02 what hardship is for, 03 anchors in the storm. Our own
+  wording throughout; the Qur'an and the sayings of the Prophet and the
+  Imams are given with references and an "in meaning" rendering, never the
+  translator's text; honorifics on every mention; no drawings of people,
+  and no dialogue cards that put words in sacred figures' mouths; the
+  chapter's uncited statistics are left out; lesson 3 names a doctor or
+  counsellor alongside a trusted friend. One evolve card per lesson with
+  Kokoro narration. Needs a scholar's review before it goes beyond a pilot.
 - The pilot is unlinked, carries `<meta name="robots" content="noindex">` and
   is not in `sitemap.xml`, the root catalog or `catalog.json`. Keep it that
   way until launch. `books/meditations/` is a two-lesson sample book: its

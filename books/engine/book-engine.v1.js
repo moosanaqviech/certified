@@ -28,6 +28,7 @@
   cards.forEach(function (c) {
     if (c.type === 'dialogue' && c.lines) c.steps = c.lines.length;
     if (c.type === 'timeline' && c.events) c.steps = c.events.length;
+    if (c.type === 'evolve' && c.stages) c.steps = Math.max(0, c.stages.length - 1);
   });
 
   var PRODUCING = { choice: 1, predict: 1, sort: 1, bucket: 1, reflect: 1, commit: 1 };
@@ -41,6 +42,7 @@
     figure: 'One number',
     scene: 'Picture it',
     video: 'Watch',
+    evolve: 'Watch it build',
     choice: 'Your turn',
     predict: 'What would you do?',
     sort: 'Put in order',
@@ -237,6 +239,7 @@
     }
     var hint = card.querySelector('.be-hint');
     if (hint) hint.hidden = stepsLeft(c) <= 0;
+    if (card.beEvolve) card.beEvolve(n);
   }
 
   function updateChrome() {
@@ -517,6 +520,189 @@
     card.appendChild(list);
     addBody(c, card);
     card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+  };
+
+  /* ---------- evolve: one diagram that changes with each tap ----------
+     Each stage is a short text and an optional static SVG; every stage
+     shares one viewBox. The engine animates between neighbouring stages:
+     a top-level shape with the same data-k in both moves and scales into
+     its new place; data-into="k" on a leaving shape shrinks it into the
+     next stage's k; data-from="k" on an arriving shape grows it out of the
+     previous stage's k; data-draw draws an arriving line; anything else
+     fades. A stage without art is a text-only beat. Optional narration per
+     stage plays only after the learner turns sound on. */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var SOUND_KEY = 'books.v1.sound';
+  var evoAudio = null;
+  function stopEvoAudio() {
+    if (evoAudio) { try { evoAudio.pause(); } catch (e) {} evoAudio = null; }
+  }
+  function reducedMotion() {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+  }
+  function evoParse(html) {
+    if (!html) return null;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var svg = tmp.querySelector('svg');
+    if (!svg) return null;
+    Array.prototype.slice.call(svg.childNodes).forEach(function (n) {
+      if (n.nodeType !== 1) return;
+      var tag = n.tagName.toLowerCase();
+      if (tag === 'defs' || tag === 'style' || tag === 'title' || tag === 'desc') return;
+      var w = document.createElementNS(SVGNS, 'g');
+      w.setAttribute('class', 'be-evo-w');
+      ['data-k', 'data-from', 'data-into', 'data-draw'].forEach(function (a) {
+        if (n.hasAttribute(a)) { w.setAttribute(a, n.getAttribute(a)); n.removeAttribute(a); }
+      });
+      svg.insertBefore(w, n);
+      w.appendChild(n);
+    });
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    return svg;
+  }
+  function evoParts(svg) {
+    var out = { list: [], keys: {}, rects: [] };
+    if (!svg) return out;
+    for (var k = 0; k < svg.childNodes.length; k++) {
+      var w = svg.childNodes[k];
+      if (w.nodeType !== 1 || !w.classList.contains('be-evo-w')) continue;
+      out.list.push(w);
+      out.rects.push(w.getBoundingClientRect());
+      if (w.getAttribute('data-k')) out.keys[w.getAttribute('data-k')] = out.list.length - 1;
+    }
+    return out;
+  }
+  function evoMid(r) { return [r.left + r.width / 2, r.top + r.height / 2]; }
+  function evoMorph(prev, next) {
+    var EASE = 'cubic-bezier(.65, 0, .25, 1)';
+    /* A quick second tap can land mid-morph: settle every running animation
+       first, so measurements are of where things really are. */
+    [prev, next].forEach(function (svg) {
+      if (svg && svg.getAnimations) svg.getAnimations({ subtree: true }).forEach(function (a) { a.cancel(); });
+    });
+    var P = evoParts(prev), N = evoParts(next);   /* measure everything before moving anything */
+    var ctm = next ? next.getScreenCTM() : (prev ? prev.getScreenCTM() : null);
+    var u = ctm && ctm.a ? ctm.a : 1;             /* screen pixels per SVG unit */
+    var animate = function (el, frames, opts) { if (el.animate) el.animate(frames, opts); };
+    N.list.forEach(function (w, k) {
+      var r = N.rects[k], key = w.getAttribute('data-k'), from = w.getAttribute('data-from');
+      if (key && P.keys[key] !== undefined && r.width && r.height) {
+        var o = P.rects[P.keys[key]];
+        w.style.transformBox = 'fill-box';
+        w.style.transformOrigin = '0 0';
+        animate(w, [{ transform: 'translate(' + (o.left - r.left) / u + 'px,' + (o.top - r.top) / u + 'px) scale(' +
+          (o.width / r.width) + ',' + (o.height / r.height) + ')' }, { transform: 'none' }],
+          { duration: 750, easing: EASE, fill: 'backwards' });
+      } else if (from && P.keys[from] !== undefined) {
+        var f = evoMid(P.rects[P.keys[from]]), m = evoMid(r);
+        w.style.transformBox = 'fill-box';
+        w.style.transformOrigin = 'center';
+        animate(w, [{ transform: 'translate(' + (f[0] - m[0]) / u + 'px,' + (f[1] - m[1]) / u + 'px) scale(.2)', opacity: 0 },
+          { transform: 'none', opacity: 1 }], { duration: 650, delay: 250, easing: EASE, fill: 'backwards' });
+      } else if (w.hasAttribute('data-draw')) {
+        Array.prototype.forEach.call(w.querySelectorAll('path, line, polyline'), function (g) {
+          var len = g.getTotalLength ? g.getTotalLength() : 0;
+          if (!len) return;
+          g.style.strokeDasharray = len + ' ' + len;
+          animate(g, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 700, delay: 350, easing: EASE, fill: 'backwards' });
+        });
+      } else {
+        animate(w, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 500, delay: 250, easing: EASE, fill: 'backwards' });
+      }
+    });
+    if (!prev) return;
+    prev.classList.add('is-leaving');
+    P.list.forEach(function (w, k) {
+      var key = w.getAttribute('data-k'), into = w.getAttribute('data-into');
+      if (key && N.keys[key] !== undefined) { w.style.opacity = '0'; return; }
+      if (into && N.keys[into] !== undefined) {
+        var t = evoMid(N.rects[N.keys[into]]), m = evoMid(P.rects[k]);
+        w.style.transformBox = 'fill-box';
+        w.style.transformOrigin = 'center';
+        animate(w, [{ transform: 'none', opacity: 1 },
+          { transform: 'translate(' + (t[0] - m[0]) / u + 'px,' + (t[1] - m[1]) / u + 'px) scale(.2)', opacity: 0 }],
+          { duration: 600, easing: EASE, fill: 'forwards' });
+      } else {
+        animate(w, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' });
+      }
+    });
+    window.setTimeout(function () { if (prev.parentNode) prev.parentNode.removeChild(prev); }, 800);
+  }
+  BUILD.evolve = function (c, card) {
+    var stages = c.stages || [];
+    addHead(card, TAG.evolve, c.title);
+    var box = h('div', 'be-art be-evo');
+    if (c.alt) { box.setAttribute('role', 'img'); box.setAttribute('aria-label', c.alt); }
+    if (c.label) box.appendChild(h('p', 'be-evo-label', esc(c.label)));
+    card.appendChild(box);
+    var texts = h('div', 'be-evo-text');
+    texts.setAttribute('aria-live', 'polite');
+    var paras = stages.map(function (st) {
+      var p = h('p', 'be-lead', fmt(st.text || ''));
+      texts.appendChild(p);
+      return p;
+    });
+    card.appendChild(texts);
+    var hasAudio = stages.some(function (st) { return !!st.audio; });
+    var soundOn = false;
+    if (hasAudio) {
+      try { soundOn = window.localStorage.getItem(SOUND_KEY) === '1'; } catch (e) {}
+      var btn = h('button', 'be-sound');
+      btn.type = 'button';
+      var paint = function () {
+        btn.textContent = soundOn ? 'Narration on' : 'Narration off';
+        btn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+      };
+      paint();
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        soundOn = !soundOn;
+        try { window.localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (err) {}
+        paint();
+        if (soundOn) speak(cur); else stopEvoAudio();
+      });
+      card.appendChild(btn);
+    }
+    card.appendChild(h('p', 'be-hint', 'Tap to continue'));
+    var cur = -1;
+    function speak(n) {
+      stopEvoAudio();
+      var src = stages[n] && stages[n].audio;
+      if (!soundOn || !src) return;
+      try {
+        evoAudio = new Audio(src);
+        var played = evoAudio.play();
+        if (played && played.catch) played.catch(function () {});
+      } catch (e) {}
+    }
+    card.beEvolve = function (n) {
+      n = Math.max(0, Math.min(stages.length - 1, n));
+      if (n === cur) return;
+      var animated = cur >= 0 && !reducedMotion();
+      cur = n;
+      paras.forEach(function (p, k) { p.classList.toggle('is-on', k === n); });
+      var prev = null;
+      for (var k = box.childNodes.length - 1; k >= 0; k--) {
+        var el = box.childNodes[k];
+        if (el.tagName && el.tagName.toLowerCase() === 'svg' && !el.classList.contains('is-leaving')) { prev = el; break; }
+      }
+      var next = evoParse(stages[n].art);
+      if (!next) {
+        /* A text-only beat: hide the panel but keep the last picture, so
+           the next stage with art grows out of it. */
+        box.classList.add('is-empty');
+      } else {
+        box.classList.remove('is-empty');
+        box.appendChild(next);
+        if (animated) evoMorph(prev, next);
+        else if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+      }
+      if (n > 0) track('evolve_stage', { card_id: c.id, stage: n + 1 });
+      speak(n);
+    };
   };
 
   /* One striking number or short statement, set large. */
@@ -1073,6 +1259,7 @@
 
   function render(focus) {
     var c = cards[i];
+    stopEvoAudio();
     stage.innerHTML = '';
     var card = mount(c);
     stage.appendChild(card);

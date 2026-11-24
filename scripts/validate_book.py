@@ -28,7 +28,7 @@ MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
 # Card types the v1 engine renders.
 TYPES = {"cover", "concept", "case", "compare", "scene", "video", "dialogue",
-         "timeline", "figure", "choice",
+         "timeline", "figure", "evolve", "choice",
          "predict", "sort", "bucket", "reflect", "commit", "done"}
 PRODUCING = {"choice", "predict", "sort", "bucket", "reflect", "commit"}
 REVIEWABLE = {"choice", "predict", "sort", "bucket"}
@@ -44,6 +44,7 @@ FIELDS = {
     "dialogue": {"id", "type", "title", "cast", "lines", "body"},
     "timeline": {"id", "type", "title", "events", "body"},
     "figure": {"id", "type", "title", "value", "caption", "body"},
+    "evolve": {"id", "type", "title", "label", "alt", "look", "stages"},
     "choice": {"id", "type", "prompt", "options", "select", "art", "alt", "look", "review", "variants"},
     "sort": {"id", "type", "prompt", "items", "why", "review", "variants"},
     "bucket": {"id", "type", "prompt", "buckets", "items", "why", "review", "variants"},
@@ -167,7 +168,7 @@ def check_options(where, card, errors):
 # Visual formats, for the variety rules. A card with art names its `look`;
 # some card types are a format in themselves.
 LOOKS = {"diagram", "illustration", "comic", "portrait", "map"}
-FORMAT_TYPES = {"dialogue", "timeline", "figure", "compare", "scene", "video"}
+FORMAT_TYPES = {"dialogue", "timeline", "figure", "compare", "scene", "video", "evolve"}
 STORY_TYPES = {"case", "dialogue", "timeline", "scene"}
 MIN_FORMATS = 3
 
@@ -318,6 +319,86 @@ def check_video(where, card, folder, errors):
     secs = card.get("seconds")
     if not isinstance(secs, int) or not VIDEO_SECONDS[0] <= secs <= VIDEO_SECONDS[1]:
         errors.append(f"{where}: seconds must be {VIDEO_SECONDS[0]} to {VIDEO_SECONDS[1]}")
+
+
+EVOLVE_STAGES = (3, 7)
+STAGE_FIELDS = {"text", "art", "audio"}
+TOP_ATTR_RE = re.compile(r"data-(k|from|into|draw)\b")
+
+
+def evolve_tops(art):
+    """Top-level children of a stage's <svg>, as (tag, attributes) pairs."""
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.fromstring(art)
+    except ET.ParseError as e:
+        return None, str(e)
+    tops = []
+    for child in root:
+        tag = child.tag.split("}")[-1]
+        tops.append((tag, child.attrib))
+        for d in child.iter():
+            if d is not child and any(TOP_ATTR_RE.match(k) for k in d.attrib):
+                return None, "data-k, data-from, data-into and data-draw go on top-level shapes only"
+    return (root.attrib.get("viewBox"), tops), None
+
+
+def check_evolve(where, card, folder, errors):
+    """One diagram that changes with each tap: 3 to 7 stages sharing one
+    viewBox, the first with art, keys unique per stage, and every data-from
+    or data-into naming a key in the nearest stage with art on that side."""
+    stages = card.get("stages")
+    lo, hi = EVOLVE_STAGES
+    if not isinstance(stages, list) or not lo <= len(stages) <= hi:
+        errors.append(f"{where}: needs {lo} to {hi} stages")
+        return
+    if not card.get("alt"):
+        errors.append(f"{where}: needs an alt text describing how the diagram changes")
+    parsed, boxes = [], set()
+    for k, st in enumerate(stages, 1):
+        sw = f"{where} stage {k}"
+        if not isinstance(st, dict) or not st.get("text"):
+            errors.append(f"{sw}: needs text")
+            parsed.append(None)
+            continue
+        extra = set(st) - STAGE_FIELDS
+        if extra:
+            errors.append(f"{sw}: unknown fields {sorted(extra)}")
+        if st.get("audio") and not os.path.isfile(os.path.join(folder, st["audio"])):
+            errors.append(f"{sw}: audio {st['audio']!r} does not exist")
+        art = st.get("art")
+        if not art:
+            if k == 1:
+                errors.append(f"{sw}: the first stage needs art")
+            parsed.append(None)
+            continue
+        check_art(sw, {"type": "evolve-stage", "art": art, "alt": card.get("alt")}, errors)
+        info, err = evolve_tops(art)
+        if err:
+            errors.append(f"{sw}: {err}")
+            parsed.append(None)
+            continue
+        box, tops = info
+        boxes.add(box)
+        keys = [a.get("data-k") for _, a in tops if a.get("data-k")]
+        if len(keys) != len(set(keys)):
+            errors.append(f"{sw}: a data-k is used twice")
+        parsed.append((set(keys), tops))
+    if len(boxes) > 1:
+        errors.append(f"{where}: every stage must share one viewBox, found {sorted(b or 'none' for b in boxes)}")
+    for k, p in enumerate(parsed):
+        if not p:
+            continue
+        keys, tops = p
+        # A text-only stage keeps the last picture, so neighbours are the
+        # nearest stages with art on either side.
+        before = next((q[0] for q in reversed(parsed[:k]) if q), set())
+        after = next((q[0] for q in parsed[k + 1:] if q), set())
+        for _, a in tops:
+            if a.get("data-from") and a["data-from"] not in before:
+                errors.append(f"{where} stage {k + 1}: data-from={a['data-from']!r} names no shape in the stage before")
+            if a.get("data-into") and a["data-into"] not in after:
+                errors.append(f"{where} stage {k + 1}: data-into={a['data-into']!r} names no shape in the stage after")
 
 
 def check_scene(where, card, folder, errors):
@@ -474,7 +555,7 @@ def check_lesson(path, book, errors):
         if extra:
             errors.append(f"{where}: unknown fields {sorted(extra)}")
         if ctype in ("cover", "concept", "case", "compare", "scene", "video", "dialogue", "timeline",
-                     "figure", "done") and not c.get("title"):
+                     "figure", "evolve", "done") and not c.get("title"):
             errors.append(f"{where}: needs a title")
         if ctype in PRODUCING and not c.get("prompt"):
             errors.append(f"{where}: needs a prompt")
@@ -495,12 +576,14 @@ def check_lesson(path, book, errors):
             check_figure(where, c, errors)
         if "look" in c and c["look"] not in LOOKS:
             errors.append(f"{where}: look must be one of {sorted(LOOKS)}")
-        if "look" in c and not c.get("art"):
+        if "look" in c and not (c.get("art") or ctype == "evolve"):
             errors.append(f"{where}: look describes art, and this card has none")
         if ctype == "video":
             check_video(where, c, os.path.dirname(path), errors)
         if ctype == "scene":
             check_scene(where, c, os.path.dirname(path), errors)
+        if ctype == "evolve":
+            check_evolve(where, c, os.path.dirname(path), errors)
         if ctype in ("reflect", "commit"):
             if not isinstance(c.get("minChars"), int) or c["minChars"] < 1:
                 errors.append(f"{where}: needs a positive minChars")
@@ -537,10 +620,10 @@ def check_lesson(path, book, errors):
     if not STORY_TYPES & set(types):
         errors.append(f"{rel}: needs something concrete: a case, dialogue, timeline or scene card")
     # Variety rules, for books that opt in with "variety": true in book.json.
-    formats = {c.get("look", "diagram") for c in cards if c.get("art")} | (FORMAT_TYPES & set(types))
+    formats = {c.get("look", "diagram") for c in cards if c.get("art") or c.get("type") == "evolve"} | (FORMAT_TYPES & set(types))
     if book.get("variety"):
         for k, c in enumerate(cards, 1):
-            if c.get("art") and "look" not in c:
+            if (c.get("art") or c.get("type") == "evolve") and "look" not in c:
                 errors.append(f"{rel} card {k} ({c.get('id', '?')}): name the art's look, one of {sorted(LOOKS)}")
         if len(formats) < MIN_FORMATS:
             errors.append(f"{rel}: uses {len(formats)} visual format(s) ({sorted(formats)}); "
@@ -562,7 +645,7 @@ def check_lesson(path, book, errors):
         errors.append(f"{rel}: a commit card belongs only on the book's last lesson")
     if sum(1 for c in cards if c.get("review")) < MIN_REVIEW:
         errors.append(f"{rel}: mark at least {MIN_REVIEW} cards review: true")
-    if sum(1 for c in cards if c.get("steps") or c.get("type") in ("dialogue", "timeline")) < MIN_STEPPED:
+    if sum(1 for c in cards if c.get("steps") or c.get("type") in ("dialogue", "timeline", "evolve")) < MIN_STEPPED:
         errors.append(f"{rel}: at least {MIN_STEPPED} cards must use step builds")
 
     # Correct answers should not sit in the same position every time.
